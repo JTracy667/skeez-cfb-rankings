@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skeez CFB Rankings — Analytics Dashboard</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0a0e17;
+  color: #e2e8f0;
+  min-height: 100vh;
+}
+.header {
+  background: linear-gradient(135deg, #1a1f36 0%, #0d1117 100%);
+  padding: 24px 32px;
+  border-bottom: 1px solid #21262d;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #f0f6fc;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header nav a {
+  color: #8b949e; text-decoration: none; padding: 8px 16px;
+  border-radius: 6px; font-size: 0.9rem; transition: all 0.2s;
+}
+.header nav a:hover, .header nav a.active {
+  color: #f0f6fc; background: rgba(255,255,255,0.06);
+}
+.container { max-width: 1600px; margin: 0 auto; padding: 24px; }
+.tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+.tab-btn {
+  padding: 8px 16px; border: 1px solid #21262d; border-radius: 8px;
+  background: #161b22; color: #8b949e; cursor: pointer; font-size: 0.82rem;
+  font-weight: 600; transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn:hover { background: #1c2129; color: #c9d1d9; }
+.tab-btn.active { background: #1f6feb; color: #fff; border-color: #1f6feb; }
+.metric-section { display: none; }
+.metric-section.active { display: block; }
+.summary-row {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px; margin-bottom: 18px;
+}
+.summary-card {
+  background: #161b22; border: 1px solid #21262d; border-radius: 10px; padding: 14px; text-align: center;
+}
+.summary-card .label { font-size: 0.7rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; }
+.summary-card .value { font-size: 1.3rem; font-weight: 700; margin-top: 4px; }
+.summary-card .value.blue { color: #58a6ff; }
+.summary-card .value.green { color: #3fb950; }
+.summary-card .value.purple { color: #d2a8ff; }
+.summary-card .value.yellow { color: #f0b232; }
+table {
+  width: 100%; border-collapse: collapse; background: #161b22;
+  border: 1px solid #21262d; border-radius: 10px; overflow: hidden;
+}
+th, td { padding: 10px 14px; text-align: center; border-bottom: 1px solid #21262d; font-size: 0.85rem; }
+th {
+  background: #1c2129; color: #8b949e; font-weight: 600; text-transform: uppercase;
+  font-size: 0.7rem; letter-spacing: 0.5px; cursor: pointer; user-select: none;
+  position: sticky; top: 0;
+}
+th:hover { background: #22272e; color: #c9d1d9; }
+th.sorted-asc::after { content: ' \25b2'; color: #1f6feb; }
+th.sorted-desc::after { content: ' \25bc'; color: #1f6feb; }
+td:first-child { text-align: center; font-weight: 700; color: #58a6ff; width: 40px; }
+td:nth-child(2) { text-align: left; font-weight: 600; }
+tr:hover td { background: rgba(31,111,235,0.06); }
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;
+}
+img.team-logo {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+  object-fit: contain;
+  margin-right: 4px;
+}
+.badge-good { background: rgba(63,185,80,0.15); color: #3fb950; }
+.badge-bad { background: rgba(248,81,73,0.15); color: #f85149; }
+.badge-mid { background: rgba(240,178,50,0.15); color: #f0b232; }
+.badge-neutral { background: rgba(210,168,255,0.15); color: #d2a8ff; }
+.search-box {
+  width: 100%; padding: 12px 16px; background: #161b22; border: 1px solid #21262d;
+  border-radius: 8px; color: #e2e8f0; font-size: 0.9rem; margin-bottom: 16px; outline: none;
+}
+.search-box:focus { border-color: #1f6feb; }
+.search-box::placeholder { color: #484f58; }
+.loading { text-align: center; padding: 60px; color: #484f58; font-size: 1.1rem; }
+.source-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 6px;
+  background: rgba(88,166,255,0.1); color: #58a6ff; font-size: 0.75rem; font-weight: 600; margin-left: 8px;
+}
+.footer { text-align: center; padding: 24px; color: #484f58; font-size: 0.75rem; margin-top: 32px; }
+@media (max-width: 768px) {
+  .header { flex-direction: column; gap: 12px; }
+  .tabs { gap: 4px; }
+  .tab-btn { padding: 6px 10px; font-size: 0.75rem; }
+  th, td { padding: 8px 6px; font-size: 0.78rem; }
+}
+
+.projections-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+@media (max-width: 1024px) { .projections-grid { grid-template-columns: 1fr; } }
+.proj-card {
+  background: #161b22; border: 1px solid #21262d; border-radius: 10px; padding: 16px;
+}
+.proj-card h3 {
+  font-size: 0.85rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+}
+.proj-card h3 .icon { font-size: 1rem; }
+.proj-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0; border-bottom: 1px solid #21262d; font-size: 0.82rem;
+}
+.proj-row:last-child { border-bottom: none; }
+.proj-row .rank { color: #58a6ff; font-weight: 700; width: 30px; text-align: center; }
+.proj-row .team { flex: 1; font-weight: 600; padding-left: 8px; }
+.proj-row .score { color: #3fb950; font-weight: 700; width: 60px; text-align: right; }
+.proj-row .prob { color: #d2a8ff; width: 55px; text-align: right; }
+.odds-table { width: 100%; border-collapse: collapse; }
+.odds-table th, .odds-table td { padding: 8px 10px; text-align: center; font-size: 0.8rem; border-bottom: 1px solid #21262d; }
+.odds-table th { background: #1c2129; color: #8b949e; font-weight: 600; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; }
+.odds-table tr:hover td { background: rgba(31,111,235,0.06); }
+.spread-val { font-weight: 700; }
+.spread-val.negative { color: #f85149; }
+.spread-val.positive { color: #3fb950; }
+.total-val { color: #f0b232; font-weight: 600; }
+.odds-source { color: #484f58; font-size: 0.7rem; }
+.mascot-name { color: #c9d1d9; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📊 Skeez CFB Rankings — Analytics <span class="source-badge" id="sourceBadge">loading...</span></h1>
+  <nav>
+    <a href="/">Skeez CFB Rankings</a>
+    <a href="/analytics" class="active">Analytics</a>
+    <a href="/schedule">Schedule</a>
+    <button class="tab-btn" id="refreshAnalyticsBtn" style="margin-left:8px;cursor:pointer">🔄 Refresh</button>
+  </nav>
+</div>
+<div class="container">
+  <input type="text" class="search-box" id="search" placeholder="Search teams...">
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="spplus">SP+</button>
+    <button class="tab-btn" data-tab="fpi">ESPN FPI</button>
+    <button class="tab-btn" data-tab="srs">SRS</button>
+    <button class="tab-btn" data-tab="elo">Elo</button>
+    <button class="tab-btn" data-tab="spoff">SP+ Offense</button>
+    <button class="tab-btn" data-tab="spdef">SP+ Defense</button>
+    <button class="tab-btn" data-tab="offense">Offense</button>
+    <button class="tab-btn" data-tab="defense">Defense</button>
+    <button class="tab-btn" data-tab="turnovers">Turnovers</button>
+    <button class="tab-btn" data-tab="cpi">CLEATZ CPi</button>
+    <button class="tab-btn" data-tab="recruiting">Recruiting</button>
+    <button class="tab-btn" data-tab="coaching">Coaching</button>
+    <button class="tab-btn" data-tab="portal">Portal / Returning</button>
+    <button class="tab-btn" data-tab="composite">Composite</button>
+    <button class="tab-btn" data-tab="projections">Projections & Odds</button>
+  </div>
+  <div id="loading" class="loading">Loading analytics data...</div>
+  <div id="content" style="display:none;">
+    <div id="summary" class="summary-row"></div>
+    <div id="spplus" class="metric-section active"></div>
+    <div id="fpi" class="metric-section"></div>
+    <div id="srs" class="metric-section"></div>
+    <div id="elo" class="metric-section"></div>
+    <div id="spoff" class="metric-section"></div>
+    <div id="spdef" class="metric-section"></div>
+    <div id="offense" class="metric-section"></div>
+    <div id="defense" class="metric-section"></div>
+    <div id="turnovers" class="metric-section"></div>
+    <div id="cpi" class="metric-section"></div>
+    <div id="recruiting" class="metric-section"></div>
+    <div id="coaching" class="metric-section"></div>
+    <div id="portal" class="metric-section"></div>
+    <div id="composite" class="metric-section"></div>
+    <div id="projections" class="metric-section"></div>
+  </div>
+</div>
+<div class="footer">CFB Analytics Dashboard — Powered by College Football Data API (CFBD) · SP+ · ESPN FPI · SRS · Elo · Recruiting</div>
+<script>
+const API = '/api';
+let teams = [];
+let currentTab = 'spplus';
+let sortCol = null;
+let sortDir = 'desc';
+
+// ── Fetch ──
+async function fetchAnalytics() {
+  try {
+    // GET the cached analytics dataset (enriched server-side with composite).
+    // No POST /analytics/fetch on page load — that hammered the CFBD API and
+    // polluted the shared cache. Use the refresh button to force a live fetch.
+    const res = await fetch(`${API}/analytics`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    teams = data.teams || [];
+    document.getElementById('sourceBadge').textContent = `cfbd · ${teams.length} teams`;
+    document.getElementById('sourceBadge').style.background = 'rgba(63,185,80,0.12)';
+    document.getElementById('sourceBadge').style.color = '#3fb950';
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    renderAll();
+  } catch (e) {
+    console.error('Failed to load analytics:', e);
+    document.getElementById('loading').textContent = 'Failed to load data. Check console.';
+  }
+}
+
+// Force a live CFBD fetch + reload (explicit user action only)
+async function refreshAnalytics() {
+  const btn = document.getElementById('refreshAnalyticsBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Refreshing…'; }
+  try {
+    const r = await fetch(`${API}/analytics/fetch`, { method: 'POST' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  } catch (e) {
+    console.error('Live fetch failed (using cached data):', e);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Refresh'; }
+  }
+  await fetchAnalytics();
+  await fetchProjectionsAndOdds();
+}
+
+// ── Helpers ──
+function val(t, key, fallback = 0) {
+  return t[key] !== undefined && t[key] !== null && t[key] !== 0 ? t[key] : fallback;
+}
+
+function pctBadge(v, higher = true) {
+  const score = higher ? v : (100 - v);
+  if (score >= 70) return `<span class="badge badge-good">${v}</span>`;
+  if (score >= 45) return `<span class="badge badge-mid">${v}</span>`;
+  return `<span class="badge badge-bad">${v}</span>`;
+}
+
+function scoreColor(v, threshold) {
+  if (v >= threshold) return 'green';
+  if (v >= threshold * 0.6) return 'yellow';
+  return '';
+}
+
+// ── Summary Cards ──
+function renderSummary() {
+  if (!teams.length) return;
+  const topFPI = teams.reduce((a, b) => (val(b, 'fpi', -999) > val(a, 'fpi', -999) ? b : a));
+  const topSP = teams.reduce((a, b) => (val(b, 'sp_plus', -999) > val(a, 'sp_plus', -999) ? b : a));
+  const topRec = teams.reduce((a, b) => (val(b, 'recruiting_rank', 999) < val(a, 'recruiting_rank', 999) ? b : a));
+  const topSRS = teams.reduce((a, b) => (val(b, 'srs', -999) > val(a, 'srs', -999) ? b : a));
+  document.getElementById('summary').innerHTML = `
+    <div class="summary-card"><div class="label">Top FPI</div><div class="value blue">${topFPI.name}</div></div>
+    <div class="summary-card"><div class="label">Top SP+</div><div class="value green">${topSP.name} (${val(topSP,'sp_plus','—').toFixed(1)})</div></div>
+    <div class="summary-card"><div class="label">Top Recruiting</div><div class="value yellow">${topRec.name}</div></div>
+    <div class="summary-card"><div class="label">Top SRS</div><div class="value purple">${topSRS.name}</div></div>
+    <div class="summary-card"><div class="label">Total Teams</div><div class="value blue">${teams.length}</div></div>
+  `;
+}
+
+// ── Renderers ──
+function renderSPPlus(filtered) {
+  const list = filtered || teams;
+  const sorted = [...list].sort((a, b) => val(b, 'sp_plus', -999) - val(a, 'sp_plus', -999));
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>SP+ Rank</th><th>SP+</th><th>Offense</th><th>Defense</th></tr></thead><tbody>`;
+  sorted.forEach((t, i) => {
+    const sp = val(t, 'sp_plus', 0);
+    const spOff = val(t, 'sp_offense', 0);
+    const spDef = val(t, 'sp_defense', 0);
+    const spRank = val(t, 'sp_rank', '—');
+    html += `<tr><td>${i+1}</td><td><img class="team-logo" src="${t.logo_url || ''}" alt="${t.name}" onerror="this.style.display='none'"> ${t.name}</td><td>${spRank}</td><td>${pctBadge(sp.toFixed(2))}</td><td>${spOff.toFixed(1)}</td><td>${spDef.toFixed(1)}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('spplus').innerHTML = html;
+}
+
+function renderFPI(filtered) {
+  const list = filtered || teams;
+  const sorted = [...list].sort((a, b) => val(b, 'fpi', -999) - val(a, 'fpi', -999));
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>FPI Rank</th><th>FPI Score</th><th>FPI Win Prob</th></tr></thead><tbody>`;
+  sorted.forEach((t, i) => {
+    const fpi = val(t, 'fpi', 0);
+    const fpiRank = val(t, 'fpi_rank', '—');
+    const fpiWP = val(t, 'fpi_win_prob', 0);
+    html += `<tr><td>${i+1}</td><td><img class="team-logo" src="${t.logo_url || ''}" alt="${t.name}" onerror="this.style.display='none'"> ${t.name}</td><td>${fpiRank}</td><td>${pctBadge(fpi.toFixed(2))}</td><td>${fpiWP.toFixed(1)}%</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('fpi').innerHTML = html;
+}
+
+function renderSRS(filtered) {
+  const list = filtered || teams;
+  const sorted = [...list].sort((a, b) => val(b, 'srs', -999) - val(a, 'srs', -999));
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>SRS</th><th>SRS Rating</th></tr></thead><tbody>`;
+  sorted.forEach((t, i) => {
+    const srs = val(t, 'srs', 0);
+    html += `<tr><td>${i+1}</td><td>${t.name}</td><td>${pctBadge(srs.toFixed(2))}</td><td>${srs >= 5 ? 'Elite' : srs >= 0 ? 'Above Avg' : 'Below Avg'}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('srs').innerHTML = html;
+}
+
+function renderElo(filtered) {
+  const list = filtered || teams;
+  const sorted = [...list].sort((a, b) => val(b, 'elo', -999) - val(a, 'elo', -999));
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>Elo Rating</th><th>Implied Win %</th></tr></thead><tbody>`;
+  sorted.forEach((t, i) => {
+    const elo = val(t, 'elo', 1500);
+    const impliedWP = (1 / (1 + Math.pow(10, -(elo - 1500) / 400)) * 100);
+    html += `<tr><td>${i+1}</td><td>${t.name}</td><td>${pctBadge(elo.toFixed(0))}</td><td>${impliedWP.toFixed(1)}%</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('elo').innerHTML = html;
+}
+
+function renderSPOffense(filtered) {
+  const list = filtered || teams;
+  const sorted = [...list].sort((a, b) => val(b, 'sp_offense', -999) - val(a, 'sp_offense', -999));
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>SP+ Offense</th></tr></thead><tbody>`;
+  sorted.forEach((t, i) => {
+    const spOff = val(t, 'sp_offense', 0);
+    html += `<tr><td>${i+1}</td><td>${t.name}</td><td>${pctBadge(spOff.toFixed(1))}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('spoff').innerHTML = html;
+}
+
+function renderSPDefense(filtered) {
+  const list = filtered || teams;
+  const sorted = [...list].sort((a, b) => val(b, 'sp_defense', -999) - val(a, 'sp_defense', -999));
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>SP+ Defense</th></tr></thead><tbody>`;
+  sorted.forEach((t, i) => {
+    const spDef = val(t, 'sp_defense', 0);
+    html += `<tr><td>${i+1}</td><td>${t.name}</td><td>${pctBadge(spDef.toFixed(1))}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('spdef').innerHTML = html;
+}
+
+function epaBadge(v) {
+  // EPA values: positive = good, negative = bad; color accordingly
+  const cls = v >= 0.20 ? 'badge-good' : v >= 0.05 ? 'badge-mid' : v >= -0.05 ? 'badge-neutral' : 'badge-bad';
+  const sign = v >= 0 ? '+' : '';
+  return `<span class="badge ${cls}">${sign}${v.toFixed(3)}</span>`;
+}
+function renderOffense(filtered) {
+  const list = filtered || teams;
+  const sorted = [...list].sort((a, b) => val(b, 'off_ppg', 0) - val(a, 'off_ppg', 0));
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>PPG</th><th>YPP</th><th>3rd %</th><th>EPA/Play</th><th>Rush EPA</th><th>Pass EPA</th><th>Pts/Poss</th><th>TD%</th><th>FG%</th><th>TO%</th></tr></thead><tbody>`;
+  sorted.forEach((t, i) => {
+    const epa = val(t, 'epa_play', 0);
+    const epa_r = val(t, 'epa_rush', 0);
+    const epa_p = val(t, 'epa_pass', 0);
+    html += `<tr><td>${i+1}</td><td><img class="team-logo" src="${t.logo_url || ''}" alt="${t.name}" onerror="this.style.display='none'"> ${t.name}</td><td>${pctBadge(val(t,'off_ppg',0).toFixed(1))}</td><td>${val(t,'off_ypp',0).toFixed(2)}</td><td>${(val(t,'off_3rd',0)*100).toFixed(1)}%</td><td>${epaBadge(epa)}</td><td>${epaBadge(epa_r)}</td><td>${epaBadge(epa_p)}</td><td>${val(t,'pts_per_poss',0).toFixed(1) || '—'}</td><td>${val(t,'td_rate',0).toFixed(1)}%</td><td>${val(t,'fg_rate',0).toFixed(1)}%</td><td>${val(t,'turnover_rate',0).toFixed(1)}%</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('offense').innerHTML = html;
+}
+
+function renderDefense(filtered) {
+  const list = filtered || teams;
+  const sorted = [...list].sort((a, b) => val(a, 'def_ppg', 999) - val(b, 'def_ppg', 999));
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>Opp PPG</th><th>Opp YPP</th><th>3rd Down %</th><th>Def EPA/Play</th><th>Def Rush EPA</th><th>Def Pass EPA</th><th>Opp Pts/Poss</th><th>Opp TD%</th><th>Opp FG%</th><th>TO Created%</th></tr></thead><tbody>`;
+  sorted.forEach((t, i) => {
+    const defEPA = val(t,'def_epa_play',null);
+    const defEPAHtml = defEPA !== null ? epaBadge(defEPA) : '—';
+    const defRush = val(t,'def_epa_rush',null);
+    const defRushHtml = defRush !== null ? epaBadge(defRush) : '—';
+    const defPass = val(t,'def_epa_pass',null);
+    const defPassHtml = defPass !== null ? epaBadge(defPass) : '—';
+    html += `<tr><td>${i+1}</td><td><img class="team-logo" src="${t.logo_url||''}" alt="${t.name}" onerror="this.style.display='none'"> ${t.name}</td><td>${pctBadge(val(t,'def_ppg',0).toFixed(1), false)}</td><td>${val(t,'def_ypp',0).toFixed(2)}</td><td>${(val(t,'def_3rd',0)*100).toFixed(1)}%</td><td>${defEPAHtml}</td><td>${defRushHtml}</td><td>${defPassHtml}</td><td>${val(t,'def_pts_per_poss',0).toFixed(1)||'—'}</td><td>${val(t,'def_td_rate',0).toFixed(1)}%</td><td>${val(t,'def_fg_rate',0).toFixed(1)}%</td><td>${val(t,'def_turnover_created',0).toFixed(1)}%</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('defense').innerHTML = html;
+}
+
+function renderTurnovers(filtered) {
+  const list = filtered || teams;
+  const sorted = [...list].sort((a, b) => val(b, 'turnover_margin', 0) - val(a, 'turnover_margin', 0));
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>Turnover Margin</th></tr></thead><tbody>`;
+  sorted.forEach((t, i) => {
+    const tm = val(t, 'turnover_margin', 0);
+    const cls = tm >= 0 ? 'badge-good' : 'badge-bad';
+    const sign = tm >= 0 ? '+' : '';
+    html += `<tr><td>${i+1}</td><td>${t.name}</td><td><span class="badge ${cls}">${sign}${tm.toFixed(1)}</span></td></tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('turnovers').innerHTML = html;
+}
+
+function renderPortal(filtered) {
+  const list = filtered || teams;
+  // Sort by returning EPA (descending — more returning production = better)
+  const sorted = [...list].sort((a, b) => val(b, 'returning_ppa', 0) - val(a, 'returning_ppa', 0));
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>Returning PPA</th><th>% EPA Returning</th><th>Pass EPA Ret</th><th>Rush EPA Ret</th><th>Experience Score</th><th>Avg Year</th><th>Roster</th></tr></thead><tbody>`;
+  sorted.forEach((t, i) => {
+    const retPPA = val(t,'returning_ppa',0);
+    const expScore = val(t,'experience_score',0);
+    html += `<tr><td>${i+1}</td><td><img class="team-logo" src="${t.logo_url||''}" alt="${t.name}" onerror="this.style.display='none'"> ${t.name}</td><td>${retPPA > 0 ? '<span class="badge badge-good">'+retPPA.toFixed(1)+'</span>' : '—'}</td><td>${retPPA > 0 ? (val(t,'pct_ppa_returning',0).toFixed(1))+'%' : '—'}</td><td>${val(t,'pct_pass_ppa',0).toFixed(1)}%</td><td>${val(t,'pct_rush_ppa',0).toFixed(1)}%</td><td>${expScore > 0 ? pctBadge(expScore.toFixed(0)) : '—'}</td><td>${val(t,'avg_year',0) > 0 ? val(t,'avg_year',0).toFixed(1) : '—'}</td><td>${val(t,'roster_count',0) > 0 ? val(t,'roster_count',0) : '—'}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('portal').innerHTML = html;
+}
+
+function renderCPI(filtered) {
+  const list = filtered || teams;
+  const sorted = [...list].sort((a, b) => val(b, 'cpi', 0) - val(a, 'cpi', 0));
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>CPi Rating</th></tr></thead><tbody>`;
+  sorted.forEach((t, i) => {
+    html += `<tr><td>${i+1}</td><td>${t.name}</td><td>${pctBadge(val(t,'cpi',0).toFixed(1))}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('cpi').innerHTML = html;
+}
+
+function renderRecruiting(filtered) {
+  const list = filtered || teams;
+  const sorted = [...list].sort((a, b) => val(a, 'recruiting_rank', 999) - val(b, 'recruiting_rank', 999));
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>Rec Rank</th><th>Rec Points</th><th>Class Tier</th></tr></thead><tbody>`;
+  sorted.forEach((t, i) => {
+    const rr = val(t, 'recruiting_rank', 0);
+    const rp = val(t, 'recruiting_pts', 0);
+    const tier = rr <= 5 ? 'Elite' : rr <= 15 ? 'Blue Blood' : rr <= 30 ? 'Power' : rr <= 60 ? 'Group of 5' : 'Developing';
+    html += `<tr><td>${i+1}</td><td>${t.name}</td><td>${rr || '—'}</td><td>${rp.toFixed(1)}</td><td>${tier}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('recruiting').innerHTML = html;
+}
+
+function renderCoaching(filtered) {
+  const list = filtered || teams;
+  const sorted = [...list].sort((a, b) => val(b, 'coach_win_pct', 0) - val(a, 'coach_win_pct', 0));
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>Coach Win %</th></tr></thead><tbody>`;
+  sorted.forEach((t, i) => {
+    html += `<tr><td>${i+1}</td><td>${t.name}</td><td>${pctBadge((val(t,'coach_win_pct',0)*100).toFixed(1))}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('coaching').innerHTML = html;
+}
+
+function renderComposite(filtered) {
+  const list = filtered || teams;
+  // Composite is computed server-side (single source of truth) — same formula
+  // the rankings page uses. Just sort and display it.
+  const sorted = [...list].sort((a, b) => val(b, 'composite', 0) - val(a, 'composite', 0));
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>Composite</th><th>SP+</th><th>FPI</th><th>SRS</th><th>Elo</th><th>Recruit</th></tr></thead><tbody>`;
+  sorted.forEach((t, i) => {
+    html += `<tr><td>${i+1}</td><td>${t.name}</td><td>${pctBadge(val(t,'composite',0).toFixed(1))}</td><td>${val(t,'sp_plus',0).toFixed(1)}</td><td>${val(t,'fpi',0).toFixed(1)}</td><td>${val(t,'srs',0).toFixed(1)}</td><td>${val(t,'elo',0).toFixed(0)}</td><td>#${val(t,'recruiting_rank',0) || '—'}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('composite').innerHTML = html;
+}
+
+// ── Master render ──
+function renderAll() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const filtered = q ? teams.filter(t => t.name.toLowerCase().includes(q)) : teams;
+  renderSummary();
+  renderSPPlus(filtered);
+  renderFPI(filtered);
+  renderSRS(filtered);
+  renderElo(filtered);
+  renderSPOffense(filtered);
+  renderSPDefense(filtered);
+  renderOffense(filtered);
+  renderDefense(filtered);
+  renderTurnovers(filtered);
+  renderCPI(filtered);
+  renderRecruiting(filtered);
+  renderCoaching(filtered);
+  renderPortal(filtered);
+  renderComposite(filtered);
+  renderProjections();
+}
+
+// ── Tab switching ──
+document.getElementById('tabs').addEventListener('click', e => {
+  if (!e.target.classList.contains('tab-btn')) return;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  document.querySelectorAll('.metric-section').forEach(s => s.classList.remove('active'));
+  document.getElementById(e.target.dataset.tab).classList.add('active');
+});
+
+// ── Search ──
+document.getElementById('search').addEventListener('input', renderAll);
+
+// ── Refresh (explicit live CFBD fetch) ──
+document.getElementById('refreshAnalyticsBtn').addEventListener('click', refreshAnalytics);
+
+// ── Init ──
+async function init() {
+  await fetchAnalytics();
+  await fetchProjectionsAndOdds();
+}
+init();
+
+// ── Projections & Odds Data ──
+let projections = [];
+let odds = [];
+
+async function fetchProjectionsAndOdds() {
+  try {
+    const [projRes, oddsRes] = await Promise.all([
+      fetch(`${API}/projections`),
+      fetch(`${API}/odds`)
+    ]);
+    if (projRes.ok) {
+      const projData = await projRes.json();
+      projections = projData.projections || [];
+    }
+    if (oddsRes.ok) {
+      const oddsData = await oddsRes.json();
+      odds = oddsData.odds || [];
+    }
+    document.getElementById('sourceBadge').textContent = `cfbd · ${teams.length} teams · ${odds.length} odds`;
+    renderProjections();
+  } catch (e) {
+    console.error('Projections/Odds load failed:', e);
+  }
+}
+
+// Mascot name mapping for display
+const MASCOT_NAMES = {};
+
+function getMascotName(name) {
+  if (MASCOT_NAMES[name]) return MASCOT_NAMES[name];
+  return name;
+}
+
+// ── Render Projections & Odds ──
+function renderProjections() {
+  const container = document.getElementById('projections');
+  if (!projections.length && !odds.length) {
+    container.innerHTML = '<div class="loading">No projection or odds data available.</div>';
+    return;
+  }
+
+  let html = '<div class="projections-grid">';
+
+  // Left column: Top 15 Projections
+  html += '<div class="proj-card">';
+  html += '<h3><span class="icon">🎯</span> Multi-Factor Projections (Top 15)</h3>';
+  const sorted = [...projections].sort((a, b) => b.home_projection.composite - a.home_projection.composite);
+  sorted.slice(0, 15).forEach((t, i) => {
+    const hp = t.home_projection;
+    const comp = hp.composite.toFixed(1);
+    const proj = hp.projected_score.toFixed(1);
+    const winp = hp.win_probability.toFixed(1);
+    html += `<div class="proj-row">
+      <span class="rank">${i+1}</span>
+      <span class="team mascot-name">${getMascotName(t.name)}</span>
+      <span class="score" title="Composite">${comp}</span>
+      <span class="score" title="Projected Score">${proj}</span>
+      <span class="prob" title="Win %">${winp}%</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Right column: Bottom 10 Projections
+  html += '<div class="proj-card">';
+  html += '<h3><span class="icon">📉</span> Projections (Bottom 10)</h3>';
+  sorted.slice(-10).reverse().forEach((t, i) => {
+    const hp = t.home_projection;
+    const comp = hp.composite.toFixed(1);
+    const proj = hp.projected_score.toFixed(1);
+    const winp = hp.win_probability.toFixed(1);
+    html += `<div class="proj-row">
+      <span class="rank">${projections.length - i}</span>
+      <span class="team mascot-name">${getMascotName(t.name)}</span>
+      <span class="score">${comp}</span>
+      <span class="score">${proj}</span>
+      <span class="prob">${winp}%</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  html += '</div>'; // end grid
+
+  // Full odds table
+  if (odds.length) {
+    html += '<div class="proj-card" style="margin-top: 16px;">';
+    html += '<h3><span class="icon">🏈</span> Live Betting Lines</h3>';
+    html += '<table class="odds-table"><thead><tr>';
+    html += '<th>Home</th><th>Spread</th><th>Total</th><th>Away</th><th>Source</th>';
+    html += '</tr></thead><tbody>';
+    odds.forEach(o => {
+      const spread = o.spread || '—';
+      const total = o.total || '—';
+      const spreadClass = typeof spread === 'number' ? (spread < 0 ? 'spread-val negative' : spread > 0 ? 'spread-val positive' : 'spread-val') : '';
+      html += `<tr>
+        <td class="mascot-name">${getMascotName(o.home)}</td>
+        <td class="${spreadClass}">${spread}</td>
+        <td class="total-val">${total}</td>
+        <td class="mascot-name">${getMascotName(o.away)}</td>
+        <td class="odds-source">${o.source || 'the_odds_api'}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+  }
+
+  container.innerHTML = html;
+}
+
+</script>
+</body>
+</html>

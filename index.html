@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skeez CFB Rankings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #242836;
+      --border: #2e3348;
+      --text: #e4e6f0;
+      --text-dim: #8b8fa8;
+      --accent: #4f8cff;
+      --accent-glow: rgba(79, 140, 255, 0.15);
+      --up: #34d399;
+      --down: #f87171;
+      --same: #8b8fa8;
+      --top3: #fbbf24;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #1a1d27 0%, #0f1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 50% 80%, var(--accent-glow) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .header h1 {
+      font-size: 2.25rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      position: relative;
+    }
+    .header h1 span { color: var(--accent); }
+    .header .subtitle {
+      color: var(--text-dim);
+      font-size: 0.95rem;
+      margin-top: 0.35rem;
+      position: relative;
+    }
+    .header .week-badge {
+      display: inline-block;
+      margin-top: 1rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 0.35rem 1rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      position: relative;
+    }
+
+    /* ── Controls ── */
+    .controls {
+      max-width: 900px;
+      margin: 1.5rem auto 0;
+      padding: 0 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .search-box {
+      flex: 1;
+      min-width: 200px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem 1rem;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box:focus { border-color: var(--accent); }
+    .search-box::placeholder { color: var(--text-dim); }
+    .filter-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem 1rem;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    /* ── Table ── */
+    .rankings-wrap {
+      max-width: 900px;
+      margin: 1.25rem auto 3rem;
+      padding: 0 1.5rem;
+    }
+    .rankings-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .rankings-table thead th {
+      text-align: left;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      padding: 0.75rem 0.5rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.2s;
+      white-space: nowrap;
+    }
+    .rankings-table thead th:hover { color: var(--accent); }
+    .rankings-table thead th.sorted { color: var(--accent); }
+    .rankings-table thead th .sort-arrow { font-size: 0.65rem; margin-left: 3px; }
+
+    .rankings-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .rankings-table tbody tr:hover { background: var(--surface); }
+    .rankings-table tbody td {
+      padding: 0.75rem 0.5rem;
+      font-size: 0.9rem;
+      vertical-align: middle;
+    }
+
+    /* Rank column */
+    .rank-cell {
+      font-weight: 800;
+      font-size: 1rem;
+      width: 50px;
+      text-align: center;
+    }
+    .rank-top3 { color: var(--top3); }
+    .rank-top10 { color: var(--text); }
+    .rank-other { color: var(--text-dim); }
+
+    /* Team cell */
+    .team-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .team-logo {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+      border-radius: 4px;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+    .team-info { min-width: 0; }
+    .team-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .team-mascot {
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+
+    /* Movement */
+    .movement {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      width: 45px;
+    }
+    .movement.up { color: var(--up); }
+    .movement.down { color: var(--down); }
+    .movement.same { color: var(--same); }
+    .movement.new { color: var(--accent); }
+
+    /* Record */
+    .record { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+    /* Points */
+    .points {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+    }
+
+    /* Streak */
+    .streak {
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .streak.w { color: var(--up); }
+    .streak.l { color: var(--down); }
+
+    /* Conference badge */
+    .conf-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      background: var(--surface2);
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .header h1 { font-size: 1.6rem; }
+      .hide-mobile { display: none; }
+      .rankings-table tbody td { padding: 0.6rem 0.3rem; font-size: 0.82rem; }
+      .team-logo { width: 28px; height: 28px; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>🏈 Skeez <span>CFB Rankings</span></h1>
+    <p class="subtitle">The definitive college football rankings — updated weekly</p>
+    <div class="week-badge">Week 5 · 2026 Season</div>
+    <nav style="margin-top:1rem;position:relative;display:flex;gap:12px;justify-content:center;">
+      <a href="/" style="color:var(--accent);text-decoration:none;font-size:0.85rem;font-weight:600;">Skeez CFB Rankings</a>
+      <span style="color:var(--text-dim);font-size:0.85rem;">·</span>
+      <a href="/analytics" style="color:var(--text-dim);text-decoration:none;font-size:0.85rem;font-weight:600;transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'">📊 Analytics</a>
+      <span style="color:var(--text-dim);font-size:0.85rem;">·</span>
+      <a href="/schedule" style="color:var(--text-dim);text-decoration:none;font-size:0.85rem;font-weight:600;transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'">📅 Schedule</a>
+    </nav>
+  </div>
+
+  <div class="controls">
+    <input type="text" class="search-box" id="searchBox" placeholder="Search teams, conferences...">
+    <button class="filter-btn active" data-conf="all">All</button>
+    <button class="filter-btn" data-conf="SEC">SEC</button>
+    <button class="filter-btn" data-conf="Big 12">Big 12</button>
+    <button class="filter-btn" data-conf="Big Ten">Big Ten</button>
+    <button class="filter-btn" data-conf="ACC">ACC</button>
+    <button class="filter-btn" data-conf="Pac-12">Pac-12</button>
+    <button class="filter-btn" data-conf="American Athletic">AAC</button>
+    <button class="filter-btn" data-conf="Conference USA">C-USA</button>
+    <button class="filter-btn" data-conf="MAC">MAC</button>
+    <button class="filter-btn" data-conf="Mountain West">MW</button>
+    <button class="filter-btn" data-conf="Sun Belt">Sun Belt</button>
+  </div>
+
+  <div class="rankings-wrap">
+    <table class="rankings-table">
+      <thead>
+        <tr>
+          <th data-sort="rank" class="sorted"># <span class="sort-arrow">▼</span></th>
+          <th data-sort="team">Team <span class="sort-arrow"></span></th>
+          <th data-sort="conf" class="hide-mobile">Conf <span class="sort-arrow"></span></th>
+          <th data-sort="movement">Δ <span class="sort-arrow"></span></th>
+          <th data-sort="record">Record <span class="sort-arrow"></span></th>
+          <th data-sort="streak" class="hide-mobile">Streak <span class="sort-arrow"></span></th>
+          <th data-sort="composite">Composite <span class="sort-arrow"></span></th>
+          <th data-sort="points">Pts <span class="sort-arrow"></span></th>
+        </tr>
+      </thead>
+      <tbody id="rankingsBody"></tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    Skeez CFB Rankings · Data updated weekly · Built with ❤️
+  </div>
+
+<script>
+// ── API ──
+const API = '/api';
+let teams = [];
+let metaInfo = {};
+
+async function fetchRankings() {
+  try {
+    const res = await fetch(`${API}/rankings`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    teams = data.teams;
+    metaInfo = { week: data.week, season: data.season, updated: data.updated };
+    document.querySelector('.week-badge').textContent = `${data.week} · ${data.season} Season`;
+    document.querySelector('.footer').textContent =
+      `Skeez CFB Rankings · Last updated ${new Date(data.updated).toLocaleString()} · Built with ❤️`;
+  } catch (err) {
+    console.error('Failed to fetch rankings:', err);
+    document.getElementById('rankingsBody').innerHTML =
+      '<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-dim)">⚠️ Could not load rankings. Is the backend running?</td></tr>';
+  }
+}
+
+// ── State ──
+let currentSort = { key: 'composite', dir: 'desc' };
+let activeConf = 'all';
+let searchQuery = '';
+
+// ── Helpers ──
+function movementHTML(m) {
+  if (m === 0) return '<span class="movement same">—</span>';
+  if (m > 0)  return `<span class="movement up">▲ ${m}</span>`;
+  return `<span class="movement down">▼ ${Math.abs(m)}</span>`;
+}
+
+function streakHTML(s) {
+  if (!s || s === '—' || s === '--') return `<span class="streak">—</span>`;
+  const ch = s.charAt(0);
+  const cls = ch === 'W' ? 'w' : 'l';
+  return `<span class="streak ${cls}">${s}</span>`;
+}
+
+function rankClass(r) {
+  if (r <= 3) return 'rank-top3';
+  if (r <= 10) return 'rank-top10';
+  return 'rank-other';
+}
+
+// ── Render ──
+function render() {
+  let data = [...teams];
+
+  // Filter by conference
+  if (activeConf !== 'all') {
+    data = data.filter(t => t.conf === activeConf);
+  }
+
+  // Search
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    data = data.filter(t =>
+      t.name.toLowerCase().includes(q) ||
+      t.mascot.toLowerCase().includes(q) ||
+      t.conf.toLowerCase().includes(q)
+    );
+  }
+
+  // Sort
+  data.sort((a, b) => {
+    let va, vb;
+    switch (currentSort.key) {
+      case 'rank':     va = a.rank; vb = b.rank; break;
+      case 'team':     va = a.name; vb = b.name; break;
+      case 'conf':     va = a.conf; vb = b.conf; break;
+      case 'movement': va = a.movement; vb = b.movement; break;
+      case 'record':   va = a.wins; vb = b.wins; break;
+      case 'streak':   va = a.streak; vb = b.streak; break;
+      case 'composite': va = a.composite; vb = b.composite; break;
+      case 'points':   va = a.points; vb = b.points; break;
+      default:         va = a.composite; vb = b.composite;
+    }
+    if (typeof va === 'string') {
+      const cmp = va.localeCompare(vb);
+      return currentSort.dir === 'asc' ? cmp : -cmp;
+    }
+    return currentSort.dir === 'asc' ? va - vb : vb - va;
+  });
+
+  const tbody = document.getElementById('rankingsBody');
+  tbody.innerHTML = data.map(t => `
+    <tr>
+      <td class="rank-cell ${rankClass(t.rank)}">${t.rank}</td>
+      <td>
+        <div class="team-cell">
+          <img class="team-logo" src="${t.logo_url || ''}" alt="${t.name}" onerror="this.style.display='none'">
+          <div class="team-info">
+            <div class="team-name">${t.name}</div>
+            <div class="team-mascot">${t.mascot}</div>
+          </div>
+        </div>
+      </td>
+      <td class="hide-mobile"><span class="conf-badge">${t.conf}</span></td>
+      <td>${movementHTML(t.movement)}</td>
+      <td class="record">${t.wins}–${t.losses}</td>
+      <td class="hide-mobile">${streakHTML(t.streak)}</td>
+      <td class="composite">${t.composite.toFixed(1)}</td>
+      <td class="points">${t.points.toFixed(1)}</td>
+    </tr>
+  `).join('');
+}
+
+// ── Sort headers ──
+document.querySelectorAll('.rankings-table thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.sort;
+    if (!key) return;
+    if (currentSort.key === key) {
+      currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      currentSort = { key, dir: key === 'team' || key === 'conf' ? 'asc' : 'desc' };
+    }
+    // Update arrow indicators
+    document.querySelectorAll('.rankings-table thead th').forEach(h => {
+      h.classList.remove('sorted');
+      const arrow = h.querySelector('.sort-arrow');
+      if (arrow) arrow.textContent = '';
+    });
+    th.classList.add('sorted');
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = currentSort.dir === 'asc' ? '▲' : '▼';
+    render();
+  });
+});
+
+// ── Conference filter ──
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeConf = btn.dataset.conf;
+    render();
+  });
+});
+
+// ── Search ──
+document.getElementById('searchBox').addEventListener('input', e => {
+  searchQuery = e.target.value.trim();
+  render();
+});
+
+// ── Initial load ──
+fetchRankings().then(render);
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+# Never ship secrets to the container image
+.env
+.env.example
+.git
+.gitignore
+__pycache__
+*.pyc
+node_modules
+src
+wrangler.jsonc
+package.json
+package-lock.json
+Dockerfile
+.dockerignore
+*.log
+# Stale/empty caches (no week 0 games exist for 2026)
+data/espn_week0_2026.json
+data/espn_week2.json
+data/espn_week3.json
+data/espn_week4.json
+data/espn_scoreboard.json
+data/espn_teams_raw.json
+data/analytics.json
+data/week_schedule.json

@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# Environment
+.env
+.env.local
+
+# Cloudflare Worker-side files (not needed by Render container)
+node_modules/
+wrangler.jsonc
+package.json
+package-lock.json
+CLOUDFLARE_DEPLOY.md
+
+# Data caches (regenerated live by the app)
+data/espn_week0_2026.json
+data/espn_week2.json
+data/espn_week3.json
+data/espn_week4.json
+data/espn_scoreboard.json
+data/espn_teams_raw.json
+data/analytics.json
+data/week_schedule.json
+
+# OS
+Thumbs.db
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
