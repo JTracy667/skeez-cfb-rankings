@@ -738,30 +738,12 @@ def _propline_fetch() -> list[dict]:
                            retries=2, base_delay=0.5)
             if not od:
                 return None
-            spread = total = None
-            for bm in od.get("bookmakers", []):
-                for market in bm.get("markets", []):
-                    if market.get("key") == "spreads":
-                        for outcome in market.get("outcomes", []):
-                            if outcome.get("name") == home:
-                                spread = outcome.get("point")
-                    elif market.get("key") == "totals":
-                        for outcome in market.get("outcomes", []):
-                            if outcome.get("name") == "Over":
-                                total = outcome.get("point")
+            # Pass through ALL bookmakers so _build_odds_map can pick the best
+            # book and record its name (DraftKings/FanDuel/etc.) for display.
             return {
                 "home_team": home,
                 "away_team": away,
-                "bookmakers": [{
-                    "key": "bovada",
-                    "title": "Bovada (PropLine)",
-                    # PropLine stores the home team's point directly (negative = home favorite),
-                    # same convention as The Odds API. Pass through unmodified.
-                    "markets": [
-                        {"key": "spreads", "outcomes": [{"name": home, "point": spread}] if spread is not None else []},
-                        {"key": "totals", "outcomes": [{"name": "Over", "point": total}] if total is not None else []},
-                    ],
-                }],
+                "bookmakers": od.get("bookmakers", []),
             }
         # Concurrent fetch for all events
         from concurrent.futures import ThreadPoolExecutor
@@ -976,39 +958,62 @@ _normalize_team_name._name_map = []  # populated lazily on first call to avoid p
 
 
 def _build_odds_map(odds_data: list[dict]) -> dict:
-    """Build a lookup dict keyed by (home_team, away_team) -> odds summary."""
+    """Build a lookup dict keyed by (home_team, away_team) -> odds summary.
+
+    Records the sportsbook name the line came from. Book preference order
+    (sharpest/most standard first): pinnacle, draftkings, fanduel, betrivers,
+    bovada. Falls back to the first book that offers a spread.
+    """
+    _BOOK_PRIORITY = ["pinnacle", "draftkings", "fanduel", "betrivers", "bovada"]
     odds_map = {}
     for game in odds_data:
         home = _normalize_team_name(game.get("home_team", ""))
         away = _normalize_team_name(game.get("away_team", ""))
         key = (home, away)
-        # Extract DraftKings or FanDuel spread/totals (prefer DraftKings)
-        spread = None
-        total = None
-        # Find spread for the home team (negative = home favorite)
-        # Match on normalized school name with word boundaries so "Georgia"
-        # never matches "Georgia Tech" outcomes.
         home_short = home.lower()
         away_short = away.lower()
+        # Collect the home-team spread + total from every book
+        per_book = {}  # book_key -> {"title", "spread", "total"}
         for bm in game.get("bookmakers", []):
+            bk = bm.get("key", "")
+            title = bm.get("title", bk)
+            spread = total = None
             for market in bm.get("markets", []):
                 if market.get("key") == "spreads":
                     for outcome in market.get("outcomes", []):
-                        oname = outcome.get("name", "")
-                        onorm = _normalize_team_name(oname)
-                        if onorm.lower() == home_short:
-                            spread = outcome.get("point")
-                        elif onorm.lower() == away_short and spread is None:
-                            # Store away spread as fallback (negated later by caller if needed)
-                            spread = outcome.get("point")
+                        oname = _normalize_team_name(outcome.get("name", ""))
+                        onorm = oname.lower()
+                        if onorm == home_short:
+                            # Home spread (negative = home favorite). Take the first
+                            # (primary) line; alt lines are later in the list.
+                            if spread is None:
+                                spread = outcome.get("point")
+                        elif onorm == away_short and spread is None:
+                            # Away spread as fallback (negate: away +7.5 => home -7.5)
+                            p = outcome.get("point")
+                            if p is not None:
+                                spread = -p
                 elif market.get("key") == "totals":
                     for outcome in market.get("outcomes", []):
-                        if outcome.get("name") == "Over":
+                        if outcome.get("name") == "Over" and total is None:
                             total = outcome.get("point")
+            if spread is not None or total is not None:
+                per_book[bk] = {"title": title, "spread": spread, "total": total}
+        # Pick the best book by priority, else the first available
+        chosen = None
+        for bk in _BOOK_PRIORITY:
+            if bk in per_book:
+                chosen = bk
+                break
+        if chosen is None and per_book:
+            chosen = next(iter(per_book))
+        b = per_book.get(chosen, {})
         odds_map[key] = {
-            "spread": round(spread, 1) if spread is not None else None,
-            "total": round(total, 1) if total is not None else None,
-            "spread_home_favorite": spread is not None and spread < 0,
+            "spread": round(b.get("spread"), 1) if b.get("spread") is not None else None,
+            "total": round(b.get("total"), 1) if b.get("total") is not None else None,
+            "spread_home_favorite": b.get("spread") is not None and b.get("spread") < 0,
+            "book": chosen,
+            "book_title": b.get("title", chosen),
         }
     return odds_map
 
@@ -1600,6 +1605,8 @@ def api_odds():
                 "spread": v.get("spread"),
                 "total": v.get("total"),
                 "source": v.get("source"),
+                "book": v.get("book"),
+                "book_title": v.get("book_title"),
             })
         return {
             "odds": odds,
@@ -1613,12 +1620,18 @@ def api_odds():
 
 @app.get("/api/projections")
 def api_projections():
-    """Get multi-factor projections for all teams + live betting odds overlay."""
+    """Get multi-factor projections for ALL FBS teams + live betting odds overlay."""
     try:
-        rankings = get_rankings()
+        # Use the full FBS analytics set (687 teams), not just the 25 ranked
+        # teams, so the frontend's "Bottom 10" shows the actual worst teams.
+        all_teams = _load_cfbd_analytics_file()
+        if not all_teams:
+            # Fallback to ranked teams if analytics file is missing
+            rankings = get_rankings()
+            all_teams = [t.model_dump() if hasattr(t, 'model_dump') else t.dict()
+                         for t in rankings.teams]
         projections = []
-        for team in rankings.teams:
-            td = team.model_dump() if hasattr(team, 'model_dump') else team.dict()
+        for td in all_teams:
             home_proj = project_score_multi_factor(td, is_home=True)
             away_proj = project_score_multi_factor(td, is_home=False)
             projections.append({

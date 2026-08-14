@@ -597,13 +597,14 @@ function renderProjections() {
     odds.forEach(o => {
       const spread = o.spread || '—';
       const total = o.total || '—';
+      const book = o.book_title || o.book || o.source || '—';
       const spreadClass = typeof spread === 'number' ? (spread < 0 ? 'spread-val negative' : spread > 0 ? 'spread-val positive' : 'spread-val') : '';
       html += `<tr>
         <td class="mascot-name">${getMascotName(o.home)}</td>
         <td class="${spreadClass}">${spread}</td>
         <td class="total-val">${total}</td>
         <td class="mascot-name">${getMascotName(o.away)}</td>
-        <td class="odds-source">${o.source || 'the_odds_api'}</td>
+        <td class="odds-source">${book}</td>
       </tr>`;
     });
     html += '</tbody></table></div>';
