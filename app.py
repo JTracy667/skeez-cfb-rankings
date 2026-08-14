@@ -1552,12 +1552,18 @@ def api_schedule():
         # Comparison: how the live line differs from our model differential
         # diff > 0 = home favored; spread < 0 = home favored. Both same direction → diff + spread
         line_vs_model = round(diff + (spread or 0), 1) if spread is not None else None
+        # ATS pick: which side to take against the spread.
+        # Home covers if home wins by MORE than |spread|. If model margin is
+        # under the spread, the underdog is the ATS side.
+        ats_pick = _ats_side(diff, spread)
         enriched.append({
             **m,
             "home_proj": home_proj_data["projected_score"],
             "away_proj": away_proj_data["projected_score"],
             "differential": diff,
             "home_favorite": diff > 0,
+            "projected_winner": "home" if diff > 0 else ("away" if diff < 0 else None),
+            "ats_pick": ats_pick,
             "home_composite": home_proj_data["composite"],
             "away_composite": away_proj_data["composite"],
             "home_win_prob": home_proj_data["win_probability"],
@@ -1577,6 +1583,8 @@ def api_schedule():
             # How much the live line diverges from our model
             "line_vs_model": line_vs_model,
         })
+    # Lock in this week's SU + ATS picks (idempotent)
+    _lock_picks(enriched, sched.get("week", 1))
     return {**sched, "matchups": enriched}
 
 @app.get("/api/odds")
@@ -1713,6 +1721,8 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             "away_proj": away_proj,
             "differential": diff,
             "home_favorite": diff > 0,
+            "projected_winner": "home" if diff > 0 else ("away" if diff < 0 else None),
+            "ats_pick": _ats_side(diff, market_odds.get("spread")),
             "home_composite": home_proj_data["composite"],
             "away_composite": away_proj_data["composite"],
             "home_win_prob": home_proj_data["win_probability"],
@@ -1735,7 +1745,153 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             "home_logo_url": _LOGO_MAP.get(m["home"].lower()),
             "away_logo_url": _LOGO_MAP.get(m["away"].lower()),
         })
+    # Lock in this week's SU + ATS picks (idempotent)
+    _lock_picks(enriched, week)
     return {"week": week, "season": year, "updated": datetime.now().isoformat(), "matchups": enriched, "has_odds": len(odds_map) > 0}
+
+# ── Records: Straight-Up (SU) + Against-the-Spread (ATS) tracking ──
+RECORD_FILE = BASE_DIR / "data" / "record.json"
+
+
+def _ats_side(diff: float, spread: float | None) -> str | None:
+    """Which side covers the spread per the model: 'home', 'away', or None.
+
+    diff   = home_proj - away_proj (positive = home favored)
+    spread = signed betting line (negative = home favorite), e.g. -35.5
+
+    Home covers if home wins by MORE than |spread| (i.e. diff > -spread).
+    If the model margin is UNDER the spread, the underdog is the ATS side.
+    """
+    if spread is None or diff == 0:
+        return None
+    cover_line = -spread  # home must win by this to cover
+    if diff > cover_line:
+        return "home"  # favorite covers
+    if diff < cover_line:
+        return "away"  # underdog covers
+    return None  # push (margin == spread)
+
+
+def _record_key(home: str, away: str) -> str:
+    """Stable per-matchup key (home-first, lowercase)."""
+    return f"{home.strip().lower()}|{away.strip().lower()}"
+
+
+def _load_record() -> dict:
+    try:
+        with open(RECORD_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return {"season": 2026, "updated": "", "picks": [], "results": []}
+
+
+def _save_record(record: dict) -> None:
+    record["updated"] = datetime.now().isoformat()
+    try:
+        RECORD_FILE.write_text(json.dumps(record, indent=2), encoding="utf-8")
+    except Exception as e:
+        print(f"[RECORD SAVE ERROR] {e}")
+
+
+def _compute_pick(home: str, away: str, diff: float, spread: float | None) -> dict:
+    """Determine the projection's SU and ATS picks for a matchup.
+
+    diff   = home_proj - away_proj (positive = home favored)
+    spread = signed betting line (negative = home favorite), e.g. -7.5
+    """
+    # SU pick: projected winner (higher projected score)
+    if diff > 0:
+        su_pick = home
+    elif diff < 0:
+        su_pick = away
+    else:
+        su_pick = None  # pick-em
+
+    # ATS pick: does the model margin beat the spread?
+    # If the model margin is under the spread, we bet the underdog against it.
+    ats_pick = None
+    side = _ats_side(diff, spread)
+    if side == "home":
+        ats_pick = home
+    elif side == "away":
+        ats_pick = away
+    return {"su_pick": su_pick, "ats_pick": ats_pick}
+
+
+def _lock_picks(enriched: list[dict], week: int) -> None:
+    """Persist picks for matchups not yet locked (idempotent by matchup key)."""
+    record = _load_record()
+    existing = {p["key"] for p in record.get("picks", [])}
+    changed = False
+    for m in enriched:
+        key = _record_key(m["home"], m["away"])
+        if key in existing:
+            continue
+        spread = m.get("line_diff")
+        diff = m.get("differential", 0)
+        pk = _compute_pick(m["home"], m["away"], diff, spread)
+        record["picks"].append({
+            "key": key,
+            "week": week,
+            "home": m["home"],
+            "away": m["away"],
+            "date": m.get("date"),
+            "spread": spread,
+            "home_proj": m.get("home_proj"),
+            "away_proj": m.get("away_proj"),
+            **pk,
+        })
+        changed = True
+    if changed:
+        _save_record(record)
+
+
+def _grade_su(su_pick: str, home: str, away: str, home_score: int, away_score: int) -> str:
+    """Grade a straight-up pick: W / L / push."""
+    if home_score == away_score:
+        return "push"
+    winner = home if home_score > away_score else away
+    return "W" if su_pick == winner else "L"
+
+
+def _grade_ats(ats_pick: str, home: str, away: str, spread: float, home_score: int, away_score: int) -> str:
+    """Grade an against-the-spread pick: W / L / push."""
+    actual_margin = home_score - away_score
+    cover_line = -spread  # home must beat this margin to cover
+    if actual_margin == cover_line:
+        return "push"
+    home_covered = actual_margin > cover_line
+    if ats_pick == home:
+        return "W" if home_covered else "L"
+    return "W" if not home_covered else "L"
+
+
+@app.get("/api/record")
+def api_record():
+    """Get the projection's straight-up (SU) and against-the-spread (ATS) records."""
+    record = _load_record()
+    su = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
+    ats = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
+    for r in record.get("results", []):
+        for bucket, field in ((su, "su_result"), (ats, "ats_result")):
+            v = r.get(field)
+            if v == "W":
+                bucket["wins"] += 1; bucket["graded"] += 1
+            elif v == "L":
+                bucket["losses"] += 1; bucket["graded"] += 1
+            elif v == "push":
+                bucket["pushes"] += 1
+    return {
+        "season": record.get("season"),
+        "updated": record.get("updated"),
+        "picks": record.get("picks", []),
+        "results": record.get("results", []),
+        "su": su,
+        "ats": ats,
+        "su_str": f"{su['wins']}-{su['losses']}" + (f"-{su['pushes']}" if su['pushes'] else ""),
+        "ats_str": f"{ats['wins']}-{ats['losses']}" + (f"-{ats['pushes']}" if ats['pushes'] else ""),
+    }
+
 
 # ── Serve frontend ──
 @app.get("/")

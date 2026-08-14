@@ -34,10 +34,10 @@ nav a.active{color:var(--accent)}
 .matchup-card:hover{border-color:var(--accent);transform:translateY(-1px)}
 .team-side{display:flex;align-items:center;gap:.75rem}
 .team-side.away{justify-content:flex-end;text-align:right}
-.team-logo{width:44px;height:44px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1px solid var(--border)}
+.team-logo{width:60px;height:60px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1px solid var(--border)}
 .team-logo img{width:100%;height:100%;object-fit:contain;background:var(--surface2)}
-.team-name{font-weight:700;font-size:1rem}
-.team-meta{font-size:.78rem;color:var(--text-dim);display:flex;gap:.5rem;align-items:center}
+.team-name{font-weight:700;font-size:1.25rem}
+.team-meta{font-size:.95rem;color:var(--text-dim);display:flex;gap:.5rem;align-items:center}
 .team-side.away .team-meta{flex-direction:row-reverse}
 .vs-section{text-align:center;min-width:120px}
 .vs-label{font-size:.75rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
@@ -60,10 +60,13 @@ nav a.active{color:var(--accent)}
 .sp-val{font-weight:600}
 .sp-val.high{color:var(--up)}
 .sp-val.low{color:var(--down)}
-.summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
+.summary-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem}
 .summary-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center}
 .summary-card .val{font-size:1.75rem;font-weight:800;color:var(--accent)}
 .summary-card .label{font-size:.75rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:.25rem}
+.summary-card.record .val{font-variant-numeric:tabular-nums}
+.summary-card.record .val.good{color:var(--up)}
+.pick-arrow{font-weight:800;color:var(--up);font-size:1.1rem;margin:0 4px;flex-shrink:0;text-shadow:0 0 8px rgba(52,211,153,0.4)}
 .footer{text-align:center;padding:1.5rem;color:var(--text-dim);font-size:.75rem;border-top:1px solid var(--border)}
 @media(max-width:768px){
   .matchup-card{grid-template-columns:1fr;gap:.5rem;text-align:center}
@@ -160,10 +163,19 @@ function renderSummary(data) {
   const avgDiff = m.length ? (m.reduce((s, x) => s + Math.abs(x.differential), 0) / m.length).toFixed(1) : 0;
   const blowouts = m.filter(x => Math.abs(x.differential) >= 21).length;
   const close = m.filter(x => Math.abs(x.differential) <= 7).length;
+  // Fetch SU + ATS records (async; render placeholders first)
+  fetch(`${API}/record`).then(r => r.json()).then(rec => {
+    const su = rec.su_str || '0-0';
+    const ats = rec.ats_str || '0-0';
+    document.getElementById('suCard').innerHTML = `<div class="val ${rec.su.wins > rec.su.losses ? 'good' : ''}">${su}</div><div class="label">Straight-Up</div>`;
+    document.getElementById('atsCard').innerHTML = `<div class="val ${rec.ats.wins > rec.ats.losses ? 'good' : ''}">${ats}</div><div class="label">ATS</div>`;
+  }).catch(() => {});
   document.getElementById('summaryRow').innerHTML = `
+    <div class="summary-card record" id="suCard"><div class="val">…</div><div class="label">Straight-Up</div></div>
     <div class="summary-card"><div class="val">${m.length}</div><div class="label">Matchups</div></div>
     <div class="summary-card"><div class="val">${avgDiff}</div><div class="label">Avg Diff</div></div>
     <div class="summary-card"><div class="val">${close}</div><div class="label">Close (≤7)</div></div>
+    <div class="summary-card record" id="atsCard"><div class="val">…</div><div class="label">ATS</div></div>
   `;
 }
 
@@ -246,7 +258,7 @@ function renderMatchups() {
       <div class="team-side home">
         <div class="team-logo"><img src="${m.home_logo_url || ''}" alt="${m.home}" onerror="this.style.display='none'"></div>
         <div>
-          <div class="team-name">${m.home}</div>
+          <div class="team-name">${m.home}${m.ats_pick === 'home' ? '<span class="pick-arrow">▶</span>' : ''}</div>
           <div class="team-meta">
             <span>${m.home_record}</span>
             <span>·</span>
@@ -272,7 +284,7 @@ function renderMatchups() {
       </div>
       <div class="team-side away">
         <div>
-          <div class="team-name">${m.away}</div>
+          <div class="team-name">${m.ats_pick === 'away' ? '<span class="pick-arrow">◀</span>' : ''}${m.away}</div>
           <div class="team-meta">
             <span>${m.away_record}</span>
             <span>·</span>
