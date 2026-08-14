@@ -26,6 +26,7 @@ data/espn_teams_raw.json
 data/analytics.json
 data/week_schedule.json
 data/finals_cache.json
+data/line_history.json
 
 # OS
 Thumbs.db

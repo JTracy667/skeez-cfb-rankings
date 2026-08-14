@@ -106,9 +106,13 @@ _rankings_cache: dict = {}
 _analytics_cache: dict = {}
 _odds_cache: dict = {}   # merged odds map (PropLine + backups) — avoids 113+ API calls per page load
 ODDS_CACHE_FILE = BASE_DIR / "data" / "odds_cache.json"  # disk-persisted so restarts reuse the daily fetch
+LINE_HISTORY_FILE = BASE_DIR / "data" / "line_history.json"  # snapshots for line-movement detection
 CACHE_TTL = 300  # 5 minutes (rankings)
 ANALYTICS_TTL = 600  # 10 minutes (analytics)
 ODDS_TTL = 86400  # 24 hours — live odds pulled ONCE per day, cached all other times
+# Background auto-refresh: how often to wake and re-pull lines + grade results.
+# Default 6 hours; 0 disables the scheduler. Env-tunable for production.
+REFRESH_INTERVAL_SECONDS = int(os.environ.get("REFRESH_INTERVAL_SECONDS", 6 * 3600))
 
 def _cache_get(store: dict, ttl: int) -> dict | None:
     if store and time.time() - store["ts"] < ttl:
@@ -144,6 +148,97 @@ def _odds_disk_cache_set(odds_map: dict):
         ODDS_CACHE_FILE.write_text(json.dumps(payload), encoding="utf-8")
     except Exception as e:
         print(f"[Odds] disk cache write failed: {e}")
+
+
+# ── Line-movement tracking + background auto-refresh ──
+def _snapshot_lines(odds_map: dict) -> list[dict]:
+    """Detect line movement vs the previous snapshot and save a new one.
+
+    Returns a list of moved lines: {home, away, market, old, new, delta}.
+    """
+    prev = {}
+    try:
+        if LINE_HISTORY_FILE.exists():
+            raw = json.loads(LINE_HISTORY_FILE.read_text(encoding="utf-8")).get("lines", {})
+            prev = {tuple(k.split("|")): v for k, v in raw.items()}
+    except Exception:
+        prev = {}
+    movements = []
+    current = {}
+    for (home, away), v in odds_map.items():
+        key = f"{home}|{away}"
+        current[key] = {"spread": v.get("spread"), "total": v.get("total"), "book": v.get("book_title") or v.get("book")}
+        old = prev.get((home, away))
+        if not old:
+            continue
+        for market in ("spread", "total"):
+            new_v = v.get(market)
+            old_v = old.get(market)
+            if new_v is not None and old_v is not None and new_v != old_v:
+                movements.append({
+                    "home": home, "away": away, "market": market,
+                    "old": old_v, "new": new_v, "delta": round(new_v - old_v, 1),
+                })
+    # Persist new snapshot (keep only latest; history of deltas is enough for CLV)
+    try:
+        LINE_HISTORY_FILE.write_text(
+            json.dumps({"ts": time.time(), "lines": current}, ensure_ascii=False), encoding="utf-8")
+    except Exception as e:
+        print(f"[Lines] history write failed: {e}")
+    return movements
+
+
+def refresh_all() -> dict:
+    """Force re-pull of live odds + final scores, then grade records.
+
+    Used by the background scheduler and the manual /api/refresh endpoint.
+    Returns a summary of what changed.
+    """
+    result = {"odds_refreshed": False, "graded": 0, "best_bets_graded": 0, "line_movements": []}
+    try:
+        # Bust the in-memory + disk odds caches so we re-fetch live lines
+        _odds_cache["data"] = {}
+        _odds_cache["ts"] = 0
+        odds_map = _fetch_odds_map()
+        result["odds_refreshed"] = bool(odds_map)
+        result["line_movements"] = _snapshot_lines(odds_map)
+    except Exception as e:
+        print(f"[refresh] odds refresh failed: {e}")
+    try:
+        # Bust finals cache + grade any newly-finished games (SU/ATS + best bets)
+        _FINALS_CACHE["data"] = {}
+        _FINALS_CACHE["ts"] = 0
+        result["graded"] = _ingest_results()
+        result["best_bets_graded"] = _ingest_best_bets()
+    except Exception as e:
+        print(f"[refresh] results grading failed: {e}")
+    result["ts"] = datetime.now().isoformat()
+    return result
+
+
+def _start_scheduler() -> None:
+    """Background daemon thread: periodically refresh lines + grade results.
+
+    Safe for containers — no network calls at startup; the thread sleeps first.
+    """
+    if REFRESH_INTERVAL_SECONDS <= 0:
+        return
+    import threading
+
+    def _loop():
+        # Sleep first so we never block the readiness probe / cold start.
+        time.sleep(60)
+        while True:
+            try:
+                summary = refresh_all()
+                if summary["graded"] or summary["line_movements"]:
+                    print(f"[scheduler] refresh: {summary}")
+            except Exception as e:
+                print(f"[scheduler] refresh error: {e}")
+            time.sleep(REFRESH_INTERVAL_SECONDS)
+
+    t = threading.Thread(target=_loop, daemon=True, name="cfb-refresh")
+    t.start()
 
 # ── Data loading ──
 def load_local() -> list[dict]:
@@ -2205,6 +2300,27 @@ def api_best_bets_record():
     }
 
 
+@app.post("/api/refresh")
+def api_refresh():
+    """Manually trigger a full refresh (lines + final scores + grading)."""
+    try:
+        return refresh_all()
+    except Exception as e:
+        print(f"[refresh error] {e}")
+        return {"error": str(e)}
+
+
+@app.get("/api/line-movements")
+def api_line_movements():
+    """Get line movement history since the last snapshot."""
+    try:
+        movements = _snapshot_lines(_fetch_odds_map())
+        return {"movements": movements, "count": len(movements)}
+    except Exception as e:
+        print(f"[line-movements error] {e}")
+        return {"error": str(e), "movements": []}
+
+
 @app.get("/api/best-bets")
 def api_best_bets():
     """Rank upcoming games by model-vs-market divergence (spread + total edge).
@@ -2283,6 +2399,13 @@ def analytics_page():
 @app.get("/schedule")
 def schedule_page():
     return FileResponse(BASE_DIR / "schedule.html")
+
+
+# Start the background auto-refresh scheduler. Runs whether the app is started
+# via `python app.py` or `uvicorn app:app` (both import this module once).
+# The daemon thread sleeps first, so it never blocks startup/readiness.
+_start_scheduler()
+
 
 # ── Main ──
 if __name__ == "__main__":
