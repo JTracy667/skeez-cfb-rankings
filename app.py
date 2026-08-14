@@ -1879,9 +1879,113 @@ def _grade_ats(ats_pick: str, home: str, away: str, spread: float, home_score: i
     return "W" if not home_covered else "L"
 
 
+# ── Results ingestion: pull final scores and grade locked picks ──
+_FINALS_CACHE = {"data": {}, "ts": 0}
+FINALS_TTL = 600  # re-fetch final scores at most every 10 min
+FINALS_CACHE_FILE = BASE_DIR / "data" / "finals_cache.json"
+
+
+def _fetch_final_scores(year: int = CFBD_YEAR) -> dict:
+    """Fetch completed-game final scores from CFBD /games.
+
+    Returns {frozenset({home_lower, away_lower}): {"home":, "away":,
+             "home_score":, "away_score":}} for completed games only.
+    """
+    # Memory cache
+    if _FINALS_CACHE["data"] and time.time() - _FINALS_CACHE["ts"] < FINALS_TTL:
+        return _FINALS_CACHE["data"]
+    # Disk cache (survives process restart on same instance)
+    try:
+        if FINALS_CACHE_FILE.exists():
+            payload = json.loads(FINALS_CACHE_FILE.read_text(encoding="utf-8"))
+            if time.time() - payload.get("ts", 0) < FINALS_TTL:
+                # Rebuild frozenset keys (stored as "home|away" strings)
+                finals = {}
+                for k, v in payload.get("finals", {}).items():
+                    finals[frozenset(k.split("|"))] = v
+                _FINALS_CACHE["data"] = finals
+                _FINALS_CACHE["ts"] = payload.get("ts", 0)
+                return finals
+    except Exception as e:
+        print(f"[Finals] disk cache read failed: {e}")
+    # Live fetch
+    finals = {}
+    try:
+        games = _http_get(f"{CFBD_BASE}/games", params={"year": year}, headers=CFBD_HEADERS)
+        for g in (games or []):
+            if not g.get("completed") or g.get("homePoints") is None:
+                continue
+            h = _normalize_team_name(g.get("homeTeam", ""))
+            a = _normalize_team_name(g.get("awayTeam", ""))
+            if not h or not a:
+                continue
+            key = frozenset({h.lower(), a.lower()})
+            finals[key] = {
+                "home": h, "away": a,
+                "home_score": g.get("homePoints"),
+                "away_score": g.get("awayPoints"),
+            }
+        _FINALS_CACHE["data"] = finals
+        _FINALS_CACHE["ts"] = time.time()
+        # Persist to disk (frozenset keys -> "home|away" strings)
+        try:
+            ser = {"ts": time.time(), "finals": {"|".join(sorted(k)): v for k, v in finals.items()}}
+            FINALS_CACHE_FILE.write_text(json.dumps(ser), encoding="utf-8")
+        except Exception as e:
+            print(f"[Finals] disk cache write failed: {e}")
+    except Exception as e:
+        print(f"[Finals fetch failed] {e}")
+    return finals
+
+
+def _ingest_results() -> int:
+    """Grade any locked picks that now have final scores. Returns # newly graded."""
+    record = _load_record()
+    finals = _fetch_final_scores()
+    if not finals:
+        return 0
+    graded = {r.get("key") for r in record.get("results", [])}
+    newly = 0
+    for p in record.get("picks", []):
+        if p.get("key") in graded:
+            continue
+        key = frozenset({p.get("home", "").lower(), p.get("away", "").lower()})
+        g = finals.get(key)
+        if not g:
+            continue
+        # Orient scores relative to the pick's home/away (CFBD may flip sides)
+        if g["home"].lower() == p.get("home", "").lower():
+            home_score, away_score = g["home_score"], g["away_score"]
+        else:
+            home_score, away_score = g["away_score"], g["home_score"]
+        su = _grade_su(p.get("su_pick"), p.get("home"), p.get("away"), home_score, away_score)
+        ats = None
+        if p.get("spread") is not None and p.get("ats_pick") is not None:
+            ats = _grade_ats(p.get("ats_pick"), p.get("home"), p.get("away"),
+                             p["spread"], home_score, away_score)
+        record["results"].append({
+            "key": p.get("key"),
+            "week": p.get("week"),
+            "home": p.get("home"), "away": p.get("away"),
+            "home_score": home_score, "away_score": away_score,
+            "su_pick": p.get("su_pick"), "ats_pick": p.get("ats_pick"),
+            "spread": p.get("spread"),
+            "su_result": su, "ats_result": ats,
+        })
+        newly += 1
+    if newly:
+        _save_record(record)
+    return newly
+
+
 @app.get("/api/record")
 def api_record():
     """Get the projection's straight-up (SU) and against-the-spread (ATS) records."""
+    # Grade any newly-finished games before reporting (idempotent)
+    try:
+        _ingest_results()
+    except Exception as e:
+        print(f"[ingest error] {e}")
     record = _load_record()
     su = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
     ats = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
@@ -1904,6 +2008,21 @@ def api_record():
         "su_str": f"{su['wins']}-{su['losses']}" + (f"-{su['pushes']}" if su['pushes'] else ""),
         "ats_str": f"{ats['wins']}-{ats['losses']}" + (f"-{ats['pushes']}" if ats['pushes'] else ""),
     }
+
+
+@app.post("/api/record/ingest")
+def api_record_ingest():
+    """Force a results-ingestion run (pull final scores + grade picks)."""
+    try:
+        # Bust the finals cache so we always re-pull on manual trigger
+        _FINALS_CACHE["data"] = {}
+        _FINALS_CACHE["ts"] = 0
+        n = _ingest_results()
+        rec = _load_record()
+        return {"graded": n, "total_results": len(rec.get("results", []))}
+    except Exception as e:
+        print(f"[ingest error] {e}")
+        return {"error": str(e), "graded": 0}
 
 
 # ── Serve frontend ──
