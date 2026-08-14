@@ -1142,15 +1142,19 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True) -> dict:
         epa_bucket * 0.20
     )
 
-    # Projected score: composite is the PRIMARY driver, mapped to realistic CFB scoring range
-    # Composite 0-100 -> 10-60 point base, then PPG diff and home field on top
-    # NO normalization or clamping — raw output from the formula
-    base_score = 10.0 + (composite / 100.0) * 50.0  # 10-60 from composite alone
-    # Add actual offensive/defensive differential at full weight
-    net_ppg = off_ppg - def_ppg
-    base_score += net_ppg * 0.75
-    # Home field advantage: ~3.5 points (CFBD research average)
-    home_adj = 3.5 if is_home else -1.5
+    # Projected score: calibrated to realistic CFB scoring.
+    # A team's projected points vs an average opponent ranges ~12 (worst) to ~40 (elite).
+    # League average is ~28 PPG. Composite 50 (average) -> ~27 pts.
+    # The composite already encodes overall strength, so we do NOT add a second
+    # offensive/defensive differential term on top (that was double-counting).
+    # Anchor: 14 + (composite/100)*26 -> composite 50 = 27, 90 = 37.4, 20 = 19.2
+    base_score = 14.0 + (composite / 100.0) * 26.0
+    # Mild offensive/defensive tilt on top (small, to avoid re-double-counting):
+    # a strong offense / weak defense nudges the projection up a few points.
+    net_ppg = (off_ppg or 28.0) - (def_ppg or 24.0)
+    base_score += max(-4.0, min(4.0, net_ppg * 0.15))
+    # Home field advantage: ~2.5 points (CFBD research average)
+    home_adj = 2.5 if is_home else -1.5
     projected_score = round(base_score + home_adj, 1)
 
     # Points can't be negative — floor projected score at 0 (defensive floor,
