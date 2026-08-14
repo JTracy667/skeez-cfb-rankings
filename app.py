@@ -1565,6 +1565,10 @@ def api_schedule():
         # Home covers if home wins by MORE than |spread|. If model margin is
         # under the spread, the underdog is the ATS side.
         ats_pick = _ats_side(diff, spread)
+        # Over/Under: model total vs book total
+        model_total, total_vs_model, over_pick = _totals_fields(
+            home_proj_data["projected_score"], away_proj_data["projected_score"],
+            line.get("total"))
         enriched.append({
             **m,
             "home_proj": home_proj_data["projected_score"],
@@ -1591,6 +1595,10 @@ def api_schedule():
             "line_source": line.get("source"),
             # How much the live line diverges from our model
             "line_vs_model": line_vs_model,
+            # Over/under projection
+            "model_total": model_total,
+            "total_vs_model": total_vs_model,
+            "over_pick": over_pick,
         })
     # Lock in this week's SU + ATS picks (idempotent)
     _lock_picks(enriched, sched.get("week", 1))
@@ -1732,6 +1740,8 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
         # Resolve conference
         home_conf = home.get("conf") or conf_map.get(m["home"], "")
         away_conf = away.get("conf") or conf_map.get(m["away"], "")
+        # Over/Under: model total vs book total
+        model_total, total_vs_model, over_pick = _totals_fields(home_proj, away_proj, market_odds.get("total"))
         enriched.append({
             **m,
             "home_proj": home_proj,
@@ -1755,6 +1765,10 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             "line_source": market_odds.get("source"),
             # Compare model differential to market line (both + = home favorite)
             "line_vs_model": round(diff + (market_odds.get("spread") or 0), 1) if market_odds.get("spread") is not None else None,
+            # Over/under projection
+            "model_total": model_total,
+            "total_vs_model": total_vs_model,
+            "over_pick": over_pick,
             "home_record": f"{home.get('wins',0)}-{home.get('losses',0)}",
             "away_record": f"{away.get('wins',0)}-{away.get('losses',0)}",
             "home_conf": home_conf,
@@ -1768,6 +1782,22 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
 
 # ── Records: Straight-Up (SU) + Against-the-Spread (ATS) tracking ──
 RECORD_FILE = BASE_DIR / "data" / "record.json"
+
+
+def _totals_fields(home_proj: float, away_proj: float, book_total: float | None) -> tuple:
+    """Compute model total, model-vs-book gap, and over/under pick.
+
+    Returns (model_total, total_vs_model, over_pick) where:
+      model_total     = home_proj + away_proj
+      total_vs_model  = model_total - book_total (positive = model likes OVER)
+      over_pick       = "over" | "under" | None (None if no book total)
+    """
+    model_total = round(home_proj + away_proj, 1)
+    if book_total is None:
+        return model_total, None, None
+    gap = round(model_total - book_total, 1)
+    over_pick = "over" if gap > 0 else ("under" if gap < 0 else None)
+    return model_total, gap, over_pick
 
 
 def _ats_side(diff: float, spread: float | None) -> str | None:
@@ -2038,6 +2068,207 @@ def api_record_ingest():
     except Exception as e:
         print(f"[ingest error] {e}")
         return {"error": str(e), "graded": 0}
+
+
+# ── Best Bets: separate tracker for high-confidence value plays ──
+BEST_BETS_FILE = BASE_DIR / "data" / "best_bets.json"
+
+
+def _load_best_bets() -> dict:
+    try:
+        with open(BEST_BETS_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return {"season": 2026, "updated": "", "picks": [], "results": []}
+
+
+def _save_best_bets(bb: dict) -> None:
+    bb["updated"] = datetime.now().isoformat()
+    try:
+        BEST_BETS_FILE.write_text(json.dumps(bb, indent=2), encoding="utf-8")
+    except Exception as e:
+        print(f"[BEST BETS SAVE ERROR] {e}")
+
+
+def _lock_best_bets(plays: list[dict], week: int) -> None:
+    """Persist best-bets picks (spread + total sides) for matchups not yet locked."""
+    bb = _load_best_bets()
+    existing = {p["key"] for p in bb.get("picks", [])}
+    changed = False
+    for play in plays:
+        key = _record_key(play.get("home", ""), play.get("away", ""))
+        if key in existing:
+            continue
+        # Only lock plays that actually have a pick (spread or total)
+        if play.get("spread_pick") is None and play.get("over_pick") is None:
+            continue
+        bb["picks"].append({
+            "key": key,
+            "week": week,
+            "home": play.get("home"),
+            "away": play.get("away"),
+            "date": play.get("date"),
+            "spread": play.get("spread"),
+            "spread_pick": play.get("spread_pick"),
+            "spread_edge": play.get("spread_edge"),
+            "total": play.get("total"),
+            "over_pick": play.get("over_pick"),
+            "total_edge": play.get("total_edge"),
+            "model_total": play.get("model_total"),
+        })
+        changed = True
+    if changed:
+        _save_best_bets(bb)
+
+
+def _grade_total(over_pick: str, book_total: float, home_score: int, away_score: int) -> str:
+    """Grade an over/under pick: W / L / push."""
+    actual_total = home_score + away_score
+    if actual_total == book_total:
+        return "push"
+    if over_pick == "over":
+        return "W" if actual_total > book_total else "L"
+    return "W" if actual_total < book_total else "L"
+
+
+def _ingest_best_bets() -> int:
+    """Grade any locked best-bets picks that now have final scores."""
+    bb = _load_best_bets()
+    finals = _fetch_final_scores()
+    if not finals:
+        return 0
+    graded = {r.get("key") for r in bb.get("results", [])}
+    newly = 0
+    for p in bb.get("picks", []):
+        if p.get("key") in graded:
+            continue
+        key = frozenset({_norm_key_name(p.get("home", "")), _norm_key_name(p.get("away", ""))})
+        g = finals.get(key)
+        if not g:
+            continue
+        if _norm_key_name(g["home"]) == _norm_key_name(p.get("home", "")):
+            home_score, away_score = g["home_score"], g["away_score"]
+        else:
+            home_score, away_score = g["away_score"], g["home_score"]
+        # Grade spread pick
+        spread_result = None
+        if p.get("spread") is not None and p.get("spread_pick") is not None:
+            spread_result = _grade_ats(p.get("spread_pick"), p.get("home"), p.get("away"),
+                                       p["spread"], home_score, away_score)
+        # Grade total pick
+        total_result = None
+        if p.get("total") is not None and p.get("over_pick") is not None:
+            total_result = _grade_total(p.get("over_pick"), p["total"], home_score, away_score)
+        bb["results"].append({
+            "key": p.get("key"),
+            "week": p.get("week"),
+            "home": p.get("home"), "away": p.get("away"),
+            "home_score": home_score, "away_score": away_score,
+            "spread_pick": p.get("spread_pick"), "over_pick": p.get("over_pick"),
+            "spread_result": spread_result,
+            "total_result": total_result,
+        })
+        newly += 1
+    if newly:
+        _save_best_bets(bb)
+    return newly
+
+
+@app.get("/api/best-bets/record")
+def api_best_bets_record():
+    """Get the best-bets tracker record (spread picks + over/under picks)."""
+    try:
+        _ingest_best_bets()
+    except Exception as e:
+        print(f"[best-bets ingest error] {e}")
+    bb = _load_best_bets()
+    spread = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
+    total = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
+    for r in bb.get("results", []):
+        for bucket, field in ((spread, "spread_result"), (total, "total_result")):
+            v = r.get(field)
+            if v == "W":
+                bucket["wins"] += 1; bucket["graded"] += 1
+            elif v == "L":
+                bucket["losses"] += 1; bucket["graded"] += 1
+            elif v == "push":
+                bucket["pushes"] += 1
+    return {
+        "season": bb.get("season"),
+        "updated": bb.get("updated"),
+        "picks": bb.get("picks", []),
+        "results": bb.get("results", []),
+        "spread": spread,
+        "total": total,
+        "spread_str": f"{spread['wins']}-{spread['losses']}" + (f"-{spread['pushes']}" if spread['pushes'] else ""),
+        "total_str": f"{total['wins']}-{total['losses']}" + (f"-{total['pushes']}" if total['pushes'] else ""),
+    }
+
+
+@app.get("/api/best-bets")
+def api_best_bets():
+    """Rank upcoming games by model-vs-market divergence (spread + total edge).
+
+    Returns the top value plays where the model disagrees most with the books,
+    for both the spread and the over/under. Each pick gets a confidence (1-3
+    stars) based on how far the line diverges from the model.
+    """
+    try:
+        # Reuse the full fetch endpoint's enrichment logic
+        sched = api_schedule_fetch(week=1)
+        matchups = sched.get("matchups", [])
+        team_map = _build_team_map()
+        # FBS-only filter: drop matchups where a team has no SP+ data
+        # (FCS teams like Norfolk State/Fordham/Bryant default to sp_plus=0
+        # and a flat ~43 composite, producing meaningless "value" signals).
+        # Real FBS teams always have a non-zero SP+ rating.
+        def _has_data(name):
+            td = team_map.get(name, {})
+            sp = td.get("sp_plus")
+            return sp is not None and sp != 0
+        plays = []
+        for m in matchups:
+            if not _has_data(m.get("home")) or not _has_data(m.get("away")):
+                continue
+            spread_edge = abs(m.get("line_vs_model")) if m.get("line_vs_model") is not None else None
+            total_edge = abs(m.get("total_vs_model")) if m.get("total_vs_model") is not None else None
+            # Confidence from edge magnitude (points)
+            def _stars(edge):
+                if edge is None:
+                    return 0
+                if edge >= 10:
+                    return 3
+                if edge >= 5:
+                    return 2
+                return 1
+            plays.append({
+                "home": m.get("home"),
+                "away": m.get("away"),
+                "date": m.get("date"),
+                "home_logo_url": m.get("home_logo_url"),
+                "away_logo_url": m.get("away_logo_url"),
+                # Spread side
+                "spread": m.get("line_diff"),
+                "spread_edge": spread_edge,
+                "spread_stars": _stars(spread_edge),
+                "spread_pick": m.get("ats_pick"),
+                # Total side
+                "total": m.get("line_total"),
+                "model_total": m.get("model_total"),
+                "total_edge": total_edge,
+                "total_stars": _stars(total_edge),
+                "over_pick": m.get("over_pick"),
+            })
+        # Rank by combined edge (max of spread/total edge), only games with a line
+        ranked = [p for p in plays if p["spread_edge"] is not None or p["total_edge"] is not None]
+        ranked.sort(key=lambda p: max(p["spread_edge"] or 0, p["total_edge"] or 0), reverse=True)
+        top = ranked[:10]
+        # Lock the top plays into the best-bets tracker (idempotent)
+        _lock_best_bets(top, sched.get("week", 1))
+        return {"best_bets": top, "count": len(ranked)}
+    except Exception as e:
+        print(f"[GET /api/best-bets ERROR] {e}")
+        return {"error": str(e), "best_bets": []}
 
 
 # ── Serve frontend ──

@@ -67,6 +67,18 @@ nav a.active{color:var(--accent)}
 .summary-card.record .val{font-variant-numeric:tabular-nums}
 .summary-card.record .val.good{color:var(--up)}
 .pick-arrow{font-weight:800;color:var(--up);font-size:1.1rem;margin:0 4px;flex-shrink:0;text-shadow:0 0 8px rgba(52,211,153,0.4)}
+.ou-pick{font-size:0.7rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;margin-top:0.2rem}
+.ou-pick.up{color:var(--up);background:rgba(52,211,177,.1)}
+.ou-pick.down{color:var(--down);background:rgba(248,113,113,.1)}
+.best-bets{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem}
+.best-bets h3{font-size:1rem;font-weight:700;margin-bottom:.75rem;color:var(--accent)}
+.best-bets .bb-row{display:grid;grid-template-columns:1.4fr auto auto;gap:.75rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.85rem}
+.best-bets .bb-row:last-child{border-bottom:none}
+.best-bets .bb-teams{font-weight:600}
+.best-bets .bb-pick{font-weight:700;color:var(--up)}
+.best-bets .bb-pick.under{color:var(--down)}
+.best-bets .bb-stars{color:var(--top3);letter-spacing:1px}
+.best-bets .bb-edge{color:var(--text-dim);font-size:.75rem}
 .footer{text-align:center;padding:1.5rem;color:var(--text-dim);font-size:.75rem;border-top:1px solid var(--border)}
 @media(max-width:768px){
   .matchup-card{grid-template-columns:1fr;gap:.5rem;text-align:center}
@@ -91,6 +103,7 @@ nav a.active{color:var(--accent)}
 </div>
 <div class="container">
   <div class="summary-row" id="summaryRow"></div>
+  <div class="best-bets" id="bestBets"></div>
   <div class="controls">
     <input type="text" class="search-box" id="searchBox" placeholder="Search teams...">
     <button class="filter-btn active" data-conf="all">All</button>
@@ -156,6 +169,51 @@ async function fetchSchedule(week) {
     document.getElementById('matchupsContainer').innerHTML =
       '<div style="text-align:center;padding:3rem;color:var(--text-dim)">⚠️ Could not load schedule. Is the backend running?</div>';
   }
+}
+
+async function fetchBestBets() {
+  try {
+    const [bbRes, recRes] = await Promise.all([
+      fetch(`${API}/best-bets`),
+      fetch(`${API}/best-bets/record`)
+    ]);
+    const bbData = await bbRes.json();
+    const recData = await recRes.json();
+    renderBestBets(bbData.best_bets || [], recData);
+  } catch (err) {
+    console.error('Failed to fetch best bets:', err);
+    document.getElementById('bestBets').innerHTML = '';
+  }
+}
+
+function stars(n) { return '★'.repeat(n || 0) + '☆'.repeat(Math.max(0, 3 - (n || 0))); }
+
+function renderBestBets(bets, rec) {
+  const el = document.getElementById('bestBets');
+  if (!bets.length) { el.innerHTML = ''; return; }
+  const spreadStr = rec.spread_str || '0-0';
+  const totalStr = rec.total_str || '0-0';
+  const rows = bets.map(b => {
+    // Show both spread and total picks
+    const spreadPick = b.spread_pick
+      ? `<span class="bb-pick">${b.spread_pick} ${b.spread > 0 ? '+' : ''}${b.spread}</span> <span class="bb-stars">${stars(b.spread_stars)}</span>`
+      : '<span class="bb-edge">no spread</span>';
+    const totalPick = b.over_pick
+      ? `<span class="bb-pick ${b.over_pick === 'under' ? 'under' : ''}">${b.over_pick.toUpperCase()} ${b.total}</span> <span class="bb-stars">${stars(b.total_stars)}</span>`
+      : '<span class="bb-edge">no total</span>';
+    return `<div class="bb-row">
+      <span class="bb-teams">${b.home} vs ${b.away}</span>
+      <span>${spreadPick}</span>
+      <span>${totalPick}</span>
+    </div>`;
+  }).join('');
+  el.innerHTML = `
+    <h3>🎯 Best Bets <span class="bb-edge">(spread ${spreadStr} · O/U ${totalStr})</span></h3>
+    <div class="bb-header" style="display:grid;grid-template-columns:1.4fr auto auto;gap:.75rem;font-size:.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;padding-bottom:.25rem;">
+      <span>Matchup</span><span>Spread Pick</span><span>O/U Pick</span>
+    </div>
+    ${rows}
+  `;
 }
 
 function renderSummary(data) {
@@ -281,6 +339,10 @@ function renderMatchups() {
           ? `<div class="line-vs-model ${m.line_vs_model > 1 ? 'up' : m.line_vs_model < -1 ? 'down' : ''}">Line ${m.line_vs_model > 0 ? 'covers +' + m.line_vs_model : m.line_vs_model < 0 ? 'under -' + Math.abs(m.line_vs_model) : '≈ model'}</div>`
           : ''
         }
+        ${m.over_pick
+          ? `<div class="ou-pick ${m.over_pick === 'over' ? 'up' : 'down'}">Model ${m.model_total} → ${m.over_pick.toUpperCase()} ${m.line_total} (${m.total_vs_model > 0 ? '+' : ''}${m.total_vs_model})</div>`
+          : ''
+        }
       </div>
       <div class="team-side away">
         <div>
@@ -322,6 +384,7 @@ document.getElementById('refreshBtn').addEventListener('click', () => fetchSched
 
 // ── Init ──
 fetchSchedule(1);
+fetchBestBets();
 </script>
 </body>
 </html>
