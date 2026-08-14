@@ -1790,6 +1790,17 @@ def _record_key(home: str, away: str) -> str:
     return f"{home.strip().lower()}|{away.strip().lower()}"
 
 
+def _norm_key_name(name: str) -> str:
+    """Normalize a team name for fuzzy matching: lowercase + strip accents.
+
+    'San José State' -> 'san jose state', 'Texas A&M' -> 'texas a&m'.
+    Used to match CFBD full school names against pick home/away names.
+    """
+    import unicodedata
+    s = unicodedata.normalize("NFKD", (name or "").strip().lower())
+    return "".join(c for c in s if not unicodedata.combining(c))
+
+
 def _load_record() -> dict:
     try:
         with open(RECORD_FILE) as f:
@@ -1915,11 +1926,11 @@ def _fetch_final_scores(year: int = CFBD_YEAR) -> dict:
         for g in (games or []):
             if not g.get("completed") or g.get("homePoints") is None:
                 continue
-            h = _normalize_team_name(g.get("homeTeam", ""))
-            a = _normalize_team_name(g.get("awayTeam", ""))
+            h = g.get("homeTeam", "")
+            a = g.get("awayTeam", "")
             if not h or not a:
                 continue
-            key = frozenset({h.lower(), a.lower()})
+            key = frozenset({_norm_key_name(h), _norm_key_name(a)})
             finals[key] = {
                 "home": h, "away": a,
                 "home_score": g.get("homePoints"),
@@ -1949,12 +1960,12 @@ def _ingest_results() -> int:
     for p in record.get("picks", []):
         if p.get("key") in graded:
             continue
-        key = frozenset({p.get("home", "").lower(), p.get("away", "").lower()})
+        key = frozenset({_norm_key_name(p.get("home", "")), _norm_key_name(p.get("away", ""))})
         g = finals.get(key)
         if not g:
             continue
         # Orient scores relative to the pick's home/away (CFBD may flip sides)
-        if g["home"].lower() == p.get("home", "").lower():
+        if _norm_key_name(g["home"]) == _norm_key_name(p.get("home", "")):
             home_score, away_score = g["home_score"], g["away_score"]
         else:
             home_score, away_score = g["away_score"], g["home_score"]
