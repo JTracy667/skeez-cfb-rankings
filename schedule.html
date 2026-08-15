@@ -79,6 +79,16 @@ nav a.active{color:var(--accent)}
 .best-bets .bb-pick.under{color:var(--down)}
 .best-bets .bb-stars{color:var(--top3);letter-spacing:1px}
 .best-bets .bb-edge{color:var(--text-dim);font-size:.75rem}
+.line-moves{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem}
+.line-moves h3{font-size:1rem;font-weight:700;margin-bottom:.75rem;color:var(--accent)}
+.line-moves .lm-row{display:grid;grid-template-columns:1.4fr auto auto auto;gap:.75rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.85rem}
+.line-moves .lm-row:last-child{border-bottom:none}
+.line-moves .lm-teams{font-weight:600}
+.line-moves .lm-market{color:var(--text-dim);text-transform:uppercase;font-size:.7rem;letter-spacing:.05em}
+.line-moves .lm-delta{font-weight:700}
+.line-moves .lm-delta.up{color:var(--up)}
+.line-moves .lm-delta.down{color:var(--down)}
+.line-moves .lm-empty{color:var(--text-dim);font-size:.85rem;padding:.5rem 0}
 .footer{text-align:center;padding:1.5rem;color:var(--text-dim);font-size:.75rem;border-top:1px solid var(--border)}
 @media(max-width:768px){
   .matchup-card{grid-template-columns:1fr;gap:.5rem;text-align:center}
@@ -104,6 +114,7 @@ nav a.active{color:var(--accent)}
 <div class="container">
   <div class="summary-row" id="summaryRow"></div>
   <div class="best-bets" id="bestBets"></div>
+  <div class="line-moves" id="lineMoves"></div>
   <div class="controls">
     <input type="text" class="search-box" id="searchBox" placeholder="Search teams...">
     <button class="filter-btn active" data-conf="all">All</button>
@@ -187,6 +198,42 @@ async function fetchBestBets() {
 }
 
 function stars(n) { return '★'.repeat(n || 0) + '☆'.repeat(Math.max(0, 3 - (n || 0))); }
+
+async function fetchLineMoves() {
+  try {
+    const res = await fetch(`${API}/line-movements`);
+    const data = await res.json();
+    renderLineMoves(data.movements || []);
+  } catch (err) {
+    console.error('Failed to fetch line movements:', err);
+    document.getElementById('lineMoves').innerHTML = '';
+  }
+}
+
+function renderLineMoves(movements) {
+  const el = document.getElementById('lineMoves');
+  if (!movements.length) {
+    el.innerHTML = '<h3>📊 Line Movement</h3><div class="lm-empty">No line movement detected since last refresh. Movements appear after a book changes a spread or total between refreshes.</div>';
+    return;
+  }
+  const rows = movements.map(mv => {
+    const up = mv.delta > 0;
+    const down = mv.delta < 0;
+    const cls = up ? 'up' : down ? 'down' : '';
+    const arrow = up ? '▲' : down ? '▼' : '—';
+    const fmt = v => (typeof v === 'number' ? (v > 0 ? '+' + v : v) : v);
+    return `<div class="lm-row">
+      <span class="lm-teams">${mv.home} vs ${mv.away}</span>
+      <span class="lm-market">${mv.market}</span>
+      <span class="lm-edge">${fmt(mv.old)} → ${fmt(mv.new)}</span>
+      <span class="lm-delta ${cls}">${arrow} ${fmt(mv.delta)}</span>
+    </div>`;
+  }).join('');
+  el.innerHTML = `
+    <h3>📊 Line Movement <span class="lm-edge">(since last refresh)</span></h3>
+    ${rows}
+  `;
+}
 
 function renderBestBets(bets, rec) {
   const el = document.getElementById('bestBets');
@@ -385,6 +432,7 @@ document.getElementById('refreshBtn').addEventListener('click', () => fetchSched
 // ── Init ──
 fetchSchedule(1);
 fetchBestBets();
+fetchLineMoves();
 </script>
 </body>
 </html>
