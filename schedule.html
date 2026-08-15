@@ -242,9 +242,16 @@ function renderBestBets(bets, rec) {
   const totalStr = rec.total_str || '0-0';
   const rows = bets.map(b => {
     // Show both spread and total picks
-    const spreadPick = b.spread_pick
-      ? `<span class="bb-pick">${b.spread_pick} ${b.spread > 0 ? '+' : ''}${b.spread}</span> <span class="bb-stars">${stars(b.spread_stars)}</span>`
-      : '<span class="bb-edge">no spread</span>';
+    // spread is the HOME team's line (negative = home favored). When the pick is
+    // the away underdog, flip the sign and show the away team's name.
+    let spreadPick = '<span class="bb-edge">no spread</span>';
+    if (b.spread_pick) {
+      const isHome = b.spread_pick === 'home';
+      const team = isHome ? b.home : b.away;
+      const line = isHome ? b.spread : (b.spread != null ? -b.spread : null);
+      const lineStr = line == null ? '' : `${line > 0 ? '+' : ''}${line}`;
+      spreadPick = `<span class="bb-pick">${team} ${lineStr}</span> <span class="bb-stars">${stars(b.spread_stars)}</span>`;
+    }
     const totalPick = b.over_pick
       ? `<span class="bb-pick ${b.over_pick === 'under' ? 'under' : ''}">${b.over_pick.toUpperCase()} ${b.total}</span> <span class="bb-stars">${stars(b.total_stars)}</span>`
       : '<span class="bb-edge">no total</span>';
