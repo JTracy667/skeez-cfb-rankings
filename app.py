@@ -2383,17 +2383,25 @@ def api_best_bets():
 
 
 # ── Serve frontend ──
+# No-cache headers so the browser always pulls the fresh page (prevents
+# stale cached HTML/JS from masking code changes).
+_NO_CACHE = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
+
 @app.get("/")
 def index():
-    return FileResponse(BASE_DIR / "index.html")
+    return FileResponse(BASE_DIR / "index.html", headers=_NO_CACHE)
 
 @app.get("/analytics")
 def analytics_page():
-    return FileResponse(BASE_DIR / "analytics.html")
+    return FileResponse(BASE_DIR / "analytics.html", headers=_NO_CACHE)
 
 @app.get("/schedule")
 def schedule_page():
-    return FileResponse(BASE_DIR / "schedule.html")
+    return FileResponse(BASE_DIR / "schedule.html", headers=_NO_CACHE)
 
 
 # Start the background auto-refresh scheduler. Runs whether the app is started
