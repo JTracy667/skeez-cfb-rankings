@@ -312,63 +312,58 @@ def fetch_espn_poll() -> list[dict] | None:
         return None
 
 def get_rankings() -> RankingsResponse:
-    """Return rankings, trying ESPN first, falling back to local.
-    Filters out unranked (rank==0) teams and sorts by composite score descending."""
+    """Return the Skeez CFB Rankings — the composite list.
+
+    Single source of truth: the SAME CFBD analytics dataset the Analytics
+    composite tab uses, enriched with the SAME composite formula
+    (project_score_multi_factor) and sorted by composite descending.
+    This guarantees the main page and the composite tab always agree —
+    same teams, same order, same scores.
+    """
     cached = _cache_get(_rankings_cache, CACHE_TTL)
     if cached:
         return RankingsResponse(**cached)
 
-    # Try live ESPN fetch
-    live = fetch_espn_poll()
-    if live:
-        teams = live
-        source = "espn"
-    else:
-        teams = load_local()
-        source = "local"
+    # Primary source: the CFBD analytics file (identical to the composite tab).
+    teams = _load_cfbd_analytics_file()
+    if not teams:
+        # Fallbacks if the file is missing/stale.
+        teams = fetch_live_analytics() or load_local()
+    if not teams:
+        raise HTTPException(502, "Rankings data unavailable")
 
-    # Filter out unranked teams (rank == 0)
-    teams = [t for t in teams if t.get("rank", 0) > 0]
+    # Deep-copy so we never mutate the shared disk cache.
+    teams = [dict(t) for t in teams]
 
-    # Build team map to get analytics data
-    team_map = _build_team_map()
+    # Enrich with composite + factor contributions (identical to the composite tab).
+    _enrich_with_composite(teams)
 
-    # Compute composite scores and inject logos + analytics fields
+    # Sanitize None -> 0.0 for fields the Team model requires as numbers
+    # (pre-season / incomplete CFBD rows carry None for these).
+    _NUM_FIELDS = ("off_ppg", "off_ypp", "off_3rd", "def_ppg", "def_ypp",
+                   "def_3rd", "turnover_margin", "points")
     for team in teams:
-        name = team["name"]
-        td = team_map.get(name, {})
-        # Inject analytics fields so downstream consumers (projections, schedule)
-        # see the real metrics, not model defaults
-        for key in ["sp_plus", "sp_offense", "sp_defense", "sp_rank", "fpi",
-                    "fpi_rank", "fpi_win_prob", "cpi", "srs", "elo",
-                    "recruiting_rank", "recruiting_pts", "coach_win_pct",
-                    "off_ppg", "off_ypp", "off_3rd", "def_ppg", "def_ypp",
-                    "def_3rd", "turnover_margin",
-                    "epa_play", "epa_pass", "epa_rush",
-                    "pts_per_poss", "td_rate", "fg_rate", "turnover_rate",
-                    "def_epa_play", "def_epa_pass", "def_epa_rush",
-                    "def_pts_per_poss", "def_td_rate", "def_fg_rate", "def_turnover_created",
-                    "returning_ppa", "pct_ppa_returning", "pct_pass_ppa", "pct_rush_ppa",
-                    "roster_count", "avg_year", "experience_score"]:
-            if key in td:
-                team[key] = td[key]
-        # Compute composite from analytics data
-        proj = project_score_multi_factor(td, is_home=True)
-        team["composite"] = proj["composite"]
-        team["sp_contribution"] = proj["sp_contribution"]
-        team["fpi_contribution"] = proj["fpi_contribution"]
-        team["cpi_contribution"] = proj["cpi_contribution"]
-        team["elo_contribution"] = proj["elo_contribution"]
-        team["rec_contribution"] = proj["rec_contribution"]
-        team["epa_contribution"] = proj["epa_contribution"]
-        # Inject cached team logos
-        logo = _LOGO_MAP.get(name.lower())
+        for k in _NUM_FIELDS:
+            if team.get(k) is None:
+                team[k] = 0.0
+        # Ensure required scalars exist for the model.
+        team.setdefault("wins", 0)
+        team.setdefault("losses", 0)
+        team.setdefault("movement", 0)
+        team.setdefault("streak", "—")
+        team.setdefault("mascot", "")
+        team.setdefault("conf", "FBS")
+        team.setdefault("emoji", "🏈")
+
+    # Inject cached team logos.
+    for team in teams:
+        logo = _LOGO_MAP.get(team.get("name", "").lower())
         if logo:
             team["logo_url"] = logo
 
-    # Sort by composite score descending
+    # Sort by composite score descending — the day's composite ranking.
     teams = sorted(teams, key=lambda t: t.get("composite", 0), reverse=True)
-    # Re-assign rank to reflect composite sort order (not stale ESPN rank from disk)
+    # Re-assign rank to reflect composite order.
     for i, t in enumerate(teams, 1):
         t["rank"] = i
 
