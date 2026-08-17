@@ -363,6 +363,9 @@ def get_rankings() -> RankingsResponse:
 
     # Sort by composite score descending — the day's composite ranking.
     teams = sorted(teams, key=lambda t: t.get("composite", 0), reverse=True)
+    # Main page shows the TOP 25 composite teams only.
+    # (The full list lives on the Analytics composite tab.)
+    teams = teams[:25]
     # Re-assign rank to reflect composite order.
     for i, t in enumerate(teams, 1):
         t["rank"] = i
