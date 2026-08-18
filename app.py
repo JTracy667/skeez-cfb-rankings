@@ -3,7 +3,9 @@
 import json
 import os
 import time
+import math
 import random
+from collections import defaultdict
 from pathlib import Path
 from datetime import datetime
 
@@ -2442,6 +2444,180 @@ def api_best_bets():
         return {"error": str(e), "best_bets": []}
 
 
+# ── Season Win-Total Projections (over/under team wins) ────────────────
+# Runs EVERY 2026 game in a team's schedule through the multi-factor model,
+# converts each projected-score differential into a head-to-head win
+# probability, and sums them. The sum is the expected total wins — the fair
+# number to bet against a sportsbook's over/under on that team's season wins.
+# Schedule strength matters: a team with 12 games vs FBS opponents gets its
+# projection from real matchups, not an average.
+
+_WIN_TOTALS_CACHE = {}          # {year: {"ts":..., "teams":[...]}}
+WIN_TOTALS_TTL = 3600           # recompute at most hourly (schedule is static)
+_H2H_SCALE = 6.0                # CFB outcome std-dev ≈ 6 pts; logistic scale
+
+
+def _h2h_win_prob(home_score: float, away_score: float) -> float:
+    """Head-to-head win probability from projected scores (logistic).
+
+    diff = home - away projected points. A +6 pt edge ≈ 73% to cover the
+    spread / win; symmetric around 50%. This is a game-level model, so it
+    already includes whatever home-field adjustment was baked into the
+    projected scores — we do NOT add HFA again here."""
+    diff = home_score - away_score
+    return 1.0 / (1.0 + math.exp(-diff / _H2H_SCALE))
+
+
+def _cfbd_season_games(year: int) -> list[dict]:
+    """Full-season game list from CFBD (one call, all weeks)."""
+    data = _cfbd_get("games", year)
+    return [g for g in data if isinstance(g, dict)]
+
+
+def compute_win_totals(year: int = CFBD_YEAR) -> dict:
+    """Project each FBS team's total season wins from its full schedule.
+
+    Returns {"year":..., "teams":[{name, conf, games, exp_wins, proj_record,
+    home_games, away_games, neutral_games, ...}], "generated":...}.
+    Cached in memory for WIN_TOTALS_TTL seconds."""
+    cached = _WIN_TOTALS_CACHE.get(year)
+    if cached and time.time() - cached["ts"] < WIN_TOTALS_TTL:
+        return cached
+
+    games = _cfbd_season_games(year)
+    team_map = _build_team_map()          # name -> full analytics dict
+    known = set(team_map.keys())
+
+    # FBS-only: this is a betting tool, so report the 138 FBS teams. CFBD tags
+    # each side's classification on every game; union them to get the FBS set.
+    fbs_names = set()
+    for g in games:
+        if (g.get("homeClassification") or "").upper().startswith("FBS"):
+            fbs_names.add(g["homeTeam"])
+        if (g.get("awayClassification") or "").upper().startswith("FBS"):
+            fbs_names.add(g["awayTeam"])
+
+    # Per-team accumulators
+    acc = defaultdict(lambda: {
+        "games": 0, "home": 0, "away": 0, "neutral": 0,
+        "exp_wins": 0.0, "proj_pts_for": 0.0, "proj_pts_against": 0.0,
+    })
+    games_analyzed = 0
+
+    for g in games:
+        home_name = g.get("homeTeam") or ""
+        away_name = g.get("awayTeam") or ""
+        if not home_name or not away_name:
+            continue
+        # Only project games where BOTH teams are in our analytics set.
+        if home_name not in known or away_name not in known:
+            continue
+        # FBS-only accumulation: skip pure non-FBS (FCS/D2) matchups entirely;
+        # an FBS-vs-non-FBS game still counts for the FBS side.
+        h_fbs = home_name in fbs_names
+        a_fbs = away_name in fbs_names
+        if not (h_fbs or a_fbs):
+            continue
+        games_analyzed += 1
+
+        neutral = bool(g.get("neutralSite"))
+        home_td = team_map[home_name]
+        away_td = team_map[away_name]
+
+        # Projected scores. On a neutral site, zero out the HFA tilt so the
+        # game is decided purely by strength (the model bakes in +2.5/-1.5).
+        if neutral:
+            h_proj = project_score_multi_factor(home_td, is_home=True)["projected_score"]
+            a_proj = project_score_multi_factor(away_td, is_home=False)["projected_score"]
+            # Re-center: remove the HFA asymmetry by averaging both directions.
+            h_proj2 = project_score_multi_factor(home_td, is_home=False)["projected_score"]
+            a_proj2 = project_score_multi_factor(away_td, is_home=True)["projected_score"]
+            home_score = (h_proj + h_proj2) / 2.0
+            away_score = (a_proj + a_proj2) / 2.0
+        else:
+            home_score = project_score_multi_factor(home_td, is_home=True)["projected_score"]
+            away_score = project_score_multi_factor(away_td, is_home=False)["projected_score"]
+
+        p_home = _h2h_win_prob(home_score, away_score)
+
+        # Home team accumulates (FBS only — a non-FBS opponent still supplies the
+        # matchup projection but never gets its own row).
+        if h_fbs:
+            ah = acc[home_name]
+            ah["games"] += 1
+            ah["exp_wins"] += p_home
+            ah["proj_pts_for"] += home_score
+            ah["proj_pts_against"] += away_score
+            if neutral:
+                ah["neutral"] += 1
+            else:
+                ah["home"] += 1
+
+        # Away team accumulates (mirror)
+        if a_fbs:
+            aa = acc[away_name]
+            aa["games"] += 1
+            aa["exp_wins"] += (1.0 - p_home)
+            aa["proj_pts_for"] += away_score
+            aa["proj_pts_against"] += home_score
+            if neutral:
+                aa["neutral"] += 1
+            else:
+                aa["away"] += 1
+
+    # Build the team list (FBS only, with a conference + logo for display)
+    teams_out = []
+    for name, a in acc.items():
+        td = team_map.get(name, {})
+        if a["games"] == 0:
+            continue
+        exp_wins = round(a["exp_wins"], 2)
+        # Projected record: wins rounded to nearest .5 (betting-friendly),
+        # losses = games - wins.
+        proj_w = round(exp_wins * 2) / 2.0
+        proj_l = a["games"] - proj_w
+        teams_out.append({
+            "name": name,
+            "conf": td.get("conf") or "",
+            "logo_url": td.get("logo_url"),
+            "composite": round(project_score_multi_factor(td)["composite"], 1),
+            "games": a["games"],
+            "home_games": a["home"],
+            "away_games": a["away"],
+            "neutral_games": a["neutral"],
+            "exp_wins": exp_wins,
+            "proj_record": f"{proj_w:g}–{proj_l:g}",
+            "proj_ppg_for": round(a["proj_pts_for"] / a["games"], 1),
+            "proj_ppg_against": round(a["proj_pts_against"] / a["games"], 1),
+        })
+
+    # Sort by expected wins descending (the natural over/under ranking)
+    teams_out.sort(key=lambda t: t["exp_wins"], reverse=True)
+    for i, t in enumerate(teams_out, 1):
+        t["rank"] = i
+
+    result = {
+        "year": year,
+        "generated": datetime.now().isoformat(),
+        "games_analyzed": games_analyzed,
+        "teams": teams_out,
+    }
+    _WIN_TOTALS_CACHE[year] = {"ts": time.time(), **result}
+    return result
+
+
+@app.get("/api/win-totals")
+def api_win_totals(year: int | None = None):
+    """Projected total season wins per FBS team (over/under reference)."""
+    yr = year or CFBD_YEAR
+    try:
+        data = compute_win_totals(yr)
+        return data
+    except Exception as e:
+        print(f"[GET /api/win-totals ERROR] {e}")
+        raise HTTPException(status_code=502, detail=f"Win-total projection failed: {e}")
+
+
 # ── Serve frontend ──
 # No-cache headers so the browser always pulls the fresh page (prevents
 # stale cached HTML/JS from masking code changes).
@@ -2462,6 +2638,10 @@ def analytics_page():
 @app.get("/schedule")
 def schedule_page():
     return FileResponse(BASE_DIR / "schedule.html", headers=_NO_CACHE)
+
+@app.get("/win-totals")
+def win_totals_page():
+    return FileResponse(BASE_DIR / "win_totals.html", headers=_NO_CACHE)
 
 
 # Start the background auto-refresh scheduler. Runs whether the app is started
