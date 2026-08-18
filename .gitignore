@@ -27,6 +27,10 @@ data/analytics.json
 data/week_schedule.json
 data/finals_cache.json
 data/line_history.json
+data/last_analytics_pull.json
+
+# Local dev artifacts
+_server.log
 
 # OS
 Thumbs.db

@@ -7,7 +7,7 @@ import math
 import random
 from collections import defaultdict
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import httpx
 import uvicorn
@@ -192,6 +192,90 @@ def _snapshot_lines(odds_map: dict) -> list[dict]:
     return movements
 
 
+# ── Weekly CFBD ratings sync (Sunday 3pm ET) ──
+# Once a week, re-pull CFBD's updated ratings (SP+/FPI/Elo/CPI/PPG) so the
+# composite rankings and win totals reflect results as they land. The due-date
+# is "most recent Sunday 15:00 America/New_York"; we persist the last pull ts
+# to disk so a container restart doesn't re-pull every scheduler tick until
+# the next Sunday (and a failed pull retries on the following hourly tick).
+try:
+    from zoneinfo import ZoneInfo
+    _ET_TZ = ZoneInfo("America/New_York")
+except Exception:  # tzdata missing — fall back to UTC-4 (EDT) approximation
+    _ET_TZ = None
+WEEKLY_ANALYTICS_FILE = BASE_DIR / "data" / "last_analytics_pull.json"
+
+
+def _most_recent_sunday_3pm_et(now=None):
+    """Most recent Sunday 15:00 ET, inclusive of today if already past it."""
+    if _ET_TZ is None:
+        return None
+    now = now or datetime.now(_ET_TZ)
+    days_back = (now.weekday() - 6) % 7  # Sun=6; 0 if today is Sunday
+    cand = (now - timedelta(days=days_back)).replace(
+        hour=15, minute=0, second=0, microsecond=0)
+    if cand > now:
+        cand -= timedelta(days=7)
+    return cand
+
+
+def _load_last_analytics_pull() -> float:
+    try:
+        if WEEKLY_ANALYTICS_FILE.exists():
+            return float(json.loads(WEEKLY_ANALYTICS_FILE.read_text()).get("ts", 0))
+    except Exception:
+        pass
+    return 0.0
+
+
+def _save_last_analytics_pull(ts: float):
+    try:
+        WEEKLY_ANALYTICS_FILE.write_text(json.dumps({"ts": ts}))
+    except Exception as e:
+        print(f"[analytics] last-pull write failed: {e}")
+
+
+def weekly_analytics_due() -> bool:
+    """True if the most recent Sunday 3pm ET postdates our last CFBD pull."""
+    due_at = _most_recent_sunday_3pm_et()
+    if due_at is None:
+        return False
+    return time.time() > due_at.timestamp() and \
+        _load_last_analytics_pull() < due_at.timestamp()
+
+
+def run_weekly_analytics_pull() -> dict:
+    """Re-pull CFBD ratings + persist, so rankings/win-totals see fresh data.
+
+    Mirrors POST /api/analytics/fetch (minus the HTTP layer). On failure we
+    keep the existing disk cache and do NOT advance the last-pull timestamp,
+    so the next scheduler tick retries."""
+    summary = {"pulled": False, "teams": 0}
+    try:
+        analytics = fetch_live_analytics()
+        if not analytics:
+            print("[analytics] weekly pull returned no data; keeping existing cache")
+            return summary
+        with open(_CFBD_ANALYTICS_FILE, "w") as f:
+            json.dump(analytics, f, indent=2)
+        _enrich_with_composite(analytics)
+        _cache_set(_analytics_cache, {
+            "week": datetime.now().strftime("%B %d, %Y"),
+            "season": CFBD_YEAR,
+            "updated": datetime.now().isoformat(),
+            "teams": analytics,
+            "source": "cfbd",
+        })
+        # Rebuild the team map so schedule/rankings/win-totals see new metrics.
+        _build_team_map()
+        summary["pulled"] = True
+        summary["teams"] = len(analytics)
+        print(f"[analytics] weekly pull complete: {len(analytics)} teams")
+    except Exception as e:
+        print(f"[analytics] weekly pull failed: {e}")
+    return summary
+
+
 def refresh_all() -> dict:
     """Force re-pull of live odds + final scores, then grade records.
 
@@ -239,6 +323,15 @@ def _start_scheduler() -> None:
                     print(f"[scheduler] refresh: {summary}")
             except Exception as e:
                 print(f"[scheduler] refresh error: {e}")
+            # Weekly CFBD ratings sync (Sunday 3pm ET). Runs on the first tick
+            # after it's due; a failed pull retries next tick (ts not advanced).
+            try:
+                if weekly_analytics_due():
+                    res = run_weekly_analytics_pull()
+                    if res["pulled"]:
+                        _save_last_analytics_pull(time.time())
+            except Exception as e:
+                print(f"[scheduler] weekly analytics error: {e}")
             time.sleep(REFRESH_INTERVAL_SECONDS)
 
     t = threading.Thread(target=_loop, daemon=True, name="cfb-refresh")
@@ -2504,6 +2597,7 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
         "games": 0, "home": 0, "away": 0, "neutral": 0,
         "exp_wins": 0.0, "proj_pts_for": 0.0, "proj_pts_against": 0.0,
         "schedule": [],
+        "played_games": 0, "actual_wins": 0, "actual_losses": 0, "actual_ties": 0,
     })
     games_analyzed = 0
 
@@ -2557,12 +2651,40 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
             "proj_against": round(home_score, 1), "p_win": 1.0 - p_home,
         }
 
+        # Completed games: use the ACTUAL result (CFBD /games carries final
+        # points). The model's pre-game probability is kept for reference, but
+        # classification and win accumulation come from the real outcome — so
+        # mid-season exp_wins = actual wins + projected remainder.
+        played = bool(g.get("completed")) and g.get("homePoints") is not None \
+            and g.get("awayPoints") is not None
+        if played:
+            h_pts, a_pts = int(g["homePoints"]), int(g["awayPoints"])
+            h_entry.update(played=True, actual_for=h_pts, actual_against=a_pts)
+            a_entry.update(played=True, actual_for=a_pts, actual_against=h_pts)
+            if h_pts > a_pts:
+                h_entry["cls"] = "W"; a_entry["cls"] = "L"
+            elif h_pts < a_pts:
+                h_entry["cls"] = "L"; a_entry["cls"] = "W"
+            else:
+                h_entry["cls"] = "T"; a_entry["cls"] = "T"
+
         # Home team accumulates (FBS only — a non-FBS opponent still supplies the
         # matchup projection but never gets its own row).
         if h_fbs:
             ah = acc[home_name]
             ah["games"] += 1
-            ah["exp_wins"] += p_home
+            if played:
+                # Actual result drives the total; model prob is reference only.
+                ah["exp_wins"] += {"W": 1.0, "L": 0.0, "T": 0.5}[h_entry["cls"]]
+                ah["played_games"] += 1
+                if h_entry["cls"] == "W":
+                    ah["actual_wins"] += 1
+                elif h_entry["cls"] == "L":
+                    ah["actual_losses"] += 1
+                else:
+                    ah["actual_ties"] += 1
+            else:
+                ah["exp_wins"] += p_home
             ah["proj_pts_for"] += home_score
             ah["proj_pts_against"] += away_score
             ah["schedule"].append(h_entry)
@@ -2575,7 +2697,17 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
         if a_fbs:
             aa = acc[away_name]
             aa["games"] += 1
-            aa["exp_wins"] += (1.0 - p_home)
+            if played:
+                aa["exp_wins"] += {"W": 1.0, "L": 0.0, "T": 0.5}[a_entry["cls"]]
+                aa["played_games"] += 1
+                if a_entry["cls"] == "W":
+                    aa["actual_wins"] += 1
+                elif a_entry["cls"] == "L":
+                    aa["actual_losses"] += 1
+                else:
+                    aa["actual_ties"] += 1
+            else:
+                aa["exp_wins"] += (1.0 - p_home)
             aa["proj_pts_for"] += away_score
             aa["proj_pts_against"] += home_score
             aa["schedule"].append(a_entry)
@@ -2597,15 +2729,21 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
         proj_l = a["games"] - proj_w
 
         # Per-game classification for the expandable schedule view:
-        # W = projected win (p>=75%), L = projected loss (p<=25%), T = toss-up.
+        # played games already carry their ACTUAL cls (W/L/T); unplayed games
+        # use the model: W = projected win (p>=75%), L = loss (p<=25%), T = toss-up.
         sched = []
         for e in sorted(a["schedule"], key=lambda x: (x["week"] or 0, x["date"])):
-            p = e["p_win"]
-            cls = "W" if p >= 0.75 else ("L" if p <= 0.25 else "T")
-            sched.append({**e, "cls": cls})
+            if "cls" not in e:
+                p = e["p_win"]
+                e["cls"] = "W" if p >= 0.75 else ("L" if p <= 0.25 else "T")
+            sched.append(e)
         n_w = sum(1 for s in sched if s["cls"] == "W")
         n_t = sum(1 for s in sched if s["cls"] == "T")
         n_l = sum(1 for s in sched if s["cls"] == "L")
+
+        # Actual record from completed games (mid-season). Ties count as 0-0-1.
+        actual_record = f"{a['actual_wins']}–{a['actual_losses']}" + \
+            (f"–{a['actual_ties']}" if a["actual_ties"] else "")
 
         teams_out.append({
             "name": name,
@@ -2616,6 +2754,8 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
             "home_games": a["home"],
             "away_games": a["away"],
             "neutral_games": a["neutral"],
+            "played_games": a["played_games"],
+            "actual_record": actual_record,
             "exp_wins": exp_wins,
             "proj_record": f"{proj_w:g}–{proj_l:g}",
             "proj_ppg_for": round(a["proj_pts_for"] / a["games"], 1),

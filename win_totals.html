@@ -48,6 +48,7 @@ tr.top3 .rank-cell{color:var(--top3)}
 .conf-cell{color:var(--text-dim);font-size:.8rem;white-space:nowrap}
 .exp-wins{font-weight:900;font-size:1.05rem;color:var(--accent)}
 .proj-record{font-weight:800;font-variant-numeric:tabular-nums}
+.rec-cell{color:var(--text-dim);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .han-cell{color:var(--text-dim);font-size:.78rem;white-space:nowrap;font-variant-numeric:tabular-nums}
 .ppg-cell{color:var(--text-dim);font-variant-numeric:tabular-nums}
 .wtl-cell{font-weight:800;font-size:.8rem;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -64,6 +65,8 @@ tr.open .chev{transform:rotate(90deg);color:var(--accent)}
 .sgame.cls-W{background:rgba(52,211,153,.06)}
 .sgame.cls-T{background:rgba(251,191,36,.06)}
 .sgame.cls-L{background:rgba(248,113,113,.07)}
+.sgame.played{opacity:.92;outline:1px solid var(--border)}
+.sscore.final{color:var(--text);font-weight:600}
 .swk{color:var(--text-dim);font-variant-numeric:tabular-nums}
 .sopp{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sscore{color:var(--text-dim);font-variant-numeric:tabular-nums;font-size:.8rem}
@@ -96,7 +99,7 @@ tr.open .chev{transform:rotate(90deg);color:var(--accent)}
   </nav>
 </div>
 <div class="container">
-  <div class="note"><b>How to read this:</b> every 2026 game in each team's schedule is run through the multi-factor model, and per-game win probabilities are summed. The result is the <b>expected total wins</b> — your fair line for betting a team's season-wins over/under. Schedule strength is baked in (tough slates drag projections down). <b>Click any row</b> to see its full schedule: green = projected win, red = projected loss, yellow = toss-up.</div>
+  <div class="note"><b>How to read this:</b> every 2026 game in each team's schedule is run through the multi-factor model, and per-game win probabilities are summed. The result is the <b>expected total wins</b> — your fair line for betting a team's season-wins over/under. Schedule strength is baked in (tough slates drag projections down). <b>Click any row</b> to see its full schedule: green = projected win, red = projected loss, yellow = toss-up. Once games are played, actual results replace the projection — W·T·L and Exp Wins reflect real outcomes for completed games plus model probabilities for the rest (the <b>Rec</b> column shows the true record).</div>
   <div class="controls">
     <input type="text" class="search-box" id="searchBox" placeholder="Search team or conference...">
     <button class="refresh-btn" id="refreshBtn">↻ Refresh</button>
@@ -110,7 +113,8 @@ tr.open .chev{transform:rotate(90deg);color:var(--accent)}
           <th data-sort="conf" class="hide-mobile">Conf</th>
           <th data-sort="games" class="num hide-mobile">Games</th>
           <th data-sort="home_games" class="num hide-mobile">H / A / N</th>
-          <th class="num" title="Projected W–L record (wins rounded to nearest half)">Proj Record</th>
+          <th class="num hide-mobile" title="Actual W–L from completed games (mid-season)">Rec</th>
+          <th class="num" title="Projected W–L record (wins rounded to nearest half); actual results count for played games">Proj Record</th>
           <th data-sort="exp_wins" class="num sorted">Exp Wins</th>
           <th class="num hide-mobile" title="Games classified as projected Win / Toss-up / Loss (≥75% / 25–75% / ≤25%)">W·T·L</th>
           <th data-sort="proj_ppg_for" class="num hide-mobile">PPG For</th>
@@ -118,7 +122,7 @@ tr.open .chev{transform:rotate(90deg);color:var(--accent)}
         </tr>
       </thead>
       <tbody id="wtBody">
-        <tr><td colspan="10"><div class="status">Loading projections… (first run analyzes the full season, ~1 min)</div></td></tr>
+        <tr><td colspan="11"><div class="status">Loading projections… (first run analyzes the full season, ~1 min)</div></td></tr>
       </tbody>
     </table>
   </div>
@@ -144,7 +148,7 @@ async function load(){
       `${data.year} season · ${TEAMS.length} teams · ${data.games_analyzed} games analyzed`;
     render();
   }catch(e){
-    body.innerHTML = `<tr><td colspan="10"><div class="status error-status">Failed to load: ${esc(e.message)}</div></td></tr>`;
+    body.innerHTML = `<tr><td colspan="11"><div class="status error-status">Failed to load: ${esc(e.message)}</div></td></tr>`;
   }
 }
 
@@ -159,15 +163,27 @@ function schedHtml(t){
     const where = s.neutral ? `vs ${esc(s.opp)} <span style="color:var(--text-dim);font-size:.72rem">(N)</span>`
               : (s.at_home ? `vs ${esc(s.opp)}` : `@ ${esc(s.opp)}`);
     const date = fmtDate(s.date);
-    return `<div class="sgame cls-${s.cls}" title="${date} · model win probability ${(s.p_win*100).toFixed(0)}%">
+    // Played games show the FINAL score; unplayed show the model projection.
+    let score, tip;
+    if(s.played){
+      score = `<span class="sscore final">final ${s.actual_for}–${s.actual_against}</span>`;
+      tip = `${date} · final ${s.actual_for}–${s.actual_against}` +
+            (s.p_win != null ? ` · model pre-game ${(s.p_win*100).toFixed(0)}%` : '');
+    } else {
+      score = `<span class="sscore">proj ${s.proj_for}–${s.proj_against}</span>`;
+      tip = `${date} · model win probability ${(s.p_win*100).toFixed(0)}%`;
+    }
+    return `<div class="sgame cls-${s.cls}${s.played ? ' played' : ''}" title="${tip}">
       <span class="swk">${s.week ? 'W'+s.week : '—'}</span>
       <span class="sopp">${where}</span>
-      <span class="sscore">proj ${s.proj_for}–${s.proj_against}</span>
+      ${score}
       <span class="spct">${Math.round(s.p_win*100)}%</span>
       <span class="badge b${s.cls}">${s.cls}</span>
     </div>`;
   }).join('');
-  return `<div class="sched-title">Projected schedule — ${esc(t.name)}</div>${rows}`;
+  const played = t.schedule.filter(s=>s.played).length;
+  const title = played ? `Schedule — ${esc(t.name)} (${played} final, ${t.schedule.length-played} projected)` : `Projected schedule — ${esc(t.name)}`;
+  return `<div class="sched-title">${title}</div>${rows}`;
 }
 
 function render(){
@@ -180,7 +196,7 @@ function render(){
   });
   const body = document.getElementById('wtBody');
   if(!rows.length){
-    body.innerHTML = `<tr><td colspan="10"><div class="status">No teams match.</div></td></tr>`;
+    body.innerHTML = `<tr><td colspan="11"><div class="status">No teams match.</div></td></tr>`;
     return;
   }
   body.innerHTML = rows.map(t=>{
@@ -195,13 +211,14 @@ function render(){
       <td class="conf-cell hide-mobile">${esc(t.conf||'—')}</td>
       <td class="num hide-mobile">${t.games}</td>
       <td class="han-cell num hide-mobile">${t.home_games} / ${t.away_games} / ${t.neutral_games}</td>
+      <td class="rec-cell num hide-mobile">${(t.played_games||0) ? esc(t.actual_record) : '—'}</td>
       <td class="proj-record num">${esc(t.proj_record)}</td>
       <td class="exp-wins num">${t.exp_wins.toFixed(2)}</td>
       <td class="wtl-cell num hide-mobile"><span class="w">${cw}W</span> · <span class="t">${ct}T</span> · <span class="l">${cl}L</span></td>
       <td class="ppg-cell num hide-mobile">${t.proj_ppg_for.toFixed(1)}</td>
       <td class="ppg-cell num hide-mobile">${t.proj_ppg_against.toFixed(1)}</td>
     </tr>
-    <tr class="detail-row" data-for="${esc(t.name)}"><td colspan="10">${schedHtml(t)}</td></tr>`;
+    <tr class="detail-row" data-for="${esc(t.name)}"><td colspan="11">${schedHtml(t)}</td></tr>`;
   }).join('');
 }
 
