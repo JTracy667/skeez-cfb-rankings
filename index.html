@@ -168,6 +168,17 @@
     .rank-top10 { color: var(--text); }
     .rank-other { color: var(--text-dim); }
 
+    /* AP poll rank column */
+    .ap-cell {
+      font-weight: 700;
+      font-size: 0.85rem;
+      width: 42px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+    .ap-cell.unranked { color: var(--text-dim); font-weight: 500; }
+
     /* Team cell */
     .team-cell {
       display: flex;
@@ -292,6 +303,7 @@
       <thead>
         <tr>
           <th data-sort="rank" class="sorted"># <span class="sort-arrow">▼</span></th>
+          <th data-sort="ap_rank" title="AP Top 25 poll rank (— = not ranked)">AP <span class="sort-arrow"></span></th>
           <th data-sort="team">Team <span class="sort-arrow"></span></th>
           <th data-sort="conf" class="hide-mobile">Conf <span class="sort-arrow"></span></th>
           <th data-sort="movement">Δ <span class="sort-arrow"></span></th>
@@ -328,7 +340,7 @@ async function fetchRankings() {
   } catch (err) {
     console.error('Failed to fetch rankings:', err);
     document.getElementById('rankingsBody').innerHTML =
-      '<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-dim)">⚠️ Could not load rankings. Is the backend running?</td></tr>';
+      '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-dim)">⚠️ Could not load rankings. Is the backend running?</td></tr>';
   }
 }
 
@@ -390,6 +402,14 @@ function render() {
       case 'points':   va = a.points; vb = b.points; break;
       default:         va = a.composite; vb = b.composite;
     }
+    if (currentSort.key === 'ap_rank') {
+      // Unranked teams always sort last, regardless of direction.
+      const an = a.ap_rank == null, bn = b.ap_rank == null;
+      if (an && bn) return 0;
+      if (an) return 1;
+      if (bn) return -1;
+      return currentSort.dir === 'asc' ? a.ap_rank - b.ap_rank : b.ap_rank - a.ap_rank;
+    }
     if (typeof va === 'string') {
       const cmp = va.localeCompare(vb);
       return currentSort.dir === 'asc' ? cmp : -cmp;
@@ -401,6 +421,7 @@ function render() {
   tbody.innerHTML = data.map(t => `
     <tr>
       <td class="rank-cell ${rankClass(t.rank)}">${t.rank}</td>
+      <td class="ap-cell${t.ap_rank == null ? ' unranked' : ''}">${t.ap_rank ?? '—'}</td>
       <td>
         <div class="team-cell">
           <img class="team-logo" src="${t.logo_url || ''}" alt="${t.name}" onerror="this.style.display='none'">
