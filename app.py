@@ -2454,16 +2454,18 @@ def api_best_bets():
 
 _WIN_TOTALS_CACHE = {}          # {year: {"ts":..., "teams":[...]}}
 WIN_TOTALS_TTL = 3600           # recompute at most hourly (schedule is static)
-_H2H_SCALE = 6.0                # CFB outcome std-dev ≈ 6 pts; logistic scale
+_H2H_SCALE = 3.0                # logistic scale, calibrated Aug 2026 vs 138 sportsbook win-total O/U lines (S=6.0 compressed elite teams ~2 wins low)
 
 
 def _h2h_win_prob(home_score: float, away_score: float) -> float:
     """Head-to-head win probability from projected scores (logistic).
 
-    diff = home - away projected points. A +6 pt edge ≈ 73% to cover the
-    spread / win; symmetric around 50%. This is a game-level model, so it
-    already includes whatever home-field adjustment was baked into the
-    projected scores — we do NOT add HFA again here."""
+    diff = home - away projected points. A +3 pt edge ≈ 73% to win; symmetric
+    around 50%. Scale calibrated against sportsbook season-win O/U lines so
+    elite teams project near their book totals instead of compressing toward
+    the middle. This is a game-level model, so it already includes whatever
+    home-field adjustment was baked into the projected scores — we do NOT add
+    HFA again here."""
     diff = home_score - away_score
     return 1.0 / (1.0 + math.exp(-diff / _H2H_SCALE))
 
