@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Application + data
 COPY app.py .
-COPY index.html analytics.html schedule.html ./
+COPY index.html analytics.html schedule.html win_totals.html ./
 COPY data/ ./data/
 COPY scripts/ ./scripts/
 
