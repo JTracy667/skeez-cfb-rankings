@@ -303,7 +303,7 @@
       <thead>
         <tr>
           <th data-sort="rank" class="sorted"># <span class="sort-arrow">▼</span></th>
-          <th data-sort="ap_rank" title="AP Top 25 poll rank (— = not ranked)">AP <span class="sort-arrow"></span></th>
+          <th title="AP Top 25 poll rank (— = not ranked). Reference only — table always stays in composite order.">AP</th>
           <th data-sort="team">Team <span class="sort-arrow"></span></th>
           <th data-sort="conf" class="hide-mobile">Conf <span class="sort-arrow"></span></th>
           <th data-sort="movement">Δ <span class="sort-arrow"></span></th>
@@ -401,14 +401,6 @@ function render() {
       case 'composite': va = a.composite; vb = b.composite; break;
       case 'points':   va = a.points; vb = b.points; break;
       default:         va = a.composite; vb = b.composite;
-    }
-    if (currentSort.key === 'ap_rank') {
-      // Unranked teams always sort last, regardless of direction.
-      const an = a.ap_rank == null, bn = b.ap_rank == null;
-      if (an && bn) return 0;
-      if (an) return 1;
-      if (bn) return -1;
-      return currentSort.dir === 'asc' ? a.ap_rank - b.ap_rank : b.ap_rank - a.ap_rank;
     }
     if (typeof va === 'string') {
       const cmp = va.localeCompare(vb);
