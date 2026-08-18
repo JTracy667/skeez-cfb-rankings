@@ -21,6 +21,7 @@ data/espn_week0_2026.json
 data/espn_week2.json
 data/espn_week3.json
 data/espn_week4.json
+data/cfbd_season_games.json
 data/espn_scoreboard.json
 data/espn_teams_raw.json
 data/analytics.json

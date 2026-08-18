@@ -132,20 +132,6 @@ nav a.active{color:var(--accent)}
     <button class="filter-btn" data-conf="Sun Belt">Sun Belt</button>
     <select class="filter-btn" id="weekSelect" title="Select week">
       <option value="1">Week 1</option>
-      <option value="2">Week 2</option>
-      <option value="3">Week 3</option>
-      <option value="4">Week 4</option>
-      <option value="5">Week 5</option>
-      <option value="6">Week 6</option>
-      <option value="7">Week 7</option>
-      <option value="8">Week 8</option>
-      <option value="9">Week 9</option>
-      <option value="10">Week 10</option>
-      <option value="11">Week 11</option>
-      <option value="12">Week 12</option>
-      <option value="13">Week 13</option>
-      <option value="14">Week 14</option>
-      <option value="15">Week 15</option>
     </select>
     <button class="filter-btn" id="sortBtn" title="Sort by date/time">Sort: Date 🕐</button>
     <button class="refresh-btn" id="refreshBtn">🔄 Refresh</button>
@@ -157,10 +143,29 @@ nav a.active{color:var(--accent)}
 const API = '/api';
 let matchups = [];
 let currentWeek = 1;
+let lastNote = '';
 let activeConf = 'all';
 let searchQuery = '';
 let sortMode = 'date';
 let sortDir = 'asc';
+
+async function loadWeeks() {
+  // Build the week dropdown from CFBD's published weeks (bye weeks and
+  // unpublished future weeks simply don't appear).
+  try {
+    const res = await fetch(`${API}/schedule/weeks`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const sel = document.getElementById('weekSelect');
+    sel.innerHTML = '';
+    (data.weeks || []).forEach(w => {
+      const opt = document.createElement('option');
+      opt.value = w;
+      opt.textContent = `Week ${w}`;
+      sel.appendChild(opt);
+    });
+  } catch (e) { console.error('Failed to load weeks:', e); }
+}
 
 async function fetchSchedule(week) {
   currentWeek = week || currentWeek;
@@ -173,6 +178,7 @@ async function fetchSchedule(week) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     matchups = data.matchups;
+    lastNote = data.note || '';
     document.getElementById('weekBadge').textContent = `Week ${data.week} · ${data.season} Season · ${matchups.length} Games`;
     document.getElementById('weekSelect').value = currentWeek;
     renderSummary(data);
@@ -364,7 +370,11 @@ function renderMatchups() {
   });
   const container = document.getElementById('matchupsContainer');
   if (!data.length) {
-    container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-dim)">No matchups match your filter.</div>';
+    if (matchups.length === 0 && lastNote) {
+      container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-dim)">📅 ${lastNote}</div>`;
+    } else {
+      container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-dim)">No matchups match your filter.</div>';
+    }
     return;
   }
   container.innerHTML = data.map(m => `
@@ -390,7 +400,7 @@ function renderMatchups() {
           : `<div class="line-overlay"><span class="line-na">No line</span></div>`
         }
         <div class="diff-badge ${diffBadgeClass(m)}">${diffBadgeText(m)}</div>
-        <div class="game-date">${formatGameDate(m.date)}</div>
+        <div class="game-date">${formatGameDate(m.date)}${m.neutral_site ? ' · 🏟️ Neutral Site' : ''}</div>
         ${m.line_vs_model !== undefined && m.line_vs_model !== null
           ? `<div class="line-vs-model ${m.line_vs_model > 1 ? 'up' : m.line_vs_model < -1 ? 'down' : ''}">Line ${m.line_vs_model > 0 ? 'covers +' + m.line_vs_model : m.line_vs_model < 0 ? 'under -' + Math.abs(m.line_vs_model) : '≈ model'}</div>`
           : ''
@@ -439,7 +449,16 @@ document.getElementById('sortBtn').addEventListener('click', () => {
 document.getElementById('refreshBtn').addEventListener('click', () => fetchSchedule(currentWeek));
 
 // ── Init ──
-fetchSchedule(1);
+(async () => {
+  await loadWeeks();
+  // If the requested week isn't published yet (e.g. a bye week), fall back to
+  // the nearest available one so the page never loads empty by accident.
+  const sel = document.getElementById('weekSelect');
+  if (![...sel.options].some(o => o.value === String(currentWeek))) {
+    currentWeek = parseInt(sel.options[0]?.value || '1', 10);
+  }
+  fetchSchedule(currentWeek);
+})();
 fetchBestBets();
 fetchLineMoves();
 </script>

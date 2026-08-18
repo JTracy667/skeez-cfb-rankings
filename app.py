@@ -1634,22 +1634,62 @@ def api_analytics_fetch():
         traceback.print_exc()
         raise HTTPException(500, str(e))
 
-# ── ESPN Schedule Fetcher ──
-ESPN_SCHEDULE_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard"
-TEAMS_NAMES_FILE = BASE_DIR / "data" / "team_names.json"
+# ── CFBD Schedule Fetcher ──
+# The Schedule page uses CFBD's full-season game list (the same source Win
+# Totals already relies on) instead of ESPN's scoreboard — ESPN's week=N param
+# silently truncates to 25 events (observed Aug 2026), which broke every week.
+# CFBD returns the complete slate for all weeks in one call, with week numbers
+# and ISO dates.
 FBS_TEAMS_FILE = BASE_DIR / "data" / "fbs_teams.json"
 
-# 2024 realignment override: ESPN API still returns old conferences for many teams
-CONF_OVERRIDE = {
-    # Moved to Big Ten
-    "Oregon": "Big Ten", "Washington": "Big Ten", "USC": "Big Ten", "UCLA": "Big Ten",
-    # Moved to SEC
-    "Texas": "SEC", "Oklahoma": "SEC",
-    # Moved to ACC
-    "Cal": "ACC",
-    # Moved to Big 12
-    "BYU": "Big 12", "Cincinnati": "Big 12", "Houston": "Big 12", "UCF": "Big 12",
-}
+def _cfbd_is_fbs(game: dict) -> bool:
+    """True if either side of a CFBD game is FBS-classified."""
+    return ((game.get("homeClassification") or "").upper().startswith("FBS")
+            or (game.get("awayClassification") or "").upper().startswith("FBS"))
+
+
+def fetch_cfbd_schedule(week: int = 1, year: int = CFBD_YEAR) -> list[dict] | None:
+    """All FBS matchups for one week from the CFBD season game list.
+
+    Returns [{home, away, date, neutral_site}] sorted by kickoff time, or [] if
+    CFBD has no games published for that week yet (bye week / future week).
+    None only on hard failure."""
+    try:
+        team_map = _build_team_map()
+        known = set(team_map.keys())
+        matchups = []
+        for g in _cfbd_season_games(year):
+            if not isinstance(g, dict) or g.get("week") != week:
+                continue
+            home_name = g.get("homeTeam") or ""
+            away_name = g.get("awayTeam") or ""
+            # FBS-only (same rule as Win Totals), and both teams must be in our
+            # analytics set so the model can project them.
+            if not _cfbd_is_fbs(g):
+                continue
+            if home_name not in known or away_name not in known:
+                continue
+            matchups.append({
+                "home": home_name,
+                "away": away_name,
+                "date": g.get("startDate"),  # ISO 8601 UTC, e.g. 2026-08-29T16:00:00Z
+                "neutral_site": bool(g.get("neutralSite")),
+            })
+        matchups.sort(key=lambda m: (m["date"] or ""))
+        return matchups
+    except Exception as e:
+        print(f"[CFBD schedule fetch failed] {e}")
+        return None
+
+
+def cfbd_weeks(year: int = CFBD_YEAR) -> list[int]:
+    """Week numbers that have at least one FBS game in the season list."""
+    weeks = set()
+    for g in _cfbd_season_games(year):
+        if isinstance(g, dict) and _cfbd_is_fbs(g) and isinstance(g.get("week"), int):
+            weeks.add(g["week"])
+    return sorted(weeks)
+
 
 def load_fbs_conferences() -> dict:
     """Load conference mapping from the FBS teams database.
@@ -1666,48 +1706,6 @@ def load_fbs_conferences() -> dict:
         return conf_map
     except Exception:
         return {}
-
-def load_team_names() -> dict:
-    try:
-        with open(TEAMS_NAMES_FILE) as f:
-            return json.load(f)
-    except Exception:
-        return {}
-
-def fetch_espn_schedule(week: int = 1, year: int = 2026) -> list[dict] | None:
-    """Fetch weekly matchups from ESPN API and map to our team names."""
-    try:
-        url = f"{ESPN_SCHEDULE_URL}?year={year}&week={week}"
-        data = _http_get(url, retries=3, base_delay=1.0)
-        if not data:
-            return None
-        name_map = load_team_names()
-        matchups = []
-        for event in data.get("events", []):
-            comp = event.get("competitions", [{}])[0]
-            home = away = None
-            for c in comp.get("competitors", []):
-                loc = c.get("team", {}).get("location", "")
-                if c.get("homeAway") == "home":
-                    home = name_map.get(loc, loc)
-                else:
-                    away = name_map.get(loc, loc)
-            if home and away:
-                matchups.append({
-                    "home": home,
-                    "away": away,
-                    "date": event.get("date"),  # ISO 8601, e.g. 2026-08-29T16:00Z
-                })
-        # Cache the raw ESPN data to disk for future fallback if the API goes down
-        try:
-            cache_file = BASE_DIR / "data" / f"espn_week{week}_{year}.json"
-            cache_file.write_text(json.dumps(data), encoding="utf-8")
-        except Exception:
-            pass
-        return matchups
-    except Exception as e:
-        print(f"[ESPN schedule fetch failed] {e}")
-        return None
 
 # ── Schedule / Differentials ──
 def load_schedule() -> dict:
@@ -1930,39 +1928,18 @@ def api_schedule_update(matchups: list[dict]):
 
 @app.post("/api/schedule/fetch")
 def api_schedule_fetch(week: int = 1, year: int = 2026):
-    """Fetch live schedule from ESPN and project scores from SP+."""
-    matchups = fetch_espn_schedule(week, year)
-    # Fallback: try cached ESPN data files if live fetch fails
+    """Fetch the full FBS slate for a week from CFBD and project scores.
+
+    Source is CFBD's season game list (same as Win Totals) — ESPN's scoreboard
+    was dropped after its week=N param started truncating to 25 events."""
+    matchups = fetch_cfbd_schedule(week, year)
+    if matchups is None:
+        raise HTTPException(502, "CFBD schedule fetch failed")
+    note = None
     if not matchups:
-        import glob
-        cached_files = sorted(glob.glob(str(BASE_DIR / "data" / "espn_week*.json")))
-        for cf in reversed(cached_files):
-            try:
-                with open(cf) as f:
-                    cached = json.load(f)
-                name_map = load_team_names()
-                for event in cached.get("events", []):
-                    comp = event.get("competitions", [{}])[0]
-                    home = away = None
-                    for c in comp.get("competitors", []):
-                        loc = c.get("team", {}).get("location", "")
-                        if c.get("homeAway") == "home":
-                            home = name_map.get(loc, loc)
-                        else:
-                            away = name_map.get(loc, loc)
-                    if home and away:
-                        matchups.append({
-                            "home": home,
-                            "away": away,
-                            "description": event.get("shortName", ""),
-                            "date": event.get("date"),  # ISO 8601, e.g. 2026-08-29T16:00Z
-                        })
-                if matchups:
-                    break
-            except Exception:
-                continue
-    if not matchups:
-        raise HTTPException(502, "ESPN schedule fetch failed")
+        # Bye week or a future week CFBD hasn't published yet.
+        note = (f"No FBS games are listed for Week {week} yet — "
+                f"CFBD publishes schedules as the season approaches.")
     team_map = _build_team_map()
     conf_map = load_fbs_conferences()
 
@@ -1973,11 +1950,18 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
     for m in matchups:
         home = team_map.get(m["home"], {})
         away = team_map.get(m["away"], {})
-        # Multi-factor projection
+        # Multi-factor projection. On a neutral site, zero out the HFA tilt so
+        # the game is decided purely by strength (same re-centering as Win Totals).
         home_proj_data = project_score_multi_factor(home, is_home=True)
         away_proj_data = project_score_multi_factor(away, is_home=False)
-        home_proj = home_proj_data["projected_score"]
-        away_proj = away_proj_data["projected_score"]
+        if m.get("neutral_site"):
+            h2 = project_score_multi_factor(home, is_home=False)["projected_score"]
+            a2 = project_score_multi_factor(away, is_home=True)["projected_score"]
+            home_proj = (home_proj_data["projected_score"] + h2) / 2.0
+            away_proj = (away_proj_data["projected_score"] + a2) / 2.0
+        else:
+            home_proj = home_proj_data["projected_score"]
+            away_proj = away_proj_data["projected_score"]
         diff = round(home_proj - away_proj, 1)
         # Betting market overlay
         odds_key = (_normalize_team_name(m["home"]), _normalize_team_name(m["away"]))
@@ -2023,7 +2007,21 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
         })
     # Lock in this week's SU + ATS picks (idempotent)
     _lock_picks(enriched, week)
-    return {"week": week, "season": year, "updated": datetime.now().isoformat(), "matchups": enriched, "has_odds": len(odds_map) > 0}
+    return {"week": week, "season": year, "updated": datetime.now().isoformat(),
+            "matchups": enriched, "has_odds": len(odds_map) > 0, "note": note}
+
+
+@app.get("/api/schedule/weeks")
+def api_schedule_weeks(year: int = CFBD_YEAR):
+    """Week numbers that currently have FBS games in the CFBD season list.
+
+    The frontend builds its week dropdown from this so weeks appear as CFBD
+    publishes them (and bye weeks like Week 14 don't show up)."""
+    try:
+        return {"year": year, "weeks": cfbd_weeks(year)}
+    except Exception as e:
+        print(f"[GET /api/schedule/weeks ERROR] {e}")
+        raise HTTPException(502, f"Weeks fetch failed: {e}")
 
 # ── Records: Straight-Up (SU) + Against-the-Spread (ATS) tracking ──
 RECORD_FILE = BASE_DIR / "data" / "record.json"
@@ -2563,10 +2561,39 @@ def _h2h_win_prob(home_score: float, away_score: float) -> float:
     return 1.0 / (1.0 + math.exp(-diff / _H2H_SCALE))
 
 
+# ── CFBD season games cache ──
+# The full-season game list is static within a week and shared by the Schedule
+# page, Win Totals, and the weekly sync. Cache in memory (30 min) + persist to
+# disk so container restarts reuse the last pull instead of re-fetching.
+_CFBD_GAMES_CACHE = {}   # {year: {"ts": float, "games": [dict]}}
+CFBD_GAMES_TTL = 1800    # 30 minutes — schedule is static within a week
+_CFBD_GAMES_FILE = BASE_DIR / "data" / "cfbd_season_games.json"
+
+
 def _cfbd_season_games(year: int) -> list[dict]:
-    """Full-season game list from CFBD (one call, all weeks)."""
-    data = _cfbd_get("games", year)
-    return [g for g in data if isinstance(g, dict)]
+    """Full-season game list from CFBD (one call, all weeks).
+
+    Cached in memory for CFBD_GAMES_TTL seconds and persisted to disk. On a
+    fresh empty result (API hiccup), falls back to the last good disk copy."""
+    cached = _CFBD_GAMES_CACHE.get(year)
+    if cached and time.time() - cached["ts"] < CFBD_GAMES_TTL:
+        return cached["games"]
+    games = [g for g in _cfbd_get("games", year) if isinstance(g, dict)]
+    if not games and _CFBD_GAMES_FILE.exists():
+        try:
+            payload = json.loads(_CFBD_GAMES_FILE.read_text(encoding="utf-8"))
+            # Disk copy is a fallback only — allow up to 4x the TTL staleness.
+            if time.time() - payload.get("ts", 0) < CFBD_GAMES_TTL * 4:
+                games = [g for g in payload.get("games", []) if isinstance(g, dict)]
+        except Exception:
+            pass
+    _CFBD_GAMES_CACHE[year] = {"ts": time.time(), "games": games}
+    try:
+        _CFBD_GAMES_FILE.write_text(
+            json.dumps({"ts": time.time(), "games": games}), encoding="utf-8")
+    except Exception:
+        pass
+    return games
 
 
 def compute_win_totals(year: int = CFBD_YEAR) -> dict:
