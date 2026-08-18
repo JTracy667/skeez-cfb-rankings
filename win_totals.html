@@ -50,6 +50,28 @@ tr.top3 .rank-cell{color:var(--top3)}
 .proj-record{font-weight:800;font-variant-numeric:tabular-nums}
 .han-cell{color:var(--text-dim);font-size:.78rem;white-space:nowrap;font-variant-numeric:tabular-nums}
 .ppg-cell{color:var(--text-dim);font-variant-numeric:tabular-nums}
+.wtl-cell{font-weight:800;font-size:.8rem;white-space:nowrap;font-variant-numeric:tabular-nums}
+.wtl-cell .w{color:var(--up)} .wtl-cell .t{color:var(--top3)} .wtl-cell .l{color:var(--down)}
+tr.team-row{cursor:pointer}
+.chev{display:inline-block;width:.9rem;color:var(--text-dim);font-size:.7rem;transition:transform .15s}
+tr.open .chev{transform:rotate(90deg);color:var(--accent)}
+.detail-row{display:none}
+.detail-row.show{display:table-row}
+.detail-row td{background:#14161f;padding:0;border-bottom:none}
+.sched{padding:.75rem 1rem .95rem;display:flex;flex-direction:column;gap:.3rem}
+.sched-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);margin-bottom:.25rem}
+.sgame{display:grid;grid-template-columns:2.6rem minmax(140px,1fr) auto auto 1.5rem;gap:.75rem;align-items:center;font-size:.83rem;padding:.3rem .55rem;border-radius:8px;background:var(--surface)}
+.sgame.cls-W{background:rgba(52,211,153,.06)}
+.sgame.cls-T{background:rgba(251,191,36,.06)}
+.sgame.cls-L{background:rgba(248,113,113,.07)}
+.swk{color:var(--text-dim);font-variant-numeric:tabular-nums}
+.sopp{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sscore{color:var(--text-dim);font-variant-numeric:tabular-nums;font-size:.8rem}
+.spct{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.badge{display:inline-block;min-width:1.35rem;text-align:center;border-radius:6px;padding:.1rem .3rem;font-size:.72rem;font-weight:800}
+.bW{background:rgba(52,211,153,.15);color:var(--up)}
+.bT{background:rgba(251,191,36,.15);color:var(--top3)}
+.bL{background:rgba(248,113,113,.15);color:var(--down)}
 .status{text-align:center;color:var(--text-dim);padding:3rem 1rem;font-size:.95rem}
 .error-status{color:var(--down)}
 @media (max-width:640px){
@@ -74,7 +96,7 @@ tr.top3 .rank-cell{color:var(--top3)}
   </nav>
 </div>
 <div class="container">
-  <div class="note"><b>How to read this:</b> every 2026 game in each team's schedule is run through the multi-factor model, and per-game win probabilities are summed. The result is the <b>expected total wins</b> — your fair line for betting a team's season-wins over/under. Schedule strength is baked in (tough slates drag projections down). No bookmaker publishes NCAAF win-total futures, so this model number IS the reference.</div>
+  <div class="note"><b>How to read this:</b> every 2026 game in each team's schedule is run through the multi-factor model, and per-game win probabilities are summed. The result is the <b>expected total wins</b> — your fair line for betting a team's season-wins over/under. Schedule strength is baked in (tough slates drag projections down). <b>Click any row</b> to see its full schedule: green = projected win, red = projected loss, yellow = toss-up.</div>
   <div class="controls">
     <input type="text" class="search-box" id="searchBox" placeholder="Search team or conference...">
     <button class="refresh-btn" id="refreshBtn">↻ Refresh</button>
@@ -90,12 +112,13 @@ tr.top3 .rank-cell{color:var(--top3)}
           <th data-sort="home_games" class="num hide-mobile">H / A / N</th>
           <th class="num" title="Projected W–L record (wins rounded to nearest half)">Proj Record</th>
           <th data-sort="exp_wins" class="num sorted">Exp Wins</th>
+          <th class="num hide-mobile" title="Games classified as projected Win / Toss-up / Loss (≥75% / 25–75% / ≤25%)">W·T·L</th>
           <th data-sort="proj_ppg_for" class="num hide-mobile">PPG For</th>
           <th data-sort="proj_ppg_against" class="num hide-mobile">PPA</th>
         </tr>
       </thead>
       <tbody id="wtBody">
-        <tr><td colspan="9"><div class="status">Loading projections… (first run analyzes the full season, ~1 min)</div></td></tr>
+        <tr><td colspan="10"><div class="status">Loading projections… (first run analyzes the full season, ~1 min)</div></td></tr>
       </tbody>
     </table>
   </div>
@@ -106,6 +129,9 @@ let sortKey = 'exp_wins';
 let sortDir = -1; // desc
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(d){ if(!d) return ''; const p=d.split('-'); return `${MONTHS[(+p[1]||1)-1]} ${+p[2]}`; }
 
 async function load(){
   const body = document.getElementById('wtBody');
@@ -118,13 +144,30 @@ async function load(){
       `${data.year} season · ${TEAMS.length} teams · ${data.games_analyzed} games analyzed`;
     render();
   }catch(e){
-    body.innerHTML = `<tr><td colspan="9"><div class="status error-status">Failed to load: ${esc(e.message)}</div></td></tr>`;
+    body.innerHTML = `<tr><td colspan="10"><div class="status error-status">Failed to load: ${esc(e.message)}</div></td></tr>`;
   }
 }
 
 function sortVal(t, key){
   const v = t[key];
   return (v === null || v === undefined) ? -Infinity : v;
+}
+
+function schedHtml(t){
+  if(!t.schedule || !t.schedule.length) return '<div class="sched-title">No schedule data</div>';
+  const rows = t.schedule.map(s=>{
+    const where = s.neutral ? `vs ${esc(s.opp)} <span style="color:var(--text-dim);font-size:.72rem">(N)</span>`
+              : (s.at_home ? `vs ${esc(s.opp)}` : `@ ${esc(s.opp)}`);
+    const date = fmtDate(s.date);
+    return `<div class="sgame cls-${s.cls}" title="${date} · model win probability ${(s.p_win*100).toFixed(0)}%">
+      <span class="swk">${s.week ? 'W'+s.week : '—'}</span>
+      <span class="sopp">${where}</span>
+      <span class="sscore">proj ${s.proj_for}–${s.proj_against}</span>
+      <span class="spct">${Math.round(s.p_win*100)}%</span>
+      <span class="badge b${s.cls}">${s.cls}</span>
+    </div>`;
+  }).join('');
+  return `<div class="sched-title">Projected schedule — ${esc(t.name)}</div>${rows}`;
 }
 
 function render(){
@@ -137,28 +180,43 @@ function render(){
   });
   const body = document.getElementById('wtBody');
   if(!rows.length){
-    body.innerHTML = `<tr><td colspan="9"><div class="status">No teams match.</div></td></tr>`;
+    body.innerHTML = `<tr><td colspan="10"><div class="status">No teams match.</div></td></tr>`;
     return;
   }
   body.innerHTML = rows.map(t=>{
     const rankCls = t.rank <= 3 ? ' top3' : '';
     const logo = t.logo_url ? `<img src="${esc(t.logo_url)}" alt="" onerror="this.style.visibility='hidden'">` : '';
-    return `<tr class="${rankCls}">
-      <td class="rank-cell">${t.rank}</td>
+    const cw = (t.schedule||[]).filter(s=>s.cls==='W').length;
+    const ct = (t.schedule||[]).filter(s=>s.cls==='T').length;
+    const cl = (t.schedule||[]).filter(s=>s.cls==='L').length;
+    return `<tr class="team-row ${rankCls}" data-name="${esc(t.name)}">
+      <td class="rank-cell"><span class="chev">▶</span>${t.rank}</td>
       <td><div class="team-cell"><span class="team-logo">${logo}</span><span class="team-name">${esc(t.name)}</span></div></td>
       <td class="conf-cell hide-mobile">${esc(t.conf||'—')}</td>
       <td class="num hide-mobile">${t.games}</td>
       <td class="han-cell num hide-mobile">${t.home_games} / ${t.away_games} / ${t.neutral_games}</td>
       <td class="proj-record num">${esc(t.proj_record)}</td>
       <td class="exp-wins num">${t.exp_wins.toFixed(2)}</td>
+      <td class="wtl-cell num hide-mobile"><span class="w">${cw}W</span> · <span class="t">${ct}T</span> · <span class="l">${cl}L</span></td>
       <td class="ppg-cell num hide-mobile">${t.proj_ppg_for.toFixed(1)}</td>
       <td class="ppg-cell num hide-mobile">${t.proj_ppg_against.toFixed(1)}</td>
-    </tr>`;
+    </tr>
+    <tr class="detail-row" data-for="${esc(t.name)}"><td colspan="10">${schedHtml(t)}</td></tr>`;
   }).join('');
 }
 
+// Expand/collapse via delegation (survives re-renders)
+document.getElementById('wtBody').addEventListener('click', e=>{
+  const row = e.target.closest('tr.team-row');
+  if(!row) return;
+  const det = document.querySelector(`#wtBody .detail-row[data-for="${CSS.escape(row.dataset.name)}"]`);
+  if(!det) return;
+  const open = det.classList.toggle('show');
+  row.classList.toggle('open', open);
+});
+
 document.querySelectorAll('#wtTable thead th').forEach(th=>{
-  if(!th.dataset.sort) return; // display-only header (Proj Record)
+  if(!th.dataset.sort) return; // display-only header (Proj Record, W·T·L)
   th.addEventListener('click', ()=>{
     const key = th.dataset.sort;
     if(sortKey === key){ sortDir *= -1; } else { sortKey = key; sortDir = (key==='name'||key==='conf') ? 1 : -1; }

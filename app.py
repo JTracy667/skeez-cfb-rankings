@@ -2503,6 +2503,7 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
     acc = defaultdict(lambda: {
         "games": 0, "home": 0, "away": 0, "neutral": 0,
         "exp_wins": 0.0, "proj_pts_for": 0.0, "proj_pts_against": 0.0,
+        "schedule": [],
     })
     games_analyzed = 0
 
@@ -2542,6 +2543,20 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
 
         p_home = _h2h_win_prob(home_score, away_score)
 
+        # Per-game schedule entries (for the expandable "which games do they lose" view).
+        week = g.get("week") or 0
+        start_date = (g.get("startDate") or "")[:10]
+        h_entry = {
+            "week": week, "date": start_date, "opp": away_name, "at_home": not neutral,
+            "neutral": neutral, "proj_for": round(home_score, 1),
+            "proj_against": round(away_score, 1), "p_win": p_home,
+        }
+        a_entry = {
+            "week": week, "date": start_date, "opp": home_name, "at_home": False,
+            "neutral": neutral, "proj_for": round(away_score, 1),
+            "proj_against": round(home_score, 1), "p_win": 1.0 - p_home,
+        }
+
         # Home team accumulates (FBS only — a non-FBS opponent still supplies the
         # matchup projection but never gets its own row).
         if h_fbs:
@@ -2550,6 +2565,7 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
             ah["exp_wins"] += p_home
             ah["proj_pts_for"] += home_score
             ah["proj_pts_against"] += away_score
+            ah["schedule"].append(h_entry)
             if neutral:
                 ah["neutral"] += 1
             else:
@@ -2562,6 +2578,7 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
             aa["exp_wins"] += (1.0 - p_home)
             aa["proj_pts_for"] += away_score
             aa["proj_pts_against"] += home_score
+            aa["schedule"].append(a_entry)
             if neutral:
                 aa["neutral"] += 1
             else:
@@ -2578,6 +2595,18 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
         # losses = games - wins.
         proj_w = round(exp_wins * 2) / 2.0
         proj_l = a["games"] - proj_w
+
+        # Per-game classification for the expandable schedule view:
+        # W = projected win (p>=75%), L = projected loss (p<=25%), T = toss-up.
+        sched = []
+        for e in sorted(a["schedule"], key=lambda x: (x["week"] or 0, x["date"])):
+            p = e["p_win"]
+            cls = "W" if p >= 0.75 else ("L" if p <= 0.25 else "T")
+            sched.append({**e, "cls": cls})
+        n_w = sum(1 for s in sched if s["cls"] == "W")
+        n_t = sum(1 for s in sched if s["cls"] == "T")
+        n_l = sum(1 for s in sched if s["cls"] == "L")
+
         teams_out.append({
             "name": name,
             "conf": td.get("conf") or "",
@@ -2591,6 +2620,8 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
             "proj_record": f"{proj_w:g}–{proj_l:g}",
             "proj_ppg_for": round(a["proj_pts_for"] / a["games"], 1),
             "proj_ppg_against": round(a["proj_pts_against"] / a["games"], 1),
+            "wtl": f"{n_w}W · {n_t}T · {n_l}L",
+            "schedule": sched,
         })
 
     # Sort by expected wins descending (the natural over/under ranking)
