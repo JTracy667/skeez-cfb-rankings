@@ -75,6 +75,7 @@ class Team(BaseModel):
     movement: int
     streak: str
     ap_rank: int | None = None  # current AP Top 25 poll rank, or None if unranked
+    coaches_rank: int | None = None  # AFCA Coaches Poll rank, or None if unranked
 
 class RankingsResponse(BaseModel):
     week: str
@@ -252,13 +253,50 @@ def load_local() -> list[dict]:
     except Exception:
         return []
 
-def fetch_espn_poll() -> list[dict] | None:
-    """
-    Fetch the AP Top 25 from ESPN's public rankings API.
-    Returns parsed team list or None on failure.
+def _parse_espn_poll(poll: dict) -> list[dict]:
+    """Parse one ESPN poll entry into the app's team-dict shape."""
+    teams = []
+    for rk in poll.get("ranks", []):
+        team_info = rk.get("team", {})
+        # location is the school name ("Ohio State"); matches CFBD names.
+        name = (team_info.get("location") or team_info.get("nickname")
+                or f"Team {rk.get('current')}").strip()
+        try:
+            points = float(rk.get("points", 0) or 0)
+        except (TypeError, ValueError):
+            points = 0.0
+        prev = int(rk.get("previous", 0) or 0)
+        cur = int(rk.get("current", 0) or 0)
+        # movement > 0 = climbed; 0 = new entry / no change (UI shows —).
+        movement = (prev - cur) if prev else 0
+        rec = rk.get("recordSummary") or "0-0"
+        try:
+            w, l = (int(x) for x in str(rec).split("-"))
+        except ValueError:
+            w = l = 0
 
-    Endpoint: /sports/football/college-football/rankings returns ALL polls
-    (AP, AFCA Coaches, FCS) for the current week; we keep only "AP Top 25".
+        teams.append({
+            "rank": cur,
+            "name": name,
+            "mascot": team_info.get("nickname", ""),
+            "conf": "FBS",
+            "emoji": "🏈",
+            "wins": w,
+            "losses": l,
+            "points": points,
+            "movement": movement,
+            "streak": "—",  # poll data has no game streak; leave neutral
+        })
+    return teams
+
+
+def fetch_espn_polls() -> dict[str, list[dict]] | None:
+    """
+    Fetch ALL FBS polls from ESPN's public rankings API in one call.
+    Returns {poll name: [team dicts]} or None on failure.
+
+    Endpoint: /sports/football/college-football/rankings returns the AP Top 25,
+    AFCA Coaches Poll and FCS Coaches Poll for the current week.
     The old /standings/ap-top-25 endpoint was retired by ESPN (404).
     """
     try:
@@ -268,68 +306,57 @@ def fetch_espn_poll() -> list[dict] | None:
         if not data or not isinstance(data, dict):
             return None
 
-        polls = [p for p in data.get("rankings", [])
-                 if p.get("name") == "AP Top 25"]
-        if not polls:
-            return None
-
-        teams = []
-        for rk in polls[0].get("ranks", []):
-            team_info = rk.get("team", {})
-            # location is the school name ("Ohio State"); matches CFBD names.
-            name = (team_info.get("location") or team_info.get("nickname")
-                    or f"Team {rk.get('current')}").strip()
-            try:
-                points = float(rk.get("points", 0) or 0)
-            except (TypeError, ValueError):
-                points = 0.0
-            prev = int(rk.get("previous", 0) or 0)
-            cur = int(rk.get("current", 0) or 0)
-            # movement > 0 = climbed; 0 = new entry / no change (UI shows —).
-            movement = (prev - cur) if prev else 0
-            rec = rk.get("recordSummary") or "0-0"
-            try:
-                w, l = (int(x) for x in str(rec).split("-"))
-            except ValueError:
-                w = l = 0
-
-            teams.append({
-                "rank": cur,
-                "name": name,
-                "mascot": team_info.get("nickname", ""),
-                "conf": "FBS",
-                "emoji": "🏈",
-                "wins": w,
-                "losses": l,
-                "points": points,
-                "movement": movement,
-                "streak": "—",  # poll data has no game streak; leave neutral
-            })
-        return teams or None
+        polls = {p.get("name"): p for p in data.get("rankings", [])}
+        out: dict[str, list[dict]] = {}
+        for name in ("AP Top 25", "AFCA Coaches Poll"):
+            if name in polls:
+                teams = _parse_espn_poll(polls[name])
+                if teams:
+                    out[name] = teams
+        return out or None
 
     except Exception as e:
         print(f"[ESPN fetch failed] {e}")
         return None
 
 
-# AP poll changes weekly — cache an hour so page loads don't hammer ESPN.
-_ap_poll_cache: dict = {}
+def fetch_espn_poll(poll_name: str = "AP Top 25") -> list[dict] | None:
+    """Convenience wrapper: one poll by name (default AP Top 25)."""
+    polls = fetch_espn_polls()
+    if not polls:
+        return None
+    return polls.get(poll_name) or None
+
+
+# Polls change weekly — cache an hour so page loads don't hammer ESPN.
+_espn_polls_cache: dict = {}
 AP_POLL_TTL = 3600
 
+_AP_NAME = "AP Top 25"
+_COACHES_NAME = "AFCA Coaches Poll"
 
-def _ap_rank_map() -> dict[str, int]:
-    """{team name (lowercase): AP rank} for the current AP Top 25.
+
+def _poll_rank_map(poll_name: str) -> dict[str, int]:
+    """{team name (lowercase): rank} for one poll.
 
     Empty dict on any failure — callers must treat a missing key as
     'not ranked' and never let an ESPN outage break the rankings page."""
-    cached = _cache_get(_ap_poll_cache, AP_POLL_TTL)
-    if cached:
-        return cached
-    poll = fetch_espn_poll()
-    m = {t["name"].lower(): t["rank"] for t in (poll or [])}
-    if m:
-        _cache_set(_ap_poll_cache, m)
-    return m
+    cached = _cache_get(_espn_polls_cache, AP_POLL_TTL)
+    if not cached:
+        polls = fetch_espn_polls()
+        if polls:
+            _cache_set(_espn_polls_cache, polls)
+            cached = polls
+    return {t["name"].lower(): t["rank"]
+            for t in (cached or {}).get(poll_name, [])}
+
+
+def _ap_rank_map() -> dict[str, int]:
+    return _poll_rank_map(_AP_NAME)
+
+
+def _coaches_rank_map() -> dict[str, int]:
+    return _poll_rank_map(_COACHES_NAME)
 
 def get_rankings() -> RankingsResponse:
     """Return the Skeez CFB Rankings — the composite list.
@@ -390,11 +417,15 @@ def get_rankings() -> RankingsResponse:
     for i, t in enumerate(teams, 1):
         t["rank"] = i
 
-    # AP Top 25 cross-reference: each team's current AP poll rank (or None if
-    # not ranked). ESPN outage => empty map => everyone shows "—", never an error.
+    # AP Top 25 + AFCA Coaches cross-reference: each team's current poll rank
+    # (or None if not ranked). ESPN outage => empty map => everyone shows "—",
+    # never an error.
     ap_map = _ap_rank_map()
+    coaches_map = _coaches_rank_map()
     for t in teams:
-        t["ap_rank"] = ap_map.get(t.get("name", "").lower())
+        key = t.get("name", "").lower()
+        t["ap_rank"] = ap_map.get(key)
+        t["coaches_rank"] = coaches_map.get(key)
 
     result = {
         "week": datetime.now().strftime("%B %d, %Y"),

@@ -304,6 +304,7 @@
         <tr>
           <th data-sort="rank" class="sorted"># <span class="sort-arrow">▼</span></th>
           <th title="AP Top 25 poll rank (— = not ranked). Reference only — table always stays in composite order.">AP</th>
+          <th title="AFCA Coaches Poll rank (— = not ranked). Reference only — table always stays in composite order.">Coaches</th>
           <th data-sort="team">Team <span class="sort-arrow"></span></th>
           <th data-sort="conf" class="hide-mobile">Conf <span class="sort-arrow"></span></th>
           <th data-sort="movement">Δ <span class="sort-arrow"></span></th>
@@ -340,7 +341,7 @@ async function fetchRankings() {
   } catch (err) {
     console.error('Failed to fetch rankings:', err);
     document.getElementById('rankingsBody').innerHTML =
-      '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-dim)">⚠️ Could not load rankings. Is the backend running?</td></tr>';
+      '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-dim)">⚠️ Could not load rankings. Is the backend running?</td></tr>';
   }
 }
 
@@ -414,6 +415,7 @@ function render() {
     <tr>
       <td class="rank-cell ${rankClass(t.rank)}">${t.rank}</td>
       <td class="ap-cell${t.ap_rank == null ? ' unranked' : ''}">${t.ap_rank ?? '—'}</td>
+      <td class="ap-cell${t.coaches_rank == null ? ' unranked' : ''}">${t.coaches_rank ?? '—'}</td>
       <td>
         <div class="team-cell">
           <img class="team-logo" src="${t.logo_url || ''}" alt="${t.name}" onerror="this.style.display='none'">
