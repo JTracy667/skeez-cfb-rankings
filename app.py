@@ -997,9 +997,11 @@ def _propline_fetch() -> list[dict]:
                 "away_team": away,
                 "bookmakers": od.get("bookmakers", []),
             }
-        # Concurrent fetch for all events
+        # Concurrency 4 (not 10): caps the transient JSON-parse burst that can
+        # breach Render's memory limit when a scheduler refresh overlaps a
+        # user request. ~10s total fetch is fine — stability > speed here.
         from concurrent.futures import ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=10) as pool:
+        with ThreadPoolExecutor(max_workers=4) as pool:
             results = list(pool.map(_parse_event, events))
         return [r for r in results if r is not None]
     except Exception as e:
