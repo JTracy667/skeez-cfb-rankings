@@ -7,7 +7,7 @@ import math
 import random
 from collections import defaultdict
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import httpx
 import uvicorn
@@ -1380,22 +1380,53 @@ def _odds_disk_cache_any_age() -> dict | None:
 def _fetch_odds_live() -> dict:
     """Fetch odds from all sources (no cache reads). Non-empty on success."""
     odds_map = {}
-    # 1) PropLine (primary)
+    # 1) PropLine (primary — Bovada's feed) — PRE-GAME ONLY.
+    # Bovada's API serves in-game adjusted lines for live events; those must
+    # never enter the odds map (they polluted picks with live spreads, e.g.
+    # UVA -8 in-game vs -3.5 consensus). Events are filtered by kickoff time.
     try:
         pl = _propline_fetch()
-        pl_map = _build_odds_map(pl)
+        pregame, live_dropped = [], 0
+        now = datetime.now(timezone.utc)
+        for ev in pl:
+            ct = ev.get("commence_time") or ev.get("start_time") or ""
+            try:
+                started = bool(ct) and datetime.fromisoformat(
+                    ct.replace("Z", "+00:00")) <= now
+            except Exception:
+                started = False  # unknown kickoff -> treat as pre-game
+            if started:
+                live_dropped += 1
+                continue
+            pregame.append(ev)
+        if live_dropped:
+            print(f"[Odds] PropLine: dropped {live_dropped} in-game events (live lines)")
+        pl_map = _build_odds_map(pregame)
         for k, v in pl_map.items():
             v["source"] = "propline"
         odds_map.update(pl_map)
     except Exception as e:
         print(f"[Odds] PropLine primary failed: {e}")
-    # 2) The Odds API (backup — only fill gaps)
+    # 2) The Odds API (multi-book consensus — fills gaps AND sanity-checks PropLine)
     try:
-        toa = _the_odds_fetch()
-        for k, v in _build_odds_map(toa).items():
+        toa_map = _build_odds_map(_the_odds_fetch())
+        for k, v in toa_map.items():
             if k not in odds_map:
                 v["source"] = "the_odds_api"
                 odds_map[k] = v
+            else:
+                # Consensus guard: PropLine (single book) vs multi-book line.
+                # A gap > 6 pts means one feed is wrong (glitch or live artifact
+                # that slipped the kickoff filter) — trust the multi-book line.
+                for mkt in ("spread", "total"):
+                    pl_v, toa_v = odds_map[k].get(mkt), v.get(mkt)
+                    if pl_v is not None and toa_v is not None and abs(pl_v - toa_v) > 6:
+                        print(f"[Odds] {k[0]}|{k[1]} {mkt}: PropLine {pl_v} vs "
+                              f"consensus {toa_v} — using consensus")
+                        odds_map[k][mkt] = toa_v
+                        odds_map[k]["book"] = v.get("book")
+                        odds_map[k]["book_title"] = v.get("book_title")
+                        odds_map[k]["source"] = "the_odds_api"
     except Exception as e:
         print(f"[Odds] The Odds API backup failed: {e}")
     # 3) CFBD lines (last resort)
