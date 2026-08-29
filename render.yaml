@@ -16,3 +16,5 @@ services:
         sync: false
       - key: CORS_ORIGINS
         value: https://skeezcfb-rankings.com
+      - key: REFRESH_INTERVAL_SECONDS
+        value: "3600"  # hourly: catch line moves for the movement log / CLV
