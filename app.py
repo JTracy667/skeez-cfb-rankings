@@ -1408,8 +1408,21 @@ def _fetch_odds_live() -> dict:
     except Exception as e:
         print(f"[Odds] PropLine primary failed: {e}")
     # 2) The Odds API (multi-book consensus — fills gaps AND sanity-checks PropLine)
+    # Same kickoff filter as PropLine: live-adjusted lines must never enter.
     try:
-        toa_map = _build_odds_map(_the_odds_fetch())
+        toa_raw = _the_odds_fetch()
+        now = datetime.now(timezone.utc)
+        toa_pregame = []
+        for ev in toa_raw:
+            ct = ev.get("commence_time") or ""
+            try:
+                started = bool(ct) and datetime.fromisoformat(
+                    ct.replace("Z", "+00:00")) <= now
+            except Exception:
+                started = False
+            if not started:
+                toa_pregame.append(ev)
+        toa_map = _build_odds_map(toa_pregame)
         for k, v in toa_map.items():
             if k not in odds_map:
                 v["source"] = "the_odds_api"
