@@ -2220,29 +2220,52 @@ def _compute_pick(home: str, away: str, diff: float, spread: float | None) -> di
 
 
 def _lock_picks(enriched: list[dict], week: int) -> None:
-    """Persist picks for matchups not yet locked (idempotent by matchup key)."""
+    """Persist picks for matchups, re-locking ungraded picks when inputs move.
+
+    Idempotent by matchup key. If a pick is already locked AND already graded,
+    it is never touched (history is history). If it is locked but ungraded and
+    the current projections/line changed the ATS or SU side, the pick is
+    re-locked to the site's current best judgment — so the record always
+    matches what the schedule page shows. One projection, one ATS logic.
+    """
     record = _load_record()
-    existing = {p["key"] for p in record.get("picks", [])}
+    graded_keys = {r.get("key") for r in record.get("results", [])}
+    existing = {p["key"]: p for p in record.get("picks", [])}
     changed = False
     for m in enriched:
         key = _record_key(m["home"], m["away"])
-        if key in existing:
-            continue
         spread = m.get("line_diff")
         diff = m.get("differential", 0)
         pk = _compute_pick(m["home"], m["away"], diff, spread)
-        record["picks"].append({
-            "key": key,
-            "week": week,
-            "home": m["home"],
-            "away": m["away"],
-            "date": m.get("date"),
-            "spread": spread,
-            "home_proj": m.get("home_proj"),
-            "away_proj": m.get("away_proj"),
-            **pk,
-        })
-        changed = True
+        prior = existing.get(key)
+        if prior is None:
+            record["picks"].append({
+                "key": key,
+                "week": week,
+                "home": m["home"],
+                "away": m["away"],
+                "date": m.get("date"),
+                "spread": spread,
+                "home_proj": m.get("home_proj"),
+                "away_proj": m.get("away_proj"),
+                **pk,
+            })
+            changed = True
+        elif key not in graded_keys and (
+            prior.get("ats_pick") != pk.get("ats_pick")
+            or prior.get("su_pick") != pk.get("su_pick")
+            or prior.get("spread") != spread
+        ):
+            # Re-lock: projections or the line moved since lock. Keep the
+            # original lock time for reference, record the new values.
+            prior.update({
+                "spread": spread,
+                "home_proj": m.get("home_proj"),
+                "away_proj": m.get("away_proj"),
+                **pk,
+                "relocked": True,
+            })
+            changed = True
     if changed:
         _save_record(record)
 
