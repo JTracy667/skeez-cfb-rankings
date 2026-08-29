@@ -197,7 +197,7 @@ def _snapshot_lines(odds_map: dict) -> list[dict]:
 # composite rankings and win totals reflect results as they land. The due-date
 # is "most recent Sunday 15:00 America/New_York"; we persist the last pull ts
 # to disk so a container restart doesn't re-pull every scheduler tick until
-# the next Sunday (and a failed pull retries on the following hourly tick).
+# the next anchor (and a failed pull retries on the following hourly tick).
 try:
     from zoneinfo import ZoneInfo
     _ET_TZ = ZoneInfo("America/New_York")
@@ -205,18 +205,26 @@ except Exception:  # tzdata missing — fall back to UTC-4 (EDT) approximation
     _ET_TZ = None
 WEEKLY_ANALYTICS_FILE = BASE_DIR / "data" / "last_analytics_pull.json"
 
+# Sync anchors: Sunday 3pm ET (post-Saturday results) + Wednesday 3pm ET
+# (mid-week, when most line movement happens and best-bet edges are widest).
+_ANALYTICS_ANCHORS = ((6, 15), (2, 15))  # (weekday, hour) — Sun=6, Wed=2
 
-def _most_recent_sunday_3pm_et(now=None):
-    """Most recent Sunday 15:00 ET, inclusive of today if already past it."""
+
+def _most_recent_anchor_et(now=None):
+    """Most recent sync anchor (Sun/Wed 15:00 ET), inclusive of today if past."""
     if _ET_TZ is None:
         return None
     now = now or datetime.now(_ET_TZ)
-    days_back = (now.weekday() - 6) % 7  # Sun=6; 0 if today is Sunday
-    cand = (now - timedelta(days=days_back)).replace(
-        hour=15, minute=0, second=0, microsecond=0)
-    if cand > now:
-        cand -= timedelta(days=7)
-    return cand
+    best = None
+    for wd, hr in _ANALYTICS_ANCHORS:
+        days_back = (now.weekday() - wd) % 7
+        cand = (now - timedelta(days=days_back)).replace(
+            hour=hr, minute=0, second=0, microsecond=0)
+        if cand > now:
+            cand -= timedelta(days=7)
+        if best is None or cand > best:
+            best = cand
+    return best
 
 
 def _load_last_analytics_pull() -> float:
@@ -236,8 +244,8 @@ def _save_last_analytics_pull(ts: float):
 
 
 def weekly_analytics_due() -> bool:
-    """True if the most recent Sunday 3pm ET postdates our last CFBD pull."""
-    due_at = _most_recent_sunday_3pm_et()
+    """True if the most recent Sun/Wed 3pm ET anchor postdates our last pull."""
+    due_at = _most_recent_anchor_et()
     if due_at is None:
         return False
     return time.time() > due_at.timestamp() and \
