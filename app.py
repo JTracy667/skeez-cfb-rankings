@@ -2107,9 +2107,20 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             home_proj = home_proj_data["projected_score"]
             away_proj = away_proj_data["projected_score"]
         diff = round(home_proj - away_proj, 1)
-        # Betting market overlay
+        # Betting market overlay — PRE-GAME ONLY. Once a game kicks off, books
+        # serve live-adjusted lines that mean something completely different
+        # (UVA -14/-21 in-play vs -3.5 pre-game). Suppress the line entirely
+        # for started games instead of showing a number that isn't a bet.
         odds_key = (_normalize_team_name(m["home"]), _normalize_team_name(m["away"]))
         market_odds = odds_map.get(odds_key, {})
+        game_kick = m.get("date")
+        try:
+            game_started = bool(game_kick) and datetime.fromisoformat(
+                str(game_kick).replace("Z", "+00:00")) <= datetime.now(timezone.utc)
+        except Exception:
+            game_started = False
+        if game_started and market_odds:
+            market_odds = {}  # live game: no line, no ATS pick, no O/U rec
         # Resolve conference
         home_conf = home.get("conf") or conf_map.get(m["home"], "")
         away_conf = away.get("conf") or conf_map.get(m["away"], "")
