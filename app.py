@@ -205,13 +205,13 @@ except Exception:  # tzdata missing — fall back to UTC-4 (EDT) approximation
     _ET_TZ = None
 WEEKLY_ANALYTICS_FILE = BASE_DIR / "data" / "last_analytics_pull.json"
 
-# Sync anchors: Sunday 3pm ET (post-Saturday results) + Wednesday 3pm ET
+# Sync anchors: Sunday 9pm ET (post-Saturday results) + Wednesday 9pm ET
 # (mid-week, when most line movement happens and best-bet edges are widest).
-_ANALYTICS_ANCHORS = ((6, 15), (2, 15))  # (weekday, hour) — Sun=6, Wed=2
+_ANALYTICS_ANCHORS = ((6, 21), (2, 21))  # (weekday, hour) — Sun=6, Wed=2
 
 
 def _most_recent_anchor_et(now=None):
-    """Most recent sync anchor (Sun/Wed 15:00 ET), inclusive of today if past."""
+    """Most recent sync anchor (Sun/Wed 21:00 ET), inclusive of today if past."""
     if _ET_TZ is None:
         return None
     now = now or datetime.now(_ET_TZ)
