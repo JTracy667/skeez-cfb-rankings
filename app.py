@@ -276,6 +276,15 @@ def run_weekly_analytics_pull() -> dict:
     return summary
 
 
+def _rss_mb() -> float:
+    """Current process RSS in MB (for memory-peak logging). 0 if unavailable."""
+    try:
+        import psutil
+        return psutil.Process().memory_info().rss / 1e6
+    except Exception:
+        return 0.0
+
+
 def refresh_all() -> dict:
     """Force re-pull of live odds + final scores, then grade records.
 
@@ -283,6 +292,7 @@ def refresh_all() -> dict:
     Returns a summary of what changed.
     """
     result = {"odds_refreshed": False, "graded": 0, "best_bets_graded": 0, "line_movements": []}
+    mem_before = _rss_mb()
     try:
         # Bust the in-memory + disk odds caches so we re-fetch live lines
         _odds_cache["data"] = {}
@@ -301,6 +311,10 @@ def refresh_all() -> dict:
     except Exception as e:
         print(f"[refresh] results grading failed: {e}")
     result["ts"] = datetime.now().isoformat()
+    # Memory telemetry: catch spike trends before they OOM-kill the service.
+    mem_after = _rss_mb()
+    if mem_after:
+        print(f"[refresh] memory: {mem_before:.0f}MB -> {mem_after:.0f}MB RSS")
     return result
 
 
