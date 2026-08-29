@@ -155,10 +155,42 @@ def _odds_disk_cache_set(odds_map: dict):
 
 
 # ── Line-movement tracking + background auto-refresh ──
+LINE_MOVEMENTS_FILE = BASE_DIR / "data" / "line_movements.json"  # rolling event log (CLV record)
+LINE_MOVEMENTS_MAX_AGE = 7 * 86400  # keep 7 days of movement events
+
+
+def _load_movement_log() -> list[dict]:
+    try:
+        if LINE_MOVEMENTS_FILE.exists():
+            return json.loads(LINE_MOVEMENTS_FILE.read_text(encoding="utf-8")).get("movements", [])
+    except Exception:
+        pass
+    return []
+
+
+def _append_movement_log(movements: list[dict]):
+    """Append detected moves to the rolling log, pruning entries older than 7 days."""
+    if not movements:
+        return
+    log = _load_movement_log()
+    log.extend(movements)
+    cutoff = time.time() - LINE_MOVEMENTS_MAX_AGE
+    log = [m for m in log if m.get("ts", 0) >= cutoff]
+    try:
+        LINE_MOVEMENTS_FILE.write_text(
+            json.dumps({"ts": time.time(), "movements": log[-2000:]}, ensure_ascii=False),
+            encoding="utf-8")
+    except Exception as e:
+        print(f"[Lines] movement log write failed: {e}")
+
+
 def _snapshot_lines(odds_map: dict) -> list[dict]:
     """Detect line movement vs the previous snapshot and save a new one.
 
-    Returns a list of moved lines: {home, away, market, old, new, delta}.
+    Detected moves are appended to a rolling 7-day event log
+    (data/line_movements.json) so the schedule page can show everything that
+    moved recently — not just the interval since the last refresh.
+    Returns the movements detected THIS pass: {home, away, market, old, new, delta}.
     """
     prev = {}
     try:
@@ -169,6 +201,7 @@ def _snapshot_lines(odds_map: dict) -> list[dict]:
         prev = {}
     movements = []
     current = {}
+    now_ts = time.time()
     for (home, away), v in odds_map.items():
         key = f"{home}|{away}"
         current[key] = {"spread": v.get("spread"), "total": v.get("total"), "book": v.get("book_title") or v.get("book")}
@@ -182,13 +215,16 @@ def _snapshot_lines(odds_map: dict) -> list[dict]:
                 movements.append({
                     "home": home, "away": away, "market": market,
                     "old": old_v, "new": new_v, "delta": round(new_v - old_v, 1),
+                    "ts": now_ts,
+                    "when": datetime.now(_ET_TZ).strftime("%a %I:%M %p") if _ET_TZ else datetime.now().strftime("%a %I:%M %p"),
                 })
-    # Persist new snapshot (keep only latest; history of deltas is enough for CLV)
+    # Persist: snapshot overwritten (new baseline) + events appended to the log
     try:
         LINE_HISTORY_FILE.write_text(
-            json.dumps({"ts": time.time(), "lines": current}, ensure_ascii=False), encoding="utf-8")
+            json.dumps({"ts": now_ts, "lines": current}, ensure_ascii=False), encoding="utf-8")
     except Exception as e:
         print(f"[Lines] history write failed: {e}")
+    _append_movement_log(movements)
     return movements
 
 
@@ -2523,11 +2559,14 @@ def api_refresh():
 
 
 @app.get("/api/line-movements")
-def api_line_movements():
-    """Get line movement history since the last snapshot."""
+def api_line_movements(hours: int = 72):
+    """Recent line movements from the rolling event log (default last 72h)."""
     try:
-        movements = _snapshot_lines(_fetch_odds_map())
-        return {"movements": movements, "count": len(movements)}
+        hours = max(1, min(hours, 24 * 7))
+        cutoff = time.time() - hours * 3600
+        log = [m for m in _load_movement_log() if m.get("ts", 0) >= cutoff]
+        log.sort(key=lambda m: m.get("ts", 0), reverse=True)
+        return {"movements": log, "count": len(log)}
     except Exception as e:
         print(f"[line-movements error] {e}")
         return {"error": str(e), "movements": []}
