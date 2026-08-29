@@ -40,3 +40,5 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+data/odds_cache.json
+_server*.log

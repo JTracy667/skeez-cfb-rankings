@@ -317,12 +317,19 @@ def _start_scheduler() -> None:
         # Sleep first so we never block the readiness probe / cold start.
         time.sleep(60)
         while True:
+            # Failure retry: shorter sleep after a failed refresh so a transient
+            # API outage doesn't leave stale lines up for a full interval.
+            sleep_s = REFRESH_INTERVAL_SECONDS
             try:
                 summary = refresh_all()
                 if summary["graded"] or summary["line_movements"]:
                     print(f"[scheduler] refresh: {summary}")
+                if not summary.get("odds_refreshed"):
+                    print("[scheduler] odds refresh failed — retrying in 15 min")
+                    sleep_s = min(sleep_s, 900)
             except Exception as e:
-                print(f"[scheduler] refresh error: {e}")
+                print(f"[scheduler] refresh error: {e} — retrying in 15 min")
+                sleep_s = min(sleep_s, 900)
             # Weekly CFBD ratings sync (Sunday 3pm ET). Runs on the first tick
             # after it's due; a failed pull retries next tick (ts not advanced).
             try:
@@ -332,7 +339,7 @@ def _start_scheduler() -> None:
                         _save_last_analytics_pull(time.time())
             except Exception as e:
                 print(f"[scheduler] weekly analytics error: {e}")
-            time.sleep(REFRESH_INTERVAL_SECONDS)
+            time.sleep(sleep_s)
 
     t = threading.Thread(target=_loop, daemon=True, name="cfb-refresh")
     t.start()
@@ -1284,6 +1291,34 @@ def _fetch_odds_map() -> dict:
     if disk:
         _cache_set(_odds_cache, disk)
         return disk
+    # 3) Live fetch from all sources, then persist to memory + disk.
+    # If the live fetch comes back empty (all sources failed), fall back to the
+    # STALE disk cache so the site never goes dark — with a loud warning.
+    odds_map = _fetch_odds_live()
+    if not odds_map:
+        stale = _odds_disk_cache_any_age()
+        if stale:
+            print("[Odds] live fetch empty — serving STALE disk cache as fallback")
+            _cache_set(_odds_cache, stale)
+            return stale
+    return odds_map
+
+
+def _odds_disk_cache_any_age() -> dict | None:
+    """Load disk odds cache regardless of age (emergency stale fallback)."""
+    try:
+        if not ODDS_CACHE_FILE.exists():
+            return None
+        payload = json.loads(ODDS_CACHE_FILE.read_text(encoding="utf-8"))
+        raw = payload.get("odds", {})
+        return {tuple(k.split("|")): v for k, v in raw.items()} or None
+    except Exception as e:
+        print(f"[Odds] stale disk cache read failed: {e}")
+        return None
+
+
+def _fetch_odds_live() -> dict:
+    """Fetch odds from all sources (no cache reads). Non-empty on success."""
     odds_map = {}
     # 1) PropLine (primary)
     try:
@@ -1319,8 +1354,13 @@ def _fetch_odds_map() -> dict:
                 }
     except Exception as e:
         print(f"[Odds] CFBD lines fallback failed: {e}")
-    _cache_set(_odds_cache, odds_map)
-    _odds_disk_cache_set(odds_map)
+    # Only persist NON-EMPTY results. If every source failed (transient API
+    # outage), keep the previous cache rather than poisoning it with {}.
+    if odds_map:
+        _cache_set(_odds_cache, odds_map)
+        _odds_disk_cache_set(odds_map)
+    else:
+        print("[Odds] all sources failed — keeping previous cache")
     return odds_map
 
 
