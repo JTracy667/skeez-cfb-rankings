@@ -289,8 +289,11 @@ function renderSummary(data) {
   fetch(`${API}/record`).then(r => r.json()).then(rec => {
     const su = rec.su_str || '0-0';
     const ats = rec.ats_str || '0-0';
+    const tot = rec.total_str || '0-0';
     document.getElementById('suCard').innerHTML = `<div class="val ${rec.su.wins > rec.su.losses ? 'good' : ''}">${su}</div><div class="label">Straight-Up</div>`;
     document.getElementById('atsCard').innerHTML = `<div class="val ${rec.ats.wins > rec.ats.losses ? 'good' : ''}">${ats}</div><div class="label">ATS</div>`;
+    const totCard = document.getElementById('totalCard');
+    if (totCard) totCard.innerHTML = `<div class="val ${rec.total && rec.total.wins > rec.total.losses ? 'good' : ''}">${tot}</div><div class="label">O/U</div>`;
   }).catch(() => {});
   document.getElementById('summaryRow').innerHTML = `
     <div class="summary-card record" id="suCard"><div class="val">…</div><div class="label">Straight-Up</div></div>
@@ -298,6 +301,7 @@ function renderSummary(data) {
     <div class="summary-card"><div class="val">${avgDiff}</div><div class="label">Avg Diff</div></div>
     <div class="summary-card"><div class="val">${close}</div><div class="label">Close (≤7)</div></div>
     <div class="summary-card record" id="atsCard"><div class="val">…</div><div class="label">ATS</div></div>
+    <div class="summary-card record" id="totalCard"><div class="val">…</div><div class="label">O/U</div></div>
   `;
 }
 

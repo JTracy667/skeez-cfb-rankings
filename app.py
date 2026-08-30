@@ -2708,11 +2708,14 @@ def _save_record(record: dict) -> None:
         print(f"[RECORD SAVE ERROR] {e}")
 
 
-def _compute_pick(home: str, away: str, diff: float, spread: float | None) -> dict:
-    """Determine the projection's SU and ATS picks for a matchup.
+def _compute_pick(home: str, away: str, diff: float, spread: float | None,
+                  model_total: float | None = None, book_total: float | None = None) -> dict:
+    """Determine the projection's SU, ATS, and O/U picks for a matchup.
 
-    diff   = home_proj - away_proj (positive = home favored)
-    spread = signed betting line (negative = home favorite), e.g. -7.5
+    diff        = home_proj - away_proj (positive = home favored)
+    spread      = signed betting line (negative = home favorite), e.g. -7.5
+    model_total = projected combined score
+    book_total  = the over/under line
     """
     # SU pick: projected winner (higher projected score)
     if diff > 0:
@@ -2730,7 +2733,12 @@ def _compute_pick(home: str, away: str, diff: float, spread: float | None) -> di
         ats_pick = home
     elif side == "away":
         ats_pick = away
-    return {"su_pick": su_pick, "ats_pick": ats_pick}
+
+    # O/U pick: model total vs book total
+    over_pick = None
+    if model_total is not None and book_total:
+        over_pick = "over" if model_total > book_total else "under"
+    return {"su_pick": su_pick, "ats_pick": ats_pick, "over_pick": over_pick}
 
 
 def _lock_picks(enriched: list[dict], week: int) -> None:
@@ -2750,7 +2758,8 @@ def _lock_picks(enriched: list[dict], week: int) -> None:
         key = _record_key(m["home"], m["away"])
         spread = m.get("line_diff")
         diff = m.get("differential", 0)
-        pk = _compute_pick(m["home"], m["away"], diff, spread)
+        pk = _compute_pick(m["home"], m["away"], diff, spread,
+                           model_total=m.get("model_total"), book_total=m.get("line_total"))
         prior = existing.get(key)
         if prior is None:
             record["picks"].append({
@@ -2760,6 +2769,8 @@ def _lock_picks(enriched: list[dict], week: int) -> None:
                 "away": m["away"],
                 "date": m.get("date"),
                 "spread": spread,
+                "total": m.get("line_total"),
+                "over_pick": pk.get("over_pick"),
                 "home_proj": m.get("home_proj"),
                 "away_proj": m.get("away_proj"),
                 **pk,
@@ -2769,6 +2780,7 @@ def _lock_picks(enriched: list[dict], week: int) -> None:
             prior.get("ats_pick") != pk.get("ats_pick")
             or prior.get("su_pick") != pk.get("su_pick")
             or prior.get("spread") != spread
+            or prior.get("over_pick") != pk.get("over_pick")
         ):
             # Re-lock: projections or the line moved since lock. Keep the
             # original lock time for reference, record the new values.
@@ -2776,6 +2788,7 @@ def _lock_picks(enriched: list[dict], week: int) -> None:
             # or feed gap) — that would erase the bet we're grading against.
             prior.update({
                 "spread": spread,
+                "total": m.get("line_total"),
                 "home_proj": m.get("home_proj"),
                 "away_proj": m.get("away_proj"),
                 **pk,
@@ -2890,14 +2903,18 @@ def _ingest_results() -> int:
         if p.get("spread") is not None and p.get("ats_pick") is not None:
             ats = _grade_ats(p.get("ats_pick"), p.get("home"), p.get("away"),
                              p["spread"], home_score, away_score)
+        total_res = None
+        if p.get("total") is not None and p.get("over_pick") is not None:
+            total_res = _grade_total(p.get("over_pick"), p["total"], home_score, away_score)
         record["results"].append({
             "key": p.get("key"),
             "week": p.get("week"),
             "home": p.get("home"), "away": p.get("away"),
             "home_score": home_score, "away_score": away_score,
             "su_pick": p.get("su_pick"), "ats_pick": p.get("ats_pick"),
-            "spread": p.get("spread"),
-            "su_result": su, "ats_result": ats,
+            "spread": p.get("spread"), "total": p.get("total"),
+            "over_pick": p.get("over_pick"),
+            "su_result": su, "ats_result": ats, "total_result": total_res,
         })
         newly += 1
     if newly:
@@ -2916,8 +2933,9 @@ def api_record():
     record = _load_record()
     su = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
     ats = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
+    total_rec = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
     for r in record.get("results", []):
-        for bucket, field in ((su, "su_result"), (ats, "ats_result")):
+        for bucket, field in ((su, "su_result"), (ats, "ats_result"), (total_rec, "total_result")):
             v = r.get(field)
             if v == "W":
                 bucket["wins"] += 1; bucket["graded"] += 1
@@ -2932,8 +2950,10 @@ def api_record():
         "results": record.get("results", []),
         "su": su,
         "ats": ats,
+        "total": total_rec,
         "su_str": f"{su['wins']}-{su['losses']}" + (f"-{su['pushes']}" if su['pushes'] else ""),
         "ats_str": f"{ats['wins']}-{ats['losses']}" + (f"-{ats['pushes']}" if ats['pushes'] else ""),
+        "total_str": f"{total_rec['wins']}-{total_rec['losses']}" + (f"-{total_rec['pushes']}" if total_rec['pushes'] else ""),
     }
 
 
