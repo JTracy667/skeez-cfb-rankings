@@ -1843,7 +1843,7 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True) -> dict:
     has_ratings = bool(team_data.get("sp_plus") or team_data.get("elo"))
     if not has_ratings and classification == "FCS":
         fcs_composite = 21.0   # typical FCS vs FBS gap (50 = average FBS)
-        base_score = 14.0 + (fcs_composite / 100.0) * 26.0   # ~19.5 pts
+        base_score = max(6.0, 27.0 + (fcs_composite - 50.0) * 0.55)   # ~13.6 pts
         home_adj = 2.5 if is_home else -1.5
         projected_score = round(max(0.0, base_score + home_adj), 1)
         win_prob = round((1 / (1 + (2.718 ** (-0.08 * (fcs_composite - 50))))) * 100, 1)
@@ -1905,12 +1905,16 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True) -> dict:
     )
 
     # Projected score: calibrated to realistic CFB scoring.
-    # A team's projected points vs an average opponent ranges ~12 (worst) to ~40 (elite).
-    # League average is ~28 PPG. Composite 50 (average) -> ~27 pts.
+    # A team's projected points vs an average opponent ranges ~8 (worst) to ~50s (elite).
+    # League average is ~28 PPG. Composite 50 (average) -> ~27 pts. Widened Aug 30.
     # The composite already encodes overall strength, so we do NOT add a second
     # offensive/defensive differential term on top (that was double-counting).
-    # Anchor: 14 + (composite/100)*26 -> composite 50 = 27, 90 = 37.4, 20 = 19.2
-    base_score = 14.0 + (composite / 100.0) * 26.0
+    # Anchor (widened Aug 30, user call: elite top-end should reach the 50s):
+    # points = 27 + (composite - 50) * 0.55, floored at 6.
+    # composite 50 = 27 (league avg), 90 = 49.5, 100 = 55; bad teams (20) = 6.
+    # Combined with the +/-4 ppg tilt, elite teams project into the low 50s.
+    base_score = 27.0 + (composite - 50.0) * 0.55
+    base_score = max(6.0, base_score)
     # Mild offensive/defensive tilt on top (small, to avoid re-double-counting):
     # a strong offense / weak defense nudges the projection up a few points.
     net_ppg = (off_ppg or 28.0) - (def_ppg or 24.0)
