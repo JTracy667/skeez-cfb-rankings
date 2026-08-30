@@ -1837,6 +1837,22 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True) -> dict:
     # Extract ratings with defaults from actual cached data
     # IMPORTANT: use `or default` semantics — stored 0/None means "no data"
     # and must fall back to a neutral value, not be treated as a real rating.
+    # MISSING-DATA PRIOR (added Aug 30): teams with NO ratings (FCS, D2, new programs)
+    # must not default to "league average" — that gave an FCS squad 24 pts vs Minnesota.
+    classification = (team_data.get("classification") or "").upper()
+    has_ratings = bool(team_data.get("sp_plus") or team_data.get("elo"))
+    if not has_ratings and classification == "FCS":
+        fcs_composite = 21.0   # typical FCS vs FBS gap (50 = average FBS)
+        base_score = 14.0 + (fcs_composite / 100.0) * 26.0   # ~19.5 pts
+        home_adj = 2.5 if is_home else -1.5
+        projected_score = round(max(0.0, base_score + home_adj), 1)
+        win_prob = round((1 / (1 + (2.718 ** (-0.08 * (fcs_composite - 50))))) * 100, 1)
+        return {
+            "projected_score": projected_score,
+            "composite": fcs_composite,
+            "win_probability": win_prob,
+            "data_flag": "fcs_no_data",
+        }
     sp_plus = team_data.get("sp_plus") or 0.0       # CFBD real scale ~ -40..+40, 0 = average
     fpi_wp = team_data.get("fpi_win_prob") or 50.0  # 0-100 scale
     cpi = team_data.get("cpi") or 50.0              # 0-100 composite index
@@ -2175,6 +2191,8 @@ def fetch_cfbd_schedule(week: int = 1, year: int = CFBD_YEAR) -> list[dict] | No
                 "away": away_name,
                 "date": g.get("startDate"),  # ISO 8601 UTC, e.g. 2026-08-29T16:00:00Z
                 "neutral_site": bool(g.get("neutralSite")),
+                "home_classification": (g.get("homeClassification") or "").upper(),
+                "away_classification": (g.get("awayClassification") or "").upper(),
             })
         matchups.sort(key=lambda m: (m["date"] or ""))
         return matchups
@@ -2449,8 +2467,13 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
 
     enriched = []
     for m in matchups:
-        home = team_map.get(m["home"], {})
-        away = team_map.get(m["away"], {})
+        home = dict(team_map.get(m["home"], {}))
+        away = dict(team_map.get(m["away"], {}))
+        # Pass CFBD classification through so the model applies an FCS prior to
+        # no-data opponents (FCS squads defaulting to "average" gave 24 pts vs
+        # Minnesota — Aug 30 fix).
+        home["classification"] = m.get("home_classification") or home.get("classification") or ""
+        away["classification"] = m.get("away_classification") or away.get("classification") or ""
         # Multi-factor projection. On a neutral site, zero out the HFA tilt so
         # the game is decided purely by strength (same re-centering as Win Totals).
         home_proj_data = project_score_multi_factor(home, is_home=True)
