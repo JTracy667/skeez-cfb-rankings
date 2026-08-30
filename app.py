@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import time
 import math
 import random
@@ -338,10 +339,10 @@ def refresh_all() -> dict:
     result = {"odds_refreshed": False, "graded": 0, "best_bets_graded": 0, "line_movements": []}
     mem_before = _rss_mb()
     try:
-        # Bust the in-memory + disk odds caches so we re-fetch live lines
-        _odds_cache["data"] = {}
-        _odds_cache["ts"] = 0
-        odds_map = _fetch_odds_map()
+        # Forced refresh must bypass BOTH caches and hit the live feeds — busting
+        # only memory would let a fresh disk cache short-circuit the fetch (the
+        # hourly line-movement detection would then never see new lines).
+        odds_map = _fetch_odds_live()
         result["odds_refreshed"] = bool(odds_map)
         result["line_movements"] = _snapshot_lines(odds_map)
     except Exception as e:
@@ -355,10 +356,15 @@ def refresh_all() -> dict:
     except Exception as e:
         print(f"[refresh] results grading failed: {e}")
     result["ts"] = datetime.now().isoformat()
-    # Memory telemetry: catch spike trends before they OOM-kill the service.
+    # Memory + quota telemetry: catch spike trends before they OOM-kill the
+    # service, and watch the PropLine daily budget every cycle.
     mem_after = _rss_mb()
     if mem_after:
         print(f"[refresh] memory: {mem_before:.0f}MB -> {mem_after:.0f}MB RSS")
+    try:
+        print(f"[refresh] {_propline_quota_str()}")
+    except Exception:
+        pass
     return result
 
 
@@ -734,24 +740,53 @@ def _cfbd_get(endpoint: str, year: int = CFBD_YEAR) -> list:
     return data if isinstance(data, list) else [data]
 
 
-def _http_get(url: str, params: dict | None = None, headers: dict | None = None,
-              retries: int = 3, base_delay: float = 1.0) -> list:
-    """GET with exponential backoff retry. Returns parsed JSON list, or [] on failure."""
+class _PropLineQuotaExhausted(Exception):
+    """Daily PropLine quota hit (429 with large Retry-After). Stop further calls."""
+
+
+def _http_get_with_headers(url: str, params: dict | None = None, headers: dict | None = None,
+                           retries: int = 3, base_delay: float = 1.0):
+    """GET with exponential backoff retry. Returns (parsed JSON, response headers).
+
+    429 handling honors Retry-After: small values (burst limit) sleep + retry;
+    large values (daily cap — counts down to next UTC midnight) raise
+    _PropLineQuotaExhausted so the caller can degrade instead of burning time.
+    """
     last_err = None
     for attempt in range(retries):
         try:
             resp = _HTTP_CLIENT.get(url, headers=headers, params=params)
-            if resp.status_code == 404:
-                return None
-            resp.raise_for_status()
-            return resp.json()
+            if resp.status_code == 429:
+                ra = int(resp.headers.get("Retry-After") or 0)
+                if ra > 120:  # daily cap — retrying now is pointless
+                    raise _PropLineQuotaExhausted(f"429 Retry-After={ra}s (daily quota exhausted)")
+                last_err = f"429 burst limit (Retry-After {ra}s)"
+            elif resp.status_code == 404:
+                return None, {}
+            else:
+                resp.raise_for_status()
+                return resp.json(), dict(resp.headers)
+        except _PropLineQuotaExhausted:
+            raise
         except Exception as e:
             last_err = e
             if attempt < retries - 1:
+                # Burst-limit 429s: honor Retry-After (seconds until next token).
                 delay = base_delay * (2 ** attempt) + random.uniform(0, 0.5)
+                m = re.search(r"Retry-After (\d+)s", str(last_err))
+                if m:
+                    delay = max(delay, int(m.group(1)))
                 time.sleep(delay)
     print(f"[_http_get] {url} failed after {retries} retries: {last_err}")
-    return None
+    return None, {}
+
+
+def _http_get(url: str, params: dict | None = None, headers: dict | None = None,
+              retries: int = 3, base_delay: float = 1.0) -> list:
+    """GET with exponential backoff retry. Returns parsed JSON, or [] on failure."""
+    data, _ = _http_get_with_headers(url, params=params, headers=headers,
+                                     retries=retries, base_delay=base_delay)
+    return data
 
 def _cfbd_teams() -> dict:
     """Fetch all FBS teams with logos, conferences, colors."""
@@ -1020,48 +1055,260 @@ def _cfbd_lines() -> list:
         return []
 
 
+# ── PropLine quota management (Hobby tier: 5,000 req/day, hard reset at UTC midnight) ──
+# The Aug 29 incident: per-event /odds calls for every event (~113/cycle x hourly
+# refreshes) exhausted the daily quota by ~6pm UTC on game day. Now: bulk /odds is
+# ONE call and carries complete spreads+totals for every event (verified identical
+# to per-event data), so per-event best-line calls are a bounded, quota-gated extra.
+_PROPLINE_QUOTA = {"limit": None, "used": None, "remaining": None, "reset": None}
+# Latch set when a 429 daily-cap is hit: skip best-line enrichment for the rest of
+# the UTC day (bulk /odds still works — it's one call and we keep trying it).
+_PROPLINE_QUOTA_DEAD = {"until_reset": 0}
+
+def _propline_quota_update(headers: dict) -> None:
+    """Track daily quota from X-Daily-* headers on every PropLine response."""
+    try:
+        # httpx header dicts are lowercase — normalize for case-insensitive lookup.
+        h = {str(k).lower(): v for k, v in (headers or {}).items()}
+        for hname, field in (("x-daily-limit", "limit"), ("x-daily-used", "used"),
+                             ("x-daily-remaining", "remaining"), ("x-daily-reset", "reset")):
+            v = h.get(hname)
+            if v is not None and str(v).strip().isdigit():
+                _PROPLINE_QUOTA[field] = int(str(v))
+        # A fresh response with remaining>0 means the UTC-day reset happened.
+        if _PROPLINE_QUOTA_DEAD["until_reset"] and (_PROPLINE_QUOTA.get("remaining") or 0) > 0:
+            _PROPLINE_QUOTA_DEAD["until_reset"] = 0
+    except Exception:
+        pass
+
+def _propline_quota_mark_dead() -> None:
+    """Called on a daily-cap 429 — no more best-line calls until the quota resets."""
+    reset = _PROPLINE_QUOTA.get("reset") or (time.time() + 86400)
+    _PROPLINE_QUOTA_DEAD["until_reset"] = int(reset)
+
+def _propline_quota_str() -> str:
+    q = _PROPLINE_QUOTA
+    if q["limit"] is None:
+        return "unknown (no PropLine response yet)"
+    pct = f"{q['used'] / q['limit'] * 100:.0f}%" if q.get("used") is not None else "?"
+    reset = ""
+    if q.get("reset"):
+        try:
+            reset = " resets " + datetime.fromtimestamp(q["reset"], timezone.utc).strftime("%H:%M UTC")
+        except Exception:
+            pass
+    return (f"PropLine quota {q['used']}/{q['limit']} ({pct}) remaining={q['remaining']}"
+            f"{reset}")
+
+def _propline_best_line_allowed() -> bool:
+    """Per-event best-line fetches only while >20% of the daily quota remains.
+
+    Below that we degrade to bulk-only (1 call) so the site keeps working and
+    the remaining budget can't be burned on enrichment. First cycle (no header
+    seen yet) is allowed — the bulk response updates state before any extra calls.
+    """
+    q = _PROPLINE_QUOTA
+    if _PROPLINE_QUOTA_DEAD["until_reset"] and time.time() < _PROPLINE_QUOTA_DEAD["until_reset"]:
+        return False  # daily cap hit earlier today — bulk-only until UTC reset
+    if q["limit"] in (None, 0):
+        return True
+    rem = q.get("remaining")
+    if rem is None:
+        rem = max(0, q["limit"] - (q.get("used") or 0))
+    return rem > 0.2 * q["limit"]
+
+# Books that are prediction markets / exchanges, not sportsbooks — never attribute
+# a displayed line to them (Kalshi/Polymarket quotes aren't bettable at those prices).
+_PROPLINE_NON_SPORTSBOOKS = {"kalshi", "polymarket", "smarkets", "novig", "prophetx"}
+
+def _parse_best_line(payload: dict) -> dict | None:
+    """Reduce a /best-line payload to consensus market lines with book attribution.
+
+    For each market (spreads/totals), the MAIN line is the point quoted by the most
+    books across all sides — that's the market consensus, not one book's alt ladder.
+    Attribution picks the sharpest sportsbook quoting that exact point (same priority
+    order as _build_odds_map). Returns {"spread": {...}, "total": {...}} or None.
+    """
+    if not payload or payload.get("redacted"):
+        return None
+    lines = {}
+    for mk, out_key in (("spreads", "spread"), ("totals", "total")):
+        entries = [ln for ln in payload.get("lines", []) if ln.get("market_key") == mk]
+        if not entries:
+            continue
+
+        def _rows(ln):
+            rows = []
+            for sd in (ln.get("sides") or {}).values():
+                rows += sd.get("all_prices") or []
+            return rows
+
+        # MAIN line = the point quoted by the most distinct SPORTSBOOKS. Exchange/
+        # prediction-market rungs (a Kalshi ladder alone can have 40+ points) must
+        # not count as consensus votes — they're one venue's depth, not agreement.
+        def _score(ln):
+            rows = [x for x in _rows(ln) if x.get("book") not in _PROPLINE_NON_SPORTSBOOKS]
+            return (len({x.get("book") for x in rows}), len(rows))
+
+        main = max(entries, key=_score)
+        all_rows = _rows(main)
+        sport_rows = [x for x in all_rows if x.get("book") not in _PROPLINE_NON_SPORTSBOOKS]
+        pool = sport_rows or all_rows
+        book = next((b for b in ("pinnacle", "draftkings", "fanduel", "betrivers", "bovada")
+                     if any(x.get("book") == b for x in pool)), None)
+        title = next((x.get("book_title") for x in pool if x.get("book") == book), None) or (book or "")
+        lines[out_key] = {"point": main.get("point"), "n_quoters": len(sport_rows) or len(all_rows),
+                          "book": book, "book_title": title}
+    return lines or None
+
+# Betting window for per-event best-line enrichment: only games kicking off within
+# this many days get the extra call (lines that far out are opening numbers anyway).
+PROPLINE_BEST_LINE_WINDOW_DAYS = int(os.environ.get("PROPLINE_BEST_LINE_WINDOW_DAYS", "10"))
+# Consensus guard threshold: a single-book line diverging from the multi-book
+# consensus by more than this many points is treated as wrong (glitch or live
+# artifact that slipped the kickoff filter) and replaced with the consensus.
+CONSENSUS_GUARD_PTS = 6.0
+# Tiered freshness inside the window — keeps game-day volume well under quota:
+#   kickoff within 48h  -> best-line every refresh cycle (lines move fast now)
+#   beyond 48h          -> at most once per day (opening lines barely move)
+PROPLINE_NEAR_HOURS = int(os.environ.get("PROPLINE_NEAR_HOURS", "48"))
+BEST_LINE_TS_FILE = BASE_DIR / "data" / "best_line_ts.json"
+# Last-known best-line per event id — reused on cycles where a far-out game is not
+# due for a fresh call, so every game keeps its consensus line (not just the ones
+# fetched this cycle).
+BEST_LINE_STORE_FILE = BASE_DIR / "data" / "best_line_store.json"
+
+def _load_best_line_ts() -> dict:
+    try:
+        if BEST_LINE_TS_FILE.exists():
+            return json.loads(BEST_LINE_TS_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+    return {}
+
+def _save_best_line_ts(ts_map: dict):
+    try:
+        # Keep only the last 3 days of entries so the file can't grow unbounded.
+        cutoff = time.time() - 3 * 86400
+        BEST_LINE_TS_FILE.write_text(
+            json.dumps({k: v for k, v in ts_map.items() if v >= cutoff}), encoding="utf-8")
+    except Exception as e:
+        print(f"[Odds] best-line ts write failed: {e}")
+
+def _load_best_line_store() -> dict:
+    try:
+        if BEST_LINE_STORE_FILE.exists():
+            return json.loads(BEST_LINE_STORE_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+    return {}
+
+def _save_best_line_store(store: dict):
+    try:
+        cutoff = time.time() - 3 * 86400
+        BEST_LINE_STORE_FILE.write_text(
+            json.dumps({k: v for k, v in store.items() if v.get("_ts", 0) >= cutoff}),
+            encoding="utf-8")
+    except Exception as e:
+        print(f"[Odds] best-line store write failed: {e}")
+
+def _best_line_due(ev: dict, now, ts_map: dict) -> bool:
+    """Should this event get a /best-line call THIS cycle?"""
+    ct = ev.get("commence_time") or ""
+    try:
+        kick = datetime.fromisoformat(ct.replace("Z", "+00:00"))
+    except Exception:
+        return True  # unknown kickoff -> fetch rather than skip
+    if kick <= now + timedelta(hours=PROPLINE_NEAR_HOURS):
+        return True  # near-term game: every cycle
+    last = ts_map.get(str(ev.get("id")), 0)
+    return time.time() - last >= 86400  # far-out game: once per day
+
+def _propline_event_needed(ev: dict, now) -> bool:
+    """True if the event kicks off within the best-line betting window."""
+    ct = ev.get("commence_time") or ""
+    try:
+        return datetime.fromisoformat(ct.replace("Z", "+00:00")) <= now + timedelta(days=PROPLINE_BEST_LINE_WINDOW_DAYS)
+    except Exception:
+        return True  # unknown kickoff -> keep the line rather than drop it
+
 def _propline_fetch() -> list[dict]:
-    """Fetch NCAAF spreads & totals from PropLine (Bovada via the-odds-compatible API).
-    Uses the bulk /odds endpoint to discover events (1 call), then fetches detailed
-    markets per event concurrently. Returns a list of dicts in the same shape as
-    _the_odds_fetch() so it can be merged into the same odds_map.
+    """Fetch NCAAF spreads & totals from PropLine.
+
+    Bulk /odds?markets=spreads,totals is ONE call and returns complete bookmaker
+    data for every event (verified identical to per-event /odds — the old 100+
+    per-event calls were pure quota burn). Per-event /best-line adds cross-book
+    consensus lines + which book offers each; it runs only when:
+      - >20% of the daily quota remains (X-Daily-Remaining), and
+      - the game kicks off within PROPLINE_BEST_LINE_WINDOW_DAYS, and
+      - tiered freshness: kickoff <= PROPLINE_NEAR_HOURS -> every cycle;
+        further out -> at most once per day (last-known line reused meanwhile).
+    Events carry "commence_time" so the kickoff filter in _fetch_odds_live works,
+    and an optional "best_line" field consumed by _build_odds_map.
     """
     if not PROPLINE_KEY:  # Use module-level key (set from .env at startup)
         return []
     try:
         base = "https://api.prop-line.com/v1/sports/football_ncaaf"
-        # 1. Bulk fetch all events with basic odds (1 API call, with retry)
-        bulk = _http_get(f"{base}/odds", params={"apiKey": PROPLINE_KEY}, retries=3, base_delay=1.0)
+        bulk, hdrs = _http_get_with_headers(
+            f"{base}/odds", params={"apiKey": PROPLINE_KEY, "markets": "spreads,totals"},
+            retries=3, base_delay=1.0)
         if not bulk:
             return []
+        _propline_quota_update(hdrs)
         events = bulk if isinstance(bulk, list) else bulk.get("events", [])
-        # 2. Concurrent per-event market fetch (113 calls done in parallel, ~5s vs ~20s sequential)
-        def _parse_event(ev):
-            home = ev.get("home_team", "")
-            away = ev.get("away_team", "")
-            if not home or not away:
-                return None
-            eid = ev.get("event_id") or ev.get("id")
+        now = datetime.now(timezone.utc)
+        ts_map = _load_best_line_ts()
+        store = _load_best_line_store()
+        # Reuse last-known best-line for games not due for a fresh call this cycle.
+        for ev in events:
+            eid = str(ev.get("id") or "")
+            if eid and "best_line" not in ev and isinstance(store.get(eid), dict):
+                ev["best_line"] = store[eid]
+        window = [ev for ev in events if _propline_event_needed(ev, now)]
+        due = [ev for ev in window if _best_line_due(ev, now, ts_map)]
+        # Measure: how many per-event calls does the window+freshness cap save?
+        print(f"[Odds] PropLine: {len(events)} events | window({PROPLINE_BEST_LINE_WINDOW_DAYS}d) "
+              f"{len(window)} | due this cycle {len(due)}")
+        if not _propline_best_line_allowed():
+            print(f"[Odds] {_propline_quota_str()} — below 20%: bulk-only this cycle (no best-line)")
+            return events
+        # Per-event best-line, concurrency 4 (memory-safe on Render's 512MB box).
+        def _fetch_best_line(ev):
+            eid = ev.get("id") or ev.get("event_id")
             if not eid:
                 return None
-            od = _http_get(f"{base}/events/{eid}/odds", params={"apiKey": PROPLINE_KEY},
-                           retries=2, base_delay=0.5)
-            if not od:
+            # A sibling worker may have hit the daily cap — stop before burning a call.
+            if _PROPLINE_QUOTA_DEAD["until_reset"] and time.time() < _PROPLINE_QUOTA_DEAD["until_reset"]:
                 return None
-            # Pass through ALL bookmakers so _build_odds_map can pick the best
-            # book and record its name (DraftKings/FanDuel/etc.) for display.
-            return {
-                "home_team": home,
-                "away_team": away,
-                "bookmakers": od.get("bookmakers", []),
-            }
-        # Concurrency 4 (not 10): caps the transient JSON-parse burst that can
-        # breach Render's memory limit when a scheduler refresh overlaps a
-        # user request. ~10s total fetch is fine — stability > speed here.
+            try:
+                bl, bh = _http_get_with_headers(
+                    f"{base}/events/{eid}/best-line",
+                    params={"apiKey": PROPLINE_KEY, "markets": "spreads,totals"},
+                    retries=2, base_delay=0.5)
+            except _PropLineQuotaExhausted:
+                _propline_quota_mark_dead()  # stop enriching; bulk data still stands
+                return None
+            if bh:
+                _propline_quota_update(bh)
+            parsed = _parse_best_line(bl or {})
+            if parsed is not None:
+                ev["best_line"] = parsed
+                store[str(eid)] = {**parsed, "_ts": time.time()}
+                ts_map[str(eid)] = time.time()
+            return None
         from concurrent.futures import ThreadPoolExecutor
         with ThreadPoolExecutor(max_workers=4) as pool:
-            results = list(pool.map(_parse_event, events))
-        return [r for r in results if r is not None]
+            list(pool.map(_fetch_best_line, due))
+        _save_best_line_ts(ts_map)
+        _save_best_line_store(store)
+        enriched = sum(1 for ev in events if "best_line" in ev)
+        print(f"[Odds] PropLine best-line: {enriched}/{len(events)} events "
+              f"(fetched {len(due)} this cycle | {_propline_quota_str()})")
+        return events
+    except _PropLineQuotaExhausted as e:
+        print(f"[Odds] PropLine daily quota exhausted mid-fetch: {e} — bulk-only from now")
+        return []
     except Exception as e:
         print(f"[PropLine fetch failed] {e}")
         return []
@@ -1259,11 +1506,12 @@ def _normalize_team_name(name: str) -> str:
     for pattern, school in _normalize_team_name._name_map:
         if pattern.lower() in name_lower:
             return school
-    # Fallback: first word
-    parts = name.split()
-    if parts:
-        return parts[0]
-    return name
+    # Fallback: keep the FULL name when it has multiple words. Truncating to the
+    # first word ("Utah State" -> "Utah") collides with a different team's game
+    # (the actual Utah Utes) and corrupts the odds map. Single-word names pass
+    # through unchanged; cross-feed matching for short-vs-full names is handled
+    # by kickoff time in _find_odds_entry, not by name truncation.
+    return name.strip() or name
 
 
 _normalize_team_name._name_map = []  # populated lazily on first call to avoid per-call rebuild
@@ -1272,9 +1520,12 @@ _normalize_team_name._name_map = []  # populated lazily on first call to avoid p
 def _build_odds_map(odds_data: list[dict]) -> dict:
     """Build a lookup dict keyed by (home_team, away_team) -> odds summary.
 
-    Records the sportsbook name the line came from. Book preference order
-    (sharpest/most standard first): pinnacle, draftkings, fanduel, betrivers,
-    bovada. Falls back to the first book that offers a spread.
+    Line source preference per game:
+      1. best_line — cross-book consensus from PropLine /best-line (the point the
+         most books quote), attributed to the sharpest sportsbook quoting it.
+      2. priority book from bulk data (sharpest/most standard first): pinnacle,
+         draftkings, fanduel, betrivers, bovada; falls back to the first book
+         that offers a spread.
     """
     _BOOK_PRIORITY = ["pinnacle", "draftkings", "fanduel", "betrivers", "bovada"]
     odds_map = {}
@@ -1282,6 +1533,11 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
         home = _normalize_team_name(game.get("home_team", ""))
         away = _normalize_team_name(game.get("away_team", ""))
         key = (home, away)
+        # 1) Cross-book consensus from /best-line (when fetched this cycle).
+        bl = game.get("best_line") or {}
+        bl_spread = bl.get("spread", {}).get("point") if isinstance(bl.get("spread"), dict) else None
+        bl_total = bl.get("total", {}).get("point") if isinstance(bl.get("total"), dict) else None
+        # 2) Bulk per-book lines (fallback + fills any market best-line missed).
         home_short = home.lower()
         away_short = away.lower()
         # Collect the home-team spread + total from every book
@@ -1311,7 +1567,7 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
                             total = outcome.get("point")
             if spread is not None or total is not None:
                 per_book[bk] = {"title": title, "spread": spread, "total": total}
-        # Pick the best book by priority, else the first available
+        # Pick the best book by priority, else the first available (bulk fallback)
         chosen = None
         for bk in _BOOK_PRIORITY:
             if bk in per_book:
@@ -1320,12 +1576,30 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
         if chosen is None and per_book:
             chosen = next(iter(per_book))
         b = per_book.get(chosen, {})
+        # Merge: best-line consensus wins per market; bulk priority book fills gaps.
+        spread = bl_spread if bl_spread is not None else b.get("spread")
+        total = bl_total if bl_total is not None else b.get("total")
+        # Book attribution follows the line actually used (best-line's attributed
+        # sportsbook when that market came from best-line, priority book otherwise).
+        def _attr(mk):
+            src = bl.get(mk)
+            if isinstance(src, dict) and src.get("point") is not None:
+                return src.get("book"), (src.get("book_title") or src.get("book"))
+            return chosen, b.get("title", chosen)
+        sp_book, sp_title = _attr("spread")
+        tt_book, tt_title = _attr("total")
+        # Top-level book = the one behind the spread (primary displayed line).
+        # Per-market kind: "best_line" = cross-book consensus, "priority_book" =
+        # single book from bulk data — the consensus guard in _fetch_odds_live
+        # only overrides priority_book lines.
         odds_map[key] = {
-            "spread": round(b.get("spread"), 1) if b.get("spread") is not None else None,
-            "total": round(b.get("total"), 1) if b.get("total") is not None else None,
-            "spread_home_favorite": b.get("spread") is not None and b.get("spread") < 0,
-            "book": chosen,
-            "book_title": b.get("title", chosen),
+            "spread": round(spread, 1) if spread is not None else None,
+            "total": round(total, 1) if total is not None else None,
+            "spread_home_favorite": spread is not None and spread < 0,
+            "book": sp_book or tt_book,
+            "book_title": sp_title or tt_title,
+            "spread_kind": "best_line" if bl_spread is not None else "priority_book",
+            "total_kind": "best_line" if bl_total is not None else "priority_book",
         }
     return odds_map
 
@@ -1377,6 +1651,47 @@ def _odds_disk_cache_any_age() -> dict | None:
         return None
 
 
+def _find_odds_entry(odds_map: dict, home: str, away: str, kick_iso: str = ""):
+    """Find an odds entry for (home, away), tolerating feed name differences.
+
+    Exact key first; then a UNIQUE prefix match — PropLine sends short names
+    ("Utah State") while The Odds API sends full names ("Utah State Aggies"),
+    which normalize to different keys and would otherwise create duplicate
+    entries for the same game (and false consensus-guard conflicts). A prefix
+    candidate only counts when kickoff times agree within 30 min, so "Utah"
+    never merges with a "Utah State" game at a different time.
+    """
+    key = (home, away)
+    if key in odds_map:
+        return key
+    cands = [k for k in odds_map
+             if (k[0].startswith(home) or home.startswith(k[0]))
+             and (k[1].startswith(away) or away.startswith(k[1]))]
+    if not cands:
+        return None
+    # When kickoff is known, require it to agree with the candidate — a unique
+    # prefix match alone can still be the WRONG game ("Utah" vs "Utah State").
+    kick = None
+    if kick_iso:
+        try:
+            kick = datetime.fromisoformat(str(kick_iso).replace("Z", "+00:00"))
+        except Exception:
+            kick = None
+    if kick is not None:
+        timed = []
+        for k in cands:
+            kt = _ODDS_KICKOFF.get(k)
+            if kt and abs((kt - kick).total_seconds()) <= 1800:
+                timed.append(k)
+        return timed[0] if len(timed) == 1 else None
+    # No kickoff info — only trust an unambiguous prefix match.
+    return cands[0] if len(cands) == 1 else None
+
+
+# (home, away) -> kickoff datetime — populated during _fetch_odds_live so the
+# prefix matcher can disambiguate same-prefix teams (Utah vs Utah State).
+_ODDS_KICKOFF = {}
+
 def _fetch_odds_live() -> dict:
     """Fetch odds from all sources (no cache reads). Non-empty on success."""
     odds_map = {}
@@ -1404,7 +1719,17 @@ def _fetch_odds_live() -> dict:
         pl_map = _build_odds_map(pregame)
         for k, v in pl_map.items():
             v["source"] = "propline"
-        odds_map.update(pl_map)
+            odds_map[k] = v
+        # Kickoff times per key — lets the prefix matcher disambiguate same-prefix
+        # teams (Utah vs Utah State) when merging other feeds.
+        for ev in pregame:
+            k2 = (_normalize_team_name(ev.get("home_team", "")),
+                  _normalize_team_name(ev.get("away_team", "")))
+            ct = ev.get("commence_time") or ""
+            try:
+                _ODDS_KICKOFF[k2] = datetime.fromisoformat(ct.replace("Z", "+00:00"))
+            except Exception:
+                pass
     except Exception as e:
         print(f"[Odds] PropLine primary failed: {e}")
     # 2) The Odds API (multi-book consensus — fills gaps AND sanity-checks PropLine)
@@ -1424,16 +1749,47 @@ def _fetch_odds_live() -> dict:
                 toa_pregame.append(ev)
         toa_map = _build_odds_map(toa_pregame)
         for k, v in toa_map.items():
-            if k not in odds_map:
+            # Tolerant match: PropLine's short names ("Utah") vs TOA's full names
+            # ("Utah Utes" -> "Utah") can produce different keys for the same game.
+            found = _find_odds_entry(odds_map, k[0], k[1],
+                                     next((e.get("commence_time", "") for e in toa_pregame
+                                           if (_normalize_team_name(e.get("home_team", "")),
+                                               _normalize_team_name(e.get("away_team", ""))) == k), ""))
+            if found is None:
                 v["source"] = "the_odds_api"
                 odds_map[k] = v
+            elif found != k:
+                # Same game, different key (feed name mismatch) — merge TOA data
+                # into the PropLine entry so downstream code sees one record.
+                print(f"[Odds] merged duplicate keys {k[0]}|{k[1]} -> {found[0]}|{found[1]}")
+                pl_v = odds_map[found]
+                for mkt in ("spread", "total"):
+                    if pl_v.get(mkt) is None and v.get(mkt) is not None:
+                        pl_v[mkt] = v[mkt]
+                # Consensus guard on the merged entry (same logic as exact-key case).
+                for mkt, pl_kind in (("spread", pl_v.get("spread_kind")), ("total", pl_v.get("total_kind"))):
+                    if pl_kind == "best_line":
+                        continue  # already cross-book consensus — never override
+                    pl_val = pl_v.get(mkt)
+                    toa_val = v.get(mkt)
+                    if (pl_val is not None and toa_val is not None
+                            and abs(pl_val - toa_val) > CONSENSUS_GUARD_PTS):
+                        print(f"[Odds] {found[0]}|{found[1]} {mkt}: PropLine {pl_val} vs "
+                              f"consensus {toa_val} — using consensus")
+                        pl_v[mkt] = toa_val
+                        pl_v["book"] = v.get("book")
+                        pl_v["book_title"] = v.get("book_title")
+                        pl_v["source"] = "the_odds_api"
             else:
-                # Consensus guard: PropLine (single book) vs multi-book line.
+                # Consensus guard: PropLine SINGLE-BOOK line vs multi-book line.
                 # A gap > 6 pts means one feed is wrong (glitch or live artifact
                 # that slipped the kickoff filter) — trust the multi-book line.
+                # Lines already sourced from /best-line are cross-book consensus,
+                # so they're never overridden here.
                 for mkt in ("spread", "total"):
                     pl_v, toa_v = odds_map[k].get(mkt), v.get(mkt)
-                    if pl_v is not None and toa_v is not None and abs(pl_v - toa_v) > 6:
+                    if (pl_v is not None and toa_v is not None and abs(pl_v - toa_v) > CONSENSUS_GUARD_PTS
+                            and odds_map[k].get(f"{mkt}_kind") != "best_line"):
                         print(f"[Odds] {k[0]}|{k[1]} {mkt}: PropLine {pl_v} vs "
                               f"consensus {toa_v} — using consensus")
                         odds_map[k][mkt] = toa_v
@@ -1442,13 +1798,14 @@ def _fetch_odds_live() -> dict:
                         odds_map[k]["source"] = "the_odds_api"
     except Exception as e:
         print(f"[Odds] The Odds API backup failed: {e}")
-    # 3) CFBD lines (last resort)
+    # 3) CFBD lines (last resort) — tolerant key match too, so a name mismatch
+    # doesn't create a duplicate entry for a game we already have.
     try:
         for game in _cfbd_lines():
             hk = _normalize_team_name(game.get("homeTeam", ""))
             ak = _normalize_team_name(game.get("awayTeam", ""))
             key = (hk, ak)
-            if key not in odds_map and game.get("lines"):
+            if _find_odds_entry(odds_map, hk, ak) is None and game.get("lines"):
                 line = game["lines"][0]
                 odds_map[key] = {
                     "spread": round(line.get("spread"), 1) if line.get("spread") is not None else None,
