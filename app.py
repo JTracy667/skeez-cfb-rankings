@@ -2306,13 +2306,15 @@ def _lock_picks(enriched: list[dict], week: int) -> None:
                 **pk,
             })
             changed = True
-        elif key not in graded_keys and (
+        elif key not in graded_keys and spread is not None and (
             prior.get("ats_pick") != pk.get("ats_pick")
             or prior.get("su_pick") != pk.get("su_pick")
             or prior.get("spread") != spread
         ):
             # Re-lock: projections or the line moved since lock. Keep the
             # original lock time for reference, record the new values.
+            # NEVER re-lock against a missing line (spread None = game started
+            # or feed gap) — that would erase the bet we're grading against.
             prior.update({
                 "spread": spread,
                 "home_proj": m.get("home_proj"),
@@ -2489,6 +2491,40 @@ def api_record_ingest():
     except Exception as e:
         print(f"[ingest error] {e}")
         return {"error": str(e), "graded": 0}
+
+
+@app.post("/api/record/repair-ats")
+def api_record_repair_ats(spread: float, ats_pick: str, key: str):
+    """One-off repair: restore a pick's spread/ats_pick erased by the Aug 29
+    re-lock bug (re-lock fired against a suppressed live-game line, writing
+    None over the legitimate pre-kickoff lock), then re-grade its result.
+
+    Only touches picks whose result has ats_result=None (ungraded ATS)."""
+    try:
+        record = _load_record()
+        fixed = []
+        for p in record.get("picks", []):
+            if p.get("key") == key and p.get("spread") is None:
+                p["spread"] = spread
+                p["ats_pick"] = ats_pick
+                fixed.append(p["key"])
+        reground = 0
+        for r in record.get("results", []):
+            if r.get("key") == key and r.get("ats_result") is None:
+                match = next((p for p in record["picks"] if p.get("key") == key), None)
+                if match and match.get("spread") is not None and match.get("ats_pick"):
+                    r["spread"] = match["spread"]
+                    r["ats_pick"] = match["ats_pick"]
+                    r["ats_result"] = _grade_ats(
+                        match["ats_pick"], match["home"], match["away"],
+                        match["spread"], r["home_score"], r["away_score"])
+                    reground += 1
+        if fixed or reground:
+            _save_record(record)
+        return {"fixed_picks": fixed, "regraded": reground}
+    except Exception as e:
+        print(f"[repair error] {e}")
+        return {"error": str(e)}
 
 
 # ── Best Bets: separate tracker for high-confidence value plays ──
