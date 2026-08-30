@@ -1825,7 +1825,7 @@ def _fetch_odds_live() -> dict:
     return odds_map
 
 
-def project_score_multi_factor(team_data: dict, is_home: bool = True) -> dict:
+def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_composite: float | None = None) -> dict:
     """
     Multi-factor projected score model.
     Uses actual cached fields: sp_plus (CFBD -40..+40 scale), fpi_win_prob, cpi,
@@ -1842,7 +1842,7 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True) -> dict:
     classification = (team_data.get("classification") or "").upper()
     has_ratings = bool(team_data.get("sp_plus") or team_data.get("elo"))
     if not has_ratings and classification == "FCS":
-        fcs_composite = 21.0   # typical FCS vs FBS gap (50 = average FBS)
+        fcs_composite = 16.0   # typical FCS vs FBS gap (50 = average FBS)
         base_score = max(6.0, 27.0 + (fcs_composite - 50.0) * 0.55)   # ~13.6 pts
         home_adj = 2.5 if is_home else -1.5
         projected_score = round(max(0.0, base_score + home_adj), 1)
@@ -1923,6 +1923,14 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True) -> dict:
     home_adj = 2.5 if is_home else -1.5
     projected_score = round(base_score + home_adj, 1)
 
+    # OPPONENT-ADJUSTED SUPPRESSION (Aug 30, user call: "52-0, 53-7 are common"):
+    # A bad team facing an elite defense scores far fewer points than its
+    # base suggests. Scale points down by composite gap: each 10 pts of
+    # (opp_composite - composite) above 30 cuts the offense by ~12%.
+    if opp_composite is not None and (opp_composite - composite) > 30:
+        suppression = 1.0 - min(0.75, (opp_composite - composite - 30) * 0.012)
+        projected_score = round(projected_score * suppression, 1)
+
     # Points can't be negative — floor projected score at 0 (defensive floor,
     # not a normalization of the model output).
     if projected_score < 0:
@@ -1946,6 +1954,69 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True) -> dict:
     }
 
 
+
+
+
+def project_head_to_head(home_data: dict, away_data: dict, neutral_site: bool = False) -> dict:
+    """Head-to-head projection: TOTAL from combined strength, MARGIN from composite gap.
+
+    Aug 30 recalibration (user call): old independent-score model produced
+    84-point totals between two elite teams and only 8-point margins for
+    Minnesota-Eastern Illinois. Real CFB: elite totals sit ~52-58, blowouts
+    52-0 / 53-7 are common, average totals ~48-52.
+
+    total  = 51 + (avg_composite - 50) * 0.10   # elite games trend slightly higher
+    margin = 0.9 * (comp_home - comp_away) + HFA (2.5 home / -1.5 away / 0 neutral)
+             — 0.9 pts margin per composite point: comp gap 40 -> ~36 pt margin
+               (matches real 40+ spreads: OSU -51 vs Ball State etc.)
+    home_score = (total + margin) / 2, away_score = (total - margin) / 2, floor 3.
+    """
+    hp = project_score_multi_factor(home_data, is_home=True)
+    ap = project_score_multi_factor(away_data, is_home=False)
+    hc, ac = hp["composite"], ap["composite"]
+    avg = (hc + ac) / 2.0
+    total = 51.0 + (avg - 50.0) * 0.10
+    # Two-regime margin curve calibrated to real spreads (Aug 30):
+    # mid-tier gaps price shallow (Iowa -3 w/ comp gap 18), blowouts steep (OSU -51 w/ gap ~55).
+    gap_ = hc - ac
+    mag = abs(gap_)
+    if mag <= 25:
+        margin = gap_ * 0.45
+    else:
+        margin = (11.25 if gap_ > 0 else -11.25) + (gap_ - 25 if gap_ > 0 else gap_ + 25) * 1.1
+    if not neutral_site:
+        margin += 2.5  # HFA
+    # Split total by margin. For lopsided games the underdog's share bottoms
+    # out near the "garbage time" floor: 52-0 / 53-7 finals are common, so a
+    # 35+ pt underdog gets ~10% of the total, not a symmetric 50/50 split.
+    home_score = (total + margin) / 2.0
+    away_score = (total - margin) / 2.0
+    # Underdog floor: composite gap > 30 caps the weak side's share of total.
+    gap = abs(hc - ac)
+    floor_share = 0.50 - min(0.40, max(0.0, (gap - 30)) * 0.011)  # gap 66 -> 0.06
+    if away_score < home_score:
+        max_away = total * floor_share
+        if away_score > max_away:
+            # shave the underdog, give the difference to the favorite
+            home_score += away_score - max_away
+            away_score = max_away
+    else:
+        max_home = total * floor_share
+        if home_score > max_home:
+            away_score += home_score - max_home
+            home_score = max_home
+    home_score = max(3.0, round(home_score, 1))
+    away_score = max(3.0, round(away_score, 1))
+    return {
+        "home_proj": home_score,
+        "away_proj": away_score,
+        "differential": round(home_score - away_score, 1),
+        "home_composite": hc,
+        "away_composite": ac,
+        "home_win_probability": hp["win_probability"],
+        "away_win_probability": ap["win_probability"],
+        "total": round(home_score + away_score, 1),
+    }
 
 def fetch_live_analytics():
     """Fetch and merge FPI, SP+, Recruiting, SRS, Elo, and REAL season stats from CFBD API."""
@@ -2317,6 +2388,12 @@ def api_schedule():
         # Multi-factor projection
         home_proj_data = project_score_multi_factor(home, is_home=True)
         away_proj_data = project_score_multi_factor(away, is_home=False)
+        # Second pass with opponent suppression (great defenses hold bad teams
+        # to single digits — 52-0 and 53-7 finals are common in CFB).
+        home_proj_data = project_score_multi_factor(
+            home, is_home=True, opp_composite=away_proj_data["composite"])
+        away_proj_data = project_score_multi_factor(
+            away, is_home=False, opp_composite=home_proj_data["composite"])
         diff = round(home_proj_data["projected_score"] - away_proj_data["projected_score"], 1)
         # Look up live betting line (negative spread = home is favorite)
         odds_key = (_normalize_team_name(m["home"]), _normalize_team_name(m["away"]))
@@ -2478,19 +2555,17 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
         # Minnesota — Aug 30 fix).
         home["classification"] = m.get("home_classification") or home.get("classification") or ""
         away["classification"] = m.get("away_classification") or away.get("classification") or ""
-        # Multi-factor projection. On a neutral site, zero out the HFA tilt so
-        # the game is decided purely by strength (same re-centering as Win Totals).
-        home_proj_data = project_score_multi_factor(home, is_home=True)
-        away_proj_data = project_score_multi_factor(away, is_home=False)
-        if m.get("neutral_site"):
-            h2 = project_score_multi_factor(home, is_home=False)["projected_score"]
-            a2 = project_score_multi_factor(away, is_home=True)["projected_score"]
-            home_proj = (home_proj_data["projected_score"] + h2) / 2.0
-            away_proj = (away_proj_data["projected_score"] + a2) / 2.0
-        else:
-            home_proj = home_proj_data["projected_score"]
-            away_proj = away_proj_data["projected_score"]
-        diff = round(home_proj - away_proj, 1)
+        # Head-to-head projection (Aug 30 recalibration): total from combined
+        # strength, margin from composite gap. Handles neutral site, elite
+        # totals (~52-58), and FCS blowouts (52-0 class finals) in one model.
+        h2h = project_head_to_head(home, away, neutral_site=bool(m.get("neutral_site")))
+        home_proj = h2h["home_proj"]
+        away_proj = h2h["away_proj"]
+        home_proj_data = {"projected_score": home_proj, "composite": h2h["home_composite"],
+                          "win_probability": h2h["home_win_probability"]}
+        away_proj_data = {"projected_score": away_proj, "composite": h2h["away_composite"],
+                          "win_probability": h2h["away_win_probability"]}
+        diff = h2h["differential"]
         # Betting market overlay — PRE-GAME ONLY. Once a game kicks off, books
         # serve live-adjusted lines that mean something completely different
         # (UVA -14/-21 in-play vs -3.5 pre-game). Suppress the line entirely
