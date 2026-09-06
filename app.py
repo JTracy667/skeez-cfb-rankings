@@ -194,20 +194,29 @@ def _snapshot_lines(odds_map: dict) -> list[dict]:
     Returns the movements detected THIS pass: {home, away, market, old, new, delta}.
     """
     prev = {}
+    prev_ts = 0.0
     try:
         if LINE_HISTORY_FILE.exists():
-            raw = json.loads(LINE_HISTORY_FILE.read_text(encoding="utf-8")).get("lines", {})
-            prev = {tuple(k.split("|")): v for k, v in raw.items()}
+            raw = json.loads(LINE_HISTORY_FILE.read_text(encoding="utf-8"))
+            prev_ts = raw.get("ts", 0)
+            prev = {tuple(k.split("|")): v for k, v in raw.get("lines", {}).items()}
     except Exception:
         prev = {}
+        prev_ts = 0
     movements = []
     current = {}
     now_ts = time.time()
+    # Stale-baseline guard: if the previous snapshot is very old (deploy gap,
+    # seeded image, restored backup), diffing against it would log a fake
+    # movement for every line that moved while we were dark. Re-baseline
+    # silently instead — movements only count when we've been watching.
+    STALE_SNAPSHOT_SECS = 24 * 3600
+    snapshot_stale = (now_ts - prev_ts) > STALE_SNAPSHOT_SECS
     for (home, away), v in odds_map.items():
         key = f"{home}|{away}"
         current[key] = {"spread": v.get("spread"), "total": v.get("total"), "book": v.get("book_title") or v.get("book")}
         old = prev.get((home, away))
-        if not old:
+        if not old or snapshot_stale:
             continue
         for market in ("spread", "total"):
             new_v = v.get(market)

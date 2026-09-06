@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "updated": "2026-08-14T15:07:38.267647",
+  "updated": "2026-09-06T07:51:08.893164",
   "picks": [
     {
       "key": "tcu|north carolina",
@@ -12,7 +12,9 @@
       "home_proj": 47.3,
       "away_proj": 37.3,
       "su_pick": "TCU",
-      "ats_pick": "TCU"
+      "ats_pick": "TCU",
+      "total": 46,
+      "over_pick": "over"
     },
     {
       "key": "usc|san jos\u00e9 state",
@@ -24,7 +26,9 @@
       "home_proj": 54.5,
       "away_proj": 23.4,
       "su_pick": "USC",
-      "ats_pick": "San Jos\u00e9 State"
+      "ats_pick": "San Jos\u00e9 State",
+      "total": 60.5,
+      "over_pick": "over"
     },
     {
       "key": "virginia|nc state",
@@ -36,7 +40,9 @@
       "home_proj": 44.4,
       "away_proj": 41.4,
       "su_pick": "Virginia",
-      "ats_pick": "NC State"
+      "ats_pick": "NC State",
+      "total": 50.5,
+      "over_pick": "over"
     },
     {
       "key": "north dakota state|jacksonville state",
@@ -48,7 +54,9 @@
       "home_proj": 35.7,
       "away_proj": 31.4,
       "su_pick": "North Dakota State",
-      "ats_pick": "Jacksonville State"
+      "ats_pick": "Jacksonville State",
+      "total": 46.5,
+      "over_pick": "over"
     },
     {
       "key": "eastern michigan|sacramento state",
@@ -60,7 +68,9 @@
       "home_proj": 30.9,
       "away_proj": 23.8,
       "su_pick": "Eastern Michigan",
-      "ats_pick": "Sacramento State"
+      "ats_pick": "Sacramento State",
+      "total": 53,
+      "over_pick": "over"
     },
     {
       "key": "stanford|hawai'i",
@@ -72,7 +82,9 @@
       "home_proj": 38.6,
       "away_proj": 32.4,
       "su_pick": "Stanford",
-      "ats_pick": "Stanford"
+      "ats_pick": "Stanford",
+      "total": 48.5,
+      "over_pick": "over"
     },
     {
       "key": "florida state|new mexico state",
@@ -84,7 +96,9 @@
       "home_proj": 48.4,
       "away_proj": 22.9,
       "su_pick": "Florida State",
-      "ats_pick": "New Mexico State"
+      "ats_pick": "New Mexico State",
+      "total": 53.5,
+      "over_pick": "over"
     },
     {
       "key": "unlv|memphis",
@@ -96,7 +110,9 @@
       "home_proj": 43.6,
       "away_proj": 35.5,
       "su_pick": "UNLV",
-      "ats_pick": "UNLV"
+      "ats_pick": "UNLV",
+      "total": 55.5,
+      "over_pick": "over"
     },
     {
       "key": "rutgers|massachusetts",
@@ -108,7 +124,9 @@
       "home_proj": 43.2,
       "away_proj": 22.7,
       "su_pick": "Rutgers",
-      "ats_pick": "Massachusetts"
+      "ats_pick": "Massachusetts",
+      "total": 54.5,
+      "over_pick": "over"
     },
     {
       "key": "ucf|bethune-cookman",
@@ -116,11 +134,14 @@
       "home": "UCF",
       "away": "Bethune-Cookman",
       "date": "2026-09-03T23:00Z",
-      "spread": null,
+      "spread": -43.5,
       "home_proj": 41.0,
       "away_proj": 31.0,
       "su_pick": "UCF",
-      "ats_pick": null
+      "ats_pick": "Bethune-Cookman",
+      "total": 58.5,
+      "line_source": "cfbd_closing (Draft Kings) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "wake forest|akron",
@@ -132,7 +153,9 @@
       "home_proj": 43.7,
       "away_proj": 22.8,
       "su_pick": "Wake Forest",
-      "ats_pick": "Akron"
+      "ats_pick": "Akron",
+      "total": 50.5,
+      "over_pick": "over"
     },
     {
       "key": "delaware|merrimack",
@@ -144,7 +167,9 @@
       "home_proj": 33.3,
       "away_proj": 31.0,
       "su_pick": "Delaware",
-      "ats_pick": "Merrimack"
+      "ats_pick": "Merrimack",
+      "total": 56.5,
+      "over_pick": "over"
     },
     {
       "key": "kennesaw state|west georgia",
@@ -156,7 +181,9 @@
       "home_proj": 30.5,
       "away_proj": 31.0,
       "su_pick": "West Georgia",
-      "ats_pick": "West Georgia"
+      "ats_pick": "West Georgia",
+      "total": 50.5,
+      "over_pick": "over"
     },
     {
       "key": "buffalo|ualbany",
@@ -168,7 +195,9 @@
       "home_proj": 31.1,
       "away_proj": 33.3,
       "su_pick": "UAlbany",
-      "ats_pick": "UAlbany"
+      "ats_pick": "UAlbany",
+      "total": 47.5,
+      "over_pick": "over"
     },
     {
       "key": "missouri|arkansas-pine bluff",
@@ -176,11 +205,14 @@
       "home": "Missouri",
       "away": "Arkansas-Pine Bluff",
       "date": "2026-09-04T00:00Z",
-      "spread": null,
+      "spread": -55.5,
       "home_proj": 51.4,
       "away_proj": 33.3,
       "su_pick": "Missouri",
-      "ats_pick": null
+      "ats_pick": "Arkansas-Pine Bluff",
+      "total": 62.5,
+      "line_source": "cfbd_closing (Draft Kings) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "georgia tech|colorado",
@@ -192,7 +224,9 @@
       "home_proj": 45.3,
       "away_proj": 34.7,
       "su_pick": "Georgia Tech",
-      "ats_pick": "Georgia Tech"
+      "ats_pick": "Georgia Tech",
+      "total": 52.5,
+      "over_pick": "over"
     },
     {
       "key": "minnesota|eastern illinois",
@@ -200,11 +234,14 @@
       "home": "Minnesota",
       "away": "Eastern Illinois",
       "date": "2026-09-04T00:00Z",
-      "spread": null,
+      "spread": -42.5,
       "home_proj": 45.4,
       "away_proj": 33.3,
       "su_pick": "Minnesota",
-      "ats_pick": null
+      "ats_pick": "Eastern Illinois",
+      "total": 52.5,
+      "line_source": "cfbd_closing (Draft Kings) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "utah|idaho",
@@ -216,7 +253,9 @@
       "home_proj": 50.2,
       "away_proj": 31.0,
       "su_pick": "Utah",
-      "ats_pick": "Utah"
+      "ats_pick": "Utah",
+      "total": 60.5,
+      "over_pick": "over"
     },
     {
       "key": "illinois|uab",
@@ -228,7 +267,9 @@
       "home_proj": 47.9,
       "away_proj": 24.3,
       "su_pick": "Illinois",
-      "ats_pick": "UAB"
+      "ats_pick": "UAB",
+      "total": 54.5,
+      "over_pick": "over"
     },
     {
       "key": "eastern michigan|san jos\u00e9 state",
@@ -240,7 +281,9 @@
       "home_proj": 30.9,
       "away_proj": 23.4,
       "su_pick": "Eastern Michigan",
-      "ats_pick": "Eastern Michigan"
+      "ats_pick": "Eastern Michigan",
+      "total": 55,
+      "over_pick": "under"
     },
     {
       "key": "purdue|indiana state",
@@ -252,7 +295,9 @@
       "home_proj": 38.8,
       "away_proj": 33.3,
       "su_pick": "Purdue",
-      "ats_pick": "Indiana State"
+      "ats_pick": "Indiana State",
+      "total": 55.5,
+      "over_pick": "over"
     },
     {
       "key": "georgia state|north carolina a&t",
@@ -264,7 +309,9 @@
       "home_proj": 31.3,
       "away_proj": 31.0,
       "su_pick": "Georgia State",
-      "ats_pick": "North Carolina A&T"
+      "ats_pick": "North Carolina A&T",
+      "total": 58.5,
+      "over_pick": "over"
     },
     {
       "key": "oklahoma|utep",
@@ -276,7 +323,9 @@
       "home_proj": 54.5,
       "away_proj": 23.2,
       "su_pick": "Oklahoma",
-      "ats_pick": "UTEP"
+      "ats_pick": "UTEP",
+      "total": 51.5,
+      "over_pick": "over"
     },
     {
       "key": "kansas|long island university",
@@ -284,11 +333,14 @@
       "home": "Kansas",
       "away": "Long Island University",
       "date": "2026-09-05T00:00Z",
-      "spread": null,
+      "spread": -44.5,
       "home_proj": 42.3,
       "away_proj": 33.3,
       "su_pick": "Kansas",
-      "ats_pick": null
+      "ats_pick": "Long Island University",
+      "total": 57.5,
+      "line_source": "cfbd_closing (Draft Kings) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "michigan state|toledo",
@@ -300,7 +352,9 @@
       "home_proj": 40.9,
       "away_proj": 33.5,
       "su_pick": "Michigan State",
-      "ats_pick": "Toledo"
+      "ats_pick": "Toledo",
+      "total": 48.5,
+      "over_pick": "over"
     },
     {
       "key": "stanford|miami",
@@ -312,7 +366,9 @@
       "home_proj": 38.6,
       "away_proj": 50.8,
       "su_pick": "Miami",
-      "ats_pick": "Stanford"
+      "ats_pick": "Stanford",
+      "total": 46.5,
+      "over_pick": "over"
     },
     {
       "key": "usc|fresno state",
@@ -324,7 +380,9 @@
       "home_proj": 54.5,
       "away_proj": 35.6,
       "su_pick": "USC",
-      "ats_pick": "Fresno State"
+      "ats_pick": "Fresno State",
+      "total": 51.5,
+      "over_pick": "over"
     },
     {
       "key": "alabama|east carolina",
@@ -336,7 +394,9 @@
       "home_proj": 54.5,
       "away_proj": 35.2,
       "su_pick": "Alabama",
-      "ats_pick": "East Carolina"
+      "ats_pick": "East Carolina",
+      "total": 52.5,
+      "over_pick": "over"
     },
     {
       "key": "houston|oregon state",
@@ -348,7 +408,9 @@
       "home_proj": 46.8,
       "away_proj": 30.0,
       "su_pick": "Houston",
-      "ats_pick": "Oregon State"
+      "ats_pick": "Oregon State",
+      "total": 50.5,
+      "over_pick": "over"
     },
     {
       "key": "west virginia|coastal carolina",
@@ -360,7 +422,9 @@
       "home_proj": 39.8,
       "away_proj": 24.7,
       "su_pick": "West Virginia",
-      "ats_pick": "Coastal Carolina"
+      "ats_pick": "Coastal Carolina",
+      "total": 54.5,
+      "over_pick": "over"
     },
     {
       "key": "syracuse|new hampshire",
@@ -372,7 +436,9 @@
       "home_proj": 39.2,
       "away_proj": 33.3,
       "su_pick": "Syracuse",
-      "ats_pick": "New Hampshire"
+      "ats_pick": "New Hampshire",
+      "total": 56.5,
+      "over_pick": "over"
     },
     {
       "key": "indiana|north texas",
@@ -384,7 +450,9 @@
       "home_proj": 55.8,
       "away_proj": 30.5,
       "su_pick": "Indiana",
-      "ats_pick": "North Texas"
+      "ats_pick": "North Texas",
+      "total": 56,
+      "over_pick": "over"
     },
     {
       "key": "nebraska|ohio",
@@ -396,7 +464,9 @@
       "home_proj": 45.2,
       "away_proj": 31.1,
       "su_pick": "Nebraska",
-      "ats_pick": "Ohio"
+      "ats_pick": "Ohio",
+      "total": 46.5,
+      "over_pick": "over"
     },
     {
       "key": "uconn|lafayette",
@@ -404,11 +474,14 @@
       "home": "UConn",
       "away": "Lafayette",
       "date": "2026-09-05T16:00Z",
-      "spread": null,
+      "spread": -21.5,
       "home_proj": 32.3,
       "away_proj": 31.0,
       "su_pick": "UConn",
-      "ats_pick": null
+      "ats_pick": "Lafayette",
+      "total": 51.5,
+      "line_source": "cfbd_closing (Draft Kings) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "army|bryant",
@@ -420,7 +493,9 @@
       "home_proj": 38.6,
       "away_proj": 31.0,
       "su_pick": "Army",
-      "ats_pick": "Bryant"
+      "ats_pick": "Bryant",
+      "total": 51.5,
+      "over_pick": "over"
     },
     {
       "key": "bowling green|tarleton state",
@@ -432,7 +507,9 @@
       "home_proj": 30.5,
       "away_proj": 31.0,
       "su_pick": "Tarleton State",
-      "ats_pick": "Tarleton State"
+      "ats_pick": "Tarleton State",
+      "total": 49.5,
+      "over_pick": "over"
     },
     {
       "key": "james madison|liberty",
@@ -444,7 +521,9 @@
       "home_proj": 41.3,
       "away_proj": 30.5,
       "su_pick": "James Madison",
-      "ats_pick": "James Madison"
+      "ats_pick": "James Madison",
+      "total": 50.5,
+      "over_pick": "over"
     },
     {
       "key": "pittsburgh|miami (oh)",
@@ -456,7 +535,9 @@
       "home_proj": 46.5,
       "away_proj": 29.9,
       "su_pick": "Pittsburgh",
-      "ats_pick": "Pittsburgh"
+      "ats_pick": "Pittsburgh",
+      "total": 47.5,
+      "over_pick": "over"
     },
     {
       "key": "ohio state|ball state",
@@ -468,7 +549,9 @@
       "home_proj": 60.1,
       "away_proj": 24.2,
       "su_pick": "Ohio State",
-      "ats_pick": "Ball State"
+      "ats_pick": "Ball State",
+      "total": 56.5,
+      "over_pick": "over"
     },
     {
       "key": "south carolina|kent state",
@@ -480,7 +563,9 @@
       "home_proj": 51.8,
       "away_proj": 22.1,
       "su_pick": "South Carolina",
-      "ats_pick": "Kent State"
+      "ats_pick": "Kent State",
+      "total": 53.5,
+      "over_pick": "over"
     },
     {
       "key": "kentucky|youngstown state",
@@ -492,7 +577,9 @@
       "home_proj": 42.7,
       "away_proj": 31.0,
       "su_pick": "Kentucky",
-      "ats_pick": "Youngstown State"
+      "ats_pick": "Youngstown State",
+      "total": 61.5,
+      "over_pick": "over"
     },
     {
       "key": "iowa state|southeast missouri state",
@@ -504,7 +591,9 @@
       "home_proj": 42.3,
       "away_proj": 33.3,
       "su_pick": "Iowa State",
-      "ats_pick": "Southeast Missouri State"
+      "ats_pick": "Southeast Missouri State",
+      "total": 52.5,
+      "over_pick": "over"
     },
     {
       "key": "air force|duquesne",
@@ -516,7 +605,9 @@
       "home_proj": 35.3,
       "away_proj": 33.3,
       "su_pick": "Air Force",
-      "ats_pick": "Duquesne"
+      "ats_pick": "Duquesne",
+      "total": 55.5,
+      "over_pick": "over"
     },
     {
       "key": "temple|rhode island",
@@ -528,7 +619,9 @@
       "home_proj": 35.1,
       "away_proj": 31.0,
       "su_pick": "Temple",
-      "ats_pick": "Rhode Island"
+      "ats_pick": "Rhode Island",
+      "total": 51.5,
+      "over_pick": "over"
     },
     {
       "key": "georgia|tennessee state",
@@ -536,11 +629,14 @@
       "home": "Georgia",
       "away": "Tennessee State",
       "date": "2026-09-05T19:00Z",
-      "spread": null,
+      "spread": -49,
       "home_proj": 58.1,
       "away_proj": 31.0,
       "su_pick": "Georgia",
-      "ats_pick": null
+      "ats_pick": "Tennessee State",
+      "total": 55,
+      "line_source": "cfbd_closing (Bovada) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "auburn|baylor",
@@ -552,7 +648,9 @@
       "home_proj": 49.6,
       "away_proj": 39.8,
       "su_pick": "Auburn",
-      "ats_pick": "Auburn"
+      "ats_pick": "Auburn",
+      "total": 58.5,
+      "over_pick": "over"
     },
     {
       "key": "tennessee|furman",
@@ -560,11 +658,14 @@
       "home": "Tennessee",
       "away": "Furman",
       "date": "2026-09-05T19:30Z",
-      "spread": null,
+      "spread": -49,
       "home_proj": 53.3,
       "away_proj": 31.0,
       "su_pick": "Tennessee",
-      "ats_pick": null
+      "ats_pick": "Furman",
+      "total": 66.5,
+      "line_source": "cfbd_closing (Bovada) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "texas|texas state",
@@ -576,7 +677,9 @@
       "home_proj": 57.8,
       "away_proj": 36.9,
       "su_pick": "Texas",
-      "ats_pick": "Texas State"
+      "ats_pick": "Texas State",
+      "total": 60,
+      "over_pick": "over"
     },
     {
       "key": "cincinnati|boston college",
@@ -588,7 +691,9 @@
       "home_proj": 41.9,
       "away_proj": 32.8,
       "su_pick": "Cincinnati",
-      "ats_pick": "Cincinnati"
+      "ats_pick": "Cincinnati",
+      "total": 51,
+      "over_pick": "over"
     },
     {
       "key": "duke|tulane",
@@ -600,7 +705,9 @@
       "home_proj": 44.1,
       "away_proj": 35.7,
       "su_pick": "Duke",
-      "ats_pick": "Tulane"
+      "ats_pick": "Tulane",
+      "total": 51.5,
+      "over_pick": "over"
     },
     {
       "key": "oregon|boise state",
@@ -612,7 +719,9 @@
       "home_proj": 59.1,
       "away_proj": 40.8,
       "su_pick": "Oregon",
-      "ats_pick": "Boise State"
+      "ats_pick": "Boise State",
+      "total": 53.5,
+      "over_pick": "over"
     },
     {
       "key": "penn state|marshall",
@@ -624,7 +733,9 @@
       "home_proj": 49.4,
       "away_proj": 30.6,
       "su_pick": "Penn State",
-      "ats_pick": "Marshall"
+      "ats_pick": "Marshall",
+      "total": 53.5,
+      "over_pick": "over"
     },
     {
       "key": "charlotte|the citadel",
@@ -636,7 +747,9 @@
       "home_proj": 27.5,
       "away_proj": 33.3,
       "su_pick": "The Citadel",
-      "ats_pick": "The Citadel"
+      "ats_pick": "The Citadel",
+      "total": 49,
+      "over_pick": "over"
     },
     {
       "key": "navy|towson",
@@ -648,7 +761,9 @@
       "home_proj": 38.8,
       "away_proj": 31.0,
       "su_pick": "Navy",
-      "ats_pick": "Towson"
+      "ats_pick": "Towson",
+      "total": 50.5,
+      "over_pick": "over"
     },
     {
       "key": "utsa|ut rio grande valley",
@@ -656,11 +771,14 @@
       "home": "UTSA",
       "away": "UT Rio Grande Valley",
       "date": "2026-09-05T19:30Z",
-      "spread": null,
+      "spread": -28.5,
       "home_proj": 42.2,
       "away_proj": 33.3,
       "su_pick": "UTSA",
-      "ats_pick": null
+      "ats_pick": "UT Rio Grande Valley",
+      "total": 59.5,
+      "line_source": "cfbd_closing (Bovada) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "north dakota state|fordham",
@@ -672,7 +790,9 @@
       "home_proj": 35.7,
       "away_proj": 31.0,
       "su_pick": "North Dakota State",
-      "ats_pick": "Fordham"
+      "ats_pick": "Fordham",
+      "total": 54.5,
+      "over_pick": "over"
     },
     {
       "key": "app state|maine",
@@ -680,11 +800,14 @@
       "home": "App State",
       "away": "Maine",
       "date": "2026-09-05T19:30Z",
-      "spread": null,
+      "spread": -21,
       "home_proj": 33.9,
       "away_proj": 33.3,
       "su_pick": "App State",
-      "ats_pick": null
+      "ats_pick": "Maine",
+      "total": 54,
+      "line_source": "cfbd_closing (Bovada) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "tulsa|oklahoma state",
@@ -696,7 +819,9 @@
       "home_proj": 34.7,
       "away_proj": 35.4,
       "su_pick": "Oklahoma State",
-      "ats_pick": "Tulsa"
+      "ats_pick": "Tulsa",
+      "total": 57.5,
+      "over_pick": "over"
     },
     {
       "key": "arkansas|north alabama",
@@ -704,11 +829,14 @@
       "home": "Arkansas",
       "away": "North Alabama",
       "date": "2026-09-05T20:15Z",
-      "spread": null,
+      "spread": -40.5,
       "home_proj": 44.8,
       "away_proj": 31.0,
       "su_pick": "Arkansas",
-      "ats_pick": null
+      "ats_pick": "North Alabama",
+      "total": 63,
+      "line_source": "cfbd_closing (Bovada) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "iowa|northern illinois",
@@ -720,7 +848,9 @@
       "home_proj": 51.2,
       "away_proj": 25.5,
       "su_pick": "Iowa",
-      "ats_pick": "Northern Illinois"
+      "ats_pick": "Northern Illinois",
+      "total": 44.5,
+      "over_pick": "over"
     },
     {
       "key": "southern miss|alcorn state",
@@ -732,7 +862,9 @@
       "home_proj": 31.6,
       "away_proj": 33.3,
       "su_pick": "Alcorn State",
-      "ats_pick": "Alcorn State"
+      "ats_pick": "Alcorn State",
+      "total": 51,
+      "over_pick": "over"
     },
     {
       "key": "colorado state|wyoming",
@@ -744,7 +876,9 @@
       "home_proj": 33.2,
       "away_proj": 26.1,
       "su_pick": "Colorado State",
-      "ats_pick": "Colorado State"
+      "ats_pick": "Colorado State",
+      "total": 46.5,
+      "over_pick": "over"
     },
     {
       "key": "old dominion|norfolk state",
@@ -756,7 +890,9 @@
       "home_proj": 38.3,
       "away_proj": 33.3,
       "su_pick": "Old Dominion",
-      "ats_pick": "Norfolk State"
+      "ats_pick": "Norfolk State",
+      "total": 52,
+      "over_pick": "over"
     },
     {
       "key": "texas a&m|missouri state",
@@ -768,7 +904,9 @@
       "home_proj": 55.9,
       "away_proj": 23.5,
       "su_pick": "Texas A&M",
-      "ats_pick": "Missouri State"
+      "ats_pick": "Missouri State",
+      "total": 53.5,
+      "over_pick": "over"
     },
     {
       "key": "vanderbilt|austin peay",
@@ -780,7 +918,9 @@
       "home_proj": 49.5,
       "away_proj": 31.0,
       "su_pick": "Vanderbilt",
-      "ats_pick": "Austin Peay"
+      "ats_pick": "Austin Peay",
+      "total": 59,
+      "over_pick": "over"
     },
     {
       "key": "texas tech|abilene christian",
@@ -788,11 +928,14 @@
       "home": "Texas Tech",
       "away": "Abilene Christian",
       "date": "2026-09-05T23:00Z",
-      "spread": null,
+      "spread": -44.5,
       "home_proj": 55.8,
       "away_proj": 31.0,
       "su_pick": "Texas Tech",
-      "ats_pick": null
+      "ats_pick": "Abilene Christian",
+      "total": 60.5,
+      "line_source": "cfbd_closing (Bovada) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "kansas state|nicholls",
@@ -800,11 +943,14 @@
       "home": "Kansas State",
       "away": "Nicholls",
       "date": "2026-09-05T23:00Z",
-      "spread": null,
+      "spread": -41,
       "home_proj": 48.2,
       "away_proj": 31.0,
       "su_pick": "Kansas State",
-      "ats_pick": null
+      "ats_pick": "Nicholls",
+      "total": 55,
+      "line_source": "cfbd_closing (Bovada) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "utah state|idaho state",
@@ -816,7 +962,9 @@
       "home_proj": 36.1,
       "away_proj": 31.0,
       "su_pick": "Utah State",
-      "ats_pick": "Idaho State"
+      "ats_pick": "Idaho State",
+      "total": 60,
+      "over_pick": "over"
     },
     {
       "key": "memphis|arkansas state",
@@ -828,7 +976,9 @@
       "home_proj": 40.5,
       "away_proj": 28.3,
       "su_pick": "Memphis",
-      "ats_pick": "Memphis"
+      "ats_pick": "Memphis",
+      "total": 52.5,
+      "over_pick": "over"
     },
     {
       "key": "rice|houston christian",
@@ -840,7 +990,9 @@
       "home_proj": 30.2,
       "away_proj": 33.3,
       "su_pick": "Houston Christian",
-      "ats_pick": "Houston Christian"
+      "ats_pick": "Houston Christian",
+      "total": 47.5,
+      "over_pick": "over"
     },
     {
       "key": "south florida|florida international",
@@ -852,7 +1004,9 @@
       "home_proj": 41.0,
       "away_proj": 25.8,
       "su_pick": "South Florida",
-      "ats_pick": "South Florida"
+      "ats_pick": "South Florida",
+      "total": 53.5,
+      "over_pick": "over"
     },
     {
       "key": "middle tennessee|murray state",
@@ -864,7 +1018,9 @@
       "home_proj": 29.8,
       "away_proj": 31.0,
       "su_pick": "Murray State",
-      "ats_pick": "Murray State"
+      "ats_pick": "Murray State",
+      "total": 56,
+      "over_pick": "over"
     },
     {
       "key": "jacksonville state|eastern kentucky",
@@ -876,7 +1032,9 @@
       "home_proj": 36.4,
       "away_proj": 31.0,
       "su_pick": "Jacksonville State",
-      "ats_pick": "Eastern Kentucky"
+      "ats_pick": "Eastern Kentucky",
+      "total": 53,
+      "over_pick": "over"
     },
     {
       "key": "georgia southern|charleston southern",
@@ -888,7 +1046,9 @@
       "home_proj": 32.8,
       "away_proj": 33.3,
       "su_pick": "Charleston Southern",
-      "ats_pick": "Charleston Southern"
+      "ats_pick": "Charleston Southern",
+      "total": 52.5,
+      "over_pick": "over"
     },
     {
       "key": "south alabama|se louisiana",
@@ -896,11 +1056,14 @@
       "home": "South Alabama",
       "away": "SE Louisiana",
       "date": "2026-09-05T23:00Z",
-      "spread": null,
+      "spread": -14,
       "home_proj": 33.7,
       "away_proj": 33.3,
       "su_pick": "South Alabama",
-      "ats_pick": null
+      "ats_pick": "SE Louisiana",
+      "total": 53.5,
+      "line_source": "cfbd_closing (Bovada) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "troy|sam houston",
@@ -912,7 +1075,9 @@
       "home_proj": 35.9,
       "away_proj": 25.1,
       "su_pick": "Troy",
-      "ats_pick": "Sam Houston"
+      "ats_pick": "Sam Houston",
+      "total": 52.5,
+      "over_pick": "over"
     },
     {
       "key": "lsu|clemson",
@@ -924,7 +1089,9 @@
       "home_proj": 54.3,
       "away_proj": 46.9,
       "su_pick": "LSU",
-      "ats_pick": "Clemson"
+      "ats_pick": "Clemson",
+      "total": 48.5,
+      "over_pick": "over"
     },
     {
       "key": "mississippi state|ul monroe",
@@ -936,7 +1103,9 @@
       "home_proj": 44.4,
       "away_proj": 24.4,
       "su_pick": "Mississippi State",
-      "ats_pick": "UL Monroe"
+      "ats_pick": "UL Monroe",
+      "total": 54.5,
+      "over_pick": "over"
     },
     {
       "key": "virginia tech|vmi",
@@ -944,11 +1113,14 @@
       "home": "Virginia Tech",
       "away": "VMI",
       "date": "2026-09-05T23:30Z",
-      "spread": null,
+      "spread": -54.5,
       "home_proj": 44.5,
       "away_proj": 33.3,
       "su_pick": "Virginia Tech",
-      "ats_pick": null
+      "ats_pick": "VMI",
+      "total": 60.5,
+      "line_source": "cfbd_closing (Draft Kings) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "michigan|western michigan",
@@ -960,7 +1132,9 @@
       "home_proj": 54.3,
       "away_proj": 33.7,
       "su_pick": "Michigan",
-      "ats_pick": "Western Michigan"
+      "ats_pick": "Western Michigan",
+      "total": 50.5,
+      "over_pick": "over"
     },
     {
       "key": "louisiana tech|northwestern state",
@@ -968,11 +1142,14 @@
       "home": "Louisiana Tech",
       "away": "Northwestern State",
       "date": "2026-09-05T23:30Z",
-      "spread": null,
+      "spread": -44.5,
       "home_proj": 35.0,
       "away_proj": 31.0,
       "su_pick": "Louisiana Tech",
-      "ats_pick": null
+      "ats_pick": "Northwestern State",
+      "total": 56.5,
+      "line_source": "cfbd_closing (Draft Kings) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "florida|florida atlantic",
@@ -984,7 +1161,9 @@
       "home_proj": 51.9,
       "away_proj": 28.7,
       "su_pick": "Florida",
-      "ats_pick": "Florida Atlantic"
+      "ats_pick": "Florida Atlantic",
+      "total": 59.5,
+      "over_pick": "over"
     },
     {
       "key": "byu|utah tech",
@@ -992,11 +1171,14 @@
       "home": "BYU",
       "away": "Utah Tech",
       "date": "2026-09-06T00:00Z",
-      "spread": null,
+      "spread": -50.5,
       "home_proj": 52.7,
       "away_proj": 31.0,
       "su_pick": "BYU",
-      "ats_pick": null
+      "ats_pick": "Utah Tech",
+      "total": 61.5,
+      "line_source": "cfbd_closing (Draft Kings) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "maryland|hampton",
@@ -1004,11 +1186,14 @@
       "home": "Maryland",
       "away": "Hampton",
       "date": "2026-09-06T00:00Z",
-      "spread": null,
+      "spread": -45.5,
       "home_proj": 42.7,
       "away_proj": 31.0,
       "su_pick": "Maryland",
-      "ats_pick": null
+      "ats_pick": "Hampton",
+      "total": 56.5,
+      "line_source": "cfbd_closing (Draft Kings) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "northwestern|south dakota state",
@@ -1016,11 +1201,14 @@
       "home": "Northwestern",
       "away": "South Dakota State",
       "date": "2026-09-06T00:00Z",
-      "spread": null,
+      "spread": -14,
       "home_proj": 45.6,
       "away_proj": 31.0,
       "su_pick": "Northwestern",
-      "ats_pick": null
+      "ats_pick": "Northwestern",
+      "total": 49.5,
+      "line_source": "cfbd_closing (Draft Kings) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "louisiana|lamar",
@@ -1032,7 +1220,9 @@
       "home_proj": 34.4,
       "away_proj": 31.0,
       "su_pick": "Louisiana",
-      "ats_pick": "Lamar"
+      "ats_pick": "Lamar",
+      "total": 48.5,
+      "over_pick": "over"
     },
     {
       "key": "arizona state|morgan state",
@@ -1040,11 +1230,14 @@
       "home": "Arizona State",
       "away": "Morgan State",
       "date": "2026-09-06T01:00Z",
-      "spread": null,
+      "spread": -43.5,
       "home_proj": 45.3,
       "away_proj": 33.3,
       "su_pick": "Arizona State",
-      "ats_pick": null
+      "ats_pick": "Morgan State",
+      "total": 52.5,
+      "line_source": "cfbd_closing (Draft Kings) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "new mexico state|mercyhurst",
@@ -1056,7 +1249,9 @@
       "home_proj": 27.9,
       "away_proj": 33.3,
       "su_pick": "Mercyhurst",
-      "ats_pick": "Mercyhurst"
+      "ats_pick": "Mercyhurst",
+      "total": 52.5,
+      "over_pick": "over"
     },
     {
       "key": "arizona|northern arizona",
@@ -1068,7 +1263,9 @@
       "home_proj": 48.9,
       "away_proj": 31.0,
       "su_pick": "Arizona",
-      "ats_pick": "Northern Arizona"
+      "ats_pick": "Northern Arizona",
+      "total": 59.5,
+      "over_pick": "over"
     },
     {
       "key": "san diego state|portland state",
@@ -1076,11 +1273,14 @@
       "home": "San Diego State",
       "away": "Portland State",
       "date": "2026-09-06T01:30Z",
-      "spread": null,
+      "spread": -38.5,
       "home_proj": 42.8,
       "away_proj": 31.0,
       "su_pick": "San Diego State",
-      "ats_pick": null
+      "ats_pick": "Portland State",
+      "total": 61.5,
+      "line_source": "cfbd_closing (Draft Kings) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "hawai'i|unlv",
@@ -1092,7 +1292,9 @@
       "home_proj": 37.4,
       "away_proj": 38.6,
       "su_pick": "UNLV",
-      "ats_pick": "Hawai'i"
+      "ats_pick": "Hawai'i",
+      "total": 55.5,
+      "over_pick": "over"
     },
     {
       "key": "new mexico|central michigan",
@@ -1104,7 +1306,9 @@
       "home_proj": 40.3,
       "away_proj": 26.6,
       "su_pick": "New Mexico",
-      "ats_pick": "Central Michigan"
+      "ats_pick": "Central Michigan",
+      "total": 47.5,
+      "over_pick": "over"
     },
     {
       "key": "sacramento state|mississippi valley state",
@@ -1112,11 +1316,14 @@
       "home": "Sacramento State",
       "away": "Mississippi Valley State",
       "date": "2026-09-06T02:00Z",
-      "spread": null,
+      "spread": -38.5,
       "home_proj": 28.8,
       "away_proj": 31.0,
       "su_pick": "Mississippi Valley State",
-      "ats_pick": null
+      "ats_pick": "Mississippi Valley State",
+      "total": 56.5,
+      "line_source": "cfbd_closing (Draft Kings) - restored Sep 6 after deploy data loss",
+      "over_pick": "over"
     },
     {
       "key": "cal|ucla",
@@ -1124,11 +1331,14 @@
       "home": "Cal",
       "away": "UCLA",
       "date": "2026-09-06T02:30Z",
-      "spread": null,
+      "spread": 4.0,
       "home_proj": 38.3,
       "away_proj": 36.3,
       "su_pick": "Cal",
-      "ats_pick": null
+      "ats_pick": "Cal",
+      "total": 53.5,
+      "over_pick": "over",
+      "line_source": "restored from Aug30 clone + cfbd closing total"
     },
     {
       "key": "nevada|western kentucky",
@@ -1140,7 +1350,9 @@
       "home_proj": 31.8,
       "away_proj": 32.5,
       "su_pick": "Western Kentucky",
-      "ats_pick": "Nevada"
+      "ats_pick": "Nevada",
+      "total": 51.5,
+      "over_pick": "over"
     },
     {
       "key": "washington|washington state",
@@ -1152,7 +1364,9 @@
       "home_proj": 52.3,
       "away_proj": 33.2,
       "su_pick": "Washington",
-      "ats_pick": "Washington State"
+      "ats_pick": "Washington State",
+      "total": 51,
+      "over_pick": "over"
     },
     {
       "key": "ole miss|louisville",
@@ -1164,7 +1378,9 @@
       "home_proj": 53.1,
       "away_proj": 43.7,
       "su_pick": "Ole Miss",
-      "ats_pick": "Ole Miss"
+      "ats_pick": "Ole Miss",
+      "total": 54.5,
+      "over_pick": "over"
     },
     {
       "key": "notre dame|wisconsin",
@@ -1176,7 +1392,9 @@
       "home_proj": 58.1,
       "away_proj": 36.9,
       "su_pick": "Notre Dame",
-      "ats_pick": "Wisconsin"
+      "ats_pick": "Wisconsin",
+      "total": 46.5,
+      "over_pick": "over"
     },
     {
       "key": "florida state|smu",
@@ -1188,7 +1406,9 @@
       "home_proj": 48.4,
       "away_proj": 45.7,
       "su_pick": "Florida State",
-      "ats_pick": "Florida State"
+      "ats_pick": "Florida State",
+      "total": 53,
+      "over_pick": "over"
     },
     {
       "key": "georgia|florida",
@@ -1196,11 +1416,13 @@
       "home": "Georgia",
       "away": "Florida",
       "date": null,
-      "spread": null,
+      "spread": -12.5,
       "home_proj": 58.1,
       "away_proj": 46.9,
       "su_pick": "Georgia",
-      "ats_pick": null
+      "ats_pick": "Florida",
+      "total": 53.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "michigan|penn state",
@@ -1208,11 +1430,13 @@
       "home": "Michigan",
       "away": "Penn State",
       "date": null,
-      "spread": null,
+      "spread": -6.5,
       "home_proj": 54.3,
       "away_proj": 44.4,
       "su_pick": "Michigan",
-      "ats_pick": null
+      "ats_pick": "Michigan",
+      "total": 51.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "miami|florida a&m",
@@ -1268,11 +1492,13 @@
       "home": "Boston College",
       "away": "Rutgers",
       "date": "2026-09-11T23:30Z",
-      "spread": null,
+      "spread": -3.5,
       "home_proj": 37.8,
       "away_proj": 38.2,
       "su_pick": "Rutgers",
-      "ats_pick": null
+      "ats_pick": "Rutgers",
+      "total": 55.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "kansas|missouri",
@@ -1328,11 +1554,13 @@
       "home": "Texas A&M",
       "away": "Arizona State",
       "date": "2026-09-12T16:00Z",
-      "spread": null,
+      "spread": -14.5,
       "home_proj": 55.9,
       "away_proj": 40.3,
       "su_pick": "Texas A&M",
-      "ats_pick": null
+      "ats_pick": "Texas A&M",
+      "total": 50.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "kansas state|washington state",
@@ -1340,11 +1568,13 @@
       "home": "Kansas State",
       "away": "Washington State",
       "date": "2026-09-12T16:00Z",
-      "spread": null,
+      "spread": -16.5,
       "home_proj": 48.2,
       "away_proj": 33.2,
       "su_pick": "Kansas State",
-      "ats_pick": null
+      "ats_pick": "Washington State",
+      "total": 51.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "oklahoma state|oregon",
@@ -1376,11 +1606,13 @@
       "home": "Virginia Tech",
       "away": "Old Dominion",
       "date": "2026-09-12T16:00Z",
-      "spread": null,
+      "spread": -14.5,
       "home_proj": 44.5,
       "away_proj": 33.3,
       "su_pick": "Virginia Tech",
-      "ats_pick": null
+      "ats_pick": "Old Dominion",
+      "total": 51.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "purdue|wake forest",
@@ -1388,11 +1620,13 @@
       "home": "Purdue",
       "away": "Wake Forest",
       "date": "2026-09-12T16:00Z",
-      "spread": null,
+      "spread": 3.5,
       "home_proj": 38.8,
       "away_proj": 38.7,
       "su_pick": "Purdue",
-      "ats_pick": null
+      "ats_pick": "Purdue",
+      "total": 49.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "indiana|howard",
@@ -1412,11 +1646,13 @@
       "home": "Temple",
       "away": "Penn State",
       "date": "2026-09-12T16:00Z",
-      "spread": null,
+      "spread": 21.5,
       "home_proj": 35.1,
       "away_proj": 44.4,
       "su_pick": "Penn State",
-      "ats_pick": null
+      "ats_pick": "Temple",
+      "total": 51.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "army|south florida",
@@ -1424,11 +1660,13 @@
       "home": "Army",
       "away": "South Florida",
       "date": "2026-09-12T16:00Z",
-      "spread": null,
+      "spread": -1.5,
       "home_proj": 38.6,
       "away_proj": 36.0,
       "su_pick": "Army",
-      "ats_pick": null
+      "ats_pick": "Army",
+      "total": 52.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "east carolina|app state",
@@ -1436,11 +1674,13 @@
       "home": "East Carolina",
       "away": "App State",
       "date": "2026-09-12T16:00Z",
-      "spread": null,
+      "spread": -10,
       "home_proj": 40.2,
       "away_proj": 28.9,
       "su_pick": "East Carolina",
-      "ats_pick": null
+      "ats_pick": "East Carolina",
+      "total": 56.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "kent state|wofford",
@@ -1460,11 +1700,13 @@
       "home": "Georgia",
       "away": "Western Kentucky",
       "date": "2026-09-12T16:45Z",
-      "spread": null,
+      "spread": -35.5,
       "home_proj": 58.1,
       "away_proj": 32.5,
       "su_pick": "Georgia",
-      "ats_pick": null
+      "ats_pick": "Western Kentucky",
+      "total": 52.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "west virginia|ut martin",
@@ -1520,11 +1762,13 @@
       "home": "Kentucky",
       "away": "Alabama",
       "date": "2026-09-12T19:30Z",
-      "spread": null,
+      "spread": 10.5,
       "home_proj": 42.7,
       "away_proj": 49.5,
       "su_pick": "Alabama",
-      "ats_pick": null
+      "ats_pick": "Kentucky",
+      "total": 48.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "minnesota|mississippi state",
@@ -1532,11 +1776,13 @@
       "home": "Minnesota",
       "away": "Mississippi State",
       "date": "2026-09-12T19:30Z",
-      "spread": null,
+      "spread": 1.5,
       "home_proj": 45.4,
       "away_proj": 39.4,
       "su_pick": "Minnesota",
-      "ats_pick": null
+      "ats_pick": "Minnesota",
+      "total": 55.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "colorado|weber state",
@@ -1556,11 +1802,13 @@
       "home": "Pittsburgh",
       "away": "UCF",
       "date": "2026-09-12T19:30Z",
-      "spread": null,
+      "spread": -8.5,
       "home_proj": 46.5,
       "away_proj": 36.0,
       "su_pick": "Pittsburgh",
-      "ats_pick": null
+      "ats_pick": "Pittsburgh",
+      "total": 56.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "byu|arizona",
@@ -1568,11 +1816,13 @@
       "home": "BYU",
       "away": "Arizona",
       "date": "2026-09-12T19:30Z",
-      "spread": null,
+      "spread": -7,
       "home_proj": 52.7,
       "away_proj": 43.9,
       "su_pick": "BYU",
-      "ats_pick": null
+      "ats_pick": "BYU",
+      "total": 51.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "syracuse|cal",
@@ -1592,11 +1842,13 @@
       "home": "Illinois",
       "away": "Duke",
       "date": "2026-09-12T19:30Z",
-      "spread": null,
+      "spread": -7.5,
       "home_proj": 47.9,
       "away_proj": 39.1,
       "su_pick": "Illinois",
-      "ats_pick": null
+      "ats_pick": "Illinois",
+      "total": 54.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "michigan state|eastern michigan",
@@ -1604,11 +1856,13 @@
       "home": "Michigan State",
       "away": "Eastern Michigan",
       "date": "2026-09-12T19:30Z",
-      "spread": null,
+      "spread": -16.5,
       "home_proj": 40.9,
       "away_proj": 25.9,
       "su_pick": "Michigan State",
-      "ats_pick": null
+      "ats_pick": "Eastern Michigan",
+      "total": 51.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "uconn|maryland",
@@ -1616,11 +1870,13 @@
       "home": "UConn",
       "away": "Maryland",
       "date": "2026-09-12T19:30Z",
-      "spread": null,
+      "spread": 12.5,
       "home_proj": 32.3,
       "away_proj": 37.7,
       "su_pick": "Maryland",
-      "ats_pick": null
+      "ats_pick": "UConn",
+      "total": 53.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "washington|utah state",
@@ -1628,11 +1884,13 @@
       "home": "Washington",
       "away": "Utah State",
       "date": "2026-09-12T19:30Z",
-      "spread": null,
+      "spread": -24.5,
       "home_proj": 52.3,
       "away_proj": 31.1,
       "su_pick": "Washington",
-      "ats_pick": null
+      "ats_pick": "Utah State",
+      "total": 56.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "notre dame|rice",
@@ -1640,11 +1898,13 @@
       "home": "Notre Dame",
       "away": "Rice",
       "date": "2026-09-12T19:30Z",
-      "spread": null,
+      "spread": -44.5,
       "home_proj": 58.1,
       "away_proj": 25.2,
       "su_pick": "Notre Dame",
-      "ats_pick": null
+      "ats_pick": "Rice",
+      "total": 52.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "texas state|utsa",
@@ -1652,11 +1912,13 @@
       "home": "Texas State",
       "away": "UTSA",
       "date": "2026-09-12T19:30Z",
-      "spread": null,
+      "spread": -1.5,
       "home_proj": 41.9,
       "away_proj": 37.2,
       "su_pick": "Texas State",
-      "ats_pick": null
+      "ats_pick": "Texas State",
+      "total": 64.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "uab|ul monroe",
@@ -1664,11 +1926,13 @@
       "home": "UAB",
       "away": "UL Monroe",
       "date": "2026-09-12T19:30Z",
-      "spread": null,
+      "spread": -7.5,
       "home_proj": 29.3,
       "away_proj": 24.4,
       "su_pick": "UAB",
-      "ats_pick": null
+      "ats_pick": "UL Monroe",
+      "total": 54.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "akron|robert morris",
@@ -1724,11 +1988,13 @@
       "home": "North Texas",
       "away": "UNLV",
       "date": "2026-09-12T19:45Z",
-      "spread": null,
+      "spread": 6.5,
       "home_proj": 35.5,
       "away_proj": 38.6,
       "su_pick": "UNLV",
-      "ats_pick": null
+      "ats_pick": "North Texas",
+      "total": 61.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "smu|uc davis",
@@ -1772,11 +2038,13 @@
       "home": "Vanderbilt",
       "away": "Delaware",
       "date": "2026-09-12T20:15Z",
-      "spread": null,
+      "spread": -21.5,
       "home_proj": 49.5,
       "away_proj": 28.3,
       "su_pick": "Vanderbilt",
-      "ats_pick": null
+      "ats_pick": "Delaware",
+      "total": 55.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "florida|campbell",
@@ -1796,11 +2064,13 @@
       "home": "Boise State",
       "away": "Memphis",
       "date": "2026-09-12T22:00Z",
-      "spread": null,
+      "spread": -7.5,
       "home_proj": 45.8,
       "away_proj": 35.5,
       "su_pick": "Boise State",
-      "ats_pick": null
+      "ats_pick": "Boise State",
+      "total": 52.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "florida international|buffalo",
@@ -1820,11 +2090,13 @@
       "home": "Ohio",
       "away": "Jacksonville State",
       "date": "2026-09-12T22:00Z",
-      "spread": null,
+      "spread": -2.5,
       "home_proj": 36.1,
       "away_proj": 31.4,
       "su_pick": "Ohio",
-      "ats_pick": null
+      "ats_pick": "Ohio",
+      "total": 48.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "liberty|gardner-webb",
@@ -1868,11 +2140,13 @@
       "home": "Georgia Tech",
       "away": "Tennessee",
       "date": "2026-09-12T23:00Z",
-      "spread": null,
+      "spread": 13.5,
       "home_proj": 45.3,
       "away_proj": 48.3,
       "su_pick": "Tennessee",
-      "ats_pick": null
+      "ats_pick": "Georgia Tech",
+      "total": 55.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "cincinnati|western carolina",
@@ -1904,11 +2178,13 @@
       "home": "Nebraska",
       "away": "Bowling Green",
       "date": "2026-09-12T23:00Z",
-      "spread": null,
+      "spread": -25.5,
       "home_proj": 45.2,
       "away_proj": 25.5,
       "su_pick": "Nebraska",
-      "ats_pick": null
+      "ats_pick": "Bowling Green",
+      "total": 48.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "colorado state|southern utah",
@@ -1928,11 +2204,13 @@
       "home": "Sam Houston",
       "away": "Tulsa",
       "date": "2026-09-12T23:00Z",
-      "spread": null,
+      "spread": 10.5,
       "home_proj": 30.1,
       "away_proj": 29.7,
       "su_pick": "Sam Houston",
-      "ats_pick": null
+      "ats_pick": "Sam Houston",
+      "total": 53.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "northern illinois|illinois state",
@@ -1952,11 +2230,13 @@
       "home": "Tulane",
       "away": "South Alabama",
       "date": "2026-09-12T23:00Z",
-      "spread": null,
+      "spread": -10,
       "home_proj": 40.7,
       "away_proj": 28.7,
       "su_pick": "Tulane",
-      "ats_pick": null
+      "ats_pick": "Tulane",
+      "total": 55.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "arkansas state|west georgia",
@@ -1988,11 +2268,13 @@
       "home": "Marshall",
       "away": "Middle Tennessee",
       "date": "2026-09-12T23:00Z",
-      "spread": null,
+      "spread": -17.5,
       "home_proj": 35.6,
       "away_proj": 24.8,
       "su_pick": "Marshall",
-      "ats_pick": null
+      "ats_pick": "Middle Tennessee",
+      "total": 57.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "missouri state|lindenwood",
@@ -2012,11 +2294,13 @@
       "home": "UCLA",
       "away": "San Diego State",
       "date": "2026-09-12T23:15Z",
-      "spread": null,
+      "spread": -10,
       "home_proj": 41.3,
       "away_proj": 37.8,
       "su_pick": "UCLA",
-      "ats_pick": null
+      "ats_pick": "San Diego State",
+      "total": 48.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "wisconsin|western illinois",
@@ -2060,11 +2344,13 @@
       "home": "Oregon State",
       "away": "Texas Tech",
       "date": "2026-09-12T23:30Z",
-      "spread": null,
+      "spread": 27.5,
       "home_proj": 35.0,
       "away_proj": 50.8,
       "su_pick": "Texas Tech",
-      "ats_pick": null
+      "ats_pick": "Oregon State",
+      "total": 49.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "iowa|iowa state",
@@ -2084,11 +2370,13 @@
       "home": "Clemson",
       "away": "Georgia Southern",
       "date": "2026-09-12T23:30Z",
-      "spread": null,
+      "spread": -26.5,
       "home_proj": 51.9,
       "away_proj": 27.8,
       "su_pick": "Clemson",
-      "ats_pick": null
+      "ats_pick": "Georgia Southern",
+      "total": 57.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "florida atlantic|navy",
@@ -2228,11 +2516,13 @@
       "home": "USC",
       "away": "Louisiana",
       "date": "2026-09-13T03:00Z",
-      "spread": null,
+      "spread": -28.5,
       "home_proj": 54.5,
       "away_proj": 29.4,
       "su_pick": "USC",
-      "ats_pick": null
+      "ats_pick": "Louisiana",
+      "total": 63.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
     },
     {
       "key": "hawai'i|new mexico state",
@@ -2240,12 +2530,1565 @@
       "home": "Hawai'i",
       "away": "New Mexico State",
       "date": "2026-09-13T03:59Z",
-      "spread": null,
+      "spread": -11.5,
       "home_proj": 37.4,
       "away_proj": 22.9,
       "su_pick": "Hawai'i",
-      "ats_pick": null
+      "ats_pick": "Hawai'i",
+      "total": 51.5,
+      "line_source": "cfbd_closing (DraftKings) - restored Sep 6 after deploy data loss"
+    },
+    {
+      "key": "california|ucla",
+      "week": 1,
+      "home": "California",
+      "away": "UCLA",
+      "date": "2026-09-06T02:30:00.000Z",
+      "spread": 4.0,
+      "home_proj": 30.0,
+      "away_proj": 26.0,
+      "su_pick": "California",
+      "ats_pick": "California",
+      "total": 53.5,
+      "over_pick": "over"
     }
   ],
-  "results": []
+  "results": [
+    {
+      "key": "tcu|north carolina",
+      "week": 1,
+      "home": "TCU",
+      "away": "North Carolina",
+      "home_score": 10,
+      "away_score": 15,
+      "su_pick": "TCU",
+      "ats_pick": "TCU",
+      "spread": -9.5,
+      "su_result": "L",
+      "ats_result": "L",
+      "total": 46,
+      "over_pick": "over",
+      "total_result": "L"
+    },
+    {
+      "key": "usc|san jos\u00e9 state",
+      "week": 1,
+      "home": "USC",
+      "away": "San Jos\u00e9 State",
+      "home_score": 42,
+      "away_score": 26,
+      "su_pick": "USC",
+      "ats_pick": "San Jos\u00e9 State",
+      "spread": -35.5,
+      "su_result": "W",
+      "ats_result": "W",
+      "total": 60.5,
+      "over_pick": "over",
+      "total_result": "W"
+    },
+    {
+      "key": "virginia|nc state",
+      "week": 1,
+      "home": "Virginia",
+      "away": "NC State",
+      "home_score": 34,
+      "away_score": 8,
+      "su_pick": "Virginia",
+      "ats_pick": "NC State",
+      "spread": -7.5,
+      "su_result": "W",
+      "ats_result": "L",
+      "total": 50.5,
+      "over_pick": "over",
+      "total_result": "L"
+    },
+    {
+      "key": "north dakota state|jacksonville state",
+      "week": 1,
+      "home": "North Dakota State",
+      "away": "Jacksonville State",
+      "home_score": 33,
+      "away_score": 7,
+      "su_pick": "North Dakota State",
+      "ats_pick": "Jacksonville State",
+      "spread": -6.5,
+      "su_result": "W",
+      "ats_result": "L",
+      "total": 46.5,
+      "over_pick": "over",
+      "total_result": "L"
+    },
+    {
+      "key": "eastern michigan|sacramento state",
+      "week": 1,
+      "home": "Eastern Michigan",
+      "away": "Sacramento State",
+      "home_score": 28,
+      "away_score": 17,
+      "su_pick": "Eastern Michigan",
+      "ats_pick": "Sacramento State",
+      "spread": -9.5,
+      "su_result": "W",
+      "ats_result": "L",
+      "total": 53,
+      "over_pick": "over",
+      "total_result": "L"
+    },
+    {
+      "key": "stanford|hawai'i",
+      "week": 1,
+      "home": "Stanford",
+      "away": "Hawai'i",
+      "home_score": 37,
+      "away_score": 27,
+      "su_pick": "Stanford",
+      "ats_pick": "Stanford",
+      "spread": -6.0,
+      "su_result": "W",
+      "ats_result": "W",
+      "total": 48.5,
+      "over_pick": "over",
+      "total_result": "W"
+    },
+    {
+      "key": "florida state|new mexico state",
+      "week": 1,
+      "home": "Florida State",
+      "away": "New Mexico State",
+      "home_score": 34,
+      "away_score": 17,
+      "su_pick": "Florida State",
+      "ats_pick": "New Mexico State",
+      "spread": -31.0,
+      "su_result": "W",
+      "ats_result": "W",
+      "total": 53.5,
+      "over_pick": "over",
+      "total_result": "L"
+    },
+    {
+      "key": "unlv|memphis",
+      "week": 1,
+      "home": "UNLV",
+      "away": "Memphis",
+      "home_score": 21,
+      "away_score": 27,
+      "su_pick": "UNLV",
+      "ats_pick": "UNLV",
+      "spread": -4.0,
+      "su_result": "L",
+      "ats_result": "L",
+      "total": 55.5,
+      "over_pick": "over",
+      "total_result": "L"
+    },
+    {
+      "key": "rutgers|massachusetts",
+      "week": 1,
+      "home": "Rutgers",
+      "away": "Massachusetts",
+      "home_score": 21,
+      "away_score": 37,
+      "su_pick": "Rutgers",
+      "ats_pick": "Massachusetts",
+      "spread": -30.5,
+      "total": 54.5,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "ucf|bethune-cookman",
+      "week": 1,
+      "home": "UCF",
+      "away": "Bethune-Cookman",
+      "home_score": 73,
+      "away_score": 6,
+      "su_pick": "UCF",
+      "ats_pick": "Bethune-Cookman",
+      "spread": -43.5,
+      "total": 58.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "wake forest|akron",
+      "week": 1,
+      "home": "Wake Forest",
+      "away": "Akron",
+      "home_score": 38,
+      "away_score": 16,
+      "su_pick": "Wake Forest",
+      "ats_pick": "Akron",
+      "spread": -23.0,
+      "total": 50.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "delaware|merrimack",
+      "week": 1,
+      "home": "Delaware",
+      "away": "Merrimack",
+      "home_score": 42,
+      "away_score": 7,
+      "su_pick": "Delaware",
+      "ats_pick": "Merrimack",
+      "spread": -28.5,
+      "total": 56.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "kennesaw state|west georgia",
+      "week": 1,
+      "home": "Kennesaw State",
+      "away": "West Georgia",
+      "home_score": 47,
+      "away_score": 0,
+      "su_pick": "West Georgia",
+      "ats_pick": "West Georgia",
+      "spread": -22.5,
+      "total": 50.5,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "buffalo|ualbany",
+      "week": 1,
+      "home": "Buffalo",
+      "away": "UAlbany",
+      "home_score": 21,
+      "away_score": 17,
+      "su_pick": "UAlbany",
+      "ats_pick": "UAlbany",
+      "spread": -26.5,
+      "total": 47.5,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "missouri|arkansas-pine bluff",
+      "week": 1,
+      "home": "Missouri",
+      "away": "Arkansas-Pine Bluff",
+      "home_score": 54,
+      "away_score": 14,
+      "su_pick": "Missouri",
+      "ats_pick": "Arkansas-Pine Bluff",
+      "spread": -55.5,
+      "total": 62.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "georgia tech|colorado",
+      "week": 1,
+      "home": "Georgia Tech",
+      "away": "Colorado",
+      "home_score": 13,
+      "away_score": 14,
+      "su_pick": "Georgia Tech",
+      "ats_pick": "Georgia Tech",
+      "spread": -9.0,
+      "total": 52.5,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "minnesota|eastern illinois",
+      "week": 1,
+      "home": "Minnesota",
+      "away": "Eastern Illinois",
+      "home_score": 59,
+      "away_score": 7,
+      "su_pick": "Minnesota",
+      "ats_pick": "Eastern Illinois",
+      "spread": -42.5,
+      "total": 52.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "utah|idaho",
+      "week": 1,
+      "home": "Utah",
+      "away": "Idaho",
+      "home_score": 66,
+      "away_score": 14,
+      "su_pick": "Utah",
+      "ats_pick": "Utah",
+      "spread": -13.5,
+      "total": 60.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "illinois|uab",
+      "week": 1,
+      "home": "Illinois",
+      "away": "UAB",
+      "home_score": 42,
+      "away_score": 23,
+      "su_pick": "Illinois",
+      "ats_pick": "UAB",
+      "spread": -27.5,
+      "total": 54.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "eastern michigan|san jos\u00e9 state",
+      "week": 1,
+      "home": "Eastern Michigan",
+      "away": "San Jos\u00e9 State",
+      "home_score": 21,
+      "away_score": 27,
+      "su_pick": "Eastern Michigan",
+      "ats_pick": "Eastern Michigan",
+      "spread": -4.5,
+      "total": 55,
+      "over_pick": "under",
+      "su_result": "L",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "purdue|indiana state",
+      "week": 1,
+      "home": "Purdue",
+      "away": "Indiana State",
+      "home_score": 44,
+      "away_score": 19,
+      "su_pick": "Purdue",
+      "ats_pick": "Indiana State",
+      "spread": -36.5,
+      "total": 55.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "georgia state|north carolina a&t",
+      "week": 1,
+      "home": "Georgia State",
+      "away": "North Carolina A&T",
+      "home_score": 59,
+      "away_score": 10,
+      "su_pick": "Georgia State",
+      "ats_pick": "North Carolina A&T",
+      "spread": -27.5,
+      "total": 58.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "oklahoma|utep",
+      "week": 1,
+      "home": "Oklahoma",
+      "away": "UTEP",
+      "home_score": 51,
+      "away_score": 0,
+      "su_pick": "Oklahoma",
+      "ats_pick": "UTEP",
+      "spread": -40.5,
+      "total": 51.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "kansas|long island university",
+      "week": 1,
+      "home": "Kansas",
+      "away": "Long Island University",
+      "home_score": 51,
+      "away_score": 6,
+      "su_pick": "Kansas",
+      "ats_pick": "Long Island University",
+      "spread": -44.5,
+      "total": 57.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "michigan state|toledo",
+      "week": 1,
+      "home": "Michigan State",
+      "away": "Toledo",
+      "home_score": 30,
+      "away_score": 20,
+      "su_pick": "Michigan State",
+      "ats_pick": "Toledo",
+      "spread": -9.5,
+      "total": 48.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "stanford|miami",
+      "week": 1,
+      "home": "Stanford",
+      "away": "Miami",
+      "home_score": 6,
+      "away_score": 45,
+      "su_pick": "Miami",
+      "ats_pick": "Stanford",
+      "spread": 23.5,
+      "total": 46.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "usc|fresno state",
+      "week": 1,
+      "home": "USC",
+      "away": "Fresno State",
+      "home_score": 39,
+      "away_score": 0,
+      "su_pick": "USC",
+      "ats_pick": "Fresno State",
+      "spread": -23.5,
+      "total": 51.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "alabama|east carolina",
+      "week": 1,
+      "home": "Alabama",
+      "away": "East Carolina",
+      "home_score": 48,
+      "away_score": 10,
+      "su_pick": "Alabama",
+      "ats_pick": "East Carolina",
+      "spread": -28.5,
+      "total": 52.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "houston|oregon state",
+      "week": 1,
+      "home": "Houston",
+      "away": "Oregon State",
+      "home_score": 33,
+      "away_score": 20,
+      "su_pick": "Houston",
+      "ats_pick": "Oregon State",
+      "spread": -19.5,
+      "total": 50.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "west virginia|coastal carolina",
+      "week": 1,
+      "home": "West Virginia",
+      "away": "Coastal Carolina",
+      "home_score": 31,
+      "away_score": 24,
+      "su_pick": "West Virginia",
+      "ats_pick": "Coastal Carolina",
+      "spread": -19.5,
+      "total": 54.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "syracuse|new hampshire",
+      "week": 1,
+      "home": "Syracuse",
+      "away": "New Hampshire",
+      "home_score": 66,
+      "away_score": 3,
+      "su_pick": "Syracuse",
+      "ats_pick": "New Hampshire",
+      "spread": -32.5,
+      "total": 56.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "indiana|north texas",
+      "week": 1,
+      "home": "Indiana",
+      "away": "North Texas",
+      "home_score": 52,
+      "away_score": 16,
+      "su_pick": "Indiana",
+      "ats_pick": "North Texas",
+      "spread": -40.5,
+      "total": 56,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "nebraska|ohio",
+      "week": 1,
+      "home": "Nebraska",
+      "away": "Ohio",
+      "home_score": 49,
+      "away_score": 21,
+      "su_pick": "Nebraska",
+      "ats_pick": "Ohio",
+      "spread": -23.5,
+      "total": 46.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "uconn|lafayette",
+      "week": 1,
+      "home": "UConn",
+      "away": "Lafayette",
+      "home_score": 56,
+      "away_score": 7,
+      "su_pick": "UConn",
+      "ats_pick": "Lafayette",
+      "spread": -21.5,
+      "total": 51.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "army|bryant",
+      "week": 1,
+      "home": "Army",
+      "away": "Bryant",
+      "home_score": 59,
+      "away_score": 3,
+      "su_pick": "Army",
+      "ats_pick": "Bryant",
+      "spread": -38.5,
+      "total": 51.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "bowling green|tarleton state",
+      "week": 1,
+      "home": "Bowling Green",
+      "away": "Tarleton State",
+      "home_score": 13,
+      "away_score": 20,
+      "su_pick": "Tarleton State",
+      "ats_pick": "Tarleton State",
+      "spread": -2.5,
+      "total": 49.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "james madison|liberty",
+      "week": 1,
+      "home": "James Madison",
+      "away": "Liberty",
+      "home_score": 20,
+      "away_score": 13,
+      "su_pick": "James Madison",
+      "ats_pick": "James Madison",
+      "spread": -8.5,
+      "total": 50.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "pittsburgh|miami (oh)",
+      "week": 1,
+      "home": "Pittsburgh",
+      "away": "Miami (OH)",
+      "home_score": 59,
+      "away_score": 14,
+      "su_pick": "Pittsburgh",
+      "ats_pick": "Pittsburgh",
+      "spread": -15.0,
+      "total": 47.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "ohio state|ball state",
+      "week": 1,
+      "home": "Ohio State",
+      "away": "Ball State",
+      "home_score": 56,
+      "away_score": 3,
+      "su_pick": "Ohio State",
+      "ats_pick": "Ball State",
+      "spread": -49.5,
+      "total": 56.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "south carolina|kent state",
+      "week": 1,
+      "home": "South Carolina",
+      "away": "Kent State",
+      "home_score": 57,
+      "away_score": 0,
+      "su_pick": "South Carolina",
+      "ats_pick": "Kent State",
+      "spread": -36.5,
+      "total": 53.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "kentucky|youngstown state",
+      "week": 1,
+      "home": "Kentucky",
+      "away": "Youngstown State",
+      "home_score": 45,
+      "away_score": 13,
+      "su_pick": "Kentucky",
+      "ats_pick": "Youngstown State",
+      "spread": -23.5,
+      "total": 61.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "iowa state|southeast missouri state",
+      "week": 1,
+      "home": "Iowa State",
+      "away": "Southeast Missouri State",
+      "home_score": 38,
+      "away_score": 10,
+      "su_pick": "Iowa State",
+      "ats_pick": "Southeast Missouri State",
+      "spread": -30.5,
+      "total": 52.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "air force|duquesne",
+      "week": 1,
+      "home": "Air Force",
+      "away": "Duquesne",
+      "home_score": 34,
+      "away_score": 0,
+      "su_pick": "Air Force",
+      "ats_pick": "Duquesne",
+      "spread": -28.5,
+      "total": 55.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "temple|rhode island",
+      "week": 1,
+      "home": "Temple",
+      "away": "Rhode Island",
+      "home_score": 38,
+      "away_score": 14,
+      "su_pick": "Temple",
+      "ats_pick": "Rhode Island",
+      "spread": -10.5,
+      "total": 51.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "georgia|tennessee state",
+      "week": 1,
+      "home": "Georgia",
+      "away": "Tennessee State",
+      "home_score": 63,
+      "away_score": 3,
+      "su_pick": "Georgia",
+      "ats_pick": "Tennessee State",
+      "spread": -49,
+      "total": 55,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "auburn|baylor",
+      "week": 1,
+      "home": "Auburn",
+      "away": "Baylor",
+      "home_score": 17,
+      "away_score": 16,
+      "su_pick": "Auburn",
+      "ats_pick": "Auburn",
+      "spread": -9.0,
+      "total": 58.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "tennessee|furman",
+      "week": 1,
+      "home": "Tennessee",
+      "away": "Furman",
+      "home_score": 56,
+      "away_score": 9,
+      "su_pick": "Tennessee",
+      "ats_pick": "Furman",
+      "spread": -49,
+      "total": 66.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "texas|texas state",
+      "week": 1,
+      "home": "Texas",
+      "away": "Texas State",
+      "home_score": 59,
+      "away_score": 7,
+      "su_pick": "Texas",
+      "ats_pick": "Texas State",
+      "spread": -30.5,
+      "total": 60,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "cincinnati|boston college",
+      "week": 1,
+      "home": "Cincinnati",
+      "away": "Boston College",
+      "home_score": 34,
+      "away_score": 15,
+      "su_pick": "Cincinnati",
+      "ats_pick": "Cincinnati",
+      "spread": -8.0,
+      "total": 51,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "duke|tulane",
+      "week": 1,
+      "home": "Duke",
+      "away": "Tulane",
+      "home_score": 17,
+      "away_score": 3,
+      "su_pick": "Duke",
+      "ats_pick": "Tulane",
+      "spread": -9.0,
+      "total": 51.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "oregon|boise state",
+      "week": 1,
+      "home": "Oregon",
+      "away": "Boise State",
+      "home_score": 34,
+      "away_score": 27,
+      "su_pick": "Oregon",
+      "ats_pick": "Boise State",
+      "spread": -26.0,
+      "total": 53.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "penn state|marshall",
+      "week": 1,
+      "home": "Penn State",
+      "away": "Marshall",
+      "home_score": 45,
+      "away_score": 0,
+      "su_pick": "Penn State",
+      "ats_pick": "Marshall",
+      "spread": -22.5,
+      "total": 53.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "charlotte|the citadel",
+      "week": 1,
+      "home": "Charlotte",
+      "away": "The Citadel",
+      "home_score": 41,
+      "away_score": 43,
+      "su_pick": "The Citadel",
+      "ats_pick": "The Citadel",
+      "spread": -16.5,
+      "total": 49,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "navy|towson",
+      "week": 1,
+      "home": "Navy",
+      "away": "Towson",
+      "home_score": 42,
+      "away_score": 15,
+      "su_pick": "Navy",
+      "ats_pick": "Towson",
+      "spread": -31.5,
+      "total": 50.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "utsa|ut rio grande valley",
+      "week": 1,
+      "home": "UTSA",
+      "away": "UT Rio Grande Valley",
+      "home_score": 45,
+      "away_score": 16,
+      "su_pick": "UTSA",
+      "ats_pick": "UT Rio Grande Valley",
+      "spread": -28.5,
+      "total": 59.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "north dakota state|fordham",
+      "week": 1,
+      "home": "North Dakota State",
+      "away": "Fordham",
+      "home_score": 38,
+      "away_score": 0,
+      "su_pick": "North Dakota State",
+      "ats_pick": "Fordham",
+      "spread": -38.5,
+      "total": 54.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "app state|maine",
+      "week": 1,
+      "home": "App State",
+      "away": "Maine",
+      "home_score": 55,
+      "away_score": 3,
+      "su_pick": "App State",
+      "ats_pick": "Maine",
+      "spread": -21,
+      "total": 54,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "tulsa|oklahoma state",
+      "week": 1,
+      "home": "Tulsa",
+      "away": "Oklahoma State",
+      "home_score": 24,
+      "away_score": 10,
+      "su_pick": "Oklahoma State",
+      "ats_pick": "Tulsa",
+      "spread": 11.5,
+      "total": 57.5,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "arkansas|north alabama",
+      "week": 1,
+      "home": "Arkansas",
+      "away": "North Alabama",
+      "home_score": 31,
+      "away_score": 14,
+      "su_pick": "Arkansas",
+      "ats_pick": "North Alabama",
+      "spread": -40.5,
+      "total": 63,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "iowa|northern illinois",
+      "week": 1,
+      "home": "Iowa",
+      "away": "Northern Illinois",
+      "home_score": 40,
+      "away_score": 0,
+      "su_pick": "Iowa",
+      "ats_pick": "Northern Illinois",
+      "spread": -31.0,
+      "total": 44.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "southern miss|alcorn state",
+      "week": 1,
+      "home": "Southern Miss",
+      "away": "Alcorn State",
+      "home_score": 49,
+      "away_score": 3,
+      "su_pick": "Alcorn State",
+      "ats_pick": "Alcorn State",
+      "spread": -22.5,
+      "total": 51,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "colorado state|wyoming",
+      "week": 1,
+      "home": "Colorado State",
+      "away": "Wyoming",
+      "home_score": 35,
+      "away_score": 13,
+      "su_pick": "Colorado State",
+      "ats_pick": "Colorado State",
+      "spread": -6.0,
+      "total": 46.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "old dominion|norfolk state",
+      "week": 1,
+      "home": "Old Dominion",
+      "away": "Norfolk State",
+      "home_score": 31,
+      "away_score": 10,
+      "su_pick": "Old Dominion",
+      "ats_pick": "Norfolk State",
+      "spread": -40.5,
+      "total": 52,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "texas a&m|missouri state",
+      "week": 1,
+      "home": "Texas A&M",
+      "away": "Missouri State",
+      "home_score": 50,
+      "away_score": 0,
+      "su_pick": "Texas A&M",
+      "ats_pick": "Missouri State",
+      "spread": -39.5,
+      "total": 53.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "vanderbilt|austin peay",
+      "week": 1,
+      "home": "Vanderbilt",
+      "away": "Austin Peay",
+      "home_score": 28,
+      "away_score": 9,
+      "su_pick": "Vanderbilt",
+      "ats_pick": "Austin Peay",
+      "spread": -32.5,
+      "total": 59,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "texas tech|abilene christian",
+      "week": 1,
+      "home": "Texas Tech",
+      "away": "Abilene Christian",
+      "home_score": 33,
+      "away_score": 10,
+      "su_pick": "Texas Tech",
+      "ats_pick": "Abilene Christian",
+      "spread": -44.5,
+      "total": 60.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "kansas state|nicholls",
+      "week": 1,
+      "home": "Kansas State",
+      "away": "Nicholls",
+      "home_score": 71,
+      "away_score": 3,
+      "su_pick": "Kansas State",
+      "ats_pick": "Nicholls",
+      "spread": -41,
+      "total": 55,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "utah state|idaho state",
+      "week": 1,
+      "home": "Utah State",
+      "away": "Idaho State",
+      "home_score": 17,
+      "away_score": 29,
+      "su_pick": "Utah State",
+      "ats_pick": "Idaho State",
+      "spread": -13.5,
+      "total": 60,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "memphis|arkansas state",
+      "week": 1,
+      "home": "Memphis",
+      "away": "Arkansas State",
+      "home_score": 42,
+      "away_score": 24,
+      "su_pick": "Memphis",
+      "ats_pick": "Memphis",
+      "spread": -10.5,
+      "total": 52.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "rice|houston christian",
+      "week": 1,
+      "home": "Rice",
+      "away": "Houston Christian",
+      "home_score": 31,
+      "away_score": 3,
+      "su_pick": "Houston Christian",
+      "ats_pick": "Houston Christian",
+      "spread": -24.5,
+      "total": 47.5,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "south florida|florida international",
+      "week": 1,
+      "home": "South Florida",
+      "away": "Florida International",
+      "home_score": 19,
+      "away_score": 9,
+      "su_pick": "South Florida",
+      "ats_pick": "South Florida",
+      "spread": -12.5,
+      "total": 53.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "middle tennessee|murray state",
+      "week": 1,
+      "home": "Middle Tennessee",
+      "away": "Murray State",
+      "home_score": 38,
+      "away_score": 14,
+      "su_pick": "Murray State",
+      "ats_pick": "Murray State",
+      "spread": -21.5,
+      "total": 56,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "jacksonville state|eastern kentucky",
+      "week": 1,
+      "home": "Jacksonville State",
+      "away": "Eastern Kentucky",
+      "home_score": 49,
+      "away_score": 7,
+      "su_pick": "Jacksonville State",
+      "ats_pick": "Eastern Kentucky",
+      "spread": -20.5,
+      "total": 53,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "georgia southern|charleston southern",
+      "week": 1,
+      "home": "Georgia Southern",
+      "away": "Charleston Southern",
+      "home_score": 31,
+      "away_score": 0,
+      "su_pick": "Charleston Southern",
+      "ats_pick": "Charleston Southern",
+      "spread": -27.5,
+      "total": 52.5,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "south alabama|se louisiana",
+      "week": 1,
+      "home": "South Alabama",
+      "away": "SE Louisiana",
+      "home_score": 39,
+      "away_score": 14,
+      "su_pick": "South Alabama",
+      "ats_pick": "SE Louisiana",
+      "spread": -14,
+      "total": 53.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "troy|sam houston",
+      "week": 1,
+      "home": "Troy",
+      "away": "Sam Houston",
+      "home_score": 24,
+      "away_score": 21,
+      "su_pick": "Troy",
+      "ats_pick": "Sam Houston",
+      "spread": -17.5,
+      "total": 52.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "lsu|clemson",
+      "week": 1,
+      "home": "LSU",
+      "away": "Clemson",
+      "home_score": 51,
+      "away_score": 10,
+      "su_pick": "LSU",
+      "ats_pick": "Clemson",
+      "spread": -9.5,
+      "total": 48.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "mississippi state|ul monroe",
+      "week": 1,
+      "home": "Mississippi State",
+      "away": "UL Monroe",
+      "home_score": 62,
+      "away_score": 13,
+      "su_pick": "Mississippi State",
+      "ats_pick": "UL Monroe",
+      "spread": -28.5,
+      "total": 54.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "virginia tech|vmi",
+      "week": 1,
+      "home": "Virginia Tech",
+      "away": "VMI",
+      "home_score": 73,
+      "away_score": 3,
+      "su_pick": "Virginia Tech",
+      "ats_pick": "VMI",
+      "spread": -54.5,
+      "total": 60.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "michigan|western michigan",
+      "week": 1,
+      "home": "Michigan",
+      "away": "Western Michigan",
+      "home_score": 13,
+      "away_score": 12,
+      "su_pick": "Michigan",
+      "ats_pick": "Western Michigan",
+      "spread": -26.5,
+      "total": 50.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "louisiana tech|northwestern state",
+      "week": 1,
+      "home": "Louisiana Tech",
+      "away": "Northwestern State",
+      "home_score": 80,
+      "away_score": 6,
+      "su_pick": "Louisiana Tech",
+      "ats_pick": "Northwestern State",
+      "spread": -44.5,
+      "total": 56.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "florida|florida atlantic",
+      "week": 1,
+      "home": "Florida",
+      "away": "Florida Atlantic",
+      "home_score": 66,
+      "away_score": 21,
+      "su_pick": "Florida",
+      "ats_pick": "Florida Atlantic",
+      "spread": -26.5,
+      "total": 59.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "byu|utah tech",
+      "week": 1,
+      "home": "BYU",
+      "away": "Utah Tech",
+      "home_score": 63,
+      "away_score": 7,
+      "su_pick": "BYU",
+      "ats_pick": "Utah Tech",
+      "spread": -50.5,
+      "total": 61.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "maryland|hampton",
+      "week": 1,
+      "home": "Maryland",
+      "away": "Hampton",
+      "home_score": 62,
+      "away_score": 0,
+      "su_pick": "Maryland",
+      "ats_pick": "Hampton",
+      "spread": -45.5,
+      "total": 56.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "northwestern|south dakota state",
+      "week": 1,
+      "home": "Northwestern",
+      "away": "South Dakota State",
+      "home_score": 34,
+      "away_score": 18,
+      "su_pick": "Northwestern",
+      "ats_pick": "Northwestern",
+      "spread": -14,
+      "total": 49.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "louisiana|lamar",
+      "week": 1,
+      "home": "Louisiana",
+      "away": "Lamar",
+      "home_score": 38,
+      "away_score": 7,
+      "su_pick": "Louisiana",
+      "ats_pick": "Lamar",
+      "spread": -20.5,
+      "total": 48.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "arizona state|morgan state",
+      "week": 1,
+      "home": "Arizona State",
+      "away": "Morgan State",
+      "home_score": 70,
+      "away_score": 7,
+      "su_pick": "Arizona State",
+      "ats_pick": "Morgan State",
+      "spread": -43.5,
+      "total": 52.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "new mexico state|mercyhurst",
+      "week": 1,
+      "home": "New Mexico State",
+      "away": "Mercyhurst",
+      "home_score": 51,
+      "away_score": 14,
+      "su_pick": "Mercyhurst",
+      "ats_pick": "Mercyhurst",
+      "spread": -26.5,
+      "total": 52.5,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "arizona|northern arizona",
+      "week": 1,
+      "home": "Arizona",
+      "away": "Northern Arizona",
+      "home_score": 35,
+      "away_score": 7,
+      "su_pick": "Arizona",
+      "ats_pick": "Northern Arizona",
+      "spread": -33.5,
+      "total": 59.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "san diego state|portland state",
+      "week": 1,
+      "home": "San Diego State",
+      "away": "Portland State",
+      "home_score": 53,
+      "away_score": 20,
+      "su_pick": "San Diego State",
+      "ats_pick": "Portland State",
+      "spread": -38.5,
+      "total": 61.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "hawai'i|unlv",
+      "week": 1,
+      "home": "Hawai'i",
+      "away": "UNLV",
+      "home_score": 6,
+      "away_score": 21,
+      "su_pick": "UNLV",
+      "ats_pick": "Hawai'i",
+      "spread": 2.5,
+      "total": 55.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "new mexico|central michigan",
+      "week": 1,
+      "home": "New Mexico",
+      "away": "Central Michigan",
+      "home_score": 38,
+      "away_score": 7,
+      "su_pick": "New Mexico",
+      "ats_pick": "Central Michigan",
+      "spread": -15.0,
+      "total": 47.5,
+      "over_pick": "over",
+      "su_result": "W",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "sacramento state|mississippi valley state",
+      "week": 1,
+      "home": "Sacramento State",
+      "away": "Mississippi Valley State",
+      "home_score": 52,
+      "away_score": 0,
+      "su_pick": "Mississippi Valley State",
+      "ats_pick": "Mississippi Valley State",
+      "spread": -38.5,
+      "total": 56.5,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "nevada|western kentucky",
+      "week": 1,
+      "home": "Nevada",
+      "away": "Western Kentucky",
+      "home_score": 49,
+      "away_score": 14,
+      "su_pick": "Western Kentucky",
+      "ats_pick": "Nevada",
+      "spread": 5.0,
+      "total": 51.5,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "california|ucla",
+      "week": 1,
+      "home": "California",
+      "away": "UCLA",
+      "home_score": 24,
+      "away_score": 45,
+      "su_pick": "California",
+      "ats_pick": "California",
+      "spread": 4.0,
+      "total": 53.5,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "cal|ucla",
+      "week": 1,
+      "home": "Cal",
+      "away": "UCLA",
+      "home_score": 24,
+      "away_score": 45,
+      "su_pick": "Cal",
+      "ats_pick": "Cal",
+      "spread": 4.0,
+      "total": 53.5,
+      "over_pick": "over",
+      "su_result": "L",
+      "ats_result": "L",
+      "total_result": "W"
+    }
+  ]
 }
