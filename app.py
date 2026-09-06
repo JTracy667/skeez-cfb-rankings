@@ -974,6 +974,11 @@ def _cfbd_season_stats() -> dict:
                 "def_3rd": round(s.get("thirdDownConversionsOpponent", 0) / max(1, s.get("thirdDownsOpponent", 1)), 3),
                 "turnover_margin": round(to / games_played, 2),
             }
+        # BUGFIX Sep 6: this return was missing entirely — _fetch always
+        # returned None, so real season stats (PPG/YPP/3rd-downs/TO margin)
+        # were silently empty all season and the model ran on neutral
+        # defaults until real ratings accumulated.
+        return out
     result = _fetch(CFBD_YEAR)
     if not result:
         result = _fetch(CFBD_YEAR_FALLBACK)
