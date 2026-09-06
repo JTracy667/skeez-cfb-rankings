@@ -79,17 +79,13 @@ nav a.active{color:var(--accent)}
 .best-bets .bb-pick.under{color:var(--down)}
 .best-bets .bb-stars{color:var(--top3);letter-spacing:1px}
 .best-bets .bb-edge{color:var(--text-dim);font-size:.75rem}
-.line-moves{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem}
-.line-moves h3{font-size:1rem;font-weight:700;margin-bottom:.75rem;color:var(--accent)}
-.line-moves .lm-row{display:grid;grid-template-columns:1.4fr auto auto auto auto;gap:.75rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.85rem}
-.line-moves .lm-when{opacity:.6;font-size:.75rem;white-space:nowrap}
-.line-moves .lm-row:last-child{border-bottom:none}
-.line-moves .lm-teams{font-weight:600}
-.line-moves .lm-market{color:var(--text-dim);text-transform:uppercase;font-size:.7rem;letter-spacing:.05em}
-.line-moves .lm-delta{font-weight:700}
-.line-moves .lm-delta.up{color:var(--up)}
-.line-moves .lm-delta.down{color:var(--down)}
-.line-moves .lm-empty{color:var(--text-dim);font-size:.85rem;padding:.5rem 0}
+.line-mv-chip{display:flex;gap:.3rem;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:.25rem;font-size:.68rem}
+.mv-tag{display:inline-flex;align-items:center;gap:.25rem;padding:.1rem .4rem;border-radius:4px;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);white-space:nowrap}
+.mv-tag .mk{color:var(--text-dim);text-transform:uppercase;font-size:.6rem;letter-spacing:.05em}
+.mv-tag.up{color:var(--up);border-color:rgba(52,211,153,.35)}
+.mv-tag.down{color:var(--down);border-color:rgba(248,113,113,.35)}
+.mv-when{opacity:.55;font-size:.62rem;white-space:nowrap}
+.mv-count{color:var(--accent);font-weight:700}
 .footer{text-align:center;padding:1.5rem;color:var(--text-dim);font-size:.75rem;border-top:1px solid var(--border)}
 @media(max-width:768px){
   .matchup-card{grid-template-columns:1fr;gap:.5rem;text-align:center}
@@ -117,7 +113,6 @@ nav a.active{color:var(--accent)}
 <div class="container">
   <div class="summary-row" id="summaryRow"></div>
   <div class="best-bets" id="bestBets"></div>
-  <div class="line-moves" id="lineMoves"></div>
   <div class="controls">
     <input type="text" class="search-box" id="searchBox" placeholder="Search teams...">
     <button class="filter-btn active" data-conf="all">All</button>
@@ -208,41 +203,46 @@ async function fetchBestBets() {
 
 function stars(n) { return '★'.repeat(n || 0) + '☆'.repeat(Math.max(0, 3 - (n || 0))); }
 
+let lineMoves = [];
+
 async function fetchLineMoves() {
   try {
-    const res = await fetch(`${API}/line-movements`);
+    const res = await fetch(`${API}/line-movements?hours=168`);
     const data = await res.json();
-    renderLineMoves(data.movements || []);
+    lineMoves = data.movements || [];
+    renderMatchups();  // re-render so cards pick up movement chips
   } catch (err) {
     console.error('Failed to fetch line movements:', err);
-    document.getElementById('lineMoves').innerHTML = '';
   }
 }
 
-function renderLineMoves(movements) {
-  const el = document.getElementById('lineMoves');
-  if (!movements.length) {
-    el.innerHTML = '<h3>📊 Line Movement</h3><div class="lm-empty">No line movement detected since last refresh. Movements appear after a book changes a spread or total between refreshes.</div>';
-    return;
-  }
-  const rows = movements.map(mv => {
-    const up = mv.delta > 0;
-    const down = mv.delta < 0;
-    const cls = up ? 'up' : down ? 'down' : '';
-    const arrow = up ? '▲' : down ? '▼' : '—';
-    const fmt = v => (typeof v === 'number' ? (v > 0 ? '+' + v : v) : v);
-    return `<div class="lm-row">
-      <span class="lm-teams">${mv.home} vs ${mv.away}</span>
-      <span class="lm-market">${mv.market}</span>
-      <span class="lm-edge">${fmt(mv.old)} → ${fmt(mv.new)}</span>
-      <span class="lm-delta ${cls}">${arrow} ${fmt(mv.delta)}</span>
-      <span class="lm-when">${mv.when || ''}</span>
-    </div>`;
+function movementsFor(matchup) {
+  // Match movement events to a matchup by normalized team pair (order-agnostic).
+  // Legacy events (recorded before the Aug 30 name-normalizer fix) carry
+  // truncated first-word names ("Kennesaw", "Wake") — accept word-prefix
+  // matches so those still attach to the right card.
+  const norm = s => (s || '').toLowerCase().trim();
+  const same = (a, b) => a === b || a.startsWith(b + ' ') || b.startsWith(a + ' ');
+  const target = [norm(matchup.home), norm(matchup.away)];
+  return lineMoves.filter(mv => {
+    const h = norm(mv.home), a = norm(mv.away);
+    return (same(h, target[0]) && same(a, target[1])) || (same(h, target[1]) && same(a, target[0]));
+  }).sort((x, y) => (y.ts || 0) - (x.ts || 0));
+}
+
+function movementChipHtml(matchup) {
+  const mvs = movementsFor(matchup);
+  if (!mvs.length) return '';
+  const fmt = v => (typeof v === 'number' ? (v > 0 ? '+' + v : v) : v);
+  // Show the 3 most recent as chips; if more, add a "+N" count tag
+  const tags = mvs.slice(0, 3).map(mv => {
+    const cls = mv.delta > 0 ? 'up' : mv.delta < 0 ? 'down' : '';
+    const arrow = mv.delta > 0 ? '▲' : mv.delta < 0 ? '▼' : '—';
+    const mk = mv.market === 'spread' ? 'SPRD' : 'O/U';
+    return `<span class="mv-tag ${cls}"><span class="mk">${mk}</span>${fmt(mv.old)}→${fmt(mv.new)}${mv.when ? ` <span class="mv-when">${mv.when}</span>` : ''}</span>`;
   }).join('');
-  el.innerHTML = `
-    <h3>📊 Line Movement <span class="lm-edge">(last 72 hours)</span></h3>
-    ${rows}
-  `;
+  const more = mvs.length > 3 ? `<span class="mv-count" title="${mvs.slice(3).map(mv => `${mv.market}: ${fmt(mv.old)}→${fmt(mv.new)} (${mv.when || ''})`).join('\n')}">+${mvs.length - 3} more</span>` : '';
+  return `<div class="line-mv-chip">${tags}${more}</div>`;
 }
 
 function renderBestBets(bets, rec) {
@@ -406,6 +406,7 @@ function renderMatchups() {
           : `<div class="line-overlay"><span class="line-na">No line</span></div>`
         }
         <div class="diff-badge ${diffBadgeClass(m)}">${diffBadgeText(m)}</div>
+        ${movementChipHtml(m)}
         <div class="game-date">${formatGameDate(m.date)}${m.neutral_site ? ' · 🏟️ Neutral Site' : ''}</div>
         ${m.line_vs_model !== undefined && m.line_vs_model !== null
           ? `<div class="line-vs-model ${m.line_vs_model > 1 ? 'up' : m.line_vs_model < -1 ? 'down' : ''}">Line ${m.line_vs_model > 0 ? 'covers +' + m.line_vs_model : m.line_vs_model < 0 ? 'under -' + Math.abs(m.line_vs_model) : '≈ model'}</div>`
