@@ -964,6 +964,23 @@ def _cfbd_season_stats() -> dict:
             plays = s.get("passAttempts", 0) + s.get("rushingAttempts", 0)
             opp_plays = s.get("passAttemptsOpponent", 0) + s.get("rushingAttemptsOpponent", 0)
             to = s.get("turnovers", 0) - s.get("turnoversOpponent", 0)
+            # HAVOC (added Sep 6, user call): CFBD has no native havoc stat, but
+            # all components are here. Naming convention verified against the
+            # turnover identity (turnoversOpponent == interceptionsOpponent +
+            # fumblesLostOpponent, 131/131) and cross-team sack totals:
+            #   unmarked fields = OUR defense produced (sacks/TFL/interceptionsOpponent
+            #   = INTs our D caught; fumblesLostOpponent = fumbles we recovered)
+            #   *Opponent fields = allowed to our offense
+            def_havoc = None
+            if opp_plays:
+                dh = (s.get("tacklesForLoss", 0) + s.get("sacks", 0)
+                      + s.get("interceptionsOpponent", 0) + s.get("fumblesLostOpponent", 0)) / opp_plays
+                def_havoc = round(dh, 3)
+            havoc_allowed = None
+            if plays:
+                ha = (s.get("tacklesForLossOpponent", 0) + s.get("sacksOpponent", 0)
+                      + s.get("interceptions", 0) + s.get("fumblesLost", 0)) / plays
+                havoc_allowed = round(ha, 3)
             out[team] = {
                 # Real points per game from game scores (fall back to stats-based if no games found)
                 "off_ppg": round(pf.get(team, 0) / ng.get(team, 1), 1) if team in ng else None,
@@ -973,6 +990,8 @@ def _cfbd_season_stats() -> dict:
                 "off_3rd": round(s.get("thirdDownConversions", 0) / max(1, s.get("thirdDowns", 1)), 3),
                 "def_3rd": round(s.get("thirdDownConversionsOpponent", 0) / max(1, s.get("thirdDownsOpponent", 1)), 3),
                 "turnover_margin": round(to / games_played, 2),
+                "def_havoc": def_havoc,          # defensive havoc rate (TFL+sack+INT+fum / opp plays)
+                "havoc_allowed": havoc_allowed,  # havoc our offense allows (same, mirrored)
             }
         # BUGFIX Sep 6: this return was missing entirely — _fetch always
         # returned None, so real season stats (PPG/YPP/3rd-downs/TO margin)
@@ -1975,8 +1994,21 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
     exp = team_data.get("experience_score") or 0
     exp_norm = max(0, min(100, exp))
 
-    # Average of the 4 sub-factors within the EPA bucket
-    epa_bucket = (epa_off_norm + epa_def_norm + ret_norm + exp_norm) / 4
+    # Average of the sub-factors within the production bucket (havoc added Sep 6)
+    # HAVOC (Sep 6): defensive havoc rate = (TFL + sacks + INT + fum recovered) / opp plays.
+    # Elite ~0.25+, weak ~0.10. Havoc allowed (offense) is the mirror, lower is better.
+    def_havoc = team_data.get("def_havoc")
+    havoc_allowed = team_data.get("havoc_allowed")
+    if def_havoc is not None:
+        havoc_norm = max(0, min(100, (def_havoc - 0.10) / 0.15 * 100))
+    else:
+        havoc_norm = 50.0  # neutral until stats exist
+    if havoc_allowed is not None:
+        havoc_allow_norm = max(0, min(100, (0.25 - havoc_allowed) / 0.15 * 100))
+    else:
+        havoc_allow_norm = 50.0
+    epa_bucket = (epa_off_norm + epa_def_norm + ret_norm + exp_norm
+                  + havoc_norm + havoc_allow_norm) / 6
 
     # Weighted composite (0-100)
     # Original: SP+ 30%, FPI 25%, CPI 20%, Elo 10%, Recruiting 15% (100%)
@@ -2187,6 +2219,9 @@ def fetch_live_analytics():
             off_3rd = st.get("off_3rd")
             def_3rd = st.get("def_3rd")
             turnover_margin = st.get("turnover_margin")
+            # HAVOC (Sep 6): defensive havoc rate + havoc our offense allows
+            def_havoc = st.get("def_havoc")
+            havoc_allowed = st.get("havoc_allowed")
 
             # EPA (Expected Points Added) + possession-based metrics from CFBD
             ppa = ppa_data.get(name, {})
@@ -2250,6 +2285,8 @@ def fetch_live_analytics():
                 "def_ypp": def_ypp,
                 "def_3rd": def_3rd,
                 "turnover_margin": turnover_margin,
+                "def_havoc": def_havoc,
+                "havoc_allowed": havoc_allowed,
                 "epa_play": epa_overall,
                 "epa_pass": epa_pass,
                 "epa_rush": epa_rush,

@@ -355,15 +355,21 @@ function epaBadge(v) {
   const sign = v >= 0 ? '+' : '';
   return `<span class="badge ${cls}">${sign}${v.toFixed(3)}</span>`;
 }
+function havocBadge(v) {
+  // Havoc rate: 0.25+ elite (green), 0.18-0.25 good, 0.12-0.18 mid, <0.12 bad
+  if (v === null || v === undefined) return '—';
+  const cls = v >= 0.25 ? 'badge-good' : v >= 0.18 ? 'badge-mid' : v >= 0.12 ? 'badge-neutral' : 'badge-bad';
+  return `<span class="badge ${cls}">${(v * 100).toFixed(1)}%</span>`;
+}
 function renderOffense(filtered) {
   const list = filtered || teams;
   const sorted = [...list].sort((a, b) => val(b, 'off_ppg', 0) - val(a, 'off_ppg', 0));
-  let html = `<table><thead><tr><th>#</th><th>Team</th><th>PPG</th><th>YPP</th><th>3rd %</th><th>EPA/Play</th><th>Rush EPA</th><th>Pass EPA</th><th>Pts/Poss</th><th>TD%</th><th>FG%</th><th>TO%</th></tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>PPG</th><th>YPP</th><th>3rd %</th><th>EPA/Play</th><th>Rush EPA</th><th>Pass EPA</th><th>Havoc Allowed</th><th>Pts/Poss</th><th>TD%</th><th>FG%</th><th>TO%</th></tr></thead><tbody>`;
   sorted.forEach((t, i) => {
     const epa = val(t, 'epa_play', 0);
     const epa_r = val(t, 'epa_rush', 0);
     const epa_p = val(t, 'epa_pass', 0);
-    html += `<tr><td>${i+1}</td><td><img class="team-logo" src="${t.logo_url || ''}" alt="${t.name}" onerror="this.style.display='none'"> ${t.name}</td><td>${pctBadge(val(t,'off_ppg',0).toFixed(1))}</td><td>${val(t,'off_ypp',0).toFixed(2)}</td><td>${(val(t,'off_3rd',0)*100).toFixed(1)}%</td><td>${epaBadge(epa)}</td><td>${epaBadge(epa_r)}</td><td>${epaBadge(epa_p)}</td><td>${val(t,'pts_per_poss',0).toFixed(1) || '—'}</td><td>${val(t,'td_rate',0).toFixed(1)}%</td><td>${val(t,'fg_rate',0).toFixed(1)}%</td><td>${val(t,'turnover_rate',0).toFixed(1)}%</td></tr>`;
+    html += `<tr><td>${i+1}</td><td><img class="team-logo" src="${t.logo_url || ''}" alt="${t.name}" onerror="this.style.display='none'"> ${t.name}</td><td>${pctBadge(val(t,'off_ppg',0).toFixed(1))}</td><td>${val(t,'off_ypp',0).toFixed(2)}</td><td>${(val(t,'off_3rd',0)*100).toFixed(1)}%</td><td>${epaBadge(epa)}</td><td>${epaBadge(epa_r)}</td><td>${epaBadge(epa_p)}</td><td>${havocBadge(t.havoc_allowed)}</td><td>${val(t,'pts_per_poss',0).toFixed(1) || '—'}</td><td>${val(t,'td_rate',0).toFixed(1)}%</td><td>${val(t,'fg_rate',0).toFixed(1)}%</td><td>${val(t,'turnover_rate',0).toFixed(1)}%</td></tr>`;
   });
   html += `</tbody></table>`;
   document.getElementById('offense').innerHTML = html;
@@ -372,7 +378,7 @@ function renderOffense(filtered) {
 function renderDefense(filtered) {
   const list = filtered || teams;
   const sorted = [...list].sort((a, b) => val(a, 'def_ppg', 999) - val(b, 'def_ppg', 999));
-  let html = `<table><thead><tr><th>#</th><th>Team</th><th>Opp PPG</th><th>Opp YPP</th><th>3rd Down %</th><th>Def EPA/Play</th><th>Def Rush EPA</th><th>Def Pass EPA</th><th>Opp Pts/Poss</th><th>Opp TD%</th><th>Opp FG%</th><th>TO Created%</th></tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>Opp PPG</th><th>Opp YPP</th><th>3rd Down %</th><th>Def EPA/Play</th><th>Def Rush EPA</th><th>Def Pass EPA</th><th>Havoc</th><th>Opp Pts/Poss</th><th>Opp TD%</th><th>Opp FG%</th><th>TO Created%</th></tr></thead><tbody>`;
   sorted.forEach((t, i) => {
     const defEPA = val(t,'def_epa_play',null);
     const defEPAHtml = defEPA !== null ? epaBadge(defEPA) : '—';
@@ -380,7 +386,7 @@ function renderDefense(filtered) {
     const defRushHtml = defRush !== null ? epaBadge(defRush) : '—';
     const defPass = val(t,'def_epa_pass',null);
     const defPassHtml = defPass !== null ? epaBadge(defPass) : '—';
-    html += `<tr><td>${i+1}</td><td><img class="team-logo" src="${t.logo_url||''}" alt="${t.name}" onerror="this.style.display='none'"> ${t.name}</td><td>${pctBadge(val(t,'def_ppg',0).toFixed(1), false)}</td><td>${val(t,'def_ypp',0).toFixed(2)}</td><td>${(val(t,'def_3rd',0)*100).toFixed(1)}%</td><td>${defEPAHtml}</td><td>${defRushHtml}</td><td>${defPassHtml}</td><td>${val(t,'def_pts_per_poss',0).toFixed(1)||'—'}</td><td>${val(t,'def_td_rate',0).toFixed(1)}%</td><td>${val(t,'def_fg_rate',0).toFixed(1)}%</td><td>${val(t,'def_turnover_created',0).toFixed(1)}%</td></tr>`;
+    html += `<tr><td>${i+1}</td><td><img class="team-logo" src="${t.logo_url||''}" alt="${t.name}" onerror="this.style.display='none'"> ${t.name}</td><td>${pctBadge(val(t,'def_ppg',0).toFixed(1), false)}</td><td>${val(t,'def_ypp',0).toFixed(2)}</td><td>${(val(t,'def_3rd',0)*100).toFixed(1)}%</td><td>${defEPAHtml}</td><td>${defRushHtml}</td><td>${defPassHtml}</td><td>${havocBadge(t.def_havoc)}</td><td>${val(t,'def_pts_per_poss',0).toFixed(1)||'—'}</td><td>${val(t,'def_td_rate',0).toFixed(1)}%</td><td>${val(t,'def_fg_rate',0).toFixed(1)}%</td><td>${val(t,'def_turnover_created',0).toFixed(1)}%</td></tr>`;
   });
   html += `</tbody></table>`;
   document.getElementById('defense').innerHTML = html;
