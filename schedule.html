@@ -457,6 +457,22 @@ document.getElementById('refreshBtn').addEventListener('click', () => fetchSched
 
 // ── Init ──
 (async () => {
+  // Default to the current season week (server derives it from CFBD's real
+  // game dates with a Monday week-over rule: the week flips on the Monday
+  // before its Thursday kickoff). ?week=N still overrides for deep links.
+  try {
+    const params = new URLSearchParams(location.search);
+    const forced = parseInt(params.get('week'), 10);
+    if (forced) {
+      currentWeek = forced;
+    } else {
+      const res = await fetch(`${API}/schedule/current-week`);
+      if (res.ok) {
+        const data = await res.json();
+        currentWeek = data.week || currentWeek;
+      }
+    }
+  } catch (e) { console.error('Failed to resolve current week:', e); }
   await loadWeeks();
   // If the requested week isn't published yet (e.g. a bye week), fall back to
   // the nearest available one so the page never loads empty by accident.

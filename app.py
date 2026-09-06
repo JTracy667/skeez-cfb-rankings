@@ -2366,6 +2366,72 @@ def cfbd_weeks(year: int = CFBD_YEAR) -> list[int]:
     return sorted(weeks)
 
 
+_current_week_cache: dict = {}
+
+def current_season_week(year: int = CFBD_YEAR) -> int | None:
+    """The season week the schedule page should show by default.
+
+    Rule (user-directed): the week flips OVER on MONDAY — a week becomes
+    current at Monday 00:00 ET before its Thursday kickoff, so by the time
+    Monday rolls around the page already shows the upcoming week. Derived
+    from CFBD's real game dates (each week's earliest FBS kickoff, walked
+    back to the preceding Monday), so bye weeks and calendar quirks are
+    handled automatically. Before the first switch Monday -> earliest week;
+    after the last one -> latest week. None if the season has no games.
+    """
+    cached = _current_week_cache.get(year)
+    if cached is not None:
+        return cached[0] if time.time() - cached[1] < 3600 else None
+    games = [g for g in _cfbd_season_games(year)
+             if isinstance(g, dict) and _cfbd_is_fbs(g) and g.get("startDate")]
+    if not games:
+        return None
+    earliest_by_week: dict[int, datetime] = {}
+    for g in games:
+        try:
+            start = datetime.fromisoformat(g["startDate"].replace("Z", "+00:00"))
+        except (ValueError, AttributeError):
+            continue
+        wk = g.get("week")
+        if not isinstance(wk, int):
+            continue
+        if wk not in earliest_by_week or start < earliest_by_week[wk]:
+            earliest_by_week[wk] = start
+    if not earliest_by_week:
+        return None
+    ET = timezone(timedelta(hours=-4))  # EDT; cutover precision of a day makes DST irrelevant
+    now = datetime.now(timezone.utc)
+    switch_mondays = []
+    for wk, start in earliest_by_week.items():
+        local = start.astimezone(ET)
+        # Walk back to this week's Monday 00:00 ET (weekday(): Mon=0)
+        monday = (local - timedelta(days=local.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0)
+        switch_mondays.append((monday, wk))
+    switch_mondays.sort()
+    current = switch_mondays[0][1]  # before/at first switch -> earliest week
+    for monday, wk in switch_mondays:
+        if now >= monday:
+            current = wk
+    _current_week_cache[year] = (current, time.time())
+    return current
+
+
+@app.get("/api/schedule/current-week")
+def api_schedule_current_week(year: int = CFBD_YEAR):
+    """Week the schedule page should default to (Monday week-over rule)."""
+    try:
+        wk = current_season_week(year)
+        weeks = cfbd_weeks(year)
+        if wk is None:
+            wk = weeks[0] if weeks else 1
+        return {"year": year, "week": wk, "weeks": weeks}
+    except Exception as e:
+        print(f"[GET /api/schedule/current-week ERROR] {e}")
+        raise HTTPException(502, f"Current-week fetch failed: {e}")
+
+
+
 def load_fbs_conferences() -> dict:
     """Load conference mapping from the FBS teams database.
     Keys by both displayName and location for flexible lookup.
