@@ -2055,8 +2055,24 @@ def project_head_to_head(home_data: dict, away_data: dict, neutral_site: bool = 
     hp = project_score_multi_factor(home_data, is_home=True)
     ap = project_score_multi_factor(away_data, is_home=False)
     hc, ac = hp["composite"], ap["composite"]
+    # FBS-vs-FCS blowout boost (Sep 6, user-directed): the FCS prior (comp 16)
+    # still undershoots real annihilation spreads — week 1 model margins came in
+    # ~10-30 pts UNDER books' -40..-55 lines, so the ATS rule defaulted to the
+    # FCS dog and went 6-15. When one side has NO data (fcs_no_data) and the
+    # other is rated FBS, boost the FBS side's projection by +20: total grows
+    # by 20 (all of it on the FBS side) and margin grows by 20, so the model
+    # takes the favorite in annihilation territory while keeping a projection
+    # on every game. Both-sides-no-data games (FCS slate noise) get no boost.
+    FCS_BLOWOUT_BOOST = 20.0
+    home_fcs = hp.get("data_flag") == "fcs_no_data"
+    away_fcs = ap.get("data_flag") == "fcs_no_data"
+    boost = 0.0
+    if home_fcs and not away_fcs:
+        boost = -FCS_BLOWOUT_BOOST   # away (FBS) gains 20 pts
+    elif away_fcs and not home_fcs:
+        boost = +FCS_BLOWOUT_BOOST   # home (FBS) gains 20 pts
     avg = (hc + ac) / 2.0
-    total = 51.0 + (avg - 50.0) * 0.10
+    total = 51.0 + (avg - 50.0) * 0.10 + boost
     # Two-regime margin curve calibrated to real spreads (Aug 30):
     # mid-tier gaps price shallow (Iowa -3 w/ comp gap 18), blowouts steep (OSU -51 w/ gap ~55).
     gap_ = hc - ac
@@ -2067,6 +2083,7 @@ def project_head_to_head(home_data: dict, away_data: dict, neutral_site: bool = 
         margin = (11.25 if gap_ > 0 else -11.25) + (gap_ - 25 if gap_ > 0 else gap_ + 25) * 1.1
     if not neutral_site:
         margin += 2.5  # HFA
+    margin += boost  # boost widens the margin in the FBS side's favor
     # Split total by margin. For lopsided games the underdog's share bottoms
     # out near the "garbage time" floor: 52-0 / 53-7 finals are common, so a
     # 35+ pt underdog gets ~10% of the total, not a symmetric 50/50 split.
