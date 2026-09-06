@@ -593,6 +593,11 @@ def get_rankings() -> RankingsResponse:
         t["ap_rank"] = ap_map.get(key)
         t["coaches_rank"] = coaches_map.get(key)
 
+    # Live W/L overlay: records change after every game — far more often than
+    # the twice-weekly CFBD analytics pull. CFBD outage => no-op (stale but
+    # nonzero beats resetting everyone to 0-0).
+    _overlay_records(teams)
+
     result = {
         "week": datetime.now().strftime("%B %d, %Y"),
         "season": datetime.now().year,
@@ -703,6 +708,7 @@ def api_analytics():
     # Deep-copy to avoid mutating the source list (disk cache or fetch result)
     teams = [dict(t) for t in teams]
     _enrich_with_composite(teams)
+    _overlay_records(teams)  # live W/L between analytics pulls
     result = {
         "week": datetime.now().strftime("%B %d, %Y"),
         "season": CFBD_YEAR,
@@ -835,6 +841,69 @@ def _cfbd_elo() -> dict:
     if not data:
         data = _cfbd_get("ratings/elo", CFBD_YEAR_FALLBACK)
     return {t["team"]: t for t in data}
+
+def _cfbd_records(year: int = CFBD_YEAR) -> dict:
+    """Fetch W/L records from CFBD /records, keyed by team name.
+
+    Returns {team: {"wins": int, "losses": int, "games": int}} from the
+    total (all games incl. neutral-site) bucket. No year fallback — records
+    of 0-0 are correct pre-season, so a 2025 fallback would be WRONG data.
+    Empty dict on any failure; callers must treat missing keys as unknown,
+    not 0-0 (that's how the site showed stale 0-0s all season).
+    """
+    try:
+        data = _cfbd_get("records", year)
+        if not data:
+            return {}
+        out: dict[str, dict] = {}
+        for r in data:
+            # FBS only — the site never displays FCS/Division rows.
+            if (r.get("classification") or "").lower() != "fbs":
+                continue
+            total = r.get("total") or {}
+            out[r.get("team", "")] = {
+                "wins": int(total.get("wins", 0) or 0),
+                "losses": int(total.get("losses", 0) or 0),
+                "games": int(total.get("games", 0) or 0),
+            }
+        return out
+    except Exception as e:
+        print(f"[records fetch failed] {e}")
+        return {}
+
+# Records freshness cache: records change after every game, far more often
+# than the twice-weekly analytics pull. 1h TTL keeps /api/rankings current
+# within an hour of a final without hammering CFBD.
+_records_cache: dict = {}
+RECORDS_TTL = 3600
+
+def _live_records() -> dict:
+    """CFBD records with a 1h cache. Empty dict when CFBD is down."""
+    cached = _cache_get(_records_cache, RECORDS_TTL)
+    if cached is not None:
+        return cached
+    rec = _cfbd_records()
+    if rec:
+        _cache_set(_records_cache, rec)
+    return rec
+
+def _overlay_records(teams: list[dict]) -> int:
+    """Overlay live CFBD W/L records onto team dicts IN PLACE.
+
+    Only overwrites when CFBD actually returned the team — a CFBD outage
+    leaves existing values untouched instead of resetting everyone to 0-0.
+    Returns the number of teams overlaid.
+    """
+    rec = _live_records()
+    if not rec:
+        return 0
+    n = 0
+    for t in teams:
+        r = rec.get(t.get("name", ""))
+        if r:
+            t["wins"], t["losses"] = r["wins"], r["losses"]
+            n += 1
+    return n
 
 def _cfbd_season_stats() -> dict:
     """Fetch REAL season stats (stats/season + games) keyed by team name.
@@ -2035,6 +2104,7 @@ def fetch_live_analytics():
             teams_db.keys() | fpi_data.keys() | sp_data.keys() | rec_data.keys()))
         returning_data = _cfbd_returning()
         roster_exp = _cfbd_roster_experience()
+        records = _cfbd_records()  # real W/L, not hardcoded zeros
         conf_map = load_fbs_conferences()
         all_names = set(list(teams_db.keys()) + list(fpi_data.keys()) + list(rec_data.keys()))
         analytics = []
@@ -2116,8 +2186,10 @@ def fetch_live_analytics():
                 "mascot": team_info.get("nickname", ""),
                 "conf": conf_map.get(name, team_info.get("conference", "FBS")),
                 "emoji": "🏈",
-                "wins": 0,
-                "losses": 0,
+                # Real W/L from CFBD /records (2026 has live data in-season;
+                # pre-season every team is correctly 0-0).
+                "wins": records.get(name, {}).get("wins", 0),
+                "losses": records.get(name, {}).get("losses", 0),
                 "points": fpi_score,
                 "sp_plus": round(sp_plus, 2),
                 "sp_offense": round(sp_offense, 1),
@@ -2364,6 +2436,12 @@ def _build_team_map() -> dict:
     except Exception as e:
         print(f"[TEAM_MAP ERROR] {e}")
         pass  # Fall back to local-only
+    # Live W/L overlay: schedule-page team records must track actual results,
+    # not the (formerly hardcoded 0-0) analytics snapshot.
+    try:
+        _overlay_records(list(team_map.values()))
+    except Exception as e:
+        print(f"[TEAM_MAP records overlay failed] {e}")
     # Merge logos from startup cache (avoids live CFBD call per request)
     for name in list(team_map.keys()):
         logo = _LOGO_MAP.get(name.lower())
