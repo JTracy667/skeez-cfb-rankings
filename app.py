@@ -251,9 +251,12 @@ except Exception:  # tzdata missing — fall back to UTC-4 (EDT) approximation
     _ET_TZ = None
 WEEKLY_ANALYTICS_FILE = BASE_DIR / "data" / "last_analytics_pull.json"
 
-# Sync anchors: Sunday 9pm ET (post-Saturday results) + Wednesday 9pm ET
-# (mid-week, when most line movement happens and best-bet edges are widest).
-_ANALYTICS_ANCHORS = ((6, 21), (2, 21))  # (weekday, hour) — Sun=6, Wed=2
+# Sync anchors: Sunday 9pm ET (post-Saturday results), Monday 9pm ET (short-week
+# seasons: Sunday games + Monday poll releases), + Wednesday 9pm ET (mid-week,
+# when most line movement happens and best-bet edges are widest).
+_ANALYTICS_ANCHORS = ((6, 21), (0, 21), (2, 21))  # (weekday, hour) — Python Mon=0: Sun=6, Mon=0, Wed=2
+# Mon anchor added Sep 6: short-week seasons (Sunday games) release polls/ratings
+# Monday, and Sun->Wed left Mon/Tue results unreflected for up to 4 days.
 
 
 def _most_recent_anchor_et(now=None):
