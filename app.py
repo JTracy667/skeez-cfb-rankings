@@ -2059,11 +2059,13 @@ def project_head_to_head(home_data: dict, away_data: dict, neutral_site: bool = 
     # still undershoots real annihilation spreads — week 1 model margins came in
     # ~10-30 pts UNDER books' -40..-55 lines, so the ATS rule defaulted to the
     # FCS dog and went 6-15. When one side has NO data (fcs_no_data) and the
-    # other is rated FBS, boost the FBS side's projection by +20: total grows
-    # by 20 (all of it on the FBS side) and margin grows by 20, so the model
-    # takes the favorite in annihilation territory while keeping a projection
-    # on every game. Both-sides-no-data games (FCS slate noise) get no boost.
-    FCS_BLOWOUT_BOOST = 20.0
+    # other is rated FBS, boost the FBS side's projection (Jeff's estimate of
+    # the true FBS-FCS gap: 12-15 pts; using 15). Total grows by the boost (all
+    # of it on the FBS side) and margin likewise, so the model takes the
+    # favorite in annihilation territory while keeping a projection on every
+    # game. Both-sides-no-data games (FCS slate noise) get no boost.
+    # Stop-gap for the 4-week FCS-feast stretch; revisit when FCS data lands.
+    FCS_BLOWOUT_BOOST = 15.0
     home_fcs = hp.get("data_flag") == "fcs_no_data"
     away_fcs = ap.get("data_flag") == "fcs_no_data"
     boost = 0.0
