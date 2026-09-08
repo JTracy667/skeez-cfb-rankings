@@ -104,12 +104,13 @@ nav a.active{color:var(--accent)}
   .summary-card .label{font-size:.58rem;letter-spacing:.02em}
 
   /* matchup card: stacked rows, TRUE MIRROR matching desktop orientation —
-       top row (home): logo flush LEFT, text left-aligned;
-       bottom row (away): logo flush RIGHT, text right-aligned.
-       DOM: home = [logo, text] (row keeps logo left);
-            away = [text, logo] (row + flex-end pushes logo right). */
+     top row (home): logo flush LEFT, text left-aligned;
+     bottom row (away): logo flush RIGHT, text right-aligned.
+     Text blocks flex:1 so BOTH span the full row width minus logo —
+     equal-size mirrored blocks regardless of team-name length. */
     .matchup-card{grid-template-columns:1fr;gap:.6rem;padding:.75rem}
     .team-side{flex-direction:row;justify-content:flex-start;text-align:left}
+    .team-side > div:not(.team-logo){flex:1;min-width:0}
     .team-side.away{justify-content:flex-end;text-align:right}
     .team-side.away .team-meta{flex-direction:row;justify-content:flex-end}
     .team-side.away .sp-row{justify-content:flex-end}
