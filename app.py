@@ -252,9 +252,11 @@ except Exception:  # tzdata missing — fall back to UTC-4 (EDT) approximation
 WEEKLY_ANALYTICS_FILE = BASE_DIR / "data" / "last_analytics_pull.json"
 
 # Sync anchors: Sunday 9pm ET (post-Saturday results), Monday 9pm ET (short-week
-# seasons: Sunday games + Monday poll releases), + Wednesday 9pm ET (mid-week,
-# when most line movement happens and best-bet edges are widest).
-_ANALYTICS_ANCHORS = ((6, 21), (0, 21), (2, 21))  # (weekday, hour) — Python Mon=0: Sun=6, Mon=0, Wed=2
+# seasons: Sunday games + Monday poll releases), Tuesday 9pm ET (CFBD's SP+/FPI
+# update irregularly Sun night through Wed — Tue catches the stragglers), +
+# Wednesday 9pm ET (mid-week, when most line movement happens and best-bet edges
+# are widest).
+_ANALYTICS_ANCHORS = ((6, 21), (0, 21), (1, 21), (2, 21))  # (weekday, hour) — Python Mon=0: Sun=6, Mon=0, Tue=1, Wed=2
 # Mon anchor added Sep 6: short-week seasons (Sunday games) release polls/ratings
 # Monday, and Sun->Wed left Mon/Tue results unreflected for up to 4 days.
 
