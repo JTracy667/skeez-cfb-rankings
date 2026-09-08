@@ -1262,8 +1262,23 @@ def _parse_best_line(payload: dict) -> dict | None:
         book = next((b for b in ("pinnacle", "draftkings", "fanduel", "betrivers", "bovada")
                      if any(x.get("book") == b for x in pool)), None)
         title = next((x.get("book_title") for x in pool if x.get("book") == book), None) or (book or "")
-        lines[out_key] = {"point": main.get("point"), "n_quoters": len(sport_rows) or len(all_rows),
-                          "book": book, "book_title": title}
+        entry = {"point": main.get("point"), "n_quoters": len(sport_rows) or len(all_rows),
+                 "book": book, "book_title": title}
+        if mk == "spreads":
+            # SPREAD SIDE ATTRIBUTION (Sep 8 fix): a ladder rung's point is quoted
+            # RELATIVE TO THE SIDE TEAM — "Missouri" at -27.5 means Missouri -27.5;
+            # "Kansas" at +27.5 means Kansas +27.5. The old parser stored the raw
+            # point with no team, so an away favorite's line (Oregon -22.5) was
+            # read as HOME -22.5 and every ATS pick on an away-favorite game
+            # flipped to the wrong side. Single-side rungs are unambiguous;
+            # two-side rungs don't identify the owner, so null the point (the
+            # caller falls back to the team-tagged bulk line, always correct).
+            side_names = [k for k in (main.get("sides") or {}).keys()]
+            if len(side_names) == 1:
+                entry["side"] = side_names[0]
+            else:
+                entry["point"] = None
+        lines[out_key] = entry
     return lines or None
 
 # Betting window for per-event best-line enrichment: only games kicking off within
@@ -1638,13 +1653,27 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
         home = _normalize_team_name(game.get("home_team", ""))
         away = _normalize_team_name(game.get("away_team", ""))
         key = (home, away)
-        # 1) Cross-book consensus from /best-line (when fetched this cycle).
-        bl = game.get("best_line") or {}
-        bl_spread = bl.get("spread", {}).get("point") if isinstance(bl.get("spread"), dict) else None
-        bl_total = bl.get("total", {}).get("point") if isinstance(bl.get("total"), dict) else None
-        # 2) Bulk per-book lines (fallback + fills any market best-line missed).
         home_short = home.lower()
         away_short = away.lower()
+        # 1) Cross-book consensus from /best-line (when fetched this cycle).
+        bl = game.get("best_line") or {}
+        bl_sp = bl.get("spread") if isinstance(bl.get("spread"), dict) else None
+        bl_spread = bl_sp.get("point") if bl_sp else None
+        bl_side = bl_sp.get("side") if bl_sp else None
+        if bl_spread is not None:
+            # SPREAD SIDE CONVERSION (Sep 8 fix): best-line rung points are quoted
+            # relative to their SIDE team. Convert to home-relative
+            # (negative = home favorite) so _ats_side/_grade_ats stay correct.
+            if bl_side:
+                bl_norm = _normalize_team_name(bl_side).lower()
+                if bl_norm == away_short:
+                    bl_spread = -bl_spread  # away-quoted -> home-relative
+                elif bl_norm != home_short:
+                    bl_spread = None  # unrecognized side: fall back to bulk
+            else:
+                bl_spread = None  # legacy store entry without side attribution
+        bl_total = bl.get("total", {}).get("point") if isinstance(bl.get("total"), dict) else None
+        # 2) Bulk per-book lines (fallback + fills any market best-line missed).
         # Collect the home-team spread + total from every book
         per_book = {}  # book_key -> {"title", "spread", "total"}
         for bm in game.get("bookmakers", []):
@@ -1683,6 +1712,21 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
         b = per_book.get(chosen, {})
         # Merge: best-line consensus wins per market; bulk priority book fills gaps.
         spread = bl_spread if bl_spread is not None else b.get("spread")
+        # FAVORITE-SIGN SANITY GUARD (Sep 8): the team-tagged bulk line is always
+        # correct, so a negative (home-favorite) spread is only plausible when a
+        # home-named line exists. A NEGATIVE spread with NO home-side quote
+        # anywhere means the line was quoted against the AWAY favorite and the
+        # side attribution got lost — drop it rather than ship a flipped ATS pick.
+        if spread is not None and spread < 0:
+            has_home_line = any(
+                _normalize_team_name(o.get("name", "")).lower() == home_short
+                for bm in game.get("bookmakers", [])
+                for mk2 in bm.get("markets", []) if mk2.get("key") == "spreads"
+                for o in mk2.get("outcomes", []))
+            if not has_home_line:
+                print(f"[Odds] {home}|{away}: negative spread {spread} with no "
+                      f"home-side line — dropping (away-favorite misattribution)")
+                spread = None
         total = bl_total if bl_total is not None else b.get("total")
         # Book attribution follows the line actually used (best-line's attributed
         # sportsbook when that market came from best-line, priority book otherwise).
