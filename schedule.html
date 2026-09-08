@@ -433,7 +433,7 @@ function renderMatchups() {
       <div class="team-side home">
         <div class="team-logo"><img src="${m.home_logo_url || ''}" alt="${m.home}" onerror="this.style.display='none'"></div>
         <div>
-          <div class="team-name">${m.home}${m.ats_pick === 'home' ? '<span class="pick-arrow">▶</span>' : ''}${isFinal(m) && m.final.winner === m.home ? '<span class="final-winner">✔</span>' : ''}${isFinal(m) ? `<span class="final-score">${m.final.home_score}</span>` : ''}</div>
+          <div class="team-name">${m.home}${m.ats_pick === 'home' ? '<span class="pick-arrow">▶</span>' : ''}${isFinal(m) && m.final.winner === m.home ? '<span class="final-winner">✔&#xFE0E;</span>' : ''}${isFinal(m) ? `<span class="final-score">${m.final.home_score}</span>` : ''}</div>
           <div class="team-meta">
             <span>${m.home_record}</span>
             <span>·</span>
@@ -464,7 +464,7 @@ function renderMatchups() {
       </div>
       <div class="team-side away">
         <div>
-          <div class="team-name">${m.ats_pick === 'away' ? '<span class="pick-arrow">◀</span>' : ''}${isFinal(m) ? `<span class="final-score">${m.final.away_score}</span>` : ''}${isFinal(m) && m.final.winner === m.away ? '<span class="final-winner">✔</span>' : ''}${m.away}</div>
+          <div class="team-name">${m.ats_pick === 'away' ? '<span class="pick-arrow">◀</span>' : ''}${isFinal(m) ? `<span class="final-score">${m.final.away_score}</span>` : ''}${isFinal(m) && m.final.winner === m.away ? '<span class="final-winner">✔&#xFE0E;</span>' : ''}${m.away}</div>
           <div class="team-meta">
             <span>${m.away_record}</span>
             <span>·</span>
