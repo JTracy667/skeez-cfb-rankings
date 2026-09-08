@@ -78,8 +78,19 @@ tr.open .chev{transform:rotate(90deg);color:var(--accent)}
 .status{text-align:center;color:var(--text-dim);padding:3rem 1rem;font-size:.95rem}
 .error-status{color:var(--down)}
 @media (max-width:640px){
-  .header h1{font-size:1.5rem}
-  .hide-mobile{display:none}
+  .header h1{font-size:1.3rem;line-height:1.25}
+  .header{padding:1.25rem 0.75rem}
+  .container{padding:12px}
+  .search-box{flex:1 1 100%;min-width:0;font-size:1rem}
+  .controls{gap:.4rem;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:.25rem}
+  .controls::-webkit-scrollbar{display:none}
+  .filter-btn,.refresh-btn{flex-shrink:0;padding:.45rem .7rem;font-size:.75rem}
+  table{font-size:.78rem;min-width:640px}
+  thead th{padding:.5rem .45rem;font-size:.62rem}
+  tbody td{padding:.5rem .45rem}
+  .team-logo{width:26px;height:26px}
+  .note{font-size:.78rem;padding:.7rem .8rem}
+  .week-badge{font-size:.72rem;padding:.3rem .7rem}
 }
 </style>
 </head>

@@ -261,10 +261,20 @@
 
     /* Responsive */
     @media (max-width: 640px) {
-      .header h1 { font-size: 1.6rem; }
+      .rankings-wrap { padding: 0 0.6rem; margin: 1rem auto 2rem; }
+      .header h1 { font-size: 1.35rem; }
+      .header .subtitle { font-size: 0.8rem; padding: 0 0.6rem; }
+      /* table keeps full 9 cols but scrolls horizontally inside its wrap —
+         no squish, no clipped columns; sticky first cols stay anchored */
+      .rankings-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .rankings-table { min-width: 620px; }
+      .rankings-table thead th { padding: 0.6rem 0.4rem; font-size: 0.62rem; }
+      .rankings-table tbody td { padding: 0.55rem 0.4rem; font-size: 0.82rem; }
+      .team-logo { width: 26px; height: 26px; font-size: 0.8rem; }
+      /* conf + streak columns hidden on phones (desktop keeps them) */
       .hide-mobile { display: none; }
-      .rankings-table tbody td { padding: 0.6rem 0.3rem; font-size: 0.82rem; }
-      .team-logo { width: 28px; height: 28px; font-size: 0.9rem; }
+      .header nav { flex-wrap: wrap; gap: 0.4rem 0.6rem; }
+      .header nav a { font-size: 0.78rem; }
     }
   </style>
 </head>

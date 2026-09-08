@@ -89,11 +89,50 @@ nav a.active{color:var(--accent)}
 .mv-when{opacity:.55;font-size:.62rem;white-space:nowrap}
 .mv-count{color:var(--accent);font-weight:700}
 .footer{text-align:center;padding:1.5rem;color:var(--text-dim);font-size:.75rem;border-top:1px solid var(--border)}
+/* ── MOBILE-FIRST OVERRIDES (Sep 8) ── phones are the primary device */
 @media(max-width:768px){
-  .matchup-card{grid-template-columns:1fr;gap:.5rem;text-align:center}
-  .team-side,.team-side.away{justify-content:center;text-align:center}
+  .container{padding:12px}
+  .header h1{font-size:1.3rem;line-height:1.25}
+  .header .subtitle{font-size:.85rem}
+  .header nav{flex-wrap:wrap;gap:.4rem .6rem;font-size:.8rem}
+
+  /* summary cards: 5 across becomes a tight 2-col grid (last card spans) */
+  .summary-row{grid-template-columns:repeat(2,1fr);gap:.5rem}
+  .summary-card{padding:.6rem .5rem}
+  .summary-card .val{font-size:1.3rem}
+  .summary-card .label{font-size:.62rem}
+  .summary-row .summary-card:last-child{grid-column:1/-1}
+
+  /* matchup card: stacked rows, logo left, name+meta+sp compact */
+  .matchup-card{grid-template-columns:1fr;gap:.6rem;padding:.75rem}
+  .team-side,.team-side.away{justify-content:flex-start;text-align:left}
+  .team-side.away{flex-direction:row-reverse;justify-content:flex-start;text-align:left}
   .team-side.away .team-meta{flex-direction:row}
-  .summary-row{grid-template-columns:1fr}
+  .team-logo{width:42px;height:42px;border-radius:8px}
+  .team-name{font-size:1.05rem;line-height:1.3;overflow-wrap:anywhere}
+  .team-meta{font-size:.78rem;flex-wrap:wrap}
+  .sp-row{font-size:.65rem}
+  .final-score{font-size:.8rem;padding:0 5px;margin-left:4px}
+  .final-winner{font-size:.95rem;margin-left:4px}
+
+  /* vs section becomes a full-width strip under each team row */
+  .vs-section{text-align:center;min-width:0;width:100%}
+  .vs-score{display:inline;font-size:1.05rem;margin:0 .4rem}
+  .vs-label{display:none}
+  .diff-badge,.ou-pick,.line-vs-model,.game-date,.line-mv-chip{font-size:.65rem}
+
+  /* controls: search full width, conf chips scroll in one swipeable row */
+  .controls{gap:.4rem}
+  .search-box{flex:1 1 100%;min-width:0;padding:.55rem .8rem;font-size:1rem}
+  .controls{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:.25rem;scrollbar-width:none}
+  .controls::-webkit-scrollbar{display:none}
+  .filter-btn{flex-shrink:0;padding:.45rem .7rem;font-size:.75rem}
+  .refresh-btn{flex-shrink:0;padding:.45rem .8rem}
+
+  /* best-bets rows stack team over pick */
+  .best-bets{padding:.75rem .9rem}
+  .best-bets .bb-row{grid-template-columns:1fr auto;gap:.4rem;font-size:.78rem}
+  .best-bets .bb-edge{grid-column:1/-1}
 }
 </style>
 </head>

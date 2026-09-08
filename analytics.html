@@ -102,10 +102,22 @@ img.team-logo {
 }
 .footer { text-align: center; padding: 24px; color: #484f58; font-size: 0.75rem; margin-top: 32px; }
 @media (max-width: 768px) {
-  .header { flex-direction: column; gap: 12px; }
-  .tabs { gap: 4px; }
-  .tab-btn { padding: 6px 10px; font-size: 0.75rem; }
+  .container { padding: 12px; }
+  .header { flex-direction: column; gap: 12px; text-align: center; }
+  .header h1 { font-size: 1.35rem; line-height: 1.25; }
+  .tabs { gap: 4px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; max-width: 100%; justify-content: flex-start; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { padding: 6px 10px; font-size: 0.75rem; flex-shrink: 0; }
   th, td { padding: 8px 6px; font-size: 0.78rem; }
+  /* hide-mobile was USED but never defined — the rule that makes the wide
+     table usable on phones. Secondary columns hide on mobile only. */
+  .hide-mobile { display: none; }
+  /* wide stat tables scroll horizontally instead of squishing */
+  .table-scroll, .container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 640px; }
+  .projections-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .proj-card { padding: 10px; }
+  .proj-row { font-size: 0.8rem; }
 }
 
 .projections-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
