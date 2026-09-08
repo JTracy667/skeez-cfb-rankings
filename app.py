@@ -2488,8 +2488,12 @@ def current_season_week(year: int = CFBD_YEAR) -> int | None:
     after the last one -> latest week. None if the season has no games.
     """
     cached = _current_week_cache.get(year)
-    if cached is not None:
-        return cached[0] if time.time() - cached[1] < 3600 else None
+    if cached is not None and time.time() - cached[1] < 3600:
+        # Fresh cache: serve it. Stale cache: fall through and RECOMPUTE.
+        # (The old condition inverted this — a stale cache returned None,
+        # which the endpoint read as "no games" and fell back to weeks[0],
+        # pinning the schedule page to week 1 an hour after every deploy.)
+        return cached[0]
     games = [g for g in _cfbd_season_games(year)
              if isinstance(g, dict) and _cfbd_is_fbs(g) and g.get("startDate")]
     if not games:
