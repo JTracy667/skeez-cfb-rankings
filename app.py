@@ -1474,12 +1474,16 @@ def _normalize_team_name(name: str) -> str:
         ("Marshall Thundering Herd", "Marshall"),
         ("Memphis Tigers", "Memphis"),
         ("Miami Hurricanes", "Miami"),
+        ("Miami Florida Hurricanes", "Miami"),
+        ("Miami Florida", "Miami"),
         ("Michigan State Spartans", "Michigan State"),
         ("Michigan Wolverines", "Michigan"),
         ("Minnesota Golden Gophers", "Minnesota"),
         ("Mississippi State Bulldogs", "Mississippi State"),
         ("Missouri Tigers", "Missouri"),
         ("NC State Wolfpack", "NC State"),
+        ("NC St. Wolfpack", "NC State"),
+        ("NC St.", "NC State"),
         ("Nebraska Cornhuskers", "Nebraska"),
         ("Nevada Wolf Pack", "Nevada"),
         ("New Mexico Lobos", "New Mexico"),
@@ -2662,7 +2666,8 @@ def api_schedule():
         diff = round(home_proj_data["projected_score"] - away_proj_data["projected_score"], 1)
         # Look up live betting line (negative spread = home is favorite)
         odds_key = (_normalize_team_name(m["home"]), _normalize_team_name(m["away"]))
-        line = odds_map.get(odds_key, {})
+        found_key = _find_odds_entry(odds_map, *odds_key, m.get("date") or "")
+        line = odds_map.get(found_key, {}) if found_key else {}
         spread = line.get("spread")  # None if no live line; negative = home favorite
         # line_diff uses the same sign as the spread: negative = home favorite
         line_diff = round(spread, 1) if spread is not None else None
@@ -2836,7 +2841,8 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
         # (UVA -14/-21 in-play vs -3.5 pre-game). Suppress the line entirely
         # for started games instead of showing a number that isn't a bet.
         odds_key = (_normalize_team_name(m["home"]), _normalize_team_name(m["away"]))
-        market_odds = odds_map.get(odds_key, {})
+        found_key = _find_odds_entry(odds_map, *odds_key, m.get("date") or "")
+        market_odds = odds_map.get(found_key, {}) if found_key else {}
         game_kick = m.get("date")
         try:
             game_started = bool(game_kick) and datetime.fromisoformat(
