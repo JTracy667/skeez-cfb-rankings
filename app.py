@@ -2886,6 +2886,28 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
         })
     # Lock in this week's SU + ATS picks (idempotent)
     _lock_picks(enriched, week)
+    # FINAL SCORES overlay (Sep 8): attach completed-game results so the page can
+    # sink finished games to the bottom and stamp the winner. Same CFBD finals
+    # feed the grading pipeline uses; lookup is name-normalized both ways since
+    # CFBD's home/away order matches ours here (both come from /games).
+    try:
+        finals = _fetch_final_scores()
+        for m in enriched:
+            key = frozenset({_norm_key_name(m["home"]), _norm_key_name(m["away"])})
+            g = finals.get(key)
+            if not g:
+                m["final"] = None
+                continue
+            if _norm_key_name(g["home"]) == _norm_key_name(m["home"]):
+                hs, as_ = g["home_score"], g["away_score"]
+            else:
+                hs, as_ = g["away_score"], g["home_score"]
+            m["final"] = {
+                "home_score": hs, "away_score": as_,
+                "winner": m["home"] if hs > as_ else (m["away"] if as_ > hs else None),
+            }
+    except Exception as e:
+        print(f"[Schedule] finals overlay failed: {e}")
     return {"week": week, "season": year, "updated": datetime.now().isoformat(),
             "matchups": enriched, "has_odds": len(odds_map) > 0, "note": note}
 
