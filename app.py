@@ -441,7 +441,8 @@ def _daily_self_restart_loop():
             print("[restart-watchdog] daily self-restart: exiting for fresh container", flush=True)
             os._exit(0)
 
-_t = threading.Thread(target=_daily_self_restart_loop, daemon=True, name="daily-restart")
+import threading as _threading
+_t = _threading.Thread(target=_daily_self_restart_loop, daemon=True, name="daily-restart")
 _t.start()
 
 # ── Data loading ──
