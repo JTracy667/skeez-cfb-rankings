@@ -422,6 +422,28 @@ def _start_scheduler() -> None:
     t = threading.Thread(target=_loop, daemon=True, name="cfb-refresh")
     t.start()
 
+# ── Daily 04:00 UTC self-restart (Render OOM prevention) ──
+# Python/glibc RSS ratchets with game-day traffic (~220MB/day on a 512MB
+# starter plan). A clean process exit at the quietest hour lets Render's
+# restart policy spin up a fresh container, resetting RSS to ~230MB.
+def _daily_self_restart_loop():
+    import datetime as _dt
+    while True:
+        utcnow = _dt.datetime.now(_dt.timezone.utc)
+        target = utcnow.replace(hour=4, minute=0, second=0, microsecond=0)
+        if target <= utcnow:
+            target += _dt.timedelta(days=1)
+        wait_s = (target - utcnow).total_seconds()
+        print(f"[restart-watchdog] next 04:00 UTC self-restart in {wait_s/3600:.1f}h", flush=True)
+        _time.sleep(max(wait_s, 60))
+        utcnow2 = _dt.datetime.now(_dt.timezone.utc)
+        if utcnow2.hour == 4 and utcnow2.minute < 10:
+            print("[restart-watchdog] daily self-restart: exiting for fresh container", flush=True)
+            os._exit(0)
+
+_t = threading.Thread(target=_daily_self_restart_loop, daemon=True, name="daily-restart")
+_t.start()
+
 # ── Data loading ──
 def load_local() -> list[dict]:
     """Load teams from local JSON file. Base fields only — analytics
