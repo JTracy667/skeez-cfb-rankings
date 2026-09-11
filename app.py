@@ -435,7 +435,7 @@ def _daily_self_restart_loop():
             target += _dt.timedelta(days=1)
         wait_s = (target - utcnow).total_seconds()
         print(f"[restart-watchdog] next 04:00 UTC self-restart in {wait_s/3600:.1f}h", flush=True)
-        _time.sleep(max(wait_s, 60))
+        time.sleep(max(wait_s, 60))
         utcnow2 = _dt.datetime.now(_dt.timezone.utc)
         if utcnow2.hour == 4 and utcnow2.minute < 10:
             print("[restart-watchdog] daily self-restart: exiting for fresh container", flush=True)
