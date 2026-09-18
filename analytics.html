@@ -376,12 +376,16 @@ function havocBadge(v) {
 function renderOffense(filtered) {
   const list = filtered || teams;
   const sorted = [...list].sort((a, b) => val(b, 'off_ppg', 0) - val(a, 'off_ppg', 0));
-  let html = `<table><thead><tr><th>#</th><th>Team</th><th>PPG</th><th>YPP</th><th>3rd %</th><th>EPA/Play</th><th>Rush EPA</th><th>Pass EPA</th><th>Havoc Allowed</th><th>Pts/Poss</th><th>TD%</th><th>FG%</th><th>TO%</th></tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>PPG</th><th>YPP</th><th>SR%</th><th>Pts/Opp</th><th>Line Yds</th><th>Stuff%</th><th>3rd %</th><th>EPA/Play</th><th>Rush EPA</th><th>Pass EPA</th><th>Havoc Allowed</th><th>Pts/Poss</th><th>TD%</th><th>FG%</th><th>TO%</th></tr></thead><tbody>`;
   sorted.forEach((t, i) => {
     const epa = val(t, 'epa_play', 0);
     const epa_r = val(t, 'epa_rush', 0);
     const epa_p = val(t, 'epa_pass', 0);
-    html += `<tr><td>${i+1}</td><td><img class="team-logo" src="${t.logo_url || ''}" alt="${t.name}" onerror="this.style.display='none'"> ${t.name}</td><td>${pctBadge(val(t,'off_ppg',0).toFixed(1))}</td><td>${val(t,'off_ypp',0).toFixed(2)}</td><td>${(val(t,'off_3rd',0)*100).toFixed(1)}%</td><td>${epaBadge(epa)}</td><td>${epaBadge(epa_r)}</td><td>${epaBadge(epa_p)}</td><td>${havocBadge(t.havoc_allowed)}</td><td>${val(t,'pts_per_poss',0).toFixed(1) || '—'}</td><td>${val(t,'td_rate',0).toFixed(1)}%</td><td>${val(t,'fg_rate',0).toFixed(1)}%</td><td>${val(t,'turnover_rate',0).toFixed(1)}%</td></tr>`;
+    const sr = t.off_success_rate !== undefined && t.off_success_rate !== null ? (t.off_success_rate * 100).toFixed(1) + '%' : '—';
+    const ppo = t.off_ppo !== undefined && t.off_ppo !== null ? t.off_ppo.toFixed(1) : '—';
+    const ly = t.off_line_yards !== undefined && t.off_line_yards !== null ? t.off_line_yards.toFixed(2) : '—';
+    const st = t.off_stuff_rate !== undefined && t.off_stuff_rate !== null ? (t.off_stuff_rate * 100).toFixed(1) + '%' : '—';
+    html += `<tr><td>${i+1}</td><td><img class="team-logo" src="${t.logo_url || ''}" alt="${t.name}" onerror="this.style.display='none'"> ${t.name}</td><td>${pctBadge(val(t,'off_ppg',0).toFixed(1))}</td><td>${val(t,'off_ypp',0).toFixed(2)}</td><td><span class="badge badge-mid">${sr}</span></td><td>${ppo}</td><td>${ly}</td><td>${st}</td><td>${(val(t,'off_3rd',0)*100).toFixed(1)}%</td><td>${epaBadge(epa)}</td><td>${epaBadge(epa_r)}</td><td>${epaBadge(epa_p)}</td><td>${havocBadge(t.havoc_allowed)}</td><td>${val(t,'pts_per_poss',0).toFixed(1) || '—'}</td><td>${val(t,'td_rate',0).toFixed(1)}%</td><td>${val(t,'fg_rate',0).toFixed(1)}%</td><td>${val(t,'turnover_rate',0).toFixed(1)}%</td></tr>`;
   });
   html += `</tbody></table>`;
   document.getElementById('offense').innerHTML = html;
@@ -390,7 +394,7 @@ function renderOffense(filtered) {
 function renderDefense(filtered) {
   const list = filtered || teams;
   const sorted = [...list].sort((a, b) => val(a, 'def_ppg', 999) - val(b, 'def_ppg', 999));
-  let html = `<table><thead><tr><th>#</th><th>Team</th><th>Opp PPG</th><th>Opp YPP</th><th>3rd Down %</th><th>Def EPA/Play</th><th>Def Rush EPA</th><th>Def Pass EPA</th><th>Havoc</th><th>Opp Pts/Poss</th><th>Opp TD%</th><th>Opp FG%</th><th>TO Created%</th></tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>Opp PPG</th><th>Opp YPP</th><th>Opp SR%</th><th>Opp Pts/Opp</th><th>Opp Line Yds</th><th>Opp Stuff%</th><th>3rd Down %</th><th>Def EPA/Play</th><th>Def Rush EPA</th><th>Def Pass EPA</th><th>Havoc</th><th>Opp Pts/Poss</th><th>Opp TD%</th><th>Opp FG%</th><th>TO Created%</th></tr></thead><tbody>`;
   sorted.forEach((t, i) => {
     const defEPA = val(t,'def_epa_play',null);
     const defEPAHtml = defEPA !== null ? epaBadge(defEPA) : '—';
@@ -398,7 +402,11 @@ function renderDefense(filtered) {
     const defRushHtml = defRush !== null ? epaBadge(defRush) : '—';
     const defPass = val(t,'def_epa_pass',null);
     const defPassHtml = defPass !== null ? epaBadge(defPass) : '—';
-    html += `<tr><td>${i+1}</td><td><img class="team-logo" src="${t.logo_url||''}" alt="${t.name}" onerror="this.style.display='none'"> ${t.name}</td><td>${pctBadge(val(t,'def_ppg',0).toFixed(1), false)}</td><td>${val(t,'def_ypp',0).toFixed(2)}</td><td>${(val(t,'def_3rd',0)*100).toFixed(1)}%</td><td>${defEPAHtml}</td><td>${defRushHtml}</td><td>${defPassHtml}</td><td>${havocBadge(t.def_havoc)}</td><td>${val(t,'def_pts_per_poss',0).toFixed(1)||'—'}</td><td>${val(t,'def_td_rate',0).toFixed(1)}%</td><td>${val(t,'def_fg_rate',0).toFixed(1)}%</td><td>${val(t,'def_turnover_created',0).toFixed(1)}%</td></tr>`;
+    const sr = t.def_success_rate !== undefined && t.def_success_rate !== null ? (t.def_success_rate * 100).toFixed(1) + '%' : '—';
+    const ppo = t.def_ppo !== undefined && t.def_ppo !== null ? t.def_ppo.toFixed(1) : '—';
+    const ly = t.def_line_yards !== undefined && t.def_line_yards !== null ? t.def_line_yards.toFixed(2) : '—';
+    const st = t.def_stuff_rate !== undefined && t.def_stuff_rate !== null ? (t.def_stuff_rate * 100).toFixed(1) + '%' : '—';
+    html += `<tr><td>${i+1}</td><td><img class="team-logo" src="${t.logo_url||''}" alt="${t.name}" onerror="this.style.display='none'"> ${t.name}</td><td>${pctBadge(val(t,'def_ppg',0).toFixed(1), false)}</td><td>${val(t,'def_ypp',0).toFixed(2)}</td><td><span class="badge badge-mid">${sr}</span></td><td>${ppo}</td><td>${ly}</td><td>${st}</td><td>${(val(t,'def_3rd',0)*100).toFixed(1)}%</td><td>${defEPAHtml}</td><td>${defRushHtml}</td><td>${defPassHtml}</td><td>${havocBadge(t.def_havoc)}</td><td>${val(t,'def_pts_per_poss',0).toFixed(1)||'—'}</td><td>${val(t,'def_td_rate',0).toFixed(1)}%</td><td>${val(t,'def_fg_rate',0).toFixed(1)}%</td><td>${val(t,'def_turnover_created',0).toFixed(1)}%</td></tr>`;
   });
   html += `</tbody></table>`;
   document.getElementById('defense').innerHTML = html;
@@ -473,9 +481,23 @@ function renderComposite(filtered) {
   // Composite is computed server-side (single source of truth) — same formula
   // the rankings page uses. Just sort and display it.
   const sorted = [...list].sort((a, b) => val(b, 'composite', 0) - val(a, 'composite', 0));
-  let html = `<table><thead><tr><th>#</th><th>Team</th><th>Composite</th><th>SP+</th><th>FPI</th><th>SRS</th><th>Elo</th><th>Recruit</th></tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>#</th><th>Team</th><th>Composite</th><th>SP+</th><th>FPI</th><th>SRS</th><th>Net SR%</th><th>Net PPO</th><th>Elo</th><th>Recruit</th></tr></thead><tbody>`;
   sorted.forEach((t, i) => {
-    html += `<tr><td>${i+1}</td><td>${t.name}</td><td>${pctBadge(val(t,'composite',0).toFixed(1))}</td><td>${val(t,'sp_plus',0).toFixed(1)}</td><td>${val(t,'fpi',0).toFixed(1)}</td><td>${val(t,'srs',0).toFixed(1)}</td><td>${val(t,'elo',0).toFixed(0)}</td><td>#${val(t,'recruiting_rank',0) || '—'}</td></tr>`;
+    const offSr = t.off_success_rate;
+    const defSr = t.def_success_rate;
+    const netSr = (offSr !== undefined && offSr !== null && defSr !== undefined && defSr !== null)
+      ? ((offSr - defSr) * 100).toFixed(1) + '%'
+      : '—';
+    const offPpo = t.off_ppo;
+    const defPpo = t.def_ppo;
+    const netPpo = (offPpo !== undefined && offPpo !== null && defPpo !== undefined && defPpo !== null)
+      ? (offPpo - defPpo > 0 ? '+' : '') + (offPpo - defPpo).toFixed(1)
+      : '—';
+    const netSrNum = parseFloat(netSr);
+    const netPpoNum = parseFloat(netPpo);
+    const srBadgeCls = !isNaN(netSrNum) ? (netSrNum >= 10 ? 'badge-good' : netSrNum >= 0 ? 'badge-mid' : 'badge-bad') : 'badge-neutral';
+    const ppoBadgeCls = !isNaN(netPpoNum) ? (netPpoNum >= 1.5 ? 'badge-good' : netPpoNum >= 0 ? 'badge-mid' : 'badge-bad') : 'badge-neutral';
+    html += `<tr><td>${i+1}</td><td><img class="team-logo" src="${t.logo_url || ''}" alt="${t.name}" onerror="this.style.display='none'"> ${t.name}</td><td>${pctBadge(val(t,'composite',0).toFixed(1))}</td><td>${val(t,'sp_plus',0).toFixed(1)}</td><td>${val(t,'fpi',0).toFixed(1)}</td><td>${val(t,'srs',0).toFixed(1)}</td><td><span class="badge ${srBadgeCls}">${netSr}</span></td><td><span class="badge ${ppoBadgeCls}">${netPpo}</span></td><td>${val(t,'elo',0).toFixed(0)}</td><td>#${val(t,'recruiting_rank',0) || '—'}</td></tr>`;
   });
   html += `</tbody></table>`;
   document.getElementById('composite').innerHTML = html;

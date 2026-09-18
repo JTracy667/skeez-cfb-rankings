@@ -725,10 +725,12 @@ def _enrich_with_composite(teams: list[dict]) -> list[dict]:
         team["composite"] = proj["composite"]
         team["sp_contribution"] = proj["sp_contribution"]
         team["fpi_contribution"] = proj["fpi_contribution"]
+        team["srs_contribution"] = proj.get("srs_contribution", 0)
         team["cpi_contribution"] = proj["cpi_contribution"]
         team["elo_contribution"] = proj["elo_contribution"]
         team["rec_contribution"] = proj["rec_contribution"]
         team["epa_contribution"] = proj["epa_contribution"]
+        team["efficiency_contribution"] = proj.get("efficiency_contribution", 0)
     return teams
 
 @app.get("/api/analytics")
@@ -1099,6 +1101,36 @@ def _cfbd_ppa() -> dict:
     return out
 
 
+def _cfbd_advanced_stats() -> dict:
+    """Fetch advanced season stats (success rate, points per opportunity, line yards, stuff rate)
+    from CFBD /stats/season/advanced.
+    Single call returns all 138 FBS teams. Falls back to CFBD_YEAR_FALLBACK if empty.
+    """
+    data = _cfbd_get("stats/season/advanced", CFBD_YEAR)
+    if not data:
+        data = _cfbd_get("stats/season/advanced", CFBD_YEAR_FALLBACK)
+    out = {}
+    for d in (data or []):
+        team = d.get("team", "")
+        off = d.get("offense", {}) or {}
+        defn = d.get("defense", {}) or {}
+        out[team] = {
+            "off_success_rate": round(off.get("successRate", 0), 4) if off.get("successRate") is not None else None,
+            "def_success_rate": round(defn.get("successRate", 0), 4) if defn.get("successRate") is not None else None,
+            "off_ppo": round(off.get("pointsPerOpportunity", 0), 2) if off.get("pointsPerOpportunity") is not None else None,
+            "def_ppo": round(defn.get("pointsPerOpportunity", 0), 2) if defn.get("pointsPerOpportunity") is not None else None,
+            "off_line_yards": round(off.get("lineYards", 0), 2) if off.get("lineYards") is not None else None,
+            "def_line_yards": round(defn.get("lineYards", 0), 2) if defn.get("lineYards") is not None else None,
+            "off_stuff_rate": round(off.get("stuffRate", 0), 3) if off.get("stuffRate") is not None else None,
+            "def_stuff_rate": round(defn.get("stuffRate", 0), 3) if defn.get("stuffRate") is not None else None,
+            "off_power_success": round(off.get("powerSuccess", 0), 3) if off.get("powerSuccess") is not None else None,
+            "def_power_success": round(defn.get("powerSuccess", 0), 3) if defn.get("powerSuccess") is not None else None,
+            "off_explosiveness": round(off.get("explosiveness", 0), 3) if off.get("explosiveness") is not None else None,
+            "def_explosiveness": round(defn.get("explosiveness", 0), 3) if defn.get("explosiveness") is not None else None,
+        }
+    return out
+
+
 def _cfbd_drives_for_teams(team_names: list[str]) -> dict:
     """Fetch drive-level data and compute possession-based metrics for both offense and defense.
     Returns dict keyed by team name with offensive AND defensive metrics:
@@ -1137,7 +1169,7 @@ def _cfbd_drives_for_teams(team_names: list[str]) -> dict:
                 if d.get("scoring"):
                     pts += max(0, d.get("endOffenseScore", 0) - d.get("startOffenseScore", 0))
             out[name] = {
-                "pts_per_poss": round(pts / max(1, scoring), 2),
+                "pts_per_poss": round(pts / max(1, total), 2),
                 "td_rate": round(tds / total * 100, 1),
                 "fg_rate": round(fgs / max(1, scoring) * 100, 1),
                 "turnover_rate": round(tos / total * 100, 1),
@@ -1156,7 +1188,7 @@ def _cfbd_drives_for_teams(team_names: list[str]) -> dict:
                     d_pts += max(0, d.get("endOffenseScore", 0) - d.get("startOffenseScore", 0))
             out.setdefault(name, {})
             out[name].update({
-                "def_pts_per_poss": round(d_pts / max(1, d_scoring), 2),
+                "def_pts_per_poss": round(d_pts / max(1, d_total), 2),
                 "def_td_rate": round(d_tds / d_total * 100, 1),
                 "def_fg_rate": round(d_fgs / max(1, d_scoring) * 100, 1),
                 "def_turnover_created": round(d_tos / d_total * 100, 1),
@@ -2006,10 +2038,15 @@ def _fetch_odds_live() -> dict:
 def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_composite: float | None = None) -> dict:
     """
     Multi-factor projected score model.
-    Uses actual cached fields: sp_plus (CFBD -40..+40 scale), fpi_win_prob, cpi,
-    recruiting_rank, real elo.
-    Weights: SP+ 25%, FPI Win Prob 20%, CPI 15%, Elo 8%, Recruiting 12%, EPA/Returning 20%
-    Plus home-field advantage adjustment.
+    Anchor Ratings: SP+ 18%, FPI 15%, SRS 12% (replaces collinear CPI)
+    Program Priors & Outcomes: Elo 8%, Talent Prior (Recruiting + Returning) 10%
+    Advanced On-Field Efficiency: 37%
+      - Net Success Rate: 10% (down-to-down consistency)
+      - Net EPA/PPA per Play: 9% (per-play points added)
+      - Finishing Drives / PPO: 6% (scoring inside the 40)
+      - Trench Dominance: 6% (Line Yards & Stuff Rate differential)
+      - True Points Per Possession (PPD): 6%
+    Plus turnover-regressed scoring tilt and home-field advantage.
     Returns projected score, win probability, and composite rating.
     """
     # Extract ratings with defaults from actual cached data
@@ -2033,7 +2070,7 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
         }
     sp_plus = team_data.get("sp_plus") or 0.0       # CFBD real scale ~ -40..+40, 0 = average
     fpi_wp = team_data.get("fpi_win_prob") or 50.0  # 0-100 scale
-    cpi = team_data.get("cpi") or 50.0              # 0-100 composite index
+    srs_score = team_data.get("srs") or 0.0         # Sports Reference SRS (~ -25..+25, 0 = avg)
     rec_rank = team_data.get("recruiting_rank") or 80
     elo = team_data.get("elo") or 1500              # real Elo, ~1500 = average
     # Real season stats may be None when CFBD has no data (e.g. pre-season);
@@ -2041,75 +2078,95 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
     off_ppg = team_data.get("off_ppg") or 28.0    # points scored per game
     def_ppg = team_data.get("def_ppg") or 24.0    # points allowed per game
 
-    # Normalize each factor to a 0-100 scale
-    # SP+: CFBD range roughly -40 (bad) to +40 (elite), center 0 -> 0-100
+    # Normalize anchor models to a 0-100 scale
     sp_norm = max(0, min(100, (sp_plus + 40) / 80 * 100))
-    # FPI Win Prob: already 0-100
     fpi_norm = max(0, min(100, fpi_wp))
-    # CPI: already 0-100
-    cpi_norm = max(0, min(100, cpi))
-    # Elo: real rating, ~1200-2000 range, center 1500 -> 0-100 (1500 = 50)
+    srs_norm = max(0, min(100, (srs_score + 25) / 50 * 100))
     elo_norm = max(0, min(100, (elo - 1500) / 300 * 100 + 50))
-    # Recruiting: rank 1-130 -> 0-100 (inverted)
+
+    # Talent Prior (Recruiting + Returning Production)
     rec_norm = max(0, min(100, (130 - rec_rank) / 129 * 100))
-
-    # EPA / Returning / Experience bucket (20% combined)
-    # Offensive EPA/play: positive values are good; scale ~ -1..+1 -> 0-100
-    epa = team_data.get("epa_play") or 0.0
-    epa_off_norm = max(0, min(100, (epa + 1) / 2 * 100))
-    # Defensive EPA/play: LOWER is better; invert
-    def_epa = team_data.get("def_epa_play") or 0.0
-    epa_def_norm = max(0, min(100, (-def_epa + 1) / 2 * 100))
-    # Returning production (% EPA returning): already 0-100
     pct_ret = team_data.get("pct_ppa_returning")
-    ret_norm = max(0, min(100, (pct_ret or 0)))
-    # Experience score: already 0-100
-    exp = team_data.get("experience_score") or 0
-    exp_norm = max(0, min(100, exp))
+    ret_norm = max(0, min(100, (pct_ret if pct_ret is not None else 50.0)))
+    talent_norm = rec_norm * 0.6 + ret_norm * 0.4
 
-    # Average of the sub-factors within the production bucket (havoc added Sep 6)
-    # HAVOC (Sep 6): defensive havoc rate = (TFL + sacks + INT + fum recovered) / opp plays.
-    # Elite ~0.25+, weak ~0.10. Havoc allowed (offense) is the mirror, lower is better.
-    def_havoc = team_data.get("def_havoc")
-    havoc_allowed = team_data.get("havoc_allowed")
-    if def_havoc is not None:
-        havoc_norm = max(0, min(100, (def_havoc - 0.10) / 0.15 * 100))
+    # Advanced On-Field Efficiency Metrics (37% combined)
+    # 1. Net Success Rate (Offense SR minus Defense SR allowed; center 0 -> 50)
+    off_sr = team_data.get("off_success_rate")
+    def_sr = team_data.get("def_success_rate")
+    if off_sr is not None and def_sr is not None:
+        sr_norm = max(0, min(100, (off_sr - def_sr + 0.20) / 0.40 * 100))
     else:
-        havoc_norm = 50.0  # neutral until stats exist
-    if havoc_allowed is not None:
-        havoc_allow_norm = max(0, min(100, (0.25 - havoc_allowed) / 0.15 * 100))
-    else:
-        havoc_allow_norm = 50.0
-    epa_bucket = (epa_off_norm + epa_def_norm + ret_norm + exp_norm
-                  + havoc_norm + havoc_allow_norm) / 6
+        sr_norm = 50.0
 
-    # Weighted composite (0-100)
-    # Original: SP+ 30%, FPI 25%, CPI 20%, Elo 10%, Recruiting 15% (100%)
-    # New: SP+ 25%, FPI 20%, CPI 15%, Elo 8%, Recruiting 12%, EPA/Returning 20% (100%)
+    # 2. Net EPA / PPA per play (center 0 -> 50)
+    epa = team_data.get("epa_play") or 0.0
+    def_epa = team_data.get("def_epa_play") or 0.0
+    epa_norm = max(0, min(100, (epa - def_epa + 0.40) / 0.80 * 100))
+
+    # 3. Finishing Drives (Points per Opportunity / inside opp 40; center 0 -> 50)
+    off_ppo = team_data.get("off_ppo")
+    def_ppo = team_data.get("def_ppo")
+    if off_ppo is not None and def_ppo is not None:
+        ppo_norm = max(0, min(100, (off_ppo - def_ppo + 2.5) / 5.0 * 100))
+    else:
+        ppo_norm = 50.0
+
+    # 4. Trench Dominance (Line Yards + Stuff Rate differential)
+    off_ly = team_data.get("off_line_yards")
+    def_ly = team_data.get("def_line_yards")
+    off_st = team_data.get("off_stuff_rate")
+    def_st = team_data.get("def_stuff_rate")
+    if all(v is not None for v in (off_ly, def_ly, off_st, def_st)):
+        ly_norm = max(0, min(100, (off_ly - def_ly + 1.5) / 3.0 * 100))
+        st_norm = max(0, min(100, (def_st - off_st + 0.15) / 0.30 * 100))
+        trench_norm = ly_norm * 0.6 + st_norm * 0.4
+    else:
+        trench_norm = 50.0
+
+    # 5. True Points Per Possession (PPD)
+    pts_poss = team_data.get("pts_per_poss")
+    def_pts_poss = team_data.get("def_pts_per_poss")
+    if pts_poss is not None and def_pts_poss is not None:
+        ppd_norm = max(0, min(100, (pts_poss - def_pts_poss + 2.0) / 4.0 * 100))
+    else:
+        ppd_norm = 50.0
+
+    # Weighted on-field efficiency bucket
+    eff_norm = (
+        sr_norm * 0.28 +
+        epa_norm * 0.24 +
+        ppo_norm * 0.16 +
+        trench_norm * 0.16 +
+        ppd_norm * 0.16
+    )
+
+    # Weighted composite (0-100) — Total = 100%
+    # Anchors: SP+ 18%, FPI 15%, SRS 12% (45%)
+    # Priors/Trajectory: Elo 8%, Talent 10% (18%)
+    # Real On-Field Efficiency: 37%
     composite = (
-        sp_norm * 0.25 +
-        fpi_norm * 0.20 +
-        cpi_norm * 0.15 +
+        sp_norm * 0.18 +
+        fpi_norm * 0.15 +
+        srs_norm * 0.12 +
         elo_norm * 0.08 +
-        rec_norm * 0.12 +
-        epa_bucket * 0.20
+        talent_norm * 0.10 +
+        eff_norm * 0.37
     )
 
     # Projected score: calibrated to realistic CFB scoring.
     # A team's projected points vs an average opponent ranges ~8 (worst) to ~50s (elite).
-    # League average is ~28 PPG. Composite 50 (average) -> ~27 pts. Widened Aug 30.
-    # The composite already encodes overall strength, so we do NOT add a second
-    # offensive/defensive differential term on top (that was double-counting).
-    # Anchor (widened Aug 30, user call: elite top-end should reach the 50s):
+    # League average is ~28 PPG. Composite 50 (average) -> ~27 pts.
     # points = 27 + (composite - 50) * 0.55, floored at 6.
-    # composite 50 = 27 (league avg), 90 = 49.5, 100 = 55; bad teams (20) = 6.
-    # Combined with the +/-4 ppg tilt, elite teams project into the low 50s.
     base_score = 27.0 + (composite - 50.0) * 0.55
     base_score = max(6.0, base_score)
-    # Mild offensive/defensive tilt on top (small, to avoid re-double-counting):
-    # a strong offense / weak defense nudges the projection up a few points.
-    net_ppg = (off_ppg or 28.0) - (def_ppg or 24.0)
+
+    # Turnover regression: regressing turnover margin 50% toward 0 prevents overfitting to fumble/luck
+    to_margin = team_data.get("turnover_margin") or 0.0
+    regressed_to = to_margin * 0.5
+    net_ppg = (off_ppg or 28.0) - (def_ppg or 24.0) - (to_margin - regressed_to) * 1.5
     base_score += max(-4.0, min(4.0, net_ppg * 0.15))
+
     # Home field advantage: ~2.5 points (CFBD research average)
     home_adj = 2.5 if is_home else -1.5
     projected_score = round(base_score + home_adj, 1)
@@ -2136,12 +2193,17 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
         "projected_score": projected_score,
         "composite": round(composite, 1),
         "win_probability": win_prob,
-        "sp_contribution": round(sp_norm * 0.25, 1),
-        "fpi_contribution": round(fpi_norm * 0.20, 1),
-        "cpi_contribution": round(cpi_norm * 0.15, 1),
+        "sp_contribution": round(sp_norm * 0.18, 1),
+        "fpi_contribution": round(fpi_norm * 0.15, 1),
+        "srs_contribution": round(srs_norm * 0.12, 1),
+        "cpi_contribution": round(srs_norm * 0.12, 1),  # backwards compatibility alias
         "elo_contribution": round(elo_norm * 0.08, 1),
-        "rec_contribution": round(rec_norm * 0.12, 1),
-        "epa_contribution": round(epa_bucket * 0.20, 1),
+        "rec_contribution": round(talent_norm * 0.10, 1),
+        "epa_contribution": round(eff_norm * 0.37, 1),  # backwards compatibility alias
+        "efficiency_contribution": round(eff_norm * 0.37, 1),
+        "sr_norm": round(sr_norm, 1),
+        "trench_norm": round(trench_norm, 1),
+        "ppo_norm": round(ppo_norm, 1),
     }
 
 
@@ -2241,6 +2303,7 @@ def fetch_live_analytics():
 
         # EPA (Expected Points Added) + possession-based metrics from CFBD
         ppa_data = _cfbd_ppa()
+        adv_data = _cfbd_advanced_stats()
         drive_stats = _cfbd_drives_for_teams(list(
             teams_db.keys() | fpi_data.keys() | sp_data.keys() | rec_data.keys()))
         returning_data = _cfbd_returning()
@@ -2298,6 +2361,7 @@ def fetch_live_analytics():
 
             # EPA (Expected Points Added) + possession-based metrics from CFBD
             ppa = ppa_data.get(name, {})
+            adv = adv_data.get(name, {})
             ds = drive_stats.get(name, {})
             epa_overall = ppa.get("epa_play")
             epa_pass = ppa.get("epa_pass")
@@ -2305,6 +2369,19 @@ def fetch_live_analytics():
             def_epa_overall = ppa.get("def_epa_play")
             def_epa_pass = ppa.get("def_epa_pass")
             def_epa_rush = ppa.get("def_epa_rush")
+            # Advanced season stats (Success Rate, PPO, Line Yards, Stuff Rate)
+            off_sr = adv.get("off_success_rate")
+            def_sr = adv.get("def_success_rate")
+            off_ppo = adv.get("off_ppo")
+            def_ppo = adv.get("def_ppo")
+            off_ly = adv.get("off_line_yards")
+            def_ly = adv.get("def_line_yards")
+            off_st = adv.get("off_stuff_rate")
+            def_st = adv.get("def_stuff_rate")
+            off_power = adv.get("off_power_success")
+            def_power = adv.get("def_power_success")
+            off_explosiveness = adv.get("off_explosiveness")
+            def_explosiveness = adv.get("def_explosiveness")
             pts_per_poss = ds.get("pts_per_poss")
             td_rate = ds.get("td_rate")
             fg_rate = ds.get("fg_rate")
@@ -2374,6 +2451,18 @@ def fetch_live_analytics():
                 "def_td_rate": def_td_rate,
                 "def_fg_rate": def_fg_rate,
                 "def_turnover_created": def_turnover_created,
+                "off_success_rate": off_sr,
+                "def_success_rate": def_sr,
+                "off_ppo": off_ppo,
+                "def_ppo": def_ppo,
+                "off_line_yards": off_ly,
+                "def_line_yards": def_ly,
+                "off_stuff_rate": off_st,
+                "def_stuff_rate": def_st,
+                "off_power_success": off_power,
+                "def_power_success": def_power,
+                "off_explosiveness": off_explosiveness,
+                "def_explosiveness": def_explosiveness,
                 "returning_ppa": round(returning_ppa, 1) if returning_ppa else None,
                 "pct_ppa_returning": round(pct_ppa_returning * 100, 1) if pct_ppa_returning else None,
                 "pct_pass_ppa": round(pct_pass_ppa * 100, 1) if pct_pass_ppa else None,
