@@ -30,8 +30,13 @@ nav a.active{color:var(--accent)}
 .filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
 .refresh-btn{background:var(--accent);border:none;border-radius:10px;padding:.6rem 1.2rem;color:#fff;font-size:.85rem;font-weight:600;cursor:pointer;transition:opacity .2s}
 .refresh-btn:hover{opacity:.85}
-.matchup-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem;display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;transition:border-color .2s,transform .15s}
+.matchup-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem;display:flex;flex-direction:column;transition:border-color .2s,transform .15s}
 .matchup-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.matchup-main{display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;width:100%}
+.matchup-injury-bar{display:flex;gap:.5rem;margin-top:.75rem;padding-top:.6rem;border-top:1px dashed var(--border);flex-wrap:wrap;width:100%}
+.injury-pill{flex:1 1 180px;display:flex;align-items:center;justify-content:space-between;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;padding:.35rem .65rem;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s}
+.injury-pill:active{background:rgba(239,68,68,0.28)}
+.injury-pill .pill-tag{background:rgba(239,68,68,0.22);padding:.1rem .35rem;border-radius:4px;font-size:.65rem;margin-left:.5rem;white-space:nowrap}
 .team-side{display:flex;align-items:center;gap:.75rem;min-width:0;overflow:hidden}
 .team-side > div:not(.team-logo){min-width:0;flex:1;overflow:hidden}
 .team-side.away{justify-content:flex-end;text-align:right}
@@ -129,7 +134,10 @@ nav a.active{color:var(--accent)}
 
   /* matchup card: KEEP desktop 3-column layout on mobile (user-directed) —
      home logo+text left, away logo+text right, scores between. Just compact. */
-    .matchup-card{grid-template-columns:1fr auto 1fr;gap:.5rem;padding:.7rem}
+    .matchup-card{padding:.75rem}
+    .matchup-main{grid-template-columns:1fr auto 1fr;gap:.5rem}
+    .matchup-injury-bar{gap:.35rem;margin-top:.5rem;padding-top:.5rem}
+    .injury-pill{flex:1 1 100%;padding:.3rem .55rem;font-size:.68rem}
     .team-logo{width:38px;height:38px;border-radius:8px}
     .team-name{font-size:.95rem;line-height:1.25;overflow-wrap:normal;word-break:keep-all;hyphens:none}
     .team-meta{font-size:.7rem;flex-wrap:wrap}
@@ -400,19 +408,40 @@ function spClass(val) {
   return val >= 0.9 ? 'high' : val >= 0.7 ? '' : 'low';
 }
 
-function injuryBadgeHtml(teamName, injuries, adj) {
-  if (!injuries || !injuries.length || !adj || adj === 0) return '';
-  const qb = injuries.find(i => i.pos === 'QB' && i.deduction <= -4.5);
-  let label = '';
-  if (qb) {
-    const lastName = qb.player.split(' ').pop();
-    const isStar = qb.tier === 'star_qb';
-    label = `⚠️ ${lastName} (${isStar ? 'STAR' : 'QB'}) [${adj}p]`;
-  } else {
-    label = `⚠️ ${injuries.length} Out [${adj}p]`;
+function matchupInjuryBarHtml(m) {
+  const hasHome = m.home_injuries && m.home_injuries.length && m.home_injury_adj;
+  const hasAway = m.away_injuries && m.away_injuries.length && m.away_injury_adj;
+  if (!hasHome && !hasAway) return '';
+
+  let html = '<div class="matchup-injury-bar">';
+  if (hasHome) {
+    const qb = m.home_injuries.find(i => i.pos === 'QB' && i.deduction <= -4.5);
+    let label = '';
+    if (qb) {
+      const isStar = qb.tier === 'star_qb';
+      const name = qb.player.split(' ').pop();
+      label = `⚠️ ${m.home}: ${name} (${isStar ? 'STAR QB' : 'QB'}) OUT`;
+    } else {
+      label = `⚠️ ${m.home}: ${m.home_injuries.length} Key Out`;
+    }
+    const cleanTeam = m.home.replace(/'/g, "\\'");
+    html += `<div class="injury-pill" role="button" tabindex="0" onclick="openInjuryModal(event, '${cleanTeam}')"><span>${label}</span><span class="pill-tag">${m.home_injury_adj} pts ▶</span></div>`;
   }
-  const cleanTeam = (teamName || '').replace(/'/g, "\\'");
-  return `<div class="injury-badge" role="button" tabindex="0" onclick="openInjuryModal(event, '${cleanTeam}')">${label}</div>`;
+  if (hasAway) {
+    const qb = m.away_injuries.find(i => i.pos === 'QB' && i.deduction <= -4.5);
+    let label = '';
+    if (qb) {
+      const isStar = qb.tier === 'star_qb';
+      const name = qb.player.split(' ').pop();
+      label = `⚠️ ${m.away}: ${name} (${isStar ? 'STAR QB' : 'QB'}) OUT`;
+    } else {
+      label = `⚠️ ${m.away}: ${m.away_injuries.length} Key Out`;
+    }
+    const cleanTeam = m.away.replace(/'/g, "\\'");
+    html += `<div class="injury-pill" role="button" tabindex="0" onclick="openInjuryModal(event, '${cleanTeam}')"><span>${label}</span><span class="pill-tag">${m.away_injury_adj} pts ▶</span></div>`;
+  }
+  html += '</div>';
+  return html;
 }
 
 function openInjuryModal(event, teamName) {
@@ -448,7 +477,7 @@ function openInjuryModal(event, teamName) {
           <div class="injury-item-name">${i.player} <span class="injury-item-pos">${i.pos}</span></div>
           <div class="injury-item-pts">${i.deduction} pts</div>
         </div>
-        <div class="injury-item-status">Status: <b>${i.status}</b> · Tier: ${i.tier || 'starter'}</div>
+        <div class="injury-item-status">Status: <b>${i.status}</b> · Tier: ${i.tier === 'star_qb' ? '⭐ Star QB' : (i.tier || 'starter')}</div>
       </div>
     `).join('');
   }
@@ -517,52 +546,53 @@ function renderMatchups() {
   }
   container.innerHTML = data.map(m => `
     <div class="matchup-card">
-      <div class="team-side home">
-        <div class="team-logo"><img src="${m.home_logo_url || ''}" alt="${m.home}" onerror="this.style.display='none'"></div>
-        <div>
-          <div class="team-name">${m.home}${m.ats_pick === 'home' ? '<span class="pick-arrow">▶</span>' : ''}${isFinal(m) && m.final.winner === m.home ? '<span class="final-winner">✔&#xFE0E;</span>' : ''}${isFinal(m) ? `<span class="final-score">${m.final.home_score}</span>` : ''}</div>
-          <div class="team-meta">
-            <span>${m.home_record}</span>
-            <span>·</span>
-            <span>${m.home_conf}</span>
+      <div class="matchup-main">
+        <div class="team-side home">
+          <div class="team-logo"><img src="${m.home_logo_url || ''}" alt="${m.home}" onerror="this.style.display='none'"></div>
+          <div>
+            <div class="team-name">${m.home}${m.ats_pick === 'home' ? '<span class="pick-arrow">▶</span>' : ''}${isFinal(m) && m.final.winner === m.home ? '<span class="final-winner">✔&#xFE0E;</span>' : ''}${isFinal(m) ? `<span class="final-score">${m.final.home_score}</span>` : ''}</div>
+            <div class="team-meta">
+              <span>${m.home_record}</span>
+              <span>·</span>
+              <span>${m.home_conf}</span>
+            </div>
+            <div class="sp-row">SP+ <span class="sp-val ${spClass(m.home_sp)}">${m.home_sp.toFixed(2)}</span></div>
           </div>
-          <div class="sp-row">SP+ <span class="sp-val ${spClass(m.home_sp)}">${m.home_sp.toFixed(2)}</span></div>
-          ${injuryBadgeHtml(m.home, m.home_injuries, m.home_injury_adj)}
+        </div>
+        <div class="vs-section">
+          <div class="vs-label">Projected</div>
+          <div class="vs-score home">${m.home_proj}</div>
+          <div class="vs-score away">${m.away_proj}</div>
+          ${m.line_diff !== undefined && m.line_diff !== null
+            ? `<div class="line-overlay"><span class="line-spread">${m.line_diff > 0 ? '+' : ''}${m.line_diff}</span><span class="line-total">O/U ${m.line_total ?? ' — '}</span></div>`
+            : `<div class="line-overlay"><span class="line-na">No line</span></div>`
+          }
+          <div class="diff-badge ${diffBadgeClass(m)}">${diffBadgeText(m)}</div>
+          ${movementChipHtml(m)}
+          <div class="game-date">${formatGameDate(m.date)}${m.neutral_site ? ' · 🏟️ Neutral Site' : ''}</div>
+          ${m.line_vs_model !== undefined && m.line_vs_model !== null
+            ? `<div class="line-vs-model ${m.line_vs_model > 1 ? 'up' : m.line_vs_model < -1 ? 'down' : ''}">Line ${m.line_vs_model > 0 ? 'covers +' + m.line_vs_model : m.line_vs_model < 0 ? 'under -' + Math.abs(m.line_vs_model) : '≈ model'}</div>`
+            : ''
+          }
+          ${m.over_pick
+            ? `<div class="ou-pick ${m.over_pick === 'over' ? 'up' : 'down'}">Model ${m.model_total} → ${m.over_pick.toUpperCase()} ${m.line_total} (${m.total_vs_model > 0 ? '+' : ''}${m.total_vs_model})</div>`
+            : ''
+          }
+        </div>
+        <div class="team-side away">
+          <div>
+            <div class="team-name">${m.ats_pick === 'away' ? '<span class="pick-arrow">◀</span>' : ''}${isFinal(m) ? `<span class="final-score">${m.final.away_score}</span>` : ''}${isFinal(m) && m.final.winner === m.away ? '<span class="final-winner">✔&#xFE0E;</span>' : ''}${m.away}</div>
+            <div class="team-meta">
+              <span>${m.away_record}</span>
+              <span>·</span>
+              <span>${m.away_conf}</span>
+            </div>
+            <div class="sp-row">SP+ <span class="sp-val ${spClass(m.away_sp)}">${m.away_sp.toFixed(2)}</span></div>
+          </div>
+          <div class="team-logo"><img src="${m.away_logo_url || ''}" alt="${m.away}" onerror="this.style.display='none'"></div>
         </div>
       </div>
-      <div class="vs-section">
-        <div class="vs-label">Projected</div>
-        <div class="vs-score home">${m.home_proj}</div>
-        <div class="vs-score away">${m.away_proj}</div>
-        ${m.line_diff !== undefined && m.line_diff !== null
-          ? `<div class="line-overlay"><span class="line-spread">${m.line_diff > 0 ? '+' : ''}${m.line_diff}</span><span class="line-total">O/U ${m.line_total ?? ' — '}</span></div>`
-          : `<div class="line-overlay"><span class="line-na">No line</span></div>`
-        }
-        <div class="diff-badge ${diffBadgeClass(m)}">${diffBadgeText(m)}</div>
-        ${movementChipHtml(m)}
-        <div class="game-date">${formatGameDate(m.date)}${m.neutral_site ? ' · 🏟️ Neutral Site' : ''}</div>
-        ${m.line_vs_model !== undefined && m.line_vs_model !== null
-          ? `<div class="line-vs-model ${m.line_vs_model > 1 ? 'up' : m.line_vs_model < -1 ? 'down' : ''}">Line ${m.line_vs_model > 0 ? 'covers +' + m.line_vs_model : m.line_vs_model < 0 ? 'under -' + Math.abs(m.line_vs_model) : '≈ model'}</div>`
-          : ''
-        }
-        ${m.over_pick
-          ? `<div class="ou-pick ${m.over_pick === 'over' ? 'up' : 'down'}">Model ${m.model_total} → ${m.over_pick.toUpperCase()} ${m.line_total} (${m.total_vs_model > 0 ? '+' : ''}${m.total_vs_model})</div>`
-          : ''
-        }
-      </div>
-      <div class="team-side away">
-        <div>
-          <div class="team-name">${m.ats_pick === 'away' ? '<span class="pick-arrow">◀</span>' : ''}${isFinal(m) ? `<span class="final-score">${m.final.away_score}</span>` : ''}${isFinal(m) && m.final.winner === m.away ? '<span class="final-winner">✔&#xFE0E;</span>' : ''}${m.away}</div>
-          <div class="team-meta">
-            <span>${m.away_record}</span>
-            <span>·</span>
-            <span>${m.away_conf}</span>
-          </div>
-          <div class="sp-row">SP+ <span class="sp-val ${spClass(m.away_sp)}">${m.away_sp.toFixed(2)}</span></div>
-          ${injuryBadgeHtml(m.away, m.away_injuries, m.away_injury_adj)}
-        </div>
-        <div class="team-logo"><img src="${m.away_logo_url || ''}" alt="${m.away}" onerror="this.style.display='none'"></div>
-      </div>
+      ${matchupInjuryBarHtml(m)}
     </div>
   `).join('');
 }
