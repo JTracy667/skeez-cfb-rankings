@@ -20,6 +20,7 @@ DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data")
 ACTIVE_INJURIES_FILE = os.path.join(DATA_DIR, "active_injuries.json")
 CFBD_ANALYTICS_FILE = os.path.join(DATA_DIR, "cfbd_analytics.json")
 CFBD_STARTERS_FILE = os.path.join(DATA_DIR, "cfbd_starters.json")
+CFBD_PPA_FILE = os.path.join(DATA_DIR, "cfbd_player_ppa.json")
 
 # Mapping of Covers team slugs to normalized CFBD team names
 COVERS_SLUG_MAP = {
@@ -224,13 +225,51 @@ def _load_team_starters() -> dict[str, dict]:
     return starters
 
 
+def _load_player_ppa() -> dict:
+    """Fetch or load CFBD player PPA (Expected Points Added) to verify true offensive producers."""
+    if os.path.exists(CFBD_PPA_FILE):
+        try:
+            with open(CFBD_PPA_FILE, "r") as f:
+                data = json.load(f)
+                return {tuple(k.split(":::")): v for k, v in data.items()}
+        except Exception:
+            pass
+
+    import app
+    client = app.httpx.Client(timeout=25)
+    ppa_map = {}
+    try:
+        r = client.get(f"{app.CFBD_BASE}/ppa/players/season?year={app.CFBD_YEAR}", headers=app.CFBD_HEADERS)
+        if r.status_code != 200 or not r.json():
+            r = client.get(f"{app.CFBD_BASE}/ppa/players/season?year={app.CFBD_YEAR_FALLBACK}", headers=app.CFBD_HEADERS)
+        if r.status_code == 200:
+            for p in r.json():
+                team = p.get("team")
+                name = p.get("name") or ""
+                last = name.split()[-1].lower() if name else ""
+                tot = (p.get("totalPPA") or {}).get("all") or 0.0
+                if team and last:
+                    key = (team, last)
+                    if key not in ppa_map or tot > ppa_map[key]:
+                        ppa_map[key] = round(tot, 2)
+            if ppa_map:
+                serializable = {f"{k[0]}:::{k[1]}": v for k, v in ppa_map.items()}
+                with open(CFBD_PPA_FILE, "w") as f:
+                    json.dump(serializable, f, indent=2)
+                print(f"[ppa] Cached {len(ppa_map)} player PPA entries")
+    except Exception as e:
+        print(f"[ppa] fetch error: {e}")
+    return ppa_map
+
+
 def calculate_player_deduction(
     team_name: str,
     player_name: str,
     pos: str,
     status: str,
     team_info: dict,
-    starters_map: dict = None
+    starters_map: dict = None,
+    ppa_map: dict = None
 ) -> tuple[float, str]:
     """
     Calculate point deduction for an injured player.
@@ -238,12 +277,13 @@ def calculate_player_deduction(
     Jeff Tracy directive: 'A major star qb in college out is massive I'd say 10 points at star level'.
     CRITICAL CHECK: Must verify player is the actual STARTING QB.
     Backup QBs receive 0.0 points (no penalty).
+    Key Skill Players (RB/WR): Must have verified PPA production (>= 7.0 Total PPA) to qualify.
     Tiers:
       - Star QB (Top 25 composite >= 80 or SP+ >= 18): -10.0 pts
       - P4 Starter QB: -7.0 pts
       - G5 Starter QB: -4.5 pts
-      - Backup QB: 0.0 pts
-      - Key skill position (RB/WR): -1.5 pts
+      - Backup QB / Reserve Skill: 0.0 pts
+      - Key skill producer (PPA >= 7.0): -1.5 pts
     Status multipliers:
       - Out / Doubtful / Surgery / IR / Suspended: 1.0 (100%)
       - Questionable: 0.5 (50%)
@@ -265,6 +305,7 @@ def calculate_player_deduction(
     conf = team_info.get("conf", "")
     comp = team_info.get("composite", 50.0)
     sp = team_info.get("sp_plus", 0.0)
+    player_last = player_name.split()[-1].lower() if player_name else ""
 
     if pos == "QB":
         # Check against true team starting QB
@@ -277,7 +318,6 @@ def calculate_player_deduction(
         else:
             starter_info = {}
         starter_last = starter_info.get("last_name", "").lower() if starter_info else ""
-        player_last = player_name.split()[-1].lower() if player_name else ""
 
         # If team has a known starter and this player is NOT the starter, deduction is 0.0!
         if starter_last and player_last != starter_last:
@@ -296,8 +336,14 @@ def calculate_player_deduction(
         return round(-base_pts * mult, 1), tier
 
     elif pos in ("RB", "WR", "TE"):
+        # PPA Verification: only deduct if player is an actual top producer (Total PPA >= 7.0)
+        ppa_table = ppa_map or {}
+        player_total_ppa = ppa_table.get((team_name, player_last), 0.0)
+        if player_total_ppa < 7.0:
+            return 0.0, "reserve_skill"
+
         base_pts = 1.5
-        tier = "key_skill"
+        tier = "key_skill_producer"
         return round(-base_pts * mult, 1), tier
 
     elif pos in ("DE", "DT", "EDGE", "LB", "CB", "S"):
@@ -326,6 +372,7 @@ def scrape_injuries() -> dict:
 
     team_analytics = _load_team_analytics()
     starters_map = _load_team_starters()
+    ppa_map = _load_player_ppa()
     existing_store = {}
     if os.path.exists(ACTIVE_INJURIES_FILE):
         try:
@@ -358,7 +405,7 @@ def scrape_injuries() -> dict:
                 if player in ("Player", "") or not pos:
                     continue
 
-                pts, tier = calculate_player_deduction(cfbd_team, player, pos, status, team_info, starters_map)
+                pts, tier = calculate_player_deduction(cfbd_team, player, pos, status, team_info, starters_map, ppa_map)
 
                 # Cap non-QB deductions at -3.0 max per team so rotational depth isn't crushed
                 if pos != "QB" and pts < 0:
