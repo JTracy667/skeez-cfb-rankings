@@ -868,6 +868,13 @@ def _cfbd_recruiting() -> dict:
         data = _cfbd_get("recruiting/teams", CFBD_YEAR_FALLBACK)
     return {t["team"]: t for t in data}
 
+def _cfbd_talent() -> dict:
+    """Fetch 247Sports Team Talent Composite (85-man full roster talent), falling back to 2025."""
+    data = _cfbd_get("talent", CFBD_YEAR)
+    if not data:
+        data = _cfbd_get("talent", CFBD_YEAR_FALLBACK)
+    return {t["team"]: t for t in (data or [])}
+
 def _cfbd_srs() -> dict:
     """Fetch SRS ratings, falling back to 2025 if 2026 empty."""
     data = _cfbd_get("ratings/srs", CFBD_YEAR)
@@ -1216,6 +1223,34 @@ def _cfbd_lines() -> list:
     except Exception as e:
         print(f"[CFBD lines fetch failed] {e}")
         return []
+
+def _cfbd_weather(week: int, year: int = CFBD_YEAR) -> dict:
+    """Fetch game kickoff weather (wind, temp, condition, dome flag) from CFBD /games/weather."""
+    try:
+        url = f"{CFBD_BASE}/games/weather"
+        params = {"year": year, "week": week}
+        data = _http_get(url, params=params, retries=2, base_delay=0.5)
+        if not data:
+            data = _http_get(url, params={"year": CFBD_YEAR_FALLBACK, "week": week}, retries=2, base_delay=0.5)
+        out = {}
+        for g in (data or []):
+            h = g.get("homeTeam", "")
+            a = g.get("awayTeam", "")
+            if h and a:
+                wind = float(g.get("windSpeed") or 0.0)
+                temp = float(g.get("temperature") or 70.0)
+                indoor = bool(g.get("gameIndoors"))
+                cond = g.get("weatherCondition") or ("Indoor" if indoor else "Clear")
+                out[(h, a)] = {
+                    "wind": round(wind, 1),
+                    "temp": round(temp, 1),
+                    "indoor": indoor,
+                    "condition": cond,
+                }
+        return out
+    except Exception as e:
+        print(f"[CFBD weather fetch failed] {e}")
+        return {}
 
 
 # ── PropLine quota management (Hobby tier: 5,000 req/day, hard reset at UTC midnight) ──
@@ -2085,11 +2120,17 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
     srs_norm = max(0, min(100, (srs_score + 25) / 50 * 100))
     elo_norm = max(0, min(100, (elo - 1500) / 300 * 100 + 50))
 
-    # Talent Prior (Recruiting + Returning Production)
+    # Talent Prior (247Sports 85-man Team Talent Composite + Recruiting Class + Returning Production)
+    talent_score = team_data.get("talent_score")
     rec_norm = max(0, min(100, (130 - rec_rank) / 129 * 100))
+    if talent_score:
+        talent_comp_norm = max(0, min(100, (talent_score - 250) / 750 * 100))
+        program_talent = talent_comp_norm * 0.70 + rec_norm * 0.30
+    else:
+        program_talent = rec_norm
     pct_ret = team_data.get("pct_ppa_returning")
     ret_norm = max(0, min(100, (pct_ret if pct_ret is not None else 50.0)))
-    talent_norm = rec_norm * 0.6 + ret_norm * 0.4
+    talent_norm = program_talent * 0.6 + ret_norm * 0.4
 
     # Advanced On-Field Efficiency Metrics (37% combined)
     # 1. Net Success Rate (Offense SR minus Defense SR allowed; center 0 -> 50)
@@ -2229,6 +2270,7 @@ def project_head_to_head(
     neutral_site: bool = False,
     home_injury_adj: float = 0.0,
     away_injury_adj: float = 0.0,
+    wind_penalty: float = 0.0,
 ) -> dict:
     """Head-to-head projection: TOTAL from combined strength, MARGIN from composite gap.
 
@@ -2290,6 +2332,10 @@ def project_head_to_head(
     total_injury = ((home_injury_adj or 0.0) + (away_injury_adj or 0.0)) * 0.70
     total = max(24.0, total + total_injury)
 
+    # Wind penalty on total: high sustained winds (>=15 mph) impair kicking and deep passing
+    if wind_penalty > 0.0:
+        total = max(24.0, total - wind_penalty)
+
     # Split total by margin. For lopsided games the underdog's share bottoms
     # out near the "garbage time" floor: 52-0 / 53-7 finals are common, so a
     # 35+ pt underdog gets ~10% of the total, not a symmetric 50/50 split.
@@ -2322,6 +2368,7 @@ def project_head_to_head(
         "total": round(home_score + away_score, 1),
         "home_injury_adj": round(home_injury_adj or 0.0, 1),
         "away_injury_adj": round(away_injury_adj or 0.0, 1),
+        "wind_penalty": round(wind_penalty or 0.0, 1),
     }
 
 def fetch_live_analytics():
@@ -2331,6 +2378,7 @@ def fetch_live_analytics():
         fpi_data = _cfbd_fpi()
         sp_data = _cfbd_sp()
         rec_data = _cfbd_recruiting()
+        talent_data = _cfbd_talent()
         srs_data = _cfbd_srs()
         elo_data = _cfbd_elo()
         real_stats = _cfbd_season_stats()
@@ -2372,9 +2420,10 @@ def fetch_live_analytics():
             srs_score = srs.get("rating", 0)
             elo_rating = elo.get("elo", 0)
 
-            # Recruiting
+            # Recruiting & 247 Team Talent Composite
             rec_rank = rec.get("rank", 0)
             rec_points = rec.get("points", 0)
+            talent_score = talent_data.get(name, {}).get("talent")
 
             # Derived metrics (these are model estimates — CFBD has no true FPI win prob / CPI)
             fpi_win_prob = max(0, min(100, 50 + fpi_score * 1.5))
@@ -2458,6 +2507,7 @@ def fetch_live_analytics():
                 "elo": round(elo_rating, 1),
                 "recruiting_rank": rec_rank,
                 "recruiting_pts": round(rec_points, 2),
+                "talent_score": round(talent_score, 1) if talent_score else None,
                 "recruiting_commits": 0,
                 "recruiting_5star": 0,
                 "recruiting_4star": 0,
@@ -2972,6 +3022,7 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
     team_map = _build_team_map()
     conf_map = load_fbs_conferences()
     injuries_map = _load_active_injuries()
+    weather_map = _cfbd_weather(week, year)
 
     # Fetch live betting odds (PropLine primary, The Odds API + CFBD backup)
     odds_map = _fetch_odds_map()
@@ -2990,6 +3041,10 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
         away_inj_data = injuries_map.get(m["away"], {})
         home_injury_adj = home_inj_data.get("net_injury_points", 0.0)
         away_injury_adj = away_inj_data.get("net_injury_points", 0.0)
+        # Weather overlay (wind, temp, dome)
+        wx = weather_map.get((m["home"], m["away"]), {})
+        wind = wx.get("wind", 0.0)
+        wind_penalty = min(5.0, max(0.0, (wind - 14.0) * 0.35)) if not wx.get("indoor") else 0.0
         # Head-to-head projection (Aug 30 recalibration): total from combined
         # strength, margin from composite gap. Handles neutral site, elite
         # totals (~52-58), and FCS blowouts (52-0 class finals) in one model.
@@ -2999,6 +3054,7 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             neutral_site=bool(m.get("neutral_site")),
             home_injury_adj=home_injury_adj,
             away_injury_adj=away_injury_adj,
+            wind_penalty=wind_penalty,
         )
         home_proj = h2h["home_proj"]
         away_proj = h2h["away_proj"]
@@ -3058,6 +3114,8 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             "away_record": f"{away.get('wins',0)}-{away.get('losses',0)}",
             "home_conf": home_conf,
             "away_conf": away_conf,
+            "weather": wx,
+            "wind_penalty": round(wind_penalty, 1),
             "home_injury_adj": home_injury_adj,
             "away_injury_adj": away_injury_adj,
             "home_injuries": home_inj_data.get("injuries", []),

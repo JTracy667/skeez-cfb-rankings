@@ -509,6 +509,22 @@ function formatGameDate(dateStr) {
   } catch { return '—'; }
 }
 
+function weatherTagHtml(m) {
+  if (!m.weather || !Object.keys(m.weather).length) return '';
+  if (m.weather.indoor) return ' · 🏟️ Dome';
+  const wind = m.weather.wind || 0;
+  const temp = m.weather.temp ? `${Math.round(m.weather.temp)}°` : '';
+  const cond = m.weather.condition || '';
+  let windStr = '';
+  if (wind >= 15) {
+    windStr = `<span style="color:#60a5fa;font-weight:700">💨 ${wind}mph</span>`;
+  } else if (wind > 0) {
+    windStr = `💨 ${wind}mph`;
+  }
+  const parts = [temp, windStr, cond].filter(Boolean).join(' ');
+  return parts ? ` · ${parts}` : '';
+}
+
 function renderMatchups() {
   let data = [...matchups];
   if (activeConf !== 'all') {
@@ -569,7 +585,8 @@ function renderMatchups() {
           }
           <div class="diff-badge ${diffBadgeClass(m)}">${diffBadgeText(m)}</div>
           ${movementChipHtml(m)}
-          <div class="game-date">${formatGameDate(m.date)}${m.neutral_site ? ' · 🏟️ Neutral Site' : ''}</div>
+          <div class="game-date">${formatGameDate(m.date)}${m.neutral_site ? ' · 🏟️ Neutral Site' : ''}${weatherTagHtml(m)}</div>
+          ${m.wind_penalty > 0 ? `<div class="ou-pick down" style="margin-top:2px">💨 Wind Adj: -${m.wind_penalty} pts to total</div>` : ''}
           ${m.line_vs_model !== undefined && m.line_vs_model !== null
             ? `<div class="line-vs-model ${m.line_vs_model > 1 ? 'up' : m.line_vs_model < -1 ? 'down' : ''}">Line ${m.line_vs_model > 0 ? 'covers +' + m.line_vs_model : m.line_vs_model < 0 ? 'under -' + Math.abs(m.line_vs_model) : '≈ model'}</div>`
             : ''
