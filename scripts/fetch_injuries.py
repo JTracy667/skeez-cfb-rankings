@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
 ACTIVE_INJURIES_FILE = os.path.join(DATA_DIR, "active_injuries.json")
 CFBD_ANALYTICS_FILE = os.path.join(DATA_DIR, "cfbd_analytics.json")
+CFBD_STARTERS_FILE = os.path.join(DATA_DIR, "cfbd_starters.json")
 
 # Mapping of Covers team slugs to normalized CFBD team names
 COVERS_SLUG_MAP = {
@@ -183,11 +184,60 @@ def _load_team_analytics() -> dict[str, dict]:
     return {}
 
 
-def calculate_player_deduction(team_name: str, pos: str, status: str, team_info: dict) -> tuple[float, str]:
+def _load_team_starters() -> dict[str, dict]:
+    """Fetch or load CFBD passing and skill leaders to identify true starting QBs and key skill players."""
+    if os.path.exists(CFBD_STARTERS_FILE):
+        try:
+            with open(CFBD_STARTERS_FILE, "r") as f:
+                data = json.load(f)
+                if data and isinstance(data, dict):
+                    return data
+        except Exception:
+            pass
+
+    import app
+    client = app.httpx.Client(timeout=25)
+    starters = {}
+    try:
+        r = client.get(f"{app.CFBD_BASE}/stats/player/season?year={app.CFBD_YEAR}&category=passing", headers=app.CFBD_HEADERS)
+        if r.status_code != 200 or not r.json():
+            r = client.get(f"{app.CFBD_BASE}/stats/player/season?year={app.CFBD_YEAR_FALLBACK}&category=passing", headers=app.CFBD_HEADERS)
+        if r.status_code == 200:
+            for row in r.json():
+                if row.get("statType") == "ATT":
+                    team = row.get("team")
+                    player = row.get("player")
+                    att = float(row.get("stat", 0))
+                    team_entry = starters.setdefault(team, {"qb": None})
+                    if not team_entry["qb"] or att > team_entry["qb"]["att"]:
+                        team_entry["qb"] = {
+                            "player": player,
+                            "att": att,
+                            "last_name": player.split()[-1].lower() if player else ""
+                        }
+            if starters:
+                with open(CFBD_STARTERS_FILE, "w") as f:
+                    json.dump(starters, f, indent=2)
+                print(f"[starters] Cached 2026 starting QBs for {len(starters)} teams")
+    except Exception as e:
+        print(f"[starters] fetch error: {e}")
+    return starters
+
+
+def calculate_player_deduction(
+    team_name: str,
+    player_name: str,
+    pos: str,
+    status: str,
+    team_info: dict,
+    starters_map: dict = None
+) -> tuple[float, str]:
     """
     Calculate point deduction for an injured player.
     Returns (points_deducted_as_negative, tier_label).
     Jeff Tracy directive: 'A major star qb in college out is massive I'd say 10 points at star level'.
+    CRITICAL CHECK: Must verify player is the actual STARTING QB.
+    Backup QBs receive 0.0 points (no penalty).
     Tiers:
       - Star QB (Top 25 composite >= 80 or SP+ >= 18): -10.0 pts
       - P4 Starter QB: -7.0 pts
@@ -195,7 +245,7 @@ def calculate_player_deduction(team_name: str, pos: str, status: str, team_info:
       - Backup QB: 0.0 pts
       - Key skill position (RB/WR): -1.5 pts
     Status multipliers:
-      - Out / Doubtful / Surgery / IR: 1.0 (100%)
+      - Out / Doubtful / Surgery / IR / Suspended: 1.0 (100%)
       - Questionable: 0.5 (50%)
     """
     pos = pos.upper().strip()
@@ -217,6 +267,22 @@ def calculate_player_deduction(team_name: str, pos: str, status: str, team_info:
     sp = team_info.get("sp_plus", 0.0)
 
     if pos == "QB":
+        # Check against true team starting QB
+        starters = starters_map or {}
+        starter_entry = starters.get(team_name, {})
+        if isinstance(starter_entry, dict) and "qb" in starter_entry and isinstance(starter_entry["qb"], dict):
+            starter_info = starter_entry["qb"]
+        elif isinstance(starter_entry, dict):
+            starter_info = starter_entry
+        else:
+            starter_info = {}
+        starter_last = starter_info.get("last_name", "").lower() if starter_info else ""
+        player_last = player_name.split()[-1].lower() if player_name else ""
+
+        # If team has a known starter and this player is NOT the starter, deduction is 0.0!
+        if starter_last and player_last != starter_last:
+            return 0.0, "backup_qb"
+
         # Star QB criteria: high composite or high SP+ on elite programs
         if comp >= 80.0 or sp >= 18.0 or team_name in ["Texas", "Georgia", "Ohio State", "Alabama", "Miami", "Notre Dame", "Oregon", "LSU", "USC", "Tennessee", "Penn State"]:
             base_pts = 10.0
@@ -230,13 +296,11 @@ def calculate_player_deduction(team_name: str, pos: str, status: str, team_info:
         return round(-base_pts * mult, 1), tier
 
     elif pos in ("RB", "WR", "TE"):
-        # Key offensive skill position
         base_pts = 1.5
         tier = "key_skill"
         return round(-base_pts * mult, 1), tier
 
     elif pos in ("DE", "DT", "EDGE", "LB", "CB", "S"):
-        # Defensive starter
         base_pts = 1.0
         tier = "defensive_key"
         return round(-base_pts * mult, 1), tier
@@ -261,6 +325,7 @@ def scrape_injuries() -> dict:
     )
 
     team_analytics = _load_team_analytics()
+    starters_map = _load_team_starters()
     existing_store = {}
     if os.path.exists(ACTIVE_INJURIES_FILE):
         try:
@@ -293,7 +358,7 @@ def scrape_injuries() -> dict:
                 if player in ("Player", "") or not pos:
                     continue
 
-                pts, tier = calculate_player_deduction(cfbd_team, pos, status, team_info)
+                pts, tier = calculate_player_deduction(cfbd_team, player, pos, status, team_info, starters_map)
 
                 # Cap non-QB deductions at -3.0 max per team so rotational depth isn't crushed
                 if pos != "QB" and pts < 0:
@@ -303,7 +368,8 @@ def scrape_injuries() -> dict:
                         if pts == 0.0:
                             continue
 
-                if pts < 0.0 or pos == "QB":
+                # Only include players that actually generate a deduction (or QBs for visibility if deduction < 0)
+                if pts < 0.0:
                     team_injuries.append({
                         "player": player,
                         "pos": pos,

@@ -22,25 +22,37 @@ class TestCFBInjuries(unittest.TestCase):
     def test_star_qb_ten_point_deduction(self):
         """Star QB out must receive the full -10.0 point deduction (Jeff Tracy rule)."""
         star_team = {"conf": "SEC", "composite": 88.0, "sp_plus": 25.0}
-        pts, tier = scraper.calculate_player_deduction("Texas", "QB", "Out - Ankle", star_team)
+        starters = {"Texas": {"player": "Arch Manning", "last_name": "manning"}}
+        pts, tier = scraper.calculate_player_deduction("Texas", "A. Manning", "QB", "Out - Ankle", star_team, starters)
         self.assertEqual(pts, -10.0, "Star QB OUT must be exactly -10.0 points")
         self.assertEqual(tier, "star_qb")
+
+    def test_backup_qb_receives_zero_deduction(self):
+        """Backup QB out (e.g. Sam Huard at USC when Jayden Maiava is starter) must receive 0.0 pts."""
+        usc_team = {"conf": "Big Ten", "composite": 84.0, "sp_plus": 19.5}
+        starters = {"USC": {"player": "Jayden Maiava", "last_name": "maiava"}}
+        pts, tier = scraper.calculate_player_deduction("USC", "S. Huard", "QB", "Questionable", usc_team, starters)
+        self.assertEqual(pts, 0.0, "Backup QB must receive 0.0 deduction")
+        self.assertEqual(tier, "backup_qb")
 
     def test_star_qb_questionable_half_deduction(self):
         """Star QB Questionable must receive 50% deduction (-5.0 pts)."""
         star_team = {"conf": "SEC", "composite": 88.0, "sp_plus": 25.0}
-        pts, tier = scraper.calculate_player_deduction("Georgia", "QB", "Questionable - Hamstring", star_team)
+        starters = {"Georgia": {"player": "Gunner Stockton", "last_name": "stockton"}}
+        pts, tier = scraper.calculate_player_deduction("Georgia", "G. Stockton", "QB", "Questionable - Hamstring", star_team, starters)
         self.assertEqual(pts, -5.0)
 
     def test_p4_and_g5_starter_tiers(self):
         """P4 starter QB receives -7.0, G5 receives -4.5."""
         p4_team = {"conf": "Big 12", "composite": 65.0, "sp_plus": 8.0}
-        pts_p4, tier_p4 = scraper.calculate_player_deduction("Baylor", "QB", "Out - Knee", p4_team)
+        starters_p4 = {"Baylor": {"player": "D.J. Lagway", "last_name": "lagway"}}
+        pts_p4, tier_p4 = scraper.calculate_player_deduction("Baylor", "D. Lagway", "QB", "Out - Knee", p4_team, starters_p4)
         self.assertEqual(pts_p4, -7.0)
         self.assertEqual(tier_p4, "p4_starter_qb")
 
         g5_team = {"conf": "MAC", "composite": 40.0, "sp_plus": -10.0}
-        pts_g5, tier_g5 = scraper.calculate_player_deduction("Buffalo", "QB", "Out - Shoulder", g5_team)
+        starters_g5 = {"Buffalo": {"player": "Elijah Holmes", "last_name": "holmes"}}
+        pts_g5, tier_g5 = scraper.calculate_player_deduction("Buffalo", "E. Holmes", "QB", "Out - Shoulder", g5_team, starters_g5)
         self.assertEqual(pts_g5, -4.5)
         self.assertEqual(tier_g5, "g5_starter_qb")
 

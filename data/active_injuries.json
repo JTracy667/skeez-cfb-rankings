@@ -1,8 +1,8 @@
 {
-  "updated": "2026-09-19T15:25:27.649693",
-  "total_teams_with_injuries": 111,
-  "total_tracked_injuries": 240,
-  "key_qb_injuries": 17,
+  "updated": "2026-09-19T16:01:40.569249",
+  "total_teams_with_injuries": 108,
+  "total_tracked_injuries": 219,
+  "key_qb_injuries": 5,
   "teams": {
     "Akron": {
       "team": "Akron",
@@ -26,7 +26,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.643162"
+      "updated_at": "2026-09-19T16:01:40.562205"
     },
     "Alabama": {
       "team": "Alabama",
@@ -50,7 +50,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.643162"
+      "updated_at": "2026-09-19T16:01:40.562205"
     },
     "Arizona": {
       "team": "Arizona",
@@ -74,7 +74,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.643162"
+      "updated_at": "2026-09-19T16:01:40.563229"
     },
     "Arizona State": {
       "team": "Arizona State",
@@ -98,7 +98,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.643162"
+      "updated_at": "2026-09-19T16:01:40.563229"
     },
     "Arkansas": {
       "team": "Arkansas",
@@ -122,7 +122,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.643162"
+      "updated_at": "2026-09-19T16:01:40.563229"
     },
     "Arkansas State": {
       "team": "Arkansas State",
@@ -138,7 +138,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.643162"
+      "updated_at": "2026-09-19T16:01:40.563229"
     },
     "Army": {
       "team": "Army",
@@ -154,7 +154,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.643162"
+      "updated_at": "2026-09-19T16:01:40.563229"
     },
     "Auburn": {
       "team": "Auburn",
@@ -178,7 +178,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.643162"
+      "updated_at": "2026-09-19T16:01:40.563229"
     },
     "Ball State": {
       "team": "Ball State",
@@ -202,7 +202,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.643162"
+      "updated_at": "2026-09-19T16:01:40.563229"
     },
     "Baylor": {
       "team": "Baylor",
@@ -234,7 +234,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.643162"
+      "updated_at": "2026-09-19T16:01:40.563229"
     },
     "Boston College": {
       "team": "Boston College",
@@ -250,7 +250,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.643162"
+      "updated_at": "2026-09-19T16:01:40.563229"
     },
     "Bowling Green": {
       "team": "Bowling Green",
@@ -274,7 +274,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.643162"
+      "updated_at": "2026-09-19T16:01:40.563229"
     },
     "Buffalo": {
       "team": "Buffalo",
@@ -306,7 +306,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.643162"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "BYU": {
       "team": "BYU",
@@ -338,7 +338,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644166"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "California": {
       "team": "California",
@@ -378,7 +378,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644166"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "Central Michigan": {
       "team": "Central Michigan",
@@ -394,20 +394,12 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644166"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "Clemson": {
       "team": "Clemson",
-      "net_injury_points": -10.0,
+      "net_injury_points": -3.0,
       "injuries": [
-        {
-          "player": "C. Vizzina",
-          "pos": "QB",
-          "status": "Doubtful - Elbow ( Sat, Sep 19)",
-          "tier": "p4_starter_qb",
-          "deduction": -7.0,
-          "updated": "2026-09-19"
-        },
         {
           "player": "K. McGriff",
           "pos": "WR",
@@ -426,7 +418,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644166"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "Colorado": {
       "team": "Colorado",
@@ -450,7 +442,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644166"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "Delaware": {
       "team": "Delaware",
@@ -474,11 +466,11 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644166"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "Duke": {
       "team": "Duke",
-      "net_injury_points": -8.5,
+      "net_injury_points": -1.5,
       "injuries": [
         {
           "player": "Q. Johnson",
@@ -487,18 +479,10 @@
           "tier": "key_skill",
           "deduction": -1.5,
           "updated": "2026-09-19"
-        },
-        {
-          "player": "L. Gardner",
-          "pos": "QB",
-          "status": "Out - Undisclosed ( Wed, Sep 16)",
-          "tier": "p4_starter_qb",
-          "deduction": -7.0,
-          "updated": "2026-09-19"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644166"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "East Carolina": {
       "team": "East Carolina",
@@ -530,11 +514,11 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644166"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "Eastern Michigan": {
       "team": "Eastern Michigan",
-      "net_injury_points": -4.5,
+      "net_injury_points": -2.3,
       "injuries": [
         {
           "player": "A. Blue",
@@ -551,18 +535,10 @@
           "tier": "key_skill",
           "deduction": -1.5,
           "updated": "2026-09-19"
-        },
-        {
-          "player": "N. Kinsey",
-          "pos": "QB",
-          "status": "Questionable - Undisclosed ( Sat, Sep 12)",
-          "tier": "g5_starter_qb",
-          "deduction": -2.2,
-          "updated": "2026-09-19"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "FIU": {
       "team": "FIU",
@@ -594,7 +570,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "Florida": {
       "team": "Florida",
@@ -618,7 +594,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "Florida State": {
       "team": "Florida State",
@@ -642,7 +618,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "Fresno State": {
       "team": "Fresno State",
@@ -666,7 +642,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "Georgia": {
       "team": "Georgia",
@@ -690,7 +666,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "Georgia Southern": {
       "team": "Georgia Southern",
@@ -706,7 +682,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "Georgia Tech": {
       "team": "Georgia Tech",
@@ -722,7 +698,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.563733"
     },
     "Hawai'i": {
       "team": "Hawai'i",
@@ -762,7 +738,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.564737"
     },
     "Houston": {
       "team": "Houston",
@@ -786,7 +762,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.564737"
     },
     "Illinois": {
       "team": "Illinois",
@@ -826,7 +802,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.564737"
     },
     "Indiana": {
       "team": "Indiana",
@@ -850,7 +826,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.564737"
     },
     "Iowa": {
       "team": "Iowa",
@@ -874,7 +850,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.564737"
     },
     "Iowa State": {
       "team": "Iowa State",
@@ -890,11 +866,11 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.564737"
     },
     "James Madison": {
       "team": "James Madison",
-      "net_injury_points": -5.3,
+      "net_injury_points": -0.8,
       "injuries": [
         {
           "player": "S. Cromwell",
@@ -903,18 +879,10 @@
           "tier": "key_skill",
           "deduction": -0.8,
           "updated": "2026-09-19"
-        },
-        {
-          "player": "J. Evans",
-          "pos": "QB",
-          "status": "Out - Undisclosed ( Wed, Sep 9)",
-          "tier": "g5_starter_qb",
-          "deduction": -4.5,
-          "updated": "2026-09-19"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.644669"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Jacksonville State": {
       "team": "Jacksonville State",
@@ -946,11 +914,11 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.645671"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Kansas": {
       "team": "Kansas",
-      "net_injury_points": -16.3,
+      "net_injury_points": -2.3,
       "injuries": [
         {
           "player": "J. Butler",
@@ -967,39 +935,15 @@
           "tier": "key_skill",
           "deduction": -1.5,
           "updated": "2026-09-19"
-        },
-        {
-          "player": "C. Ballard",
-          "pos": "QB",
-          "status": "Out - Shoulder ( Fri, Sep 18)",
-          "tier": "p4_starter_qb",
-          "deduction": -7.0,
-          "updated": "2026-09-19"
-        },
-        {
-          "player": "J. Mason",
-          "pos": "QB",
-          "status": "Out - Undisclosed ( Thu, Sep 17)",
-          "tier": "p4_starter_qb",
-          "deduction": -7.0,
-          "updated": "2026-09-19"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.645671"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Kansas State": {
       "team": "Kansas State",
-      "net_injury_points": -17.4,
+      "net_injury_points": -2.4,
       "injuries": [
-        {
-          "player": "D. Duff",
-          "pos": "QB",
-          "status": "Out - Undisclosed ( Sat, Sep 19)",
-          "tier": "star_qb",
-          "deduction": -10.0,
-          "updated": "2026-09-19"
-        },
         {
           "player": "I. Koch",
           "pos": "WR",
@@ -1023,18 +967,10 @@
           "tier": "key_skill",
           "deduction": -0.8,
           "updated": "2026-09-19"
-        },
-        {
-          "player": "B. Barnett",
-          "pos": "QB",
-          "status": "Questionable - Lower Body ( Sat, Sep 12)",
-          "tier": "star_qb",
-          "deduction": -5.0,
-          "updated": "2026-09-19"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.645671"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Kent State": {
       "team": "Kent State",
@@ -1066,7 +1002,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.645671"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Kentucky": {
       "team": "Kentucky",
@@ -1090,7 +1026,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.645671"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Liberty": {
       "team": "Liberty",
@@ -1114,7 +1050,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.645671"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Louisiana": {
       "team": "Louisiana",
@@ -1138,7 +1074,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.645671"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Louisiana Tech": {
       "team": "Louisiana Tech",
@@ -1162,23 +1098,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.645671"
-    },
-    "UL Monroe": {
-      "team": "UL Monroe",
-      "net_injury_points": -2.2,
-      "injuries": [
-        {
-          "player": "A. Armenta",
-          "pos": "QB",
-          "status": "Questionable - Undisclosed ( Sun, Sep 13)",
-          "tier": "g5_starter_qb",
-          "deduction": -2.2,
-          "updated": "2026-09-19"
-        }
-      ],
-      "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Louisville": {
       "team": "Louisville",
@@ -1202,7 +1122,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "LSU": {
       "team": "LSU",
@@ -1234,7 +1154,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Maryland": {
       "team": "Maryland",
@@ -1258,7 +1178,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Miami": {
       "team": "Miami",
@@ -1282,7 +1202,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Miami (OH)": {
       "team": "Miami (OH)",
@@ -1306,7 +1226,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Michigan State": {
       "team": "Michigan State",
@@ -1322,7 +1242,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Minnesota": {
       "team": "Minnesota",
@@ -1346,7 +1266,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.565240"
     },
     "Missouri": {
       "team": "Missouri",
@@ -1370,7 +1290,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.566242"
     },
     "Missouri State": {
       "team": "Missouri State",
@@ -1386,7 +1306,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.566242"
     },
     "Mississippi State": {
       "team": "Mississippi State",
@@ -1410,7 +1330,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.566242"
     },
     "Navy": {
       "team": "Navy",
@@ -1450,7 +1370,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.566242"
     },
     "NC State": {
       "team": "NC State",
@@ -1474,11 +1394,11 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.566242"
     },
     "North Dakota State": {
       "team": "North Dakota State",
-      "net_injury_points": -4.6,
+      "net_injury_points": -2.4,
       "injuries": [
         {
           "player": "N. Nelson",
@@ -1497,14 +1417,6 @@
           "updated": "2026-09-19"
         },
         {
-          "player": "H. Nelson",
-          "pos": "QB",
-          "status": "Questionable - Undisclosed ( Sun, Sep 13)",
-          "tier": "g5_starter_qb",
-          "deduction": -2.2,
-          "updated": "2026-09-19"
-        },
-        {
           "player": "D. Schlosser",
           "pos": "WR",
           "status": "Questionable - Undisclosed ( Sun, Sep 13)",
@@ -1514,7 +1426,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.566242"
     },
     "Nebraska": {
       "team": "Nebraska",
@@ -1530,27 +1442,11 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
-    },
-    "Nevada": {
-      "team": "Nevada",
-      "net_injury_points": -2.2,
-      "injuries": [
-        {
-          "player": "C. Jones",
-          "pos": "QB",
-          "status": "Questionable - Arm ( Tue, Sep 15)",
-          "tier": "g5_starter_qb",
-          "deduction": -2.2,
-          "updated": "2026-09-19"
-        }
-      ],
-      "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.566242"
     },
     "New Mexico": {
       "team": "New Mexico",
-      "net_injury_points": -6.9,
+      "net_injury_points": -2.4,
       "injuries": [
         {
           "player": "A. Williams",
@@ -1575,18 +1471,10 @@
           "tier": "key_skill",
           "deduction": -0.8,
           "updated": "2026-09-19"
-        },
-        {
-          "player": "D. Layne",
-          "pos": "QB",
-          "status": "Out - Elbow ( Thu, Aug 27)",
-          "tier": "g5_starter_qb",
-          "deduction": -4.5,
-          "updated": "2026-09-19"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.566242"
     },
     "New Mexico State": {
       "team": "New Mexico State",
@@ -1602,7 +1490,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.646174"
+      "updated_at": "2026-09-19T16:01:40.566242"
     },
     "North Carolina": {
       "team": "North Carolina",
@@ -1626,7 +1514,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647176"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "Northwestern": {
       "team": "Northwestern",
@@ -1642,20 +1530,12 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647176"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "Notre Dame": {
       "team": "Notre Dame",
-      "net_injury_points": -5.8,
+      "net_injury_points": -0.8,
       "injuries": [
-        {
-          "player": "B. Hebert",
-          "pos": "QB",
-          "status": "Questionable - Undisclosed ( Sat, Sep 12)",
-          "tier": "star_qb",
-          "deduction": -5.0,
-          "updated": "2026-09-19"
-        },
         {
           "player": "Q. Porter",
           "pos": "WR",
@@ -1666,20 +1546,12 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647176"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "Ohio": {
       "team": "Ohio",
       "net_injury_points": -3.0,
       "injuries": [
-        {
-          "player": "M. Vezza",
-          "pos": "QB",
-          "status": "Probable - Undisclosed ( Fri, Sep 18)",
-          "tier": "active",
-          "deduction": 0.0,
-          "updated": "2026-09-19"
-        },
         {
           "player": "N. Poulos",
           "pos": "QB",
@@ -1698,7 +1570,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647176"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "Ohio State": {
       "team": "Ohio State",
@@ -1714,7 +1586,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647176"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "Oklahoma": {
       "team": "Oklahoma",
@@ -1738,7 +1610,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647176"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "Oklahoma State": {
       "team": "Oklahoma State",
@@ -1770,7 +1642,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647176"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "Oregon": {
       "team": "Oregon",
@@ -1794,7 +1666,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647176"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "Oregon State": {
       "team": "Oregon State",
@@ -1810,7 +1682,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647176"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "Penn State": {
       "team": "Penn State",
@@ -1842,7 +1714,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647176"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "Pittsburgh": {
       "team": "Pittsburgh",
@@ -1866,7 +1738,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647678"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "Purdue": {
       "team": "Purdue",
@@ -1890,7 +1762,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647678"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "Rice": {
       "team": "Rice",
@@ -1914,7 +1786,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647678"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "Rutgers": {
       "team": "Rutgers",
@@ -1935,18 +1807,10 @@
           "tier": "key_skill",
           "deduction": -1.5,
           "updated": "2026-09-19"
-        },
-        {
-          "player": "D. Lonergan",
-          "pos": "QB",
-          "status": "Probable - Undisclosed ( Wed, Sep 16)",
-          "tier": "active",
-          "deduction": 0.0,
-          "updated": "2026-09-19"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647678"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "Sacramento State": {
       "team": "Sacramento State",
@@ -1978,7 +1842,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647678"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "SMU": {
       "team": "SMU",
@@ -2002,20 +1866,12 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647678"
+      "updated_at": "2026-09-19T16:01:40.566745"
     },
     "South Carolina": {
       "team": "South Carolina",
-      "net_injury_points": -12.3,
+      "net_injury_points": -2.3,
       "injuries": [
-        {
-          "player": "L. Anderson III",
-          "pos": "QB",
-          "status": "Out - Undisclosed ( Thu, Sep 17)",
-          "tier": "star_qb",
-          "deduction": -10.0,
-          "updated": "2026-09-19"
-        },
         {
           "player": "M. Brown II",
           "pos": "TE",
@@ -2034,7 +1890,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647678"
+      "updated_at": "2026-09-19T16:01:40.567747"
     },
     "Southern Mississippi": {
       "team": "Southern Mississippi",
@@ -2050,7 +1906,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647678"
+      "updated_at": "2026-09-19T16:01:40.567747"
     },
     "Stanford": {
       "team": "Stanford",
@@ -2082,7 +1938,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647678"
+      "updated_at": "2026-09-19T16:01:40.567747"
     },
     "Syracuse": {
       "team": "Syracuse",
@@ -2114,7 +1970,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647678"
+      "updated_at": "2026-09-19T16:01:40.567747"
     },
     "TCU": {
       "team": "TCU",
@@ -2138,7 +1994,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647678"
+      "updated_at": "2026-09-19T16:01:40.567747"
     },
     "Temple": {
       "team": "Temple",
@@ -2170,7 +2026,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647678"
+      "updated_at": "2026-09-19T16:01:40.567747"
     },
     "Tennessee": {
       "team": "Tennessee",
@@ -2186,7 +2042,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647678"
+      "updated_at": "2026-09-19T16:01:40.567747"
     },
     "Texas": {
       "team": "Texas",
@@ -2210,7 +2066,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.647678"
+      "updated_at": "2026-09-19T16:01:40.567747"
     },
     "Texas A&M": {
       "team": "Texas A&M",
@@ -2234,7 +2090,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568249"
     },
     "Texas State": {
       "team": "Texas State",
@@ -2250,7 +2106,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568249"
     },
     "Texas Tech": {
       "team": "Texas Tech",
@@ -2282,7 +2138,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568249"
     },
     "Toledo": {
       "team": "Toledo",
@@ -2314,7 +2170,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568249"
     },
     "Tulane": {
       "team": "Tulane",
@@ -2330,7 +2186,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568249"
     },
     "Tulsa": {
       "team": "Tulsa",
@@ -2346,7 +2202,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568249"
     },
     "UAB": {
       "team": "UAB",
@@ -2362,7 +2218,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568249"
     },
     "UCF": {
       "team": "UCF",
@@ -2378,11 +2234,11 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568249"
     },
     "UCLA": {
       "team": "UCLA",
-      "net_injury_points": -6.3,
+      "net_injury_points": -2.8,
       "injuries": [
         {
           "player": "J. Johnson",
@@ -2407,18 +2263,10 @@
           "tier": "key_skill",
           "deduction": -0.8,
           "updated": "2026-09-19"
-        },
-        {
-          "player": "T. Dieffenbach",
-          "pos": "QB",
-          "status": "Questionable - Undisclosed ( Sun, Sep 13)",
-          "tier": "p4_starter_qb",
-          "deduction": -3.5,
-          "updated": "2026-09-19"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568249"
     },
     "Connecticut": {
       "team": "Connecticut",
@@ -2434,7 +2282,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568249"
     },
     "Massachusetts": {
       "team": "Massachusetts",
@@ -2450,7 +2298,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568749"
     },
     "UNLV": {
       "team": "UNLV",
@@ -2482,11 +2330,11 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568749"
     },
     "USC": {
       "team": "USC",
-      "net_injury_points": -7.3,
+      "net_injury_points": -2.3,
       "injuries": [
         {
           "player": "T. Mosley",
@@ -2494,14 +2342,6 @@
           "status": "Out - Knee ( Thu, Sep 17)",
           "tier": "key_skill",
           "deduction": -1.5,
-          "updated": "2026-09-19"
-        },
-        {
-          "player": "S. Huard",
-          "pos": "QB",
-          "status": "Questionable - Undisclosed ( Wed, Sep 16)",
-          "tier": "star_qb",
-          "deduction": -5.0,
           "updated": "2026-09-19"
         },
         {
@@ -2514,23 +2354,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
-    },
-    "Utah State": {
-      "team": "Utah State",
-      "net_injury_points": -2.2,
-      "injuries": [
-        {
-          "player": "M. Hillstead",
-          "pos": "QB",
-          "status": "Questionable - Forearm ( Sat, Sep 19)",
-          "tier": "g5_starter_qb",
-          "deduction": -2.2,
-          "updated": "2026-09-19"
-        }
-      ],
-      "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568749"
     },
     "Vanderbilt": {
       "team": "Vanderbilt",
@@ -2546,7 +2370,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568749"
     },
     "Virginia": {
       "team": "Virginia",
@@ -2578,7 +2402,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568749"
     },
     "Virginia Tech": {
       "team": "Virginia Tech",
@@ -2610,7 +2434,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568749"
     },
     "Wake Forest": {
       "team": "Wake Forest",
@@ -2634,7 +2458,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568749"
     },
     "Washington": {
       "team": "Washington",
@@ -2658,7 +2482,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.648681"
+      "updated_at": "2026-09-19T16:01:40.568749"
     },
     "Washington State": {
       "team": "Washington State",
@@ -2682,7 +2506,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.649693"
+      "updated_at": "2026-09-19T16:01:40.569249"
     },
     "West Virginia": {
       "team": "West Virginia",
@@ -2706,7 +2530,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.649693"
+      "updated_at": "2026-09-19T16:01:40.569249"
     },
     "Western Kentucky": {
       "team": "Western Kentucky",
@@ -2730,7 +2554,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.649693"
+      "updated_at": "2026-09-19T16:01:40.569249"
     },
     "Western Michigan": {
       "team": "Western Michigan",
@@ -2746,11 +2570,11 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.649693"
+      "updated_at": "2026-09-19T16:01:40.569249"
     },
     "Wisconsin": {
       "team": "Wisconsin",
-      "net_injury_points": -6.5,
+      "net_injury_points": -3.0,
       "injuries": [
         {
           "player": "M. Coleman",
@@ -2767,22 +2591,14 @@
           "tier": "key_skill",
           "deduction": -1.5,
           "updated": "2026-09-19"
-        },
-        {
-          "player": "D. O&#x27;Neil",
-          "pos": "QB",
-          "status": "Questionable - Lower Body ( Sun, Sep 13)",
-          "tier": "p4_starter_qb",
-          "deduction": -3.5,
-          "updated": "2026-09-19"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.649693"
+      "updated_at": "2026-09-19T16:01:40.569249"
     },
     "Wyoming": {
       "team": "Wyoming",
-      "net_injury_points": -6.8,
+      "net_injury_points": -2.3,
       "injuries": [
         {
           "player": "D. Hubbard",
@@ -2799,24 +2615,10 @@
           "tier": "key_skill",
           "deduction": -1.5,
           "updated": "2026-09-19"
-        },
-        {
-          "player": "T. Hasselbeck",
-          "pos": "QB",
-          "status": "Out - Knee ( Tue, Aug 11)",
-          "tier": "g5_starter_qb",
-          "deduction": -4.5,
-          "updated": "2026-09-19"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T15:25:27.649693"
-    },
-    "TestState": {
-      "team": "TestState",
-      "net_injury_points": 0,
-      "injuries": [],
-      "manual_overrides": []
+      "updated_at": "2026-09-19T16:01:40.569249"
     }
   }
 }
