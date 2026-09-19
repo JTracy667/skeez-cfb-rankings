@@ -67,6 +67,7 @@ nav a.active{color:var(--accent)}
 .summary-card.record .val{font-variant-numeric:tabular-nums}
 .summary-card.record .val.good{color:var(--up)}
 .pick-arrow{font-weight:800;color:var(--up);font-size:1.1rem;margin:0 4px;flex-shrink:0;text-shadow:0 0 8px rgba(52,211,153,0.4)}
+.injury-badge{display:inline-flex;align-items:center;gap:.25rem;padding:.15rem .45rem;border-radius:4px;font-size:.65rem;font-weight:700;color:#fca5a5;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);margin-top:.25rem;white-space:nowrap}
 .final-winner{font-weight:800;color:var(--up);font-size:1.35rem;margin-left:6px;text-shadow:0 0 10px rgba(52,211,153,0.6)}
 .final-score{font-weight:800;color:var(--text);background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:1px 7px;margin-left:6px;font-size:0.95rem;font-variant-numeric:tabular-nums}
 .ou-pick{font-size:0.7rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;margin-top:0.2rem}
@@ -376,6 +377,14 @@ function spClass(val) {
   return val >= 0.9 ? 'high' : val >= 0.7 ? '' : 'low';
 }
 
+function injuryBadgeHtml(injuries, adj) {
+  if (!injuries || !injuries.length || !adj || adj === 0) return '';
+  const qb = injuries.find(i => i.pos === 'QB' && i.deduction <= -4.5);
+  const label = qb ? `${qb.player} (${qb.tier === 'star_qb' ? 'STAR QB' : 'QB'}) ${qb.status.split(' ')[0]}` : `${injuries.length} key out`;
+  const tip = injuries.map(i => `${i.player} (${i.pos}): ${i.status} [${i.deduction} pts]`).join(' | ');
+  return `<div class="injury-badge" title="${tip}">⚠️ ${label} [${adj > 0 ? '+' : ''}${adj} pts]</div>`;
+}
+
 function formatGameDate(dateStr) {
   if (!dateStr) return '—';
   try {
@@ -440,6 +449,7 @@ function renderMatchups() {
             <span>${m.home_conf}</span>
           </div>
           <div class="sp-row">SP+ <span class="sp-val ${spClass(m.home_sp)}">${m.home_sp.toFixed(2)}</span></div>
+          ${injuryBadgeHtml(m.home_injuries, m.home_injury_adj)}
         </div>
       </div>
       <div class="vs-section">
@@ -471,6 +481,7 @@ function renderMatchups() {
             <span>${m.away_conf}</span>
           </div>
           <div class="sp-row">SP+ <span class="sp-val ${spClass(m.away_sp)}">${m.away_sp.toFixed(2)}</span></div>
+          ${injuryBadgeHtml(m.away_injuries, m.away_injury_adj)}
         </div>
         <div class="team-logo"><img src="${m.away_logo_url || ''}" alt="${m.away}" onerror="this.style.display='none'"></div>
       </div>

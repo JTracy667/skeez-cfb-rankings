@@ -29,6 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR / "data" / "teams.json"
 ANALYTICS_FILE = BASE_DIR / "data" / "analytics.json"
 SCHEDULE_FILE = BASE_DIR / "data" / "week_schedule.json"
+ACTIVE_INJURIES_FILE = BASE_DIR / "data" / "active_injuries.json"
 
 # ── Environment (.env) support ──
 def _load_env_file():
@@ -2210,13 +2211,34 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
 
 
 
-def project_head_to_head(home_data: dict, away_data: dict, neutral_site: bool = False) -> dict:
+def _load_active_injuries() -> dict[str, dict]:
+    """Load active team injuries from disk cache (team_name -> injury info)."""
+    if ACTIVE_INJURIES_FILE.exists():
+        try:
+            with open(ACTIVE_INJURIES_FILE, "r") as f:
+                data = json.load(f)
+                return data.get("teams", {})
+        except Exception as e:
+            print(f"[injuries] load failed: {e}")
+    return {}
+
+
+def project_head_to_head(
+    home_data: dict,
+    away_data: dict,
+    neutral_site: bool = False,
+    home_injury_adj: float = 0.0,
+    away_injury_adj: float = 0.0,
+) -> dict:
     """Head-to-head projection: TOTAL from combined strength, MARGIN from composite gap.
 
     Aug 30 recalibration (user call): old independent-score model produced
     84-point totals between two elite teams and only 8-point margins for
     Minnesota-Eastern Illinois. Real CFB: elite totals sit ~52-58, blowouts
     52-0 / 53-7 are common, average totals ~48-52.
+
+    Jeff Tracy rule: Star QB out is massive — 10.0 points deduction at star level.
+    Persistent injury adjustments modify the game margin and total directly.
 
     total  = 51 + (avg_composite - 50) * 0.10   # elite games trend slightly higher
     margin = 0.9 * (comp_home - comp_away) + HFA (2.5 home / -1.5 away / 0 neutral)
@@ -2258,6 +2280,16 @@ def project_head_to_head(home_data: dict, away_data: dict, neutral_site: bool = 
     if not neutral_site:
         margin += 2.5  # HFA
     margin += boost  # boost widens the margin in the FBS side's favor
+
+    # Persistent injury adjustment (Jeff Tracy rule: Star QB out = -10.0 pts):
+    # home_injury_adj and away_injury_adj are negative numbers (e.g. -10.0)
+    net_injury = (home_injury_adj or 0.0) - (away_injury_adj or 0.0)
+    margin += net_injury
+
+    # Offensive drop-off also reduces expected game total
+    total_injury = ((home_injury_adj or 0.0) + (away_injury_adj or 0.0)) * 0.70
+    total = max(24.0, total + total_injury)
+
     # Split total by margin. For lopsided games the underdog's share bottoms
     # out near the "garbage time" floor: 52-0 / 53-7 finals are common, so a
     # 35+ pt underdog gets ~10% of the total, not a symmetric 50/50 split.
@@ -2288,6 +2320,8 @@ def project_head_to_head(home_data: dict, away_data: dict, neutral_site: bool = 
         "home_win_probability": hp["win_probability"],
         "away_win_probability": ap["win_probability"],
         "total": round(home_score + away_score, 1),
+        "home_injury_adj": round(home_injury_adj or 0.0, 1),
+        "away_injury_adj": round(away_injury_adj or 0.0, 1),
     }
 
 def fetch_live_analytics():
@@ -2762,12 +2796,17 @@ def api_schedule():
     """Get weekly schedule with projected differentials + live betting lines."""
     sched = load_schedule()
     team_map = _build_team_map()
+    injuries_map = _load_active_injuries()
     # Fetch live odds once (PropLine primary, The Odds API backup, CFBD fallback)
     odds_map = _fetch_odds_map()
     enriched = []
     for m in sched.get("matchups", []):
         home = team_map.get(m["home"], {})
         away = team_map.get(m["away"], {})
+        home_inj_data = injuries_map.get(m["home"], {})
+        away_inj_data = injuries_map.get(m["away"], {})
+        home_injury_adj = home_inj_data.get("net_injury_points", 0.0)
+        away_injury_adj = away_inj_data.get("net_injury_points", 0.0)
         # Multi-factor projection
         home_proj_data = project_score_multi_factor(home, is_home=True)
         away_proj_data = project_score_multi_factor(away, is_home=False)
@@ -2777,7 +2816,9 @@ def api_schedule():
             home, is_home=True, opp_composite=away_proj_data["composite"])
         away_proj_data = project_score_multi_factor(
             away, is_home=False, opp_composite=home_proj_data["composite"])
-        diff = round(home_proj_data["projected_score"] - away_proj_data["projected_score"], 1)
+        base_diff = round(home_proj_data["projected_score"] - away_proj_data["projected_score"], 1)
+        # Apply persistent injury adjustment:
+        diff = round(base_diff + (home_injury_adj - away_injury_adj), 1)
         # Look up live betting line (negative spread = home is favorite)
         odds_key = (_normalize_team_name(m["home"]), _normalize_team_name(m["away"]))
         found_key = _find_odds_entry(odds_map, *odds_key, m.get("date") or "")
@@ -2814,6 +2855,10 @@ def api_schedule():
             "away_record": f"{away.get('wins',0)}-{away.get('losses',0)}",
             "home_conf": home.get("conf", ""),
             "away_conf": away.get("conf", ""),
+            "home_injury_adj": home_injury_adj,
+            "away_injury_adj": away_injury_adj,
+            "home_injuries": home_inj_data.get("injuries", []),
+            "away_injuries": away_inj_data.get("injuries", []),
             "home_logo_url": home.get("logo_url"),
             "away_logo_url": away.get("logo_url"),
             # Live betting line (negative = home favorite, positive = underdog)
@@ -2926,6 +2971,7 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
                 f"CFBD publishes schedules as the season approaches.")
     team_map = _build_team_map()
     conf_map = load_fbs_conferences()
+    injuries_map = _load_active_injuries()
 
     # Fetch live betting odds (PropLine primary, The Odds API + CFBD backup)
     odds_map = _fetch_odds_map()
@@ -2939,10 +2985,21 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
         # Minnesota — Aug 30 fix).
         home["classification"] = m.get("home_classification") or home.get("classification") or ""
         away["classification"] = m.get("away_classification") or away.get("classification") or ""
+        # Active injury adjustment lookup (Jeff Tracy rule: Star QB out = -10.0 pts)
+        home_inj_data = injuries_map.get(m["home"], {})
+        away_inj_data = injuries_map.get(m["away"], {})
+        home_injury_adj = home_inj_data.get("net_injury_points", 0.0)
+        away_injury_adj = away_inj_data.get("net_injury_points", 0.0)
         # Head-to-head projection (Aug 30 recalibration): total from combined
         # strength, margin from composite gap. Handles neutral site, elite
         # totals (~52-58), and FCS blowouts (52-0 class finals) in one model.
-        h2h = project_head_to_head(home, away, neutral_site=bool(m.get("neutral_site")))
+        h2h = project_head_to_head(
+            home,
+            away,
+            neutral_site=bool(m.get("neutral_site")),
+            home_injury_adj=home_injury_adj,
+            away_injury_adj=away_injury_adj,
+        )
         home_proj = h2h["home_proj"]
         away_proj = h2h["away_proj"]
         home_proj_data = {"projected_score": home_proj, "composite": h2h["home_composite"],
@@ -3001,6 +3058,10 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             "away_record": f"{away.get('wins',0)}-{away.get('losses',0)}",
             "home_conf": home_conf,
             "away_conf": away_conf,
+            "home_injury_adj": home_injury_adj,
+            "away_injury_adj": away_injury_adj,
+            "home_injuries": home_inj_data.get("injuries", []),
+            "away_injuries": away_inj_data.get("injuries", []),
             "home_logo_url": _LOGO_MAP.get(m["home"].lower()),
             "away_logo_url": _LOGO_MAP.get(m["away"].lower()),
         })
@@ -3043,6 +3104,87 @@ def api_schedule_weeks(year: int = CFBD_YEAR):
     except Exception as e:
         print(f"[GET /api/schedule/weeks ERROR] {e}")
         raise HTTPException(502, f"Weeks fetch failed: {e}")
+
+
+@app.get("/api/injuries")
+def api_injuries():
+    """Get all active college football injuries, tracked key players, and point deductions."""
+    try:
+        if ACTIVE_INJURIES_FILE.exists():
+            with open(ACTIVE_INJURIES_FILE, "r") as f:
+                return json.load(f)
+        return {"teams": {}, "total_teams_with_injuries": 0, "total_tracked_injuries": 0}
+    except Exception as e:
+        print(f"[GET /api/injuries ERROR] {e}")
+        return {"error": str(e), "teams": {}}
+
+
+@app.post("/api/injuries/sync")
+def api_injuries_sync():
+    """Trigger the live injury scraper to refresh active injuries from Covers."""
+    try:
+        import scripts.fetch_injuries as scraper
+        result = scraper.scrape_injuries()
+        return {
+            "status": "synced",
+            "teams": result.get("total_teams_with_injuries", 0),
+            "injuries": result.get("total_tracked_injuries", 0),
+            "key_qbs": result.get("key_qb_injuries", 0)
+        }
+    except Exception as e:
+        print(f"[POST /api/injuries/sync ERROR] {e}")
+        raise HTTPException(500, f"Injury sync failed: {e}")
+
+
+@app.post("/api/injuries/override")
+def api_injuries_override(payload: dict):
+    """Set or remove a manual player injury override.
+    Format: {"team": "Texas", "player": "Quinn Ewers", "pos": "QB", "status": "Out", "deduction": -10.0}
+    Or {"team": "Texas", "action": "clear"} to clear overrides.
+    """
+    team = payload.get("team")
+    if not team:
+        raise HTTPException(400, "Missing team name")
+    data = {}
+    if ACTIVE_INJURIES_FILE.exists():
+        try:
+            with open(ACTIVE_INJURIES_FILE, "r") as f:
+                data = json.load(f)
+        except Exception:
+            data = {}
+    teams_dict = data.setdefault("teams", {})
+    team_entry = teams_dict.setdefault(
+        team,
+        {"team": team, "net_injury_points": 0.0, "injuries": [], "manual_overrides": []}
+    )
+    
+    if payload.get("action") == "clear":
+        team_entry["manual_overrides"] = []
+    else:
+        player = payload.get("player", "Key Player")
+        pos = payload.get("pos", "QB")
+        status = payload.get("status", "Out")
+        deduction = float(payload.get("deduction", -10.0))
+        if deduction > 0:
+            deduction = -deduction
+        override_item = {
+            "player": player, "pos": pos, "status": status,
+            "tier": "manual_override", "deduction": deduction,
+            "updated": datetime.now().strftime("%Y-%m-%d"),
+            "manual": True
+        }
+        team_entry["manual_overrides"] = [
+            m for m in team_entry.get("manual_overrides", []) if m.get("player") != player
+        ]
+        team_entry["manual_overrides"].append(override_item)
+
+    # Recalculate net injury points
+    all_items = team_entry.get("injuries", []) + team_entry.get("manual_overrides", [])
+    team_entry["net_injury_points"] = round(sum(i.get("deduction", 0.0) for i in all_items), 1)
+
+    with open(ACTIVE_INJURIES_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+    return {"status": "updated", "team": team, "net_injury_points": team_entry["net_injury_points"]}
 
 # ── Records: Straight-Up (SU) + Against-the-Spread (ATS) tracking ──
 RECORD_FILE = BASE_DIR / "data" / "record.json"
