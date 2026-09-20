@@ -1,0 +1,7450 @@
+{
+  "Abilene Christian": {
+    "team": "Abilene Christian",
+    "conference": "UAC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 9,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.12
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 2,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.12
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 11,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 64.7,
+      "weighted_avg_cover_margin": 2.65
+    }
+  },
+  "Air Force": {
+    "team": "Air Force",
+    "conference": "MWC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.08
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.75
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 6,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 42.9,
+      "weighted_avg_cover_margin": 0.04
+    }
+  },
+  "Akron": {
+    "team": "Akron",
+    "conference": "MAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.17
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.83
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 1.1
+    }
+  },
+  "Alabama": {
+    "team": "Alabama",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 15,
+        "ats_wins": 9,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.9
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 15
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 11,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 64.7,
+      "weighted_avg_cover_margin": 0.97
+    }
+  },
+  "Alabama A&M": {
+    "team": "Alabama A&M",
+    "conference": "SWAC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 4,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -9.55
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 12.5
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 5,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 38.5,
+      "weighted_avg_cover_margin": -6.16
+    }
+  },
+  "Alabama State": {
+    "team": "Alabama State",
+    "conference": "SWAC",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 9,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 9.55
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.25
+      }
+    },
+    "aggregate": {
+      "total_games": 12,
+      "total_ats_wins": 10,
+      "total_ats_losses": 2,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 83.3,
+      "weighted_avg_cover_margin": 8.0
+    }
+  },
+  "Alcorn State": {
+    "team": "Alcorn State",
+    "conference": "SWAC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 6,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.05
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -16.5
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 6,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.2,
+      "weighted_avg_cover_margin": -3.43
+    }
+  },
+  "App State": {
+    "team": "App State",
+    "conference": "SBC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 6,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.15
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 20.25
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": -2.63
+    }
+  },
+  "Arizona": {
+    "team": "Arizona",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.5
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.75
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 5.13
+    }
+  },
+  "Arizona State": {
+    "team": "Arizona State",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 6,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.38
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.33
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 8,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -1.5
+    }
+  },
+  "Arkansas": {
+    "team": "Arkansas",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 0,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -15.83
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 4,
+      "total_ats_losses": 11,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 26.7,
+      "weighted_avg_cover_margin": -6.37
+    }
+  },
+  "Arkansas-Pine Bluff": {
+    "team": "Arkansas-Pine Bluff",
+    "conference": "SWAC",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 4,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5.3
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 11
+      }
+    },
+    "aggregate": {
+      "total_games": 12,
+      "total_ats_wins": 6,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -2.58
+    }
+  },
+  "Arkansas State": {
+    "team": "Arkansas State",
+    "conference": "SBC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.12
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 9,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 60.0,
+      "weighted_avg_cover_margin": 2.24
+    }
+  },
+  "Army": {
+    "team": "Army",
+    "conference": "AAC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.88
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 1.56
+    }
+  },
+  "Auburn": {
+    "team": "Auburn",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.08
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.75
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 5,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 35.7,
+      "weighted_avg_cover_margin": -0.18
+    }
+  },
+  "Austin Peay": {
+    "team": "Austin Peay",
+    "conference": "UAC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 6,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.45
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 14.75
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 8,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 61.5,
+      "weighted_avg_cover_margin": 6.03
+    }
+  },
+  "Ball State": {
+    "team": "Ball State",
+    "conference": "MAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.5
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.33
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": -2.07
+    }
+  },
+  "Baylor": {
+    "team": "Baylor",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 2,
+        "ats_losses": 10,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.67
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 4,
+      "total_ats_losses": 11,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 26.7,
+      "weighted_avg_cover_margin": -4.94
+    }
+  },
+  "Bethune-Cookman": {
+    "team": "Bethune-Cookman",
+    "conference": "SWAC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 7,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.14
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.5
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 8,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 61.5,
+      "weighted_avg_cover_margin": 2.5
+    }
+  },
+  "Boise State": {
+    "team": "Boise State",
+    "conference": "MWC",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 9,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.07
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 13.5
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 11,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 68.8,
+      "weighted_avg_cover_margin": -1.0
+    }
+  },
+  "Boston College": {
+    "team": "Boston College",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -13.17
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": -5.03
+    }
+  },
+  "Bowling Green": {
+    "team": "Bowling Green",
+    "conference": "MAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.83
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 0,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -17.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 5,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 33.3,
+      "weighted_avg_cover_margin": -4.96
+    }
+  },
+  "Brown": {
+    "team": "Brown",
+    "conference": "IVY",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 7,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.95
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 7,
+      "total_ats_losses": 4,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 63.6,
+      "weighted_avg_cover_margin": 4.23
+    }
+  },
+  "Bryant": {
+    "team": "Bryant",
+    "conference": "CAA",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 4,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.32
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 3,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 7.13
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": 0.2
+    }
+  },
+  "Bucknell": {
+    "team": "Bucknell",
+    "conference": "PAT",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 2,
+        "ats_losses": 10,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5.21
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 2,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.5
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 4,
+      "total_ats_losses": 12,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 25.0,
+      "weighted_avg_cover_margin": -3.53
+    }
+  },
+  "Buffalo": {
+    "team": "Buffalo",
+    "conference": "MAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5.42
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 0,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.83
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 4,
+      "total_ats_losses": 11,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 26.7,
+      "weighted_avg_cover_margin": -5.7
+    }
+  },
+  "Butler": {
+    "team": "Butler",
+    "conference": "PFL",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 5,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.85
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 12.5
+      }
+    },
+    "aggregate": {
+      "total_games": 12,
+      "total_ats_wins": 7,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 58.3,
+      "weighted_avg_cover_margin": 0.54
+    }
+  },
+  "BYU": {
+    "team": "BYU",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 10,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.86
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.25
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 12,
+      "total_ats_losses": 4,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 75.0,
+      "weighted_avg_cover_margin": 5.78
+    }
+  },
+  "California": {
+    "team": "California",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 5,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.96
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -9
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 6,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 37.5,
+      "weighted_avg_cover_margin": -4.09
+    }
+  },
+  "Cal Poly": {
+    "team": "Cal Poly",
+    "conference": "BSKY",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 5,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 10.5
+      }
+    },
+    "aggregate": {
+      "total_games": 12,
+      "total_ats_wins": 7,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 58.3,
+      "weighted_avg_cover_margin": 3.42
+    }
+  },
+  "Campbell": {
+    "team": "Campbell",
+    "conference": "CAA",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.17
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 3,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 9.67
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 0.2
+    }
+  },
+  "Central Arkansas": {
+    "team": "Central Arkansas",
+    "conference": "UAC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 5,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5.09
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -35.5
+      }
+    },
+    "aggregate": {
+      "total_games": 12,
+      "total_ats_wins": 5,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 41.7,
+      "weighted_avg_cover_margin": -7.62
+    }
+  },
+  "Central Connecticut": {
+    "team": "Central Connecticut",
+    "conference": "NEC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 6,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.73
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 1.36
+    }
+  },
+  "Central Michigan": {
+    "team": "Central Michigan",
+    "conference": "MAC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.08
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.5
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 9,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 56.2,
+      "weighted_avg_cover_margin": -0.34
+    }
+  },
+  "Charleston Southern": {
+    "team": "Charleston Southern",
+    "conference": "OVCBS",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 7,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.04
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 8,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 57.1,
+      "weighted_avg_cover_margin": 3.89
+    }
+  },
+  "Charlotte": {
+    "team": "Charlotte",
+    "conference": "AAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.25
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -2.64
+    }
+  },
+  "Chattanooga": {
+    "team": "Chattanooga",
+    "conference": "SOCON",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.75
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.25
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 4,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 28.6,
+      "weighted_avg_cover_margin": -3.25
+    }
+  },
+  "Cincinnati": {
+    "team": "Cincinnati",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 6,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.92
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.67
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 8,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -0.5
+    }
+  },
+  "Clemson": {
+    "team": "Clemson",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 5,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.81
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -10.17
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 6,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 37.5,
+      "weighted_avg_cover_margin": -5.0
+    }
+  },
+  "Coastal Carolina": {
+    "team": "Coastal Carolina",
+    "conference": "SBC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 6,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.15
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 8,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -1.81
+    }
+  },
+  "Colgate": {
+    "team": "Colgate",
+    "conference": "PAT",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.88
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 4,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 9.5
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 10,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 62.5,
+      "weighted_avg_cover_margin": 4.54
+    }
+  },
+  "Colorado": {
+    "team": "Colorado",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.08
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -5.21
+    }
+  },
+  "Colorado State": {
+    "team": "Colorado State",
+    "conference": "MWC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -9
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 16.5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 6,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 42.9,
+      "weighted_avg_cover_margin": -5.36
+    }
+  },
+  "Columbia": {
+    "team": "Columbia",
+    "conference": "IVY",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 3,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.2
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 1,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 4,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 36.4,
+      "weighted_avg_cover_margin": -2.64
+    }
+  },
+  "Cornell": {
+    "team": "Cornell",
+    "conference": "IVY",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 6,
+        "ats_losses": 3,
+        "ats_pushes": 1,
+        "avg_cover_margin": 1.1
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.5
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 6,
+      "total_ats_losses": 4,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 54.5,
+      "weighted_avg_cover_margin": 0.95
+    }
+  },
+  "Dartmouth": {
+    "team": "Dartmouth",
+    "conference": "IVY",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 3,
+        "ats_losses": 6,
+        "ats_pushes": 1,
+        "avg_cover_margin": -0.2
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 1,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 13.5
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 4,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 36.4,
+      "weighted_avg_cover_margin": 1.05
+    }
+  },
+  "Davidson": {
+    "team": "Davidson",
+    "conference": "PFL",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 3,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -8.36
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.75
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 4,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 30.8,
+      "weighted_avg_cover_margin": -6.96
+    }
+  },
+  "Dayton": {
+    "team": "Dayton",
+    "conference": "PFL",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 5,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.45
+      }
+    },
+    "aggregate": {
+      "total_games": 10,
+      "total_ats_wins": 5,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 3.45
+    }
+  },
+  "Delaware": {
+    "team": "Delaware",
+    "conference": "CUSA",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 5,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.73
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 3,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 8,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -0.28
+    }
+  },
+  "Delaware State": {
+    "team": "Delaware State",
+    "conference": "MEAC",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 5,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.2
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 1,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.5
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 6,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 54.5,
+      "weighted_avg_cover_margin": 5.86
+    }
+  },
+  "Drake": {
+    "team": "Drake",
+    "conference": "PFL",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 6,
+        "ats_losses": 4,
+        "ats_pushes": 1,
+        "avg_cover_margin": 2.41
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -15
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 7,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 53.8,
+      "weighted_avg_cover_margin": -0.27
+    }
+  },
+  "Duke": {
+    "team": "Duke",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 8,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.46
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 3,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 11.5
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 11,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 64.7,
+      "weighted_avg_cover_margin": 2.41
+    }
+  },
+  "Duquesne": {
+    "team": "Duquesne",
+    "conference": "NEC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 5,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.82
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 0,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -14.17
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 5,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 35.7,
+      "weighted_avg_cover_margin": -5.25
+    }
+  },
+  "East Carolina": {
+    "team": "East Carolina",
+    "conference": "AAC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 7
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -9.75
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 4.77
+    }
+  },
+  "Eastern Illinois": {
+    "team": "Eastern Illinois",
+    "conference": "OVCBS",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 0,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.67
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": -2.93
+    }
+  },
+  "Eastern Kentucky": {
+    "team": "Eastern Kentucky",
+    "conference": "UAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 5,
+        "ats_pushes": 1,
+        "avg_cover_margin": 1.92
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -11
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": -0.66
+    }
+  },
+  "Eastern Michigan": {
+    "team": "Eastern Michigan",
+    "conference": "MAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 7,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.42
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 1,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -9.12
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 8,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -2.59
+    }
+  },
+  "Eastern Washington": {
+    "team": "Eastern Washington",
+    "conference": "BSKY",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 5,
+        "ats_pushes": 1,
+        "avg_cover_margin": 0.38
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.33
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": 0.24
+    }
+  },
+  "East Tennessee State": {
+    "team": "East Tennessee State",
+    "conference": "SOCON",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.46
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -8
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": -1.23
+    }
+  },
+  "East Texas A&M": {
+    "team": "East Texas A&M",
+    "conference": "SLC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 5,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.77
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -0.28
+    }
+  },
+  "Elon": {
+    "team": "Elon",
+    "conference": "CAA",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 6,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.45
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5.5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -0.83
+    }
+  },
+  "Florida": {
+    "team": "Florida",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5.08
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 8
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 6,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 42.9,
+      "weighted_avg_cover_margin": -3.21
+    }
+  },
+  "Florida A&M": {
+    "team": "Florida A&M",
+    "conference": "SWAC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 3,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -9.59
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.5
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 4,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 30.8,
+      "weighted_avg_cover_margin": -8.81
+    }
+  },
+  "Florida Atlantic": {
+    "team": "Florida Atlantic",
+    "conference": "AAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 7,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.33
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 8,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 57.1,
+      "weighted_avg_cover_margin": -1.57
+    }
+  },
+  "Florida International": {
+    "team": "Florida International",
+    "conference": "CUSA",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.85
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.25
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 10,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 66.7,
+      "weighted_avg_cover_margin": 1.3
+    }
+  },
+  "Florida State": {
+    "team": "Florida State",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.75
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 1,
+        "avg_cover_margin": -7
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 5,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 35.7,
+      "weighted_avg_cover_margin": -1.64
+    }
+  },
+  "Fordham": {
+    "team": "Fordham",
+    "conference": "PAT",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.83
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": -3.76
+    }
+  },
+  "Fresno State": {
+    "team": "Fresno State",
+    "conference": "MWC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.62
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 4.74
+    }
+  },
+  "Furman": {
+    "team": "Furman",
+    "conference": "SOCON",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.25
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 12.25
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -1.89
+    }
+  },
+  "Gardner-Webb": {
+    "team": "Gardner-Webb",
+    "conference": "OVCBS",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 7,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.13
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 16
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 9,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 64.3,
+      "weighted_avg_cover_margin": 2.4
+    }
+  },
+  "Georgetown": {
+    "team": "Georgetown",
+    "conference": "PAT",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.29
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -2.53
+    }
+  },
+  "Georgia": {
+    "team": "Georgia",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 6,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.39
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 3,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 8.17
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 9,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 52.9,
+      "weighted_avg_cover_margin": 1.12
+    }
+  },
+  "Georgia Southern": {
+    "team": "Georgia Southern",
+    "conference": "SBC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.15
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.75
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 9,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 60.0,
+      "weighted_avg_cover_margin": -1.36
+    }
+  },
+  "Georgia State": {
+    "team": "Georgia State",
+    "conference": "SBC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 2,
+        "ats_losses": 10,
+        "ats_pushes": 0,
+        "avg_cover_margin": -7
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 21.25
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 4,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 28.6,
+      "weighted_avg_cover_margin": -2.96
+    }
+  },
+  "Georgia Tech": {
+    "team": "Georgia Tech",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.12
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 0,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -7.17
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 7,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 43.8,
+      "weighted_avg_cover_margin": -2.25
+    }
+  },
+  "Grambling": {
+    "team": "Grambling",
+    "conference": "SWAC",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 4,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.95
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -11.5
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 4,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 36.4,
+      "weighted_avg_cover_margin": -1.91
+    }
+  },
+  "Hampton": {
+    "team": "Hampton",
+    "conference": "CAA",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 4,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -8.09
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 0,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -18.83
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 4,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 28.6,
+      "weighted_avg_cover_margin": -10.39
+    }
+  },
+  "Harvard": {
+    "team": "Harvard",
+    "conference": "IVY",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 5,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.36
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 1,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 9.5
+      }
+    },
+    "aggregate": {
+      "total_games": 12,
+      "total_ats_wins": 6,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -3.21
+    }
+  },
+  "Hawai'i": {
+    "team": "Hawai'i",
+    "conference": "MWC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 9,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.73
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.83
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 10,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 62.5,
+      "weighted_avg_cover_margin": 2.12
+    }
+  },
+  "Holy Cross": {
+    "team": "Holy Cross",
+    "conference": "PAT",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.33
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 1,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -7
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 6,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 37.5,
+      "weighted_avg_cover_margin": -2.0
+    }
+  },
+  "Houston": {
+    "team": "Houston",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 9,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.15
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 11,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 68.8,
+      "weighted_avg_cover_margin": 2.87
+    }
+  },
+  "Houston Christian": {
+    "team": "Houston Christian",
+    "conference": "SLC",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 2,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.85
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 2,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 18.2,
+      "weighted_avg_cover_margin": -6.68
+    }
+  },
+  "Howard": {
+    "team": "Howard",
+    "conference": "MEAC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 6,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 3,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 9,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 64.3,
+      "weighted_avg_cover_margin": 1.86
+    }
+  },
+  "Idaho": {
+    "team": "Idaho",
+    "conference": "BSKY",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.21
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 0,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": -8.5
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 5,
+      "total_ats_losses": 11,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 31.2,
+      "weighted_avg_cover_margin": -5.28
+    }
+  },
+  "Idaho State": {
+    "team": "Idaho State",
+    "conference": "BSKY",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 8,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.45
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 13.17
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 10,
+      "total_ats_losses": 4,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 71.4,
+      "weighted_avg_cover_margin": 7.1
+    }
+  },
+  "Illinois": {
+    "team": "Illinois",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.5
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 9,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 56.2,
+      "weighted_avg_cover_margin": -2.16
+    }
+  },
+  "Illinois State": {
+    "team": "Illinois State",
+    "conference": "MVFC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.17
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 3,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.17
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 9,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 60.0,
+      "weighted_avg_cover_margin": 1.37
+    }
+  },
+  "Incarnate Word": {
+    "team": "Incarnate Word",
+    "conference": "SLC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 5,
+        "ats_losses": 5,
+        "ats_pushes": 1,
+        "avg_cover_margin": -4.05
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5.5
+      }
+    },
+    "aggregate": {
+      "total_games": 12,
+      "total_ats_wins": 5,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 41.7,
+      "weighted_avg_cover_margin": -4.17
+    }
+  },
+  "Indiana": {
+    "team": "Indiana",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 16,
+        "ats_wins": 10,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 12.94
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 0,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.67
+      }
+    },
+    "aggregate": {
+      "total_games": 19,
+      "total_ats_wins": 10,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 52.6,
+      "weighted_avg_cover_margin": 10.16
+    }
+  },
+  "Indiana State": {
+    "team": "Indiana State",
+    "conference": "MVFC",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 6,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.7
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 3,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.63
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 9,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 64.3,
+      "weighted_avg_cover_margin": -0.46
+    }
+  },
+  "Iowa": {
+    "team": "Iowa",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 10,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.31
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.83
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 12,
+      "total_ats_losses": 4,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 75.0,
+      "weighted_avg_cover_margin": 6.03
+    }
+  },
+  "Iowa State": {
+    "team": "Iowa State",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.17
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 11.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": 4.04
+    }
+  },
+  "Jackson State": {
+    "team": "Jackson State",
+    "conference": "SWAC",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 5,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.4
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -10.5
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 5,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 45.5,
+      "weighted_avg_cover_margin": 2.14
+    }
+  },
+  "Jacksonville State": {
+    "team": "Jacksonville State",
+    "conference": "CUSA",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 7,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.39
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 1,
+        "avg_cover_margin": 0.33
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 8,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 47.1,
+      "weighted_avg_cover_margin": 2.03
+    }
+  },
+  "James Madison": {
+    "team": "James Madison",
+    "conference": "SBC",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 9,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 7.57
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 19.25
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 11,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 68.8,
+      "weighted_avg_cover_margin": 9.03
+    }
+  },
+  "Kansas": {
+    "team": "Kansas",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.42
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": -4.34
+    }
+  },
+  "Kansas State": {
+    "team": "Kansas State",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.67
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 8.83
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": 0.43
+    }
+  },
+  "Kennesaw State": {
+    "team": "Kennesaw State",
+    "conference": "CUSA",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 9,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.54
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.5
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 10,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 62.5,
+      "weighted_avg_cover_margin": 1.54
+    }
+  },
+  "Kent State": {
+    "team": "Kent State",
+    "conference": "MAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.5
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.83
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": 3.43
+    }
+  },
+  "Kentucky": {
+    "team": "Kentucky",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.92
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": -0.44
+    }
+  },
+  "Lafayette": {
+    "team": "Lafayette",
+    "conference": "PAT",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 8,
+        "ats_losses": 3,
+        "ats_pushes": 1,
+        "avg_cover_margin": 4.13
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 0,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -14.67
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 0.37
+    }
+  },
+  "Lamar": {
+    "team": "Lamar",
+    "conference": "SLC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 1,
+        "avg_cover_margin": 0.23
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.33
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 1.0
+    }
+  },
+  "Lehigh": {
+    "team": "Lehigh",
+    "conference": "PAT",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 8,
+        "ats_losses": 2,
+        "ats_pushes": 1,
+        "avg_cover_margin": 6.09
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 3,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.13
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 11,
+      "total_ats_losses": 3,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 73.3,
+      "weighted_avg_cover_margin": 5.57
+    }
+  },
+  "Liberty": {
+    "team": "Liberty",
+    "conference": "CUSA",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 3,
+        "ats_losses": 9,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.58
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.33
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 4,
+      "total_ats_losses": 11,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 26.7,
+      "weighted_avg_cover_margin": -4.13
+    }
+  },
+  "Lindenwood": {
+    "team": "Lindenwood",
+    "conference": "OVCBS",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 7,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.75
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 1,
+        "avg_cover_margin": -8.5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 0.29
+    }
+  },
+  "Long Island University": {
+    "team": "Long Island University",
+    "conference": "NEC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.71
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.67
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": 0.03
+    }
+  },
+  "Louisiana": {
+    "team": "Louisiana",
+    "conference": "SBC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 6,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.19
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 11.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 0.5
+    }
+  },
+  "Louisiana Tech": {
+    "team": "Louisiana Tech",
+    "conference": "CUSA",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.77
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 3,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 12.17
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 11,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 68.8,
+      "weighted_avg_cover_margin": 6.16
+    }
+  },
+  "Louisville": {
+    "team": "Louisville",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 4,
+        "ats_losses": 9,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.88
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 3,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 7,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 43.8,
+      "weighted_avg_cover_margin": -0.4
+    }
+  },
+  "LSU": {
+    "team": "LSU",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 4,
+        "ats_losses": 9,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.23
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 13.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 5,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 33.3,
+      "weighted_avg_cover_margin": -1.87
+    }
+  },
+  "Maine": {
+    "team": "Maine",
+    "conference": "CAA",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 8,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.5
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.17
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 9,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 60.0,
+      "weighted_avg_cover_margin": -0.03
+    }
+  },
+  "Marist": {
+    "team": "Marist",
+    "conference": "PFL",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 8,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.46
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 10,
+      "total_ats_losses": 4,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 71.4,
+      "weighted_avg_cover_margin": 4.75
+    }
+  },
+  "Marshall": {
+    "team": "Marshall",
+    "conference": "SBC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 7,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.25
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -16.5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -1.29
+    }
+  },
+  "Maryland": {
+    "team": "Maryland",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.92
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 14.5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 1.28
+    }
+  },
+  "Massachusetts": {
+    "team": "Massachusetts",
+    "conference": "MAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 3,
+        "ats_losses": 9,
+        "ats_pushes": 0,
+        "avg_cover_margin": -12.17
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 13.17
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 5,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 33.3,
+      "weighted_avg_cover_margin": -7.1
+    }
+  },
+  "McNeese": {
+    "team": "McNeese",
+    "conference": "SLC",
+    "seasons": {
+      "2025": {
+        "games": 9,
+        "ats_wins": 5,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.67
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 9
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 7,
+      "total_ats_losses": 4,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 63.6,
+      "weighted_avg_cover_margin": 5.46
+    }
+  },
+  "Memphis": {
+    "team": "Memphis",
+    "conference": "AAC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.85
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.17
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 10,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 62.5,
+      "weighted_avg_cover_margin": 1.28
+    }
+  },
+  "Mercer": {
+    "team": "Mercer",
+    "conference": "SOCON",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 6,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.4
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 2,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.25
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 8,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 57.1,
+      "weighted_avg_cover_margin": 4.93
+    }
+  },
+  "Mercyhurst": {
+    "team": "Mercyhurst",
+    "conference": "NEC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 8,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.42
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -14.75
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 8,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 57.1,
+      "weighted_avg_cover_margin": -1.75
+    }
+  },
+  "Merrimack": {
+    "team": "Merrimack",
+    "conference": "INDAA",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 7,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.09
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 8,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 57.1,
+      "weighted_avg_cover_margin": -1.0
+    }
+  },
+  "Miami": {
+    "team": "Miami",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 16,
+        "ats_wins": 11,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.88
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6
+      }
+    },
+    "aggregate": {
+      "total_games": 19,
+      "total_ats_wins": 13,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 68.4,
+      "weighted_avg_cover_margin": 5.06
+    }
+  },
+  "Miami (OH)": {
+    "team": "Miami (OH)",
+    "conference": "MAC",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 8,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.39
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.67
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 10,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 58.8,
+      "weighted_avg_cover_margin": -0.33
+    }
+  },
+  "Michigan": {
+    "team": "Michigan",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 4,
+        "ats_losses": 9,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.31
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.83
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 6,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 37.5,
+      "weighted_avg_cover_margin": -2.78
+    }
+  },
+  "Michigan State": {
+    "team": "Michigan State",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 7,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.33
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 0,
+        "ats_pushes": 1,
+        "avg_cover_margin": 5.25
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 8,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 57.1,
+      "weighted_avg_cover_margin": -1.25
+    }
+  },
+  "Middle Tennessee": {
+    "team": "Middle Tennessee",
+    "conference": "CUSA",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.75
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.25
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 8,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 57.1,
+      "weighted_avg_cover_margin": -2.32
+    }
+  },
+  "Minnesota": {
+    "team": "Minnesota",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 5,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.73
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.67
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 7,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 43.8,
+      "weighted_avg_cover_margin": -0.91
+    }
+  },
+  "Mississippi State": {
+    "team": "Mississippi State",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.38
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 23.25
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 10,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 66.7,
+      "weighted_avg_cover_margin": 2.77
+    }
+  },
+  "Mississippi Valley State": {
+    "team": "Mississippi Valley State",
+    "conference": "SWAC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 5,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.32
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -14.5
+      }
+    },
+    "aggregate": {
+      "total_games": 12,
+      "total_ats_wins": 5,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 41.7,
+      "weighted_avg_cover_margin": -4.25
+    }
+  },
+  "Missouri": {
+    "team": "Missouri",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.46
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.25
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 1.1
+    }
+  },
+  "Missouri State": {
+    "team": "Missouri State",
+    "conference": "CUSA",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.35
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.75
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 1.67
+    }
+  },
+  "Monmouth": {
+    "team": "Monmouth",
+    "conference": "CAA",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.92
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 1,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5.5
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 7,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 43.8,
+      "weighted_avg_cover_margin": -2.81
+    }
+  },
+  "Montana": {
+    "team": "Montana",
+    "conference": "BSKY",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 7,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.29
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 0,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -8.83
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": -2.0
+    }
+  },
+  "Montana State": {
+    "team": "Montana State",
+    "conference": "BSKY",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 7.35
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 2,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5.87
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 10,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 58.8,
+      "weighted_avg_cover_margin": 4.24
+    }
+  },
+  "Morehead State": {
+    "team": "Morehead State",
+    "conference": "PFL",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 5,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.95
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -19.5
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 5,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 45.5,
+      "weighted_avg_cover_margin": -3.55
+    }
+  },
+  "Morgan State": {
+    "team": "Morgan State",
+    "conference": "MEAC",
+    "seasons": {
+      "2025": {
+        "games": 9,
+        "ats_wins": 5,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.61
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -7.5
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 6,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 54.5,
+      "weighted_avg_cover_margin": -3.5
+    }
+  },
+  "Murray State": {
+    "team": "Murray State",
+    "conference": "MVFC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 9,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 7.18
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.5
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 9,
+      "total_ats_losses": 4,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 69.2,
+      "weighted_avg_cover_margin": 5.54
+    }
+  },
+  "Navy": {
+    "team": "Navy",
+    "conference": "AAC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 5,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.46
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -8
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 5,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 33.3,
+      "weighted_avg_cover_margin": -1.47
+    }
+  },
+  "NC State": {
+    "team": "NC State",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.92
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.67
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 8,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 1.81
+    }
+  },
+  "Nebraska": {
+    "team": "Nebraska",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 4,
+        "ats_losses": 9,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.31
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 11.25
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": -0.5
+    }
+  },
+  "Nevada": {
+    "team": "Nevada",
+    "conference": "MWC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.08
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 13.25
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 6,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 42.9,
+      "weighted_avg_cover_margin": 1.96
+    }
+  },
+  "New Hampshire": {
+    "team": "New Hampshire",
+    "conference": "CAA",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.5
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 0,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": -17.12
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 7,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 41.2,
+      "weighted_avg_cover_margin": -2.12
+    }
+  },
+  "New Haven": {
+    "team": "New Haven",
+    "conference": "NEC",
+    "seasons": {
+      "2025": {
+        "games": 7,
+        "ats_wins": 3,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.21
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 1,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5.87
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 4,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 36.4,
+      "weighted_avg_cover_margin": -3.54
+    }
+  },
+  "New Mexico": {
+    "team": "New Mexico",
+    "conference": "MWC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.15
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 20.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 9,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 60.0,
+      "weighted_avg_cover_margin": 7.2
+    }
+  },
+  "New Mexico State": {
+    "team": "New Mexico State",
+    "conference": "CUSA",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.42
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.67
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 2.47
+    }
+  },
+  "Nicholls": {
+    "team": "Nicholls",
+    "conference": "SLC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 5,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.86
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -9.25
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 6,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.2,
+      "weighted_avg_cover_margin": -3.0
+    }
+  },
+  "Norfolk State": {
+    "team": "Norfolk State",
+    "conference": "MEAC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 2,
+        "ats_losses": 9,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.55
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 8.83
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 4,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 28.6,
+      "weighted_avg_cover_margin": -1.68
+    }
+  },
+  "North Alabama": {
+    "team": "North Alabama",
+    "conference": "UAC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 6,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.18
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 3,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 10
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 9,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 64.3,
+      "weighted_avg_cover_margin": 0.43
+    }
+  },
+  "North Carolina": {
+    "team": "North Carolina",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.83
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.33
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": -2.8
+    }
+  },
+  "North Carolina A&T": {
+    "team": "North Carolina A&T",
+    "conference": "CAA",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -8.54
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 1,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.75
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 7,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 43.8,
+      "weighted_avg_cover_margin": -7.34
+    }
+  },
+  "North Carolina Central": {
+    "team": "North Carolina Central",
+    "conference": "MEAC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 5,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.73
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -19.5
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 5,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 38.5,
+      "weighted_avg_cover_margin": -6.16
+    }
+  },
+  "North Dakota": {
+    "team": "North Dakota",
+    "conference": "MVFC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.38
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 9,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 60.0,
+      "weighted_avg_cover_margin": 3.33
+    }
+  },
+  "North Dakota State": {
+    "team": "North Dakota State",
+    "conference": "MVFC",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 5,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.45
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.5
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 7,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.8,
+      "weighted_avg_cover_margin": 5.69
+    }
+  },
+  "Northern Arizona": {
+    "team": "Northern Arizona",
+    "conference": "BSKY",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.04
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 3,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": -2.53
+    }
+  },
+  "Northern Colorado": {
+    "team": "Northern Colorado",
+    "conference": "BSKY",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 6,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.82
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.67
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 8,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 57.1,
+      "weighted_avg_cover_margin": 2.65
+    }
+  },
+  "Northern Illinois": {
+    "team": "Northern Illinois",
+    "conference": "MAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 3,
+        "ats_losses": 9,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.5
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.75
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 3,
+      "total_ats_losses": 11,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 21.4,
+      "weighted_avg_cover_margin": -3.68
+    }
+  },
+  "Northern Iowa": {
+    "team": "Northern Iowa",
+    "conference": "MVFC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 7,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.25
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.33
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": -0.33
+    }
+  },
+  "North Texas": {
+    "team": "North Texas",
+    "conference": "AAC",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 10,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 7.11
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 11.33
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 12,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 70.6,
+      "weighted_avg_cover_margin": 7.85
+    }
+  },
+  "Northwestern": {
+    "team": "Northwestern",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 9,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.15
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 1,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 10,
+      "total_ats_losses": 4,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 71.4,
+      "weighted_avg_cover_margin": 5.03
+    }
+  },
+  "Northwestern State": {
+    "team": "Northwestern State",
+    "conference": "SLC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.96
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -16.5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 4,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 28.6,
+      "weighted_avg_cover_margin": -8.32
+    }
+  },
+  "Notre Dame": {
+    "team": "Notre Dame",
+    "conference": "Ind",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.42
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 7.25
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 8,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 57.1,
+      "weighted_avg_cover_margin": 4.82
+    }
+  },
+  "Ohio": {
+    "team": "Ohio",
+    "conference": "MAC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.77
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 1,
+        "avg_cover_margin": -2
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": 0.4
+    }
+  },
+  "Ohio State": {
+    "team": "Ohio State",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 10,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.68
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 3,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.33
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 13,
+      "total_ats_losses": 4,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 76.5,
+      "weighted_avg_cover_margin": 3.44
+    }
+  },
+  "Oklahoma": {
+    "team": "Oklahoma",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.35
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.75
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 0.2
+    }
+  },
+  "Oklahoma State": {
+    "team": "Oklahoma State",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.12
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 6,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 42.9,
+      "weighted_avg_cover_margin": -3.17
+    }
+  },
+  "Old Dominion": {
+    "team": "Old Dominion",
+    "conference": "SBC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.92
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -12.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 2.6
+    }
+  },
+  "Ole Miss": {
+    "team": "Ole Miss",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 15,
+        "ats_wins": 9,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.3
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -8
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 9,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 52.9,
+      "weighted_avg_cover_margin": 2.85
+    }
+  },
+  "Oregon": {
+    "team": "Oregon",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 15,
+        "ats_wins": 8,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.23
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -8.17
+      }
+    },
+    "aggregate": {
+      "total_games": 18,
+      "total_ats_wins": 9,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 1.33
+    }
+  },
+  "Oregon State": {
+    "team": "Oregon State",
+    "conference": "PAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -7
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 11
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 6,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 42.9,
+      "weighted_avg_cover_margin": -4.43
+    }
+  },
+  "Penn State": {
+    "team": "Penn State",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 5,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.88
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 7,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 43.8,
+      "weighted_avg_cover_margin": -1.21
+    }
+  },
+  "Pennsylvania": {
+    "team": "Pennsylvania",
+    "conference": "IVY",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 5,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.65
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 1,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 9.5
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 6,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 54.5,
+      "weighted_avg_cover_margin": -0.64
+    }
+  },
+  "Pittsburgh": {
+    "team": "Pittsburgh",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.46
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 10
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 10,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 62.5,
+      "weighted_avg_cover_margin": 4.69
+    }
+  },
+  "Portland State": {
+    "team": "Portland State",
+    "conference": "BSKY",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.75
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 3,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.5
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 8,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -2.69
+    }
+  },
+  "Prairie View A&M": {
+    "team": "Prairie View A&M",
+    "conference": "SWAC",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 8,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 12.85
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 8.17
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 10,
+      "total_ats_losses": 3,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 76.9,
+      "weighted_avg_cover_margin": 11.77
+    }
+  },
+  "Presbyterian": {
+    "team": "Presbyterian",
+    "conference": "PFL",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 5,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.6
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -23.5
+      }
+    },
+    "aggregate": {
+      "total_games": 12,
+      "total_ats_wins": 5,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 41.7,
+      "weighted_avg_cover_margin": -3.42
+    }
+  },
+  "Princeton": {
+    "team": "Princeton",
+    "conference": "IVY",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 5,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.95
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -9.5
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 5,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 45.5,
+      "weighted_avg_cover_margin": 0.0
+    }
+  },
+  "Purdue": {
+    "team": "Purdue",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.25
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 6,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 42.9,
+      "weighted_avg_cover_margin": -3.5
+    }
+  },
+  "Rhode Island": {
+    "team": "Rhode Island",
+    "conference": "CAA",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.35
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 2,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -8
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 9,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 52.9,
+      "weighted_avg_cover_margin": -0.85
+    }
+  },
+  "Rice": {
+    "team": "Rice",
+    "conference": "AAC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 5,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.19
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": -5.5
+    }
+  },
+  "Richmond": {
+    "team": "Richmond",
+    "conference": "PAT",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 4,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.18
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 1,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -12.75
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 5,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 33.3,
+      "weighted_avg_cover_margin": -5.73
+    }
+  },
+  "Robert Morris": {
+    "team": "Robert Morris",
+    "conference": "NEC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 4,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.18
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 9
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 5,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 38.5,
+      "weighted_avg_cover_margin": -0.46
+    }
+  },
+  "Rutgers": {
+    "team": "Rutgers",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -11.67
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": -3.93
+    }
+  },
+  "Sacramento State": {
+    "team": "Sacramento State",
+    "conference": "BSKY",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.63
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": -0.5
+    }
+  },
+  "Sacred Heart": {
+    "team": "Sacred Heart",
+    "conference": "INDAA",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 6,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.5
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.83
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 8,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 57.1,
+      "weighted_avg_cover_margin": 3.57
+    }
+  },
+  "Saint Francis": {
+    "team": "Saint Francis",
+    "conference": "NEC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 5,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.95
+      }
+    },
+    "aggregate": {
+      "total_games": 11,
+      "total_ats_wins": 5,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 45.5,
+      "weighted_avg_cover_margin": -3.95
+    }
+  },
+  "Samford": {
+    "team": "Samford",
+    "conference": "SOCON",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 4,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -7.14
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 6,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 42.9,
+      "weighted_avg_cover_margin": -4.75
+    }
+  },
+  "Sam Houston": {
+    "team": "Sam Houston",
+    "conference": "CUSA",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 3,
+        "ats_losses": 9,
+        "ats_pushes": 0,
+        "avg_cover_margin": -8.08
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 9.5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 5,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 35.7,
+      "weighted_avg_cover_margin": -5.57
+    }
+  },
+  "San Diego": {
+    "team": "San Diego",
+    "conference": "PFL",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.88
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -18.5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 6,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 42.9,
+      "weighted_avg_cover_margin": -1.89
+    }
+  },
+  "San Diego State": {
+    "team": "San Diego State",
+    "conference": "MWC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 10,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": 7.38
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 10,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 66.7,
+      "weighted_avg_cover_margin": 5.6
+    }
+  },
+  "San Jos\u00e9 State": {
+    "team": "San Jos\u00e9 State",
+    "conference": "MWC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -10.58
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.67
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": -7.33
+    }
+  },
+  "SE Louisiana": {
+    "team": "SE Louisiana",
+    "conference": "SLC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.54
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.17
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": 1.27
+    }
+  },
+  "SMU": {
+    "team": "SMU",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 6,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.27
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 1,
+        "avg_cover_margin": 2.17
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 43.8,
+      "weighted_avg_cover_margin": 1.44
+    }
+  },
+  "South Alabama": {
+    "team": "South Alabama",
+    "conference": "SBC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.25
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 8.25
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -2.46
+    }
+  },
+  "South Carolina": {
+    "team": "South Carolina",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.08
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -0.07
+    }
+  },
+  "South Carolina State": {
+    "team": "South Carolina State",
+    "conference": "MEAC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 5,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.14
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.5
+      }
+    },
+    "aggregate": {
+      "total_games": 12,
+      "total_ats_wins": 5,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 41.7,
+      "weighted_avg_cover_margin": 0.92
+    }
+  },
+  "South Dakota": {
+    "team": "South Dakota",
+    "conference": "MVFC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 7,
+        "ats_pushes": 1,
+        "avg_cover_margin": -5.62
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.83
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": -3.53
+    }
+  },
+  "South Dakota State": {
+    "team": "South Dakota State",
+    "conference": "MVFC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 5,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.35
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.17
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 7,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 43.8,
+      "weighted_avg_cover_margin": -4.56
+    }
+  },
+  "Southeast Missouri State": {
+    "team": "Southeast Missouri State",
+    "conference": "OVCBS",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5.33
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.17
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": -4.3
+    }
+  },
+  "Southern": {
+    "team": "Southern",
+    "conference": "SWAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 1,
+        "ats_losses": 11,
+        "ats_pushes": 0,
+        "avg_cover_margin": -12.08
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.25
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 2,
+      "total_ats_losses": 12,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 14.3,
+      "weighted_avg_cover_margin": -11.25
+    }
+  },
+  "Southern Illinois": {
+    "team": "Southern Illinois",
+    "conference": "MVFC",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 4,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.55
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.33
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 5,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 38.5,
+      "weighted_avg_cover_margin": 2.5
+    }
+  },
+  "Southern Miss": {
+    "team": "Southern Miss",
+    "conference": "SBC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 6,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.69
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 12.25
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": 0.17
+    }
+  },
+  "Southern Utah": {
+    "team": "Southern Utah",
+    "conference": "UAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 7,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.21
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 1,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -7.37
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 8,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -0.94
+    }
+  },
+  "South Florida": {
+    "team": "South Florida",
+    "conference": "AAC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 7.85
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.25
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 9,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 60.0,
+      "weighted_avg_cover_margin": 6.97
+    }
+  },
+  "Stanford": {
+    "team": "Stanford",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.17
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -9.17
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": 1.5
+    }
+  },
+  "Stephen F. Austin": {
+    "team": "Stephen F. Austin",
+    "conference": "SLC",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 6,
+        "ats_losses": 3,
+        "ats_pushes": 1,
+        "avg_cover_margin": 5.35
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 9.33
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 8,
+      "total_ats_losses": 4,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 61.5,
+      "weighted_avg_cover_margin": 6.27
+    }
+  },
+  "Stetson": {
+    "team": "Stetson",
+    "conference": "PFL",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 3,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -8
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -11.5
+      }
+    },
+    "aggregate": {
+      "total_games": 12,
+      "total_ats_wins": 3,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 25.0,
+      "weighted_avg_cover_margin": -8.58
+    }
+  },
+  "Stonehill": {
+    "team": "Stonehill",
+    "conference": "NEC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.21
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 3,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.63
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 9,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 56.2,
+      "weighted_avg_cover_margin": 1.81
+    }
+  },
+  "Stony Brook": {
+    "team": "Stony Brook",
+    "conference": "CAA",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.04
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 1,
+        "avg_cover_margin": 10.33
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": 2.9
+    }
+  },
+  "St. Thomas (MN)": {
+    "team": "St. Thomas (MN)",
+    "conference": "PFL",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 7,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.95
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.5
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 8,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 61.5,
+      "weighted_avg_cover_margin": 6.42
+    }
+  },
+  "Syracuse": {
+    "team": "Syracuse",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.5
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.17
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 5,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 33.3,
+      "weighted_avg_cover_margin": -3.97
+    }
+  },
+  "Tarleton State": {
+    "team": "Tarleton State",
+    "conference": "UAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 7,
+        "ats_losses": 4,
+        "ats_pushes": 1,
+        "avg_cover_margin": 6.38
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.67
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 4.57
+    }
+  },
+  "TCU": {
+    "team": "TCU",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 6,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.65
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": -1.5
+    }
+  },
+  "Temple": {
+    "team": "Temple",
+    "conference": "AAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 7,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.5
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 3,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 10,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 66.7,
+      "weighted_avg_cover_margin": 4.1
+    }
+  },
+  "Tennessee": {
+    "team": "Tennessee",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 5,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.27
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.25
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": -0.67
+    }
+  },
+  "Tennessee State": {
+    "team": "Tennessee State",
+    "conference": "OVCBS",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.29
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -10.33
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 5,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 33.3,
+      "weighted_avg_cover_margin": -4.7
+    }
+  },
+  "Tennessee Tech": {
+    "team": "Tennessee Tech",
+    "conference": "OVCBS",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.17
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": -1.24
+    }
+  },
+  "Texas": {
+    "team": "Texas",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 5,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.08
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 10.75
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": -0.37
+    }
+  },
+  "Texas A&M": {
+    "team": "Texas A&M",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 5,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.54
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.33
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 7,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 43.8,
+      "weighted_avg_cover_margin": -0.69
+    }
+  },
+  "Texas Southern": {
+    "team": "Texas Southern",
+    "conference": "SWAC",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 4,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.35
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.33
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 5,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 38.5,
+      "weighted_avg_cover_margin": -0.42
+    }
+  },
+  "Texas State": {
+    "team": "Texas State",
+    "conference": "SBC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 5,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.58
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 6,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 37.5,
+      "weighted_avg_cover_margin": -0.65
+    }
+  },
+  "Texas Tech": {
+    "team": "Texas Tech",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 12,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 7.96
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 0,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -14.17
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 12,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 70.6,
+      "weighted_avg_cover_margin": 4.05
+    }
+  },
+  "The Citadel": {
+    "team": "The Citadel",
+    "conference": "SOCON",
+    "seasons": {
+      "2025": {
+        "games": 9,
+        "ats_wins": 5,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.78
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.33
+      }
+    },
+    "aggregate": {
+      "total_games": 12,
+      "total_ats_wins": 6,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 1.5
+    }
+  },
+  "Toledo": {
+    "team": "Toledo",
+    "conference": "MAC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 10,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.58
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 1,
+        "avg_cover_margin": 4.17
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 11,
+      "total_ats_losses": 4,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 68.8,
+      "weighted_avg_cover_margin": 5.32
+    }
+  },
+  "Towson": {
+    "team": "Towson",
+    "conference": "CAA",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 4,
+        "ats_losses": 6,
+        "ats_pushes": 1,
+        "avg_cover_margin": 1.95
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 6,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 46.2,
+      "weighted_avg_cover_margin": 2.57
+    }
+  },
+  "Troy": {
+    "team": "Troy",
+    "conference": "SBC",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 10,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.75
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -10.25
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 10,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 62.5,
+      "weighted_avg_cover_margin": 1.12
+    }
+  },
+  "Tulane": {
+    "team": "Tulane",
+    "conference": "AAC",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 7,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.71
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.67
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 8,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 47.1,
+      "weighted_avg_cover_margin": -1.53
+    }
+  },
+  "Tulsa": {
+    "team": "Tulsa",
+    "conference": "AAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.42
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 10.75
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 1.9
+    }
+  },
+  "UAB": {
+    "team": "UAB",
+    "conference": "AAC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.58
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.25
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 5,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 35.7,
+      "weighted_avg_cover_margin": -1.03
+    }
+  },
+  "UAlbany": {
+    "team": "UAlbany",
+    "conference": "CAA",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.75
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 3,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 13.13
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 8,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 0.47
+    }
+  },
+  "UC Davis": {
+    "team": "UC Davis",
+    "conference": "BSKY",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 5,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.55
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.83
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 6,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.2,
+      "weighted_avg_cover_margin": -2.31
+    }
+  },
+  "UCF": {
+    "team": "UCF",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.96
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 12.75
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 6,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 42.9,
+      "weighted_avg_cover_margin": 1.0
+    }
+  },
+  "UCLA": {
+    "team": "UCLA",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 11.5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 6,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 42.9,
+      "weighted_avg_cover_margin": -3.5
+    }
+  },
+  "UConn": {
+    "team": "UConn",
+    "conference": "Ind",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 8,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.88
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 8.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 9,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 60.0,
+      "weighted_avg_cover_margin": 2.76
+    }
+  },
+  "UL Monroe": {
+    "team": "UL Monroe",
+    "conference": "SBC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 4,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": -7.83
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -10.17
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 5,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 33.3,
+      "weighted_avg_cover_margin": -8.3
+    }
+  },
+  "UNLV": {
+    "team": "UNLV",
+    "conference": "MWC",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 7,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.61
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -13.17
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 8,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 47.1,
+      "weighted_avg_cover_margin": -1.0
+    }
+  },
+  "USC": {
+    "team": "USC",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 5,
+        "ats_losses": 8,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.88
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 1,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -7.62
+      }
+    },
+    "aggregate": {
+      "total_games": 17,
+      "total_ats_wins": 6,
+      "total_ats_losses": 11,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 35.3,
+      "weighted_avg_cover_margin": -0.36
+    }
+  },
+  "Utah": {
+    "team": "Utah",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 9,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 8.54
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 3,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 14
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 12,
+      "total_ats_losses": 4,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 75.0,
+      "weighted_avg_cover_margin": 9.56
+    }
+  },
+  "Utah State": {
+    "team": "Utah State",
+    "conference": "MWC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 10,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.46
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.33
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 11,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 68.8,
+      "weighted_avg_cover_margin": 3.19
+    }
+  },
+  "Utah Tech": {
+    "team": "Utah Tech",
+    "conference": "UAC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 5,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.14
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.5
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 6,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 42.9,
+      "weighted_avg_cover_margin": -0.86
+    }
+  },
+  "UTEP": {
+    "team": "UTEP",
+    "conference": "CUSA",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 3,
+        "ats_losses": 9,
+        "ats_pushes": 0,
+        "avg_cover_margin": -2.5
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.17
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 4,
+      "total_ats_losses": 11,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 26.7,
+      "weighted_avg_cover_margin": -1.77
+    }
+  },
+  "UT Martin": {
+    "team": "UT Martin",
+    "conference": "OVCBS",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.37
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -7
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 6,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 42.9,
+      "weighted_avg_cover_margin": -1.32
+    }
+  },
+  "UT Rio Grande Valley": {
+    "team": "UT Rio Grande Valley",
+    "conference": "SLC",
+    "seasons": {
+      "2025": {
+        "games": 4,
+        "ats_wins": 3,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.5
+      }
+    },
+    "aggregate": {
+      "total_games": 6,
+      "total_ats_wins": 3,
+      "total_ats_losses": 3,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 2.5
+    }
+  },
+  "UTSA": {
+    "team": "UTSA",
+    "conference": "AAC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.23
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.5
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 9,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 60.0,
+      "weighted_avg_cover_margin": 4.13
+    }
+  },
+  "Valparaiso": {
+    "team": "Valparaiso",
+    "conference": "PFL",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 4,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.3
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.5
+      }
+    },
+    "aggregate": {
+      "total_games": 12,
+      "total_ats_wins": 5,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 41.7,
+      "weighted_avg_cover_margin": -2.33
+    }
+  },
+  "Vanderbilt": {
+    "team": "Vanderbilt",
+    "conference": "SEC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 10,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": 9.08
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -7
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 11,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 68.8,
+      "weighted_avg_cover_margin": 6.07
+    }
+  },
+  "Villanova": {
+    "team": "Villanova",
+    "conference": "CAA",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 8,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.13
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 0,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": -14.75
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 8,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 0.16
+    }
+  },
+  "Virginia": {
+    "team": "Virginia",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 9,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.82
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 15.5
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 11,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 68.8,
+      "weighted_avg_cover_margin": 6.16
+    }
+  },
+  "Virginia Tech": {
+    "team": "Virginia Tech",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 3,
+        "ats_losses": 9,
+        "ats_pushes": 0,
+        "avg_cover_margin": -6.33
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 10.25
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 5,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 35.7,
+      "weighted_avg_cover_margin": -3.96
+    }
+  },
+  "VMI": {
+    "team": "VMI",
+    "conference": "SOCON",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 5,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -9.14
+      },
+      "2026": {
+        "games": 4,
+        "ats_wins": 1,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -4.62
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": -7.93
+    }
+  },
+  "Wagner": {
+    "team": "Wagner",
+    "conference": "NEC",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 7,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.86
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -16.17
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 8,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 57.1,
+      "weighted_avg_cover_margin": -1.22
+    }
+  },
+  "Wake Forest": {
+    "team": "Wake Forest",
+    "conference": "ACC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 9,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.65
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.33
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 10,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 62.5,
+      "weighted_avg_cover_margin": 4.65
+    }
+  },
+  "Washington": {
+    "team": "Washington",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.5
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 0,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -17.75
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": 3.27
+    }
+  },
+  "Washington State": {
+    "team": "Washington State",
+    "conference": "PAC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 9,
+        "ats_losses": 4,
+        "ats_pushes": 0,
+        "avg_cover_margin": 6.38
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.83
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 11,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 68.8,
+      "weighted_avg_cover_margin": 5.34
+    }
+  },
+  "Weber State": {
+    "team": "Weber State",
+    "conference": "BSKY",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 2,
+        "ats_losses": 10,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.92
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 3,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 7
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 5,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 33.3,
+      "weighted_avg_cover_margin": -1.74
+    }
+  },
+  "Western Carolina": {
+    "team": "Western Carolina",
+    "conference": "SOCON",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 6,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.86
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 2,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 5.33
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 8,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 57.1,
+      "weighted_avg_cover_margin": 1.82
+    }
+  },
+  "Western Illinois": {
+    "team": "Western Illinois",
+    "conference": "OVCBS",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": 1.38
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2.75
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 1.58
+    }
+  },
+  "Western Kentucky": {
+    "team": "Western Kentucky",
+    "conference": "CUSA",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 10,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": 3.77
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -12.33
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 11,
+      "total_ats_losses": 5,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 68.8,
+      "weighted_avg_cover_margin": 0.75
+    }
+  },
+  "Western Michigan": {
+    "team": "Western Michigan",
+    "conference": "MAC",
+    "seasons": {
+      "2025": {
+        "games": 14,
+        "ats_wins": 11,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": 8.75
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 2,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 16.5
+      }
+    },
+    "aggregate": {
+      "total_games": 16,
+      "total_ats_wins": 13,
+      "total_ats_losses": 3,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 81.2,
+      "weighted_avg_cover_margin": 9.72
+    }
+  },
+  "West Georgia": {
+    "team": "West Georgia",
+    "conference": "UAC",
+    "seasons": {
+      "2025": {
+        "games": 10,
+        "ats_wins": 5,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.65
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -9.83
+      }
+    },
+    "aggregate": {
+      "total_games": 13,
+      "total_ats_wins": 6,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.2,
+      "weighted_avg_cover_margin": 1.31
+    }
+  },
+  "West Virginia": {
+    "team": "West Virginia",
+    "conference": "B12",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -3.42
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -5.25
+      }
+    },
+    "aggregate": {
+      "total_games": 14,
+      "total_ats_wins": 7,
+      "total_ats_losses": 7,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": -3.68
+    }
+  },
+  "William & Mary": {
+    "team": "William & Mary",
+    "conference": "CAA",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -0.17
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 0.83
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 6,
+      "total_ats_losses": 9,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 40.0,
+      "weighted_avg_cover_margin": 0.03
+    }
+  },
+  "Wisconsin": {
+    "team": "Wisconsin",
+    "conference": "B1G",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 6,
+        "ats_losses": 6,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.83
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 7,
+      "total_ats_losses": 8,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 46.7,
+      "weighted_avg_cover_margin": -1.66
+    }
+  },
+  "Wofford": {
+    "team": "Wofford",
+    "conference": "SOCON",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 10,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 8.92
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 1,
+        "ats_losses": 2,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 11,
+      "total_ats_losses": 4,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 73.3,
+      "weighted_avg_cover_margin": 7.54
+    }
+  },
+  "Wyoming": {
+    "team": "Wyoming",
+    "conference": "MWC",
+    "seasons": {
+      "2025": {
+        "games": 12,
+        "ats_wins": 5,
+        "ats_losses": 7,
+        "ats_pushes": 0,
+        "avg_cover_margin": -1.33
+      },
+      "2026": {
+        "games": 3,
+        "ats_wins": 0,
+        "ats_losses": 3,
+        "ats_pushes": 0,
+        "avg_cover_margin": -16.83
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 5,
+      "total_ats_losses": 10,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 33.3,
+      "weighted_avg_cover_margin": -4.43
+    }
+  },
+  "Yale": {
+    "team": "Yale",
+    "conference": "IVY",
+    "seasons": {
+      "2025": {
+        "games": 11,
+        "ats_wins": 6,
+        "ats_losses": 5,
+        "ats_pushes": 0,
+        "avg_cover_margin": 4.14
+      },
+      "2026": {
+        "games": 1,
+        "ats_wins": 0,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": -11
+      }
+    },
+    "aggregate": {
+      "total_games": 12,
+      "total_ats_wins": 6,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 2.88
+    }
+  },
+  "Youngstown State": {
+    "team": "Youngstown State",
+    "conference": "MVFC",
+    "seasons": {
+      "2025": {
+        "games": 13,
+        "ats_wins": 7,
+        "ats_losses": 5,
+        "ats_pushes": 1,
+        "avg_cover_margin": 2.92
+      },
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 12.25
+      }
+    },
+    "aggregate": {
+      "total_games": 15,
+      "total_ats_wins": 8,
+      "total_ats_losses": 6,
+      "total_ats_pushes": 1,
+      "ats_win_pct": 53.3,
+      "weighted_avg_cover_margin": 4.16
+    }
+  },
+  "Chicago State": {
+    "team": "Chicago State",
+    "conference": "INDAA",
+    "seasons": {
+      "2026": {
+        "games": 2,
+        "ats_wins": 1,
+        "ats_losses": 1,
+        "ats_pushes": 0,
+        "avg_cover_margin": 2
+      }
+    },
+    "aggregate": {
+      "total_games": 2,
+      "total_ats_wins": 1,
+      "total_ats_losses": 1,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 50.0,
+      "weighted_avg_cover_margin": 2.0
+    }
+  },
+  "West Florida": {
+    "team": "West Florida",
+    "conference": "UAC",
+    "seasons": {
+      "2026": {
+        "games": 1,
+        "ats_wins": 1,
+        "ats_losses": 0,
+        "ats_pushes": 0,
+        "avg_cover_margin": 35.5
+      }
+    },
+    "aggregate": {
+      "total_games": 1,
+      "total_ats_wins": 1,
+      "total_ats_losses": 0,
+      "total_ats_pushes": 0,
+      "ats_win_pct": 100.0,
+      "weighted_avg_cover_margin": 35.5
+    }
+  }
+}
