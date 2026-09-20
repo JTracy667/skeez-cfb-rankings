@@ -3107,6 +3107,8 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             "line_source": market_odds.get("source"),
             # Compare model differential to market line (both + = home favorite)
             "line_vs_model": round(diff + (market_odds.get("spread") or 0), 1) if market_odds.get("spread") is not None else None,
+            "spread_stars": (5 if abs(round(diff + (market_odds.get("spread") or 0), 1)) >= 7.0 else (3 if abs(round(diff + (market_odds.get("spread") or 0), 1)) >= 3.5 else 0)) if market_odds.get("spread") is not None else 0,
+            "total_stars": 3 if (total_vs_model is not None and abs(total_vs_model) >= 4.0) else 0,
             # Over/under projection
             "model_total": model_total,
             "total_vs_model": total_vs_model,
@@ -3486,14 +3488,84 @@ def _fetch_final_scores(year: int = CFBD_YEAR) -> dict:
     return finals
 
 
+def _fetch_closing_lines_map(year: int = CFBD_YEAR) -> dict:
+    """Fetch closing lines from CFBD /lines and map (home_norm, away_norm) -> (spread, total)."""
+    try:
+        url = f"{CFBD_BASE}/lines"
+        params = {"year": year}
+        data = _http_get(url, params=params, headers=CFBD_HEADERS, retries=2, base_delay=0.5)
+        out = {}
+        for g in (data or []):
+            h = _norm_key_name(g.get("homeTeam", ""))
+            a = _norm_key_name(g.get("awayTeam", ""))
+            if not h or not a:
+                continue
+            spread = None
+            total = None
+            for prov in ("DraftKings", "Draft Kings", "Bovada"):
+                for l in g.get("lines", []):
+                    if l.get("provider") == prov:
+                        if spread is None and l.get("spread") is not None:
+                            spread = float(l["spread"])
+                        if total is None and l.get("overUnder") is not None:
+                            total = float(l["overUnder"])
+                    if spread is not None and total is not None:
+                        break
+                if spread is not None and total is not None:
+                    break
+            if spread is not None or total is not None:
+                out[(h, a)] = {"spread": spread, "total": total}
+        return out
+    except Exception as e:
+        print(f"[closing lines fetch failed] {e}")
+        return {}
+
+
 def _ingest_results() -> int:
     """Grade any locked picks that now have final scores. Returns # newly graded."""
     record = _load_record()
     finals = _fetch_final_scores()
     if not finals:
         return 0
+    closing_map = _fetch_closing_lines_map()
+    t_map = _build_team_map()
     graded = {r.get("key") for r in record.get("results", [])}
     newly = 0
+
+    # 1. Regrade existing results that were missing ATS or Total lines
+    for r in record.get("results", []):
+        h_norm = _norm_key_name(r.get("home", ""))
+        a_norm = _norm_key_name(r.get("away", ""))
+        cl = closing_map.get((h_norm, a_norm), {})
+        hs = r.get("home_score")
+        as_ = r.get("away_score")
+        if hs is None or as_ is None:
+            continue
+            
+        if r.get("ats_result") is None and (r.get("spread") is not None or cl.get("spread") is not None):
+            spread = r.get("spread") if r.get("spread") is not None else cl.get("spread")
+            ats_pick = r.get("ats_pick")
+            if not ats_pick and r.get("home") in t_map and r.get("away") in t_map:
+                h2h = project_head_to_head(t_map[r["home"]], t_map[r["away"]])
+                ats_side = _ats_side(h2h["differential"], spread)
+                ats_pick = r["home"] if ats_side == "home" else (r["away"] if ats_side == "away" else None)
+            if spread is not None and ats_pick:
+                r["spread"] = spread
+                r["ats_pick"] = ats_pick
+                r["ats_result"] = _grade_ats(ats_pick, r["home"], r["away"], spread, hs, as_)
+                
+        if r.get("total_result") is None and (r.get("total") is not None or cl.get("total") is not None):
+            total = r.get("total") if r.get("total") is not None else cl.get("total")
+            over_pick = r.get("over_pick")
+            if not over_pick and r.get("home") in t_map and r.get("away") in t_map:
+                h2h = project_head_to_head(t_map[r["home"]], t_map[r["away"]])
+                over_pick = "over" if h2h["total"] > total else ("under" if h2h["total"] < total else None)
+            if total is not None and over_pick:
+                r["total"] = total
+                r["over_pick"] = over_pick
+                r["total_result"] = _grade_total(over_pick, total, hs, as_)
+
+    # 2. Grade any newly completed picks
     for p in record.get("picks", []):
         if p.get("key") in graded:
             continue
@@ -3506,26 +3578,40 @@ def _ingest_results() -> int:
             home_score, away_score = g["home_score"], g["away_score"]
         else:
             home_score, away_score = g["away_score"], g["home_score"]
-        su = _grade_su(p.get("su_pick"), p.get("home"), p.get("away"), home_score, away_score)
-        ats = None
-        if p.get("spread") is not None and p.get("ats_pick") is not None:
-            ats = _grade_ats(p.get("ats_pick"), p.get("home"), p.get("away"),
-                             p["spread"], home_score, away_score)
-        total_res = None
-        if p.get("total") is not None and p.get("over_pick") is not None:
-            total_res = _grade_total(p.get("over_pick"), p["total"], home_score, away_score)
+            
+        cl_key = (_norm_key_name(p.get("home", "")), _norm_key_name(p.get("away", "")))
+        cl = closing_map.get(cl_key, {})
+        spread = p.get("spread") if p.get("spread") is not None else cl.get("spread")
+        total = p.get("total") if p.get("total") is not None else cl.get("total")
+        
+        su_pick = p.get("su_pick")
+        ats_pick = p.get("ats_pick")
+        over_pick = p.get("over_pick")
+        
+        if (not ats_pick or not over_pick) and p.get("home") in t_map and p.get("away") in t_map:
+            h2h = project_head_to_head(t_map[p["home"]], t_map[p["away"]])
+            if not ats_pick and spread is not None:
+                side = _ats_side(h2h["differential"], spread)
+                ats_pick = p["home"] if side == "home" else (p["away"] if side == "away" else None)
+            if not over_pick and total is not None:
+                over_pick = "over" if h2h["total"] > total else ("under" if h2h["total"] < total else None)
+
+        su = _grade_su(su_pick, p.get("home"), p.get("away"), home_score, away_score)
+        ats = _grade_ats(ats_pick, p.get("home"), p.get("away"), spread, home_score, away_score) if (spread is not None and ats_pick) else None
+        total_res = _grade_total(over_pick, total, home_score, away_score) if (total is not None and over_pick) else None
+        
         record["results"].append({
             "key": p.get("key"),
             "week": p.get("week"),
             "home": p.get("home"), "away": p.get("away"),
             "home_score": home_score, "away_score": away_score,
-            "su_pick": p.get("su_pick"), "ats_pick": p.get("ats_pick"),
-            "spread": p.get("spread"), "total": p.get("total"),
-            "over_pick": p.get("over_pick"),
+            "su_pick": su_pick, "ats_pick": ats_pick,
+            "spread": spread, "total": total,
+            "over_pick": over_pick,
             "su_result": su, "ats_result": ats, "total_result": total_res,
         })
         newly += 1
-    if newly:
+    if newly or record.get("results"):
         _save_record(record)
     return newly
 
@@ -3542,6 +3628,7 @@ def api_record():
     su = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
     ats = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
     total_rec = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
+    stars_rec = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
     for r in record.get("results", []):
         for bucket, field in ((su, "su_result"), (ats, "ats_result"), (total_rec, "total_result")):
             v = r.get(field)
@@ -3551,6 +3638,18 @@ def api_record():
                 bucket["losses"] += 1; bucket["graded"] += 1
             elif v == "push":
                 bucket["pushes"] += 1
+        # Track star plays (high-confidence totals >= 4.0 or spreads >= 3.5)
+        tot_res = r.get("total_result")
+        ats_res = r.get("ats_result")
+        if tot_res in ("W", "L") and r.get("total") is not None:
+            # Check if this total was a star pick
+            if r.get("total_stars", 0) >= 3 or abs((r.get("model_total") or 50) - (r.get("total") or 50)) >= 4.0:
+                if tot_res == "W": stars_rec["wins"] += 1; stars_rec["graded"] += 1
+                elif tot_res == "L": stars_rec["losses"] += 1; stars_rec["graded"] += 1
+        elif ats_res in ("W", "L") and r.get("spread") is not None:
+            if r.get("spread_stars", 0) >= 3 or abs((r.get("differential") or 0) + (r.get("spread") or 0)) >= 3.5:
+                if ats_res == "W": stars_rec["wins"] += 1; stars_rec["graded"] += 1
+                elif ats_res == "L": stars_rec["losses"] += 1; stars_rec["graded"] += 1
     return {
         "season": record.get("season"),
         "updated": record.get("updated"),
@@ -3559,9 +3658,11 @@ def api_record():
         "su": su,
         "ats": ats,
         "total": total_rec,
+        "stars": stars_rec,
         "su_str": f"{su['wins']}-{su['losses']}" + (f"-{su['pushes']}" if su['pushes'] else ""),
         "ats_str": f"{ats['wins']}-{ats['losses']}" + (f"-{ats['pushes']}" if ats['pushes'] else ""),
         "total_str": f"{total_rec['wins']}-{total_rec['losses']}" + (f"-{total_rec['pushes']}" if total_rec['pushes'] else ""),
+        "stars_str": f"{stars_rec['wins']}-{stars_rec['losses']}" + (f"-{stars_rec['pushes']}" if stars_rec['pushes'] else ""),
     }
 
 

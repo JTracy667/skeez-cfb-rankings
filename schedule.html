@@ -75,7 +75,11 @@ nav a.active{color:var(--accent)}
 .sp-val{font-weight:600}
 .sp-val.high{color:var(--up)}
 .sp-val.low{color:var(--down)}
-.summary-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem}
+.summary-row{display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:0.75rem;margin-bottom:1.5rem}
+.star-badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;font-size:0.75rem;font-weight:800;margin-top:3px;letter-spacing:0.02em}
+.star-badge.five-star{background:rgba(245,158,11,0.22);color:#fbbf24;border:1px solid rgba(245,158,11,0.5);box-shadow:0 0 10px rgba(245,158,11,0.2)}
+.star-badge.three-star{background:rgba(59,130,246,0.2);color:#93c5fd;border:1px solid rgba(59,130,246,0.4)}
+.star-badge.total-star{background:rgba(16,185,129,0.2);color:#6ee7b7;border:1px solid rgba(16,185,129,0.4)}
 .summary-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center}
 .summary-card .val{font-size:1.75rem;font-weight:800;color:var(--accent)}
 .summary-card .label{font-size:.75rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:.25rem}
@@ -205,6 +209,7 @@ nav a.active{color:var(--accent)}
   <div class="controls">
     <input type="text" class="search-box" id="searchBox" placeholder="Search teams...">
     <button class="filter-btn active" data-conf="all">All</button>
+    <button class="filter-btn" data-conf="stars" style="color:#fbbf24;font-weight:700">⭐ Star Plays Only</button>
     <button class="filter-btn" data-conf="SEC">SEC</button>
     <button class="filter-btn" data-conf="Big Ten">Big Ten</button>
     <button class="filter-btn" data-conf="Big 12">Big 12</button>
@@ -379,10 +384,13 @@ function renderSummary(data) {
     const su = rec.su_str || '0-0';
     const ats = rec.ats_str || '0-0';
     const tot = rec.total_str || '0-0';
-    document.getElementById('suCard').innerHTML = `<div class="val ${rec.su.wins > rec.su.losses ? 'good' : ''}">${su}</div><div class="label">Straight-Up</div>`;
-    document.getElementById('atsCard').innerHTML = `<div class="val ${rec.ats.wins > rec.ats.losses ? 'good' : ''}">${ats}</div><div class="label">ATS</div>`;
+    const stars = rec.stars_str || '0-0';
+    document.getElementById('suCard').innerHTML = `<div class="val ${rec.su && rec.su.wins > rec.su.losses ? 'good' : ''}">${su}</div><div class="label">Straight-Up</div>`;
+    document.getElementById('atsCard').innerHTML = `<div class="val ${rec.ats && rec.ats.wins > rec.ats.losses ? 'good' : ''}">${ats}</div><div class="label">ATS</div>`;
     const totCard = document.getElementById('totalCard');
     if (totCard) totCard.innerHTML = `<div class="val ${rec.total && rec.total.wins > rec.total.losses ? 'good' : ''}">${tot}</div><div class="label">O/U</div>`;
+    const starsCard = document.getElementById('starsCard');
+    if (starsCard) starsCard.innerHTML = `<div class="val ${rec.stars && rec.stars.wins > rec.stars.losses ? 'good' : ''}">${stars}</div><div class="label">⭐ Star Plays</div>`;
   }).catch(() => {});
   document.getElementById('summaryRow').innerHTML = `
     <div class="summary-card"><div class="val">${m.length}</div><div class="label">Matchups</div></div>
@@ -391,6 +399,7 @@ function renderSummary(data) {
     <div class="summary-card record" id="suCard"><div class="val">…</div><div class="label">Straight-Up</div></div>
     <div class="summary-card record" id="atsCard"><div class="val">…</div><div class="label">ATS</div></div>
     <div class="summary-card record" id="totalCard"><div class="val">…</div><div class="label">O/U</div></div>
+    <div class="summary-card record" id="starsCard"><div class="val">…</div><div class="label">⭐ Star Plays</div></div>
   `;
 }
 
@@ -457,6 +466,14 @@ function matchupMetaBarHtml(m) {
   if (m.over_pick) {
     const cls = m.over_pick === 'over' ? 'up' : 'down';
     parts.push(`<div class="ou-pick ${cls}">Model ${m.model_total} → ${m.over_pick.toUpperCase()} ${m.line_total} (${m.total_vs_model > 0 ? '+' : ''}${m.total_vs_model})</div>`);
+  }
+  if (m.spread_stars >= 5) {
+    parts.push(`<div class="star-badge five-star">⭐⭐⭐⭐⭐ 5-STAR SPREAD (${m.ats_pick || 'Fav'})</div>`);
+  } else if (m.spread_stars >= 3) {
+    parts.push(`<div class="star-badge three-star">⭐⭐⭐ 3-STAR SPREAD (${m.ats_pick || 'Fav'})</div>`);
+  }
+  if (m.total_stars >= 3) {
+    parts.push(`<div class="star-badge total-star">⭐⭐⭐ 3-STAR TOTAL (${m.over_pick ? m.over_pick.toUpperCase() : 'O/U'} ${m.line_total || ''})</div>`);
   }
   if (!parts.length) return '';
   return `<div class="matchup-meta-bar">${parts.join('')}</div>`;
@@ -583,7 +600,9 @@ function weatherTagHtml(m) {
 
 function renderMatchups() {
   let data = [...matchups];
-  if (activeConf !== 'all') {
+  if (activeConf === 'stars') {
+    data = data.filter(m => (m.spread_stars && m.spread_stars >= 3) || (m.total_stars && m.total_stars >= 3) || m.is_star_pick);
+  } else if (activeConf !== 'all') {
     data = data.filter(m => m.home_conf === activeConf || m.away_conf === activeConf);
   }
   if (searchQuery) {
