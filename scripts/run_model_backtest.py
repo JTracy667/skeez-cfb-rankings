@@ -1,6 +1,6 @@
 """
 run_model_backtest.py
-True point-in-time walk-forward backtest harness for cfb-power-rankings.
+Strict point-in-time walk-forward backtest harness for cfb-power-rankings.
 Evaluates model projections against verified closing spreads and totals from CFBD (/lines).
 
 Enforces:
@@ -8,11 +8,11 @@ Enforces:
      - Captures closing_timestamp (ISO 8601 UTC kickoff freeze time) on every game row.
      - Explicit provider hierarchy: DraftKings (primary) -> Bovada (secondary).
      - Records closing_spread, spread_open, closing_total, total_open, and line_source.
-  2. True Point-in-Time Walk-Forward Isolation:
-     - Reconstructs pre-kickoff team power dynamically per game week.
-     - Week 1 strictly uses pre-season priors (247 Talent Composite, Recruiting Rank, Returning PPA, Preseason ratings).
-     - Weeks 2-4 progressively scale in-season efficiency by sample size (shrinkage = (week-1)/6.0),
-       preventing full-season or future stats from leaking into earlier projections.
+  2. True Point-in-Time Data Reconstruction (Zero Future Leakage):
+     - Loads frozen pre-season snapshot (data/cfbd_analytics_preseason.json) for baseline priors.
+     - Fetches and aggregates weekly game-level efficiency stats strictly from prior weeks (past_wk < week).
+     - Week 1 uses strictly pre-season priors (0 in-season stats existed before kickoff).
+     - Weeks 2-4 only ingest stats from completed prior games, with zero future-week data leakage.
   3. FCS / Unrated Veto:
      - Non-FBS programs with sp_plus == 0 are strictly excluded from star betting tiers.
 
@@ -33,67 +33,92 @@ DATA_DIR = ROOT_DIR / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 FIXTURE_FILE = DATA_DIR / "backtest_fixture_2026.json"
 SUMMARY_FILE = DATA_DIR / "backtest_summary.json"
+PRESEASON_FILE = DATA_DIR / "cfbd_analytics_preseason.json"
 
 PROVIDER_PREFERENCE = ("DraftKings", "Draft Kings", "Bovada")
 
-def project_point_in_time(team_data: dict, week: int, is_home: bool = False) -> dict:
+def build_weekly_stats_cache(client, weeks=(1, 2, 3)) -> dict:
+    """Pre-fetch weekly game-level advanced stats for past completed weeks."""
+    weekly_stats = {}
+    for wk in weeks:
+        url = f"{app.CFBD_BASE}/stats/game/advanced?year=2026&week={wk}"
+        try:
+            resp = client.get(url, headers=app.CFBD_HEADERS)
+            if resp.status_code == 200:
+                weekly_stats[wk] = resp.json()
+            else:
+                weekly_stats[wk] = []
+        except Exception as e:
+            print(f"[Warning] Failed to fetch week {wk} game stats: {e}")
+            weekly_stats[wk] = []
+    return weekly_stats
+
+def reconstruct_pit_team_data(preseason_map: dict, weekly_stats: dict, team_name: str, week: int) -> dict:
     """
-    Point-in-time score projection strictly using data available prior to kickoff of `week`.
-    Walk-forward shrinkage: at week 1, shrinkage = 0.0 (100% pre-season priors/anchors).
-    In-season efficiency is only weighted as games accumulate, preventing future leakage.
+    Reconstructs team data strictly as it existed prior to kickoff of `week`.
+    Week 1: 100% frozen preseason ratings (no in-season stats).
+    Week > 1: Ingests only completed game stats from prior weeks (past_wk < week).
     """
-    shrinkage = min(1.0, max(0.0, (week - 1) / 6.0))
-    
-    classification = (team_data.get("classification") or "").upper()
-    has_ratings = bool(team_data.get("sp_plus") or team_data.get("elo"))
-    if not has_ratings and classification == "FCS":
-        return {"projected_score": 13.6 + (2.5 if is_home else -1.5), "composite": 16.0}
+    base = dict(preseason_map.get(team_name, {}))
+    if not base:
+        return {}
         
-    sp_norm = max(0, min(100, (float(team_data.get("sp_plus") or 0.0) + 40) / 80 * 100))
-    fpi_norm = max(0, min(100, float(team_data.get("fpi_win_prob") or 50.0)))
-    srs_norm = max(0, min(100, (float(team_data.get("srs") or 0.0) + 25) / 50 * 100))
-    elo_norm = max(0, min(100, (float(team_data.get("elo") or 1500) - 1500) / 300 * 100 + 50))
-    
-    talent_score = team_data.get("talent_score")
-    rec_norm = max(0, min(100, (130 - float(team_data.get("recruiting_rank") or 80)) / 129 * 100))
-    if talent_score:
-        talent_comp_norm = max(0, min(100, (float(talent_score) - 250) / 750 * 100))
-        prog_talent = talent_comp_norm * 0.70 + rec_norm * 0.30
-    else:
-        prog_talent = rec_norm
-    pct_ret = team_data.get("pct_ppa_returning")
-    ret_norm = max(0, min(100, float(pct_ret if pct_ret is not None else 50.0)))
-    talent_norm = prog_talent * 0.60 + ret_norm * 0.40
-    
-    # Pre-season baseline composite (63% anchors + priors normalized to 100%)
-    prior_comp = (sp_norm * 0.18 + fpi_norm * 0.15 + srs_norm * 0.12 + elo_norm * 0.08 + talent_norm * 0.10) / 0.63
-    
-    # In-season efficiency (only blended as games accumulate)
-    eff_norm = 50.0
-    if shrinkage > 0.0:
-        off_sr = team_data.get("off_success_rate")
-        def_sr = team_data.get("def_success_rate")
-        sr_norm = max(0, min(100, (float(off_sr) - float(def_sr) + 0.20) / 0.40 * 100)) if (off_sr and def_sr) else 50.0
-        epa = float(team_data.get("epa_play") or 0.0)
-        def_epa = float(team_data.get("def_epa_play") or 0.0)
-        epa_norm = max(0, min(100, (epa - def_epa + 0.40) / 0.80 * 100))
-        eff_norm = sr_norm * 0.55 + epa_norm * 0.45
-        
-    composite = prior_comp * (1.0 - 0.37 * shrinkage) + eff_norm * (0.37 * shrinkage)
-    base_score = max(6.0, 27.0 + (composite - 50.0) * 0.55)
-    home_adj = 2.5 if is_home else -1.5
-    return {"projected_score": round(base_score + home_adj, 1), "composite": round(composite, 1)}
+    if week == 1:
+        base["off_success_rate"] = None
+        base["def_success_rate"] = None
+        base["epa_play"] = 0.0
+        base["def_epa_play"] = 0.0
+        return base
+
+    off_sr_list = []
+    def_sr_list = []
+    epa_list = []
+    def_epa_list = []
+
+    for past_wk in range(1, week):
+        for entry in weekly_stats.get(past_wk, []):
+            if entry.get("team") == team_name:
+                off = entry.get("offense", {})
+                df = entry.get("defense", {})
+                if off.get("successRate") is not None:
+                    off_sr_list.append(off["successRate"])
+                if df.get("successRate") is not None:
+                    def_sr_list.append(df["successRate"])
+                if off.get("ppa") is not None:
+                    epa_list.append(off["ppa"])
+                if df.get("ppa") is not None:
+                    def_epa_list.append(df["ppa"])
+
+    if off_sr_list:
+        base["off_success_rate"] = sum(off_sr_list) / len(off_sr_list)
+    if def_sr_list:
+        base["def_success_rate"] = sum(def_sr_list) / len(def_sr_list)
+    if epa_list:
+        base["epa_play"] = sum(epa_list) / len(epa_list)
+    if def_epa_list:
+        base["def_epa_play"] = sum(def_epa_list) / len(def_epa_list)
+
+    return base
 
 def run_backtest(year: int = 2026) -> dict:
     client = app.httpx.Client(timeout=20)
-    team_map = app._build_team_map()
-    talent_map = app._cfbd_talent()
     
-    # Enrich team_map with 247 Team Talent Composite
-    for name, data in team_map.items():
+    # 1. Load frozen pre-season baseline
+    if not PRESEASON_FILE.exists():
+        raise RuntimeError("Missing data/cfbd_analytics_preseason.json")
+    with open(PRESEASON_FILE, "r", encoding="utf-8") as f:
+        preseason_list = json.load(f)
+    preseason_map = {t["name"]: t for t in preseason_list}
+    
+    # Enrich with 247 Team Talent Composite
+    talent_map = app._cfbd_talent()
+    for name, data in preseason_map.items():
         if name in talent_map:
             data["talent_score"] = talent_map[name].get("talent")
-    
+
+    # 2. Cache prior-week game stats for point-in-time reconstruction
+    weekly_game_stats = build_weekly_stats_cache(client, weeks=(1, 2, 3))
+
     print(f"[Backtest] Loading CFBD closing lines and game scores for {year}...")
     url = f"{app.CFBD_BASE}/lines?year={year}"
     resp = client.get(url, headers=app.CFBD_HEADERS)
@@ -110,6 +135,12 @@ def run_backtest(year: int = 2026) -> dict:
         "tier_3_5star_7pt": {"min_edge": 7.0, "w": 0, "l": 0, "p": 0},
     }
     
+    totals_tiers = {
+        "all_totals": {"min_edge": 0.5, "w": 0, "l": 0, "p": 0},
+        "totals_3star_4pt": {"min_edge": 4.0, "w": 0, "l": 0, "p": 0},
+        "totals_5star_7pt": {"min_edge": 7.0, "w": 0, "l": 0, "p": 0},
+    }
+    
     by_week = {}
 
     for g in games_raw:
@@ -120,17 +151,16 @@ def run_backtest(year: int = 2026) -> dict:
         wk = g.get("week")
         kickoff = g.get("startDate")
         
-        # Must be a completed game
+        # Must be completed
         if h_score is None or a_score is None:
             continue
-        if h_name not in team_map or a_name not in team_map:
+            
+        home_pit = reconstruct_pit_team_data(preseason_map, weekly_game_stats, h_name, wk)
+        away_pit = reconstruct_pit_team_data(preseason_map, weekly_game_stats, a_name, wk)
+        if not home_pit or not away_pit:
             continue
             
-        home_team = team_map[h_name]
-        away_team = team_map[a_name]
-        
-        # CFO VETO: Exclude FCS / unrated teams (sp_plus == 0) from star betting tiers
-        is_fbs_matchup = (home_team.get("sp_plus", 0) != 0 and away_team.get("sp_plus", 0) != 0)
+        is_fbs_matchup = (home_pit.get("sp_plus", 0) != 0 and away_pit.get("sp_plus", 0) != 0)
 
         # 1. Closing-line selection rule with strict timestamp and provider provenance
         line_chosen = None
@@ -151,11 +181,10 @@ def run_backtest(year: int = 2026) -> dict:
         total_open = float(line_chosen["overUnderOpen"]) if line_chosen.get("overUnderOpen") is not None else None
         provider = line_chosen.get("provider")
 
-        # 2. Point-in-time model projection using strictly pre-kickoff ratings for week `wk`
-        hp = project_point_in_time(home_team, wk, is_home=True)
-        ap_ = project_point_in_time(away_team, wk, is_home=False)
-        model_spread = round(hp["projected_score"] - ap_["projected_score"], 1)
-        model_total = round(hp["projected_score"] + ap_["projected_score"], 1)
+        # 2. Model projection strictly using reconstructed point-in-time team data
+        h2h = app.project_head_to_head(home_pit, away_pit)
+        model_spread = h2h["differential"] # home_proj - away_proj
+        model_total = h2h["total"]
         
         # Book expected home margin is -spread (e.g. -7.0 spread means home expected to win by 7)
         book_home_margin = -closing_spread
@@ -173,6 +202,20 @@ def run_backtest(year: int = 2026) -> dict:
             ats_res = "WIN"
         else:
             ats_res = "LOSS"
+
+        # Totals Outcome
+        ou_res = "N/A"
+        ou_edge = 0.0
+        if closing_total is not None:
+            ou_edge = abs(model_total - closing_total)
+            pick_over = model_total > closing_total
+            total_margin = actual_total - closing_total
+            if total_margin == 0:
+                ou_res = "PUSH"
+            elif (pick_over and total_margin > 0) or (not pick_over and total_margin < 0):
+                ou_res = "WIN"
+            else:
+                ou_res = "LOSS"
             
         # Record in FBS tiers
         if is_fbs_matchup:
@@ -184,6 +227,16 @@ def run_backtest(year: int = 2026) -> dict:
                         t_data["l"] += 1
                     elif ats_res == "PUSH":
                         t_data["p"] += 1
+
+            if closing_total is not None:
+                for t_name, t_data in totals_tiers.items():
+                    if ou_edge >= t_data["min_edge"]:
+                        if ou_res == "WIN":
+                            t_data["w"] += 1
+                        elif ou_res == "LOSS":
+                            t_data["l"] += 1
+                        elif ou_res == "PUSH":
+                            t_data["p"] += 1
 
             if wk not in by_week:
                 by_week[wk] = {
@@ -218,16 +271,19 @@ def run_backtest(year: int = 2026) -> dict:
             "ats_edge": round(ats_edge, 1),
             "ats_pick": f"{h_name} ({closing_spread:+})" if pick_home else f"{a_name} ({-closing_spread:+})",
             "ats_result": ats_res,
+            "ou_edge": round(ou_edge, 1),
+            "ou_result": ou_res,
         })
 
     summary = {
         "season": year,
         "closing_line_provenance": "Explicit provider hierarchy (DraftKings primary, Bovada secondary) with kickoff closing timestamp.",
-        "point_in_time_isolation": "True walk-forward bayesian shrinkage: week 1 uses 100% pre-season priors; in-season efficiency scaled progressively by sample size (no future stats leakage).",
+        "point_in_time_isolation": "Strict prior-week reconstruction: week 1 uses frozen preseason baseline; weeks > 1 only ingest stats from completed games (past_wk < week), with zero future leakage.",
         "fcs_exclusion_applied": True,
         "total_evaluated_games": len(game_audit_log),
         "fbs_matchups_evaluated": sum(1 for g in game_audit_log if g["is_fbs_matchup"]),
         "fbs_ats_tiers": {},
+        "fbs_totals_tiers": {},
         "walk_forward_weeks": {},
     }
     
@@ -235,6 +291,16 @@ def run_backtest(year: int = 2026) -> dict:
         decided = v["w"] + v["l"]
         pct = round(v["w"] / decided * 100, 1) if decided else 0.0
         summary["fbs_ats_tiers"][k] = {
+            "record": f"{v['w']}-{v['l']}-{v['p']}",
+            "win_pct": pct,
+            "decided_games": decided,
+            "min_edge": v["min_edge"],
+        }
+        
+    for k, v in totals_tiers.items():
+        decided = v["w"] + v["l"]
+        pct = round(v["w"] / decided * 100, 1) if decided else 0.0
+        summary["fbs_totals_tiers"][k] = {
             "record": f"{v['w']}-{v['l']}-{v['p']}",
             "win_pct": pct,
             "decided_games": decided,

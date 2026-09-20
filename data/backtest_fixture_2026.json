@@ -13,11 +13,13 @@
     "closing_total": 66.5,
     "total_open": 66.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:30:00.000Z)",
-    "model_proj_spread": 26.8,
-    "model_proj_total": 62.0,
-    "ats_edge": 22.7,
+    "model_proj_spread": 15.2,
+    "model_proj_total": 51.4,
+    "ats_edge": 34.3,
     "ats_pick": "Furman (+49.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 15.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401862698,
@@ -33,11 +35,13 @@
     "closing_total": 51.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T18:00:00.000Z)",
-    "model_proj_spread": 3.1,
-    "model_proj_total": 40.3,
-    "ats_edge": 11.4,
+    "model_proj_spread": 1.0,
+    "model_proj_total": 50.2,
+    "ats_edge": 13.5,
     "ats_pick": "Rhode Island (+14.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856635,
@@ -53,11 +57,13 @@
     "closing_total": 63.5,
     "total_open": 63.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T20:15:00.000Z)",
-    "model_proj_spread": 12.0,
-    "model_proj_total": 47.2,
-    "ats_edge": 28.5,
+    "model_proj_spread": 9.2,
+    "model_proj_total": 50.8,
+    "ats_edge": 31.3,
     "ats_pick": "North Alabama (+40.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 12.7,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856777,
@@ -73,11 +79,13 @@
     "closing_total": 51.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:30:00.000Z)",
-    "model_proj_spread": 13.1,
-    "model_proj_total": 51.7,
-    "ats_edge": 6.1,
-    "ats_pick": "Cincinnati (-7.0)",
-    "ats_result": "WIN"
+    "model_proj_spread": 5.7,
+    "model_proj_total": 50.7,
+    "ats_edge": 1.3,
+    "ats_pick": "Boston College (+7.0)",
+    "ats_result": "LOSS",
+    "ou_edge": 0.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401869960,
@@ -93,11 +101,13 @@
     "closing_total": 50.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:00:00.000Z)",
-    "model_proj_spread": 11.3,
-    "model_proj_total": 56.9,
-    "ats_edge": 5.3,
+    "model_proj_spread": 7.2,
+    "model_proj_total": 51.0,
+    "ats_edge": 1.2,
     "ats_pick": "James Madison (-6.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856779,
@@ -113,11 +123,13 @@
     "closing_total": 52.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T17:00:00.000Z)",
-    "model_proj_spread": 13.4,
-    "model_proj_total": 52.8,
-    "ats_edge": 16.1,
+    "model_proj_spread": 7.3,
+    "model_proj_total": 50.9,
+    "ats_edge": 22.2,
     "ats_pick": "Southeast Missouri State (+29.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 1.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858208,
@@ -133,11 +145,13 @@
     "closing_total": 56.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:00:00.000Z)",
-    "model_proj_spread": 5.5,
-    "model_proj_total": 45.5,
-    "ats_edge": 30.0,
+    "model_proj_spread": 2.9,
+    "model_proj_total": 50.3,
+    "ats_edge": 32.6,
     "ats_pick": "New Hampshire (+35.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 6.2,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856767,
@@ -153,11 +167,13 @@
     "closing_total": 58.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-03T23:00:00.000Z)",
-    "model_proj_spread": 12.3,
-    "model_proj_total": 47.5,
-    "ats_edge": 31.2,
+    "model_proj_spread": 5.9,
+    "model_proj_total": 50.5,
+    "ats_edge": 37.6,
     "ats_pick": "Bethune-Cookman (+43.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 8.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856658,
@@ -173,11 +189,13 @@
     "closing_total": 55.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:00:00.000Z)",
-    "model_proj_spread": 32.9,
-    "model_proj_total": 68.1,
-    "ats_edge": 16.6,
+    "model_proj_spread": 25.8,
+    "model_proj_total": 51.6,
+    "ats_edge": 23.7,
     "ats_pick": "Tennessee State (+49.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401862701,
@@ -193,11 +211,13 @@
     "closing_total": 51.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:00:00.000Z)",
-    "model_proj_spread": 10.8,
-    "model_proj_total": 46.0,
-    "ats_edge": 26.7,
+    "model_proj_spread": 6.0,
+    "model_proj_total": 50.6,
+    "ats_edge": 31.5,
     "ats_pick": "Bryant (+37.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401861962,
@@ -213,11 +233,13 @@
     "closing_total": 51.5,
     "total_open": 58.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:00:00.000Z)",
-    "model_proj_spread": 3.6,
-    "model_proj_total": 38.8,
-    "ats_edge": 17.9,
+    "model_proj_spread": 2.7,
+    "model_proj_total": 50.1,
+    "ats_edge": 18.8,
     "ats_pick": "Lafayette (+21.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856659,
@@ -233,11 +255,13 @@
     "closing_total": 61.5,
     "total_open": 62.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T17:00:00.000Z)",
-    "model_proj_spread": 10.7,
-    "model_proj_total": 50.3,
-    "ats_edge": 11.8,
+    "model_proj_spread": 6.1,
+    "model_proj_total": 50.7,
+    "ats_edge": 16.4,
     "ats_pick": "Youngstown State (+22.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 10.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866410,
@@ -253,11 +277,13 @@
     "closing_total": 49.5,
     "total_open": 47.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:00:00.000Z)",
-    "model_proj_spread": -7.8,
-    "model_proj_total": 35.0,
-    "ats_edge": 9.3,
+    "model_proj_spread": -4.5,
+    "model_proj_total": 50.1,
+    "ats_edge": 6.0,
     "ats_pick": "Tarleton State (+1.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.6,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866409,
@@ -273,11 +299,13 @@
     "closing_total": 47.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-03T23:00:00.000Z)",
-    "model_proj_spread": -4.8,
-    "model_proj_total": 34.6,
-    "ats_edge": 23.3,
+    "model_proj_spread": -0.3,
+    "model_proj_total": 49.9,
+    "ats_edge": 18.8,
     "ats_pick": "UAlbany (+18.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 2.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401862694,
@@ -293,11 +321,13 @@
     "closing_total": 49.5,
     "total_open": 46.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:30:00.000Z)",
-    "model_proj_spread": -7.5,
-    "model_proj_total": 31.9,
-    "ats_edge": 28.0,
+    "model_proj_spread": -3.6,
+    "model_proj_total": 49.6,
+    "ats_edge": 24.1,
     "ats_pick": "The Citadel (+20.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866623,
@@ -313,11 +343,13 @@
     "closing_total": 58.5,
     "total_open": 63.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-04T23:00:00.000Z)",
-    "model_proj_spread": -2.0,
-    "model_proj_total": 33.2,
-    "ats_edge": 30.5,
+    "model_proj_spread": -1.3,
+    "model_proj_total": 49.5,
+    "ats_edge": 29.8,
     "ats_pick": "North Carolina A&T (+28.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 9.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858422,
@@ -333,11 +365,13 @@
     "closing_total": 52.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-04T00:00:00.000Z)",
-    "model_proj_spread": 11.0,
-    "model_proj_total": 50.4,
-    "ats_edge": 31.5,
+    "model_proj_spread": 7.9,
+    "model_proj_total": 50.7,
+    "ats_edge": 34.6,
     "ats_pick": "Eastern Illinois (+42.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856769,
@@ -353,11 +387,13 @@
     "closing_total": 57.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T00:00:00.000Z)",
-    "model_proj_spread": 10.4,
-    "model_proj_total": 49.8,
-    "ats_edge": 34.1,
+    "model_proj_spread": 6.3,
+    "model_proj_total": 50.7,
+    "ats_edge": 38.2,
     "ats_pick": "Long Island University (+44.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 6.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856663,
@@ -373,11 +409,13 @@
     "closing_total": 62.5,
     "total_open": 60.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-04T00:00:00.000Z)",
-    "model_proj_spread": 21.9,
-    "model_proj_total": 61.3,
-    "ats_edge": 33.6,
+    "model_proj_spread": 12.8,
+    "model_proj_total": 51.4,
+    "ats_edge": 42.7,
     "ats_pick": "Arkansas-Pine Bluff (+55.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 11.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401864424,
@@ -393,11 +431,13 @@
     "closing_total": 56.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-03T23:00:00.000Z)",
-    "model_proj_spread": 4.7,
-    "model_proj_total": 39.9,
-    "ats_edge": 26.8,
+    "model_proj_spread": 1.8,
+    "model_proj_total": 50.0,
+    "ats_edge": 29.7,
     "ats_pick": "Merrimack (+31.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 6.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858435,
@@ -413,11 +453,13 @@
     "closing_total": 55.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-04T23:00:00.000Z)",
-    "model_proj_spread": 6.0,
-    "model_proj_total": 45.4,
-    "ats_edge": 28.5,
+    "model_proj_spread": 3.4,
+    "model_proj_total": 50.4,
+    "ats_edge": 31.1,
     "ats_pick": "Indiana State (+34.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 5.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401864425,
@@ -433,11 +475,13 @@
     "closing_total": 50.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-03T23:00:00.000Z)",
-    "model_proj_spread": -0.6,
-    "model_proj_total": 36.8,
-    "ats_edge": 23.1,
+    "model_proj_spread": -0.3,
+    "model_proj_total": 49.9,
+    "ats_edge": 22.8,
     "ats_pick": "West Georgia (+22.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401862696,
@@ -453,11 +497,13 @@
     "closing_total": 50.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:30:00.000Z)",
-    "model_proj_spread": 7.6,
-    "model_proj_total": 42.8,
-    "ats_edge": 23.9,
+    "model_proj_spread": 6.1,
+    "model_proj_total": 50.5,
+    "ats_edge": 25.4,
     "ats_pick": "Towson (+31.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401864499,
@@ -473,11 +519,13 @@
     "closing_total": 54.5,
     "total_open": 57.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:30:00.000Z)",
-    "model_proj_spread": 13.6,
-    "model_proj_total": 48.8,
-    "ats_edge": 27.9,
+    "model_proj_spread": 6.2,
+    "model_proj_total": 50.4,
+    "ats_edge": 35.3,
     "ats_pick": "Fordham (+41.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401862700,
@@ -493,11 +541,13 @@
     "closing_total": 59.5,
     "total_open": 59.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:30:00.000Z)",
-    "model_proj_spread": 10.1,
-    "model_proj_total": 51.3,
-    "ats_edge": 18.4,
+    "model_proj_spread": 5.6,
+    "model_proj_total": 51.0,
+    "ats_edge": 22.9,
     "ats_pick": "UT Rio Grande Valley (+28.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 8.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866627,
@@ -513,11 +563,13 @@
     "closing_total": 53.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:30:00.000Z)",
-    "model_proj_spread": 1.2,
-    "model_proj_total": 40.6,
-    "ats_edge": 19.3,
+    "model_proj_spread": -1.0,
+    "model_proj_total": 50.0,
+    "ats_edge": 21.5,
     "ats_pick": "Maine (+20.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856782,
@@ -533,11 +585,13 @@
     "closing_total": 54.5,
     "total_open": 60.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": -18.0,
-    "model_proj_total": 69.6,
-    "ats_edge": 5.5,
-    "ats_pick": "Oklahoma State (+23.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": -26.9,
+    "model_proj_total": 51.9,
+    "ats_edge": 3.4,
+    "ats_pick": "Oregon (-23.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 2.6,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866411,
@@ -553,11 +607,13 @@
     "closing_total": 56.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T02:00:00.000Z)",
-    "model_proj_spread": -4.9,
-    "model_proj_total": 30.3,
-    "ats_edge": 42.4,
+    "model_proj_spread": 2.5,
+    "model_proj_total": 49.7,
+    "ats_edge": 35.0,
     "ats_pick": "Mississippi Valley State (+37.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 6.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856775,
@@ -573,11 +629,13 @@
     "closing_total": 61.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T00:00:00.000Z)",
-    "model_proj_spread": 26.7,
-    "model_proj_total": 61.9,
-    "ats_edge": 23.8,
+    "model_proj_spread": 16.4,
+    "model_proj_total": 51.4,
+    "ats_edge": 34.1,
     "ats_pick": "Utah Tech (+50.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 10.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868140,
@@ -593,11 +651,13 @@
     "closing_total": 51.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": 4.8,
-    "model_proj_total": 40.2,
-    "ats_edge": 17.7,
+    "model_proj_spread": 3.6,
+    "model_proj_total": 50.2,
+    "ats_edge": 18.9,
     "ats_pick": "Eastern Kentucky (+22.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856669,
@@ -613,11 +673,13 @@
     "closing_total": 57.5,
     "total_open": 61.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": 20.6,
-    "model_proj_total": 59.6,
-    "ats_edge": 7.9,
+    "model_proj_spread": 12.1,
+    "model_proj_total": 51.3,
+    "ats_edge": 16.4,
     "ats_pick": "Austin Peay (+28.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858431,
@@ -633,11 +695,13 @@
     "closing_total": 49.5,
     "total_open": 46.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T00:00:00.000Z)",
-    "model_proj_spread": 15.1,
-    "model_proj_total": 55.7,
-    "ats_edge": 1.1,
-    "ats_pick": "Northwestern (-14.0)",
-    "ats_result": "WIN"
+    "model_proj_spread": 7.4,
+    "model_proj_total": 51.0,
+    "ats_edge": 6.6,
+    "ats_pick": "South Dakota State (+14.0)",
+    "ats_result": "LOSS",
+    "ou_edge": 1.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856770,
@@ -653,11 +717,13 @@
     "closing_total": 60.5,
     "total_open": 59.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": 25.9,
-    "model_proj_total": 66.1,
-    "ats_edge": 19.6,
+    "model_proj_spread": 16.2,
+    "model_proj_total": 51.8,
+    "ats_edge": 29.3,
     "ats_pick": "Abilene Christian (+45.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 8.7,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856773,
@@ -673,11 +739,13 @@
     "closing_total": 59.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T01:30:00.000Z)",
-    "model_proj_spread": 20.1,
-    "model_proj_total": 57.7,
-    "ats_edge": 12.4,
+    "model_proj_spread": 11.8,
+    "model_proj_total": 51.2,
+    "ats_edge": 20.7,
     "ats_pick": "Northern Arizona (+32.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 8.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401862697,
@@ -693,11 +761,13 @@
     "closing_total": 47.5,
     "total_open": 47.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": -3.7,
-    "model_proj_total": 35.7,
-    "ats_edge": 26.2,
+    "model_proj_spread": -1.2,
+    "model_proj_total": 49.8,
+    "ats_edge": 23.7,
     "ats_pick": "Houston Christian (+22.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868170,
@@ -713,11 +783,13 @@
     "closing_total": 51.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": 0.1,
-    "model_proj_total": 39.5,
-    "ats_edge": 28.4,
+    "model_proj_spread": -0.4,
+    "model_proj_total": 50.0,
+    "ats_edge": 28.9,
     "ats_pick": "Charleston Southern (+28.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856771,
@@ -733,11 +805,13 @@
     "closing_total": 55.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": 23.2,
-    "model_proj_total": 58.4,
-    "ats_edge": 18.3,
+    "model_proj_spread": 11.8,
+    "model_proj_total": 51.0,
+    "ats_edge": 29.7,
     "ats_pick": "Nicholls (+41.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401860880,
@@ -753,11 +827,13 @@
     "closing_total": 59.5,
     "total_open": 64.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": 3.7,
-    "model_proj_total": 43.1,
-    "ats_edge": 11.8,
+    "model_proj_spread": 3.6,
+    "model_proj_total": 50.4,
+    "ats_edge": 11.9,
     "ats_pick": "Idaho State (+15.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 9.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401860879,
@@ -773,11 +849,13 @@
     "closing_total": 62.5,
     "total_open": 57.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T01:30:00.000Z)",
-    "model_proj_spread": 13.0,
-    "model_proj_total": 48.2,
-    "ats_edge": 25.5,
+    "model_proj_spread": 9.6,
+    "model_proj_total": 50.6,
+    "ats_edge": 28.9,
     "ats_pick": "Portland State (+38.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 11.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856685,
@@ -793,11 +871,13 @@
     "closing_total": 49.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:30:00.000Z)",
-    "model_proj_spread": 14.1,
-    "model_proj_total": 76.9,
-    "ats_edge": 4.4,
+    "model_proj_spread": 11.3,
+    "model_proj_total": 52.9,
+    "ats_edge": 7.2,
     "ats_pick": "Florida State (+18.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401869129,
@@ -813,11 +893,13 @@
     "closing_total": 56.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:30:00.000Z)",
-    "model_proj_spread": 6.2,
-    "model_proj_total": 41.4,
-    "ats_edge": 38.3,
+    "model_proj_spread": 4.4,
+    "model_proj_total": 50.2,
+    "ats_edge": 40.1,
     "ats_pick": "Northwestern State (+44.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 6.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858211,
@@ -833,11 +915,13 @@
     "closing_total": 60.5,
     "total_open": 57.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:30:00.000Z)",
-    "model_proj_spread": 13.4,
-    "model_proj_total": 52.8,
-    "ats_edge": 41.1,
+    "model_proj_spread": 6.1,
+    "model_proj_total": 50.7,
+    "ats_edge": 48.4,
     "ats_pick": "VMI (+54.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 9.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858230,
@@ -853,11 +937,13 @@
     "closing_total": 57.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:30:00.000Z)",
-    "model_proj_spread": 1.6,
-    "model_proj_total": 82.0,
-    "ats_edge": 1.4,
+    "model_proj_spread": 1.4,
+    "model_proj_total": 53.2,
+    "ats_edge": 1.6,
     "ats_pick": "SMU (+3.0)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858427,
@@ -873,11 +959,13 @@
     "closing_total": 56.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T00:00:00.000Z)",
-    "model_proj_spread": 15.3,
-    "model_proj_total": 50.5,
-    "ats_edge": 30.2,
+    "model_proj_spread": 6.2,
+    "model_proj_total": 50.4,
+    "ats_edge": 39.3,
     "ats_pick": "Hampton (+45.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 6.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856679,
@@ -893,11 +981,13 @@
     "closing_total": 43.5,
     "total_open": 46.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": 2.1,
-    "model_proj_total": 83.7,
-    "ats_edge": 7.6,
+    "model_proj_spread": -0.2,
+    "model_proj_total": 53.6,
+    "ats_edge": 5.3,
     "ats_pick": "Michigan (+5.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 10.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867973,
@@ -913,11 +1003,13 @@
     "closing_total": 52.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T22:00:00.000Z)",
-    "model_proj_spread": 2.7,
-    "model_proj_total": 42.1,
-    "ats_edge": 38.8,
+    "model_proj_spread": 5.4,
+    "model_proj_total": 50.6,
+    "ats_edge": 36.1,
     "ats_pick": "Norfolk State (+41.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 1.9,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856774,
@@ -933,11 +1025,13 @@
     "closing_total": 52.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T02:00:00.000Z)",
-    "model_proj_spread": 13.8,
-    "model_proj_total": 53.2,
-    "ats_edge": 29.7,
+    "model_proj_spread": 8.1,
+    "model_proj_total": 50.9,
+    "ats_edge": 35.4,
     "ats_pick": "Morgan State (+43.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.6,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856683,
@@ -953,11 +1047,13 @@
     "closing_total": 51.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": 18.9,
-    "model_proj_total": 79.5,
-    "ats_edge": 4.4,
-    "ats_pick": "Texas A&M (-14.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 9.7,
+    "model_proj_total": 53.3,
+    "ats_edge": 4.8,
+    "ats_pick": "Arizona State (+14.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 1.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868356,
@@ -973,11 +1069,13 @@
     "closing_total": 51.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T21:00:00.000Z)",
-    "model_proj_spread": 0.7,
-    "model_proj_total": 40.1,
-    "ats_edge": 18.8,
+    "model_proj_spread": -0.4,
+    "model_proj_total": 50.2,
+    "ats_edge": 19.9,
     "ats_pick": "Alcorn State (+19.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856678,
@@ -993,11 +1091,13 @@
     "closing_total": 51.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T00:00:00.000Z)",
-    "model_proj_spread": -6.2,
-    "model_proj_total": 68.6,
-    "ats_edge": 2.2,
-    "ats_pick": "Missouri (-4.0)",
-    "ats_result": "WIN"
+    "model_proj_spread": -3.6,
+    "model_proj_total": 52.8,
+    "ats_edge": 0.4,
+    "ats_pick": "Kansas (+4.0)",
+    "ats_result": "LOSS",
+    "ou_edge": 1.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856670,
@@ -1013,11 +1113,13 @@
     "closing_total": 55.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-13T02:15:00.000Z)",
-    "model_proj_spread": 20.0,
-    "model_proj_total": 71.0,
-    "ats_edge": 7.5,
-    "ats_pick": "Utah (-12.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 9.0,
+    "model_proj_total": 53.0,
+    "ats_edge": 3.5,
+    "ats_pick": "Arkansas (+12.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 2.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401869142,
@@ -1033,11 +1135,13 @@
     "closing_total": 48.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T00:00:00.000Z)",
-    "model_proj_spread": 4.9,
-    "model_proj_total": 40.9,
-    "ats_edge": 15.6,
+    "model_proj_spread": 0.8,
+    "model_proj_total": 50.0,
+    "ats_edge": 19.7,
     "ats_pick": "Lamar (+20.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868316,
@@ -1053,11 +1157,13 @@
     "closing_total": 53.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": 0.3,
-    "model_proj_total": 42.3,
-    "ats_edge": 13.2,
+    "model_proj_spread": -1.1,
+    "model_proj_total": 50.1,
+    "ats_edge": 14.6,
     "ats_pick": "SE Louisiana (+13.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867866,
@@ -1073,11 +1179,13 @@
     "closing_total": 55.5,
     "total_open": 59.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": -4.2,
-    "model_proj_total": 31.0,
-    "ats_edge": 26.7,
+    "model_proj_spread": -2.5,
+    "model_proj_total": 49.5,
+    "ats_edge": 25.0,
     "ats_pick": "Murray State (+22.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 6.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856788,
@@ -1093,11 +1201,13 @@
     "closing_total": 42.5,
     "total_open": 41.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:30:00.000Z)",
-    "model_proj_spread": 11.2,
-    "model_proj_total": 70.0,
-    "ats_edge": 2.8,
+    "model_proj_spread": 8.2,
+    "model_proj_total": 52.8,
+    "ats_edge": 5.8,
     "ats_pick": "Iowa State (+14.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 10.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856811,
@@ -1113,11 +1223,13 @@
     "closing_total": 52.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T00:00:00.000Z)",
-    "model_proj_spread": 10.8,
-    "model_proj_total": 82.0,
-    "ats_edge": 3.3,
-    "ats_pick": "Texas Tech (-7.5)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 7.5,
+    "model_proj_total": 53.3,
+    "ats_edge": 0.0,
+    "ats_pick": "Houston (+7.5)",
+    "ats_result": "WIN",
+    "ou_edge": 0.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856682,
@@ -1133,11 +1245,13 @@
     "closing_total": 50.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:30:00.000Z)",
-    "model_proj_spread": 0.5,
-    "model_proj_total": 97.1,
-    "ats_edge": 2.0,
+    "model_proj_spread": -1.3,
+    "model_proj_total": 54.5,
+    "ats_edge": 3.8,
     "ats_pick": "Ohio State (+2.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858423,
@@ -1153,11 +1267,13 @@
     "closing_total": 54.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-03T22:00:00.000Z)",
-    "model_proj_spread": 18.8,
-    "model_proj_total": 32.4,
-    "ats_edge": 10.7,
+    "model_proj_spread": 18.1,
+    "model_proj_total": 49.7,
+    "ats_edge": 11.4,
     "ats_pick": "Massachusetts (+29.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856768,
@@ -1173,11 +1289,13 @@
     "closing_total": 60.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-04T01:00:00.000Z)",
-    "model_proj_spread": 26.2,
-    "model_proj_total": 63.4,
-    "ats_edge": 11.3,
+    "model_proj_spread": 13.1,
+    "model_proj_total": 51.5,
+    "ats_edge": 24.4,
     "ats_pick": "Idaho (+37.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 9.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401870790,
@@ -1193,11 +1311,13 @@
     "closing_total": 52.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T01:00:00.000Z)",
-    "model_proj_spread": -5.0,
-    "model_proj_total": 34.4,
-    "ats_edge": 34.5,
+    "model_proj_spread": -3.3,
+    "model_proj_total": 49.7,
+    "ats_edge": 32.8,
     "ats_pick": "Mercyhurst (+29.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867894,
@@ -1213,11 +1333,13 @@
     "closing_total": 57.5,
     "total_open": null,
     "line_source": "Draft Kings closing line frozen at kickoff (2026-08-27T22:00:00.000Z)",
-    "model_proj_spread": 4.1,
-    "model_proj_total": 43.5,
-    "ats_edge": 26.4,
+    "model_proj_spread": 2.1,
+    "model_proj_total": 50.3,
+    "ats_edge": 28.4,
     "ats_pick": "Mercyhurst (+30.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 7.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868129,
@@ -1233,11 +1355,13 @@
     "closing_total": 50.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T01:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 39.2,
-    "ats_edge": 1.0,
-    "ats_pick": "Northern Colorado (-3.0)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 2.7,
+    "model_proj_total": 50.1,
+    "ats_edge": 0.3,
+    "ats_pick": "Weber State (+3.0)",
+    "ats_result": "WIN",
+    "ou_edge": 0.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866617,
@@ -1253,11 +1377,13 @@
     "closing_total": 47.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-28T22:00:00.000Z)",
-    "model_proj_spread": 3.0,
-    "model_proj_total": 40.2,
-    "ats_edge": 23.5,
+    "model_proj_spread": 1.0,
+    "model_proj_total": 50.2,
+    "ats_edge": 21.5,
     "ats_pick": "Merrimack (+20.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868324,
@@ -1273,11 +1399,13 @@
     "closing_total": 56.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T19:00:00.000Z)",
-    "model_proj_spread": 4.7,
-    "model_proj_total": 39.9,
-    "ats_edge": 14.8,
+    "model_proj_spread": 3.9,
+    "model_proj_total": 50.1,
+    "ats_edge": 15.6,
     "ats_pick": "Southern (+19.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866616,
@@ -1293,11 +1421,13 @@
     "closing_total": 46.5,
     "total_open": 45.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-28T23:00:00.000Z)",
-    "model_proj_spread": 3.7,
-    "model_proj_total": 43.7,
-    "ats_edge": 13.7,
+    "model_proj_spread": 2.4,
+    "model_proj_total": 50.2,
+    "ats_edge": 12.4,
     "ats_pick": "UAlbany (+10.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868040,
@@ -1313,11 +1443,13 @@
     "closing_total": 47.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-28T22:00:00.000Z)",
-    "model_proj_spread": 5.8,
-    "model_proj_total": 41.0,
-    "ats_edge": 6.7,
+    "model_proj_spread": 2.6,
+    "model_proj_total": 50.2,
+    "ats_edge": 9.9,
     "ats_pick": "William & Mary (+12.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 2.7,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867882,
@@ -1333,11 +1465,13 @@
     "closing_total": 49.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T18:00:00.000Z)",
-    "model_proj_spread": 4.1,
-    "model_proj_total": 43.5,
-    "ats_edge": 17.4,
+    "model_proj_spread": 2.3,
+    "model_proj_total": 50.3,
+    "ats_edge": 19.2,
     "ats_pick": "Central Connecticut (+21.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867916,
@@ -1353,11 +1487,13 @@
     "closing_total": 40.5,
     "total_open": 39.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T16:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 43.4,
-    "ats_edge": 1.5,
+    "model_proj_spread": 1.9,
+    "model_proj_total": 50.3,
+    "ats_edge": 3.6,
     "ats_pick": "Robert Morris (+5.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 9.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858212,
@@ -1373,11 +1509,13 @@
     "closing_total": 54.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-07T23:30:00.000Z)",
-    "model_proj_spread": -1.6,
-    "model_proj_total": 75.0,
-    "ats_edge": 1.4,
+    "model_proj_spread": 1.0,
+    "model_proj_total": 52.2,
+    "ats_edge": 4.0,
     "ats_pick": "Florida State (+3.0)",
-    "ats_result": "PUSH"
+    "ats_result": "PUSH",
+    "ou_edge": 2.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858201,
@@ -1393,11 +1531,13 @@
     "closing_total": 48.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T23:00:00.000Z)",
-    "model_proj_spread": 3.3,
-    "model_proj_total": 43.1,
-    "ats_edge": 1.2,
+    "model_proj_spread": 1.3,
+    "model_proj_total": 50.5,
+    "ats_edge": 3.2,
     "ats_pick": "Hawai'i (+4.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858436,
@@ -1413,11 +1553,13 @@
     "closing_total": 51.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T01:00:00.000Z)",
-    "model_proj_spread": 19.9,
-    "model_proj_total": 72.3,
-    "ats_edge": 1.6,
+    "model_proj_spread": 11.9,
+    "model_proj_total": 51.7,
+    "ats_edge": 9.6,
     "ats_pick": "Fresno State (+21.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.2,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858425,
@@ -1433,11 +1575,13 @@
     "closing_total": 56.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:00:00.000Z)",
-    "model_proj_spread": 20.8,
-    "model_proj_total": 75.2,
-    "ats_edge": 18.7,
+    "model_proj_spread": 13.3,
+    "model_proj_total": 52.1,
+    "ats_edge": 26.2,
     "ats_pick": "North Texas (+39.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856667,
@@ -1453,11 +1597,13 @@
     "closing_total": 60.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:30:00.000Z)",
-    "model_proj_spread": 28.1,
-    "model_proj_total": 71.3,
-    "ats_edge": 1.4,
+    "model_proj_spread": 13.2,
+    "model_proj_total": 52.2,
+    "ats_edge": 16.3,
     "ats_pick": "Texas State (+29.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 8.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866620,
@@ -1473,11 +1619,13 @@
     "closing_total": 56.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T21:30:00.000Z)",
-    "model_proj_spread": 2.0,
-    "model_proj_total": 41.4,
-    "ats_edge": 5.0,
+    "model_proj_spread": 2.2,
+    "model_proj_total": 50.2,
+    "ats_edge": 4.8,
     "ats_pick": "Campbell (+7.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868101,
@@ -1493,11 +1641,13 @@
     "closing_total": 53.5,
     "total_open": 60.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T22:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 43.4,
-    "ats_edge": 30.5,
+    "model_proj_spread": 2.8,
+    "model_proj_total": 50.2,
+    "ats_edge": 31.7,
     "ats_pick": "VMI (+34.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866621,
@@ -1513,11 +1663,13 @@
     "closing_total": 58.5,
     "total_open": 58.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T23:00:00.000Z)",
-    "model_proj_spread": 4.8,
-    "model_proj_total": 45.2,
-    "ats_edge": 3.7,
+    "model_proj_spread": 3.0,
+    "model_proj_total": 50.6,
+    "ats_edge": 5.5,
     "ats_pick": "Monmouth (+8.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 7.9,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858437,
@@ -1533,11 +1685,13 @@
     "closing_total": 51.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T20:00:00.000Z)",
-    "model_proj_spread": 16.1,
-    "model_proj_total": 66.9,
-    "ats_edge": 7.4,
+    "model_proj_spread": 10.0,
+    "model_proj_total": 52.0,
+    "ats_edge": 13.5,
     "ats_pick": "Washington State (+23.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866619,
@@ -1553,11 +1707,13 @@
     "closing_total": 45.5,
     "total_open": 44.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T22:00:00.000Z)",
-    "model_proj_spread": 6.1,
-    "model_proj_total": 41.3,
-    "ats_edge": 10.6,
+    "model_proj_spread": 2.8,
+    "model_proj_total": 50.2,
+    "ats_edge": 7.3,
     "ats_pick": "Stonehill (+4.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868394,
@@ -1573,11 +1729,13 @@
     "closing_total": 45.5,
     "total_open": 45.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T22:00:00.000Z)",
-    "model_proj_spread": 1.9,
-    "model_proj_total": 41.3,
-    "ats_edge": 5.6,
+    "model_proj_spread": 2.5,
+    "model_proj_total": 50.3,
+    "ats_edge": 5.0,
     "ats_pick": "The Citadel (+7.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858206,
@@ -1593,11 +1751,13 @@
     "closing_total": 46.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T01:00:00.000Z)",
-    "model_proj_spread": -22.0,
-    "model_proj_total": 68.4,
-    "ats_edge": 2.5,
+    "model_proj_spread": -13.2,
+    "model_proj_total": 51.8,
+    "ats_edge": 11.3,
     "ats_pick": "Stanford (+24.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 5.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856772,
@@ -1614,10 +1774,12 @@
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:45:00.000Z)",
     "model_proj_spread": -0.2,
-    "model_proj_total": 43.2,
+    "model_proj_total": 50.0,
     "ats_edge": 13.3,
     "ats_pick": "Tulsa (+13.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 7.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858209,
@@ -1633,11 +1795,13 @@
     "closing_total": 51.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:30:00.000Z)",
-    "model_proj_spread": 10.2,
-    "model_proj_total": 59.6,
-    "ats_edge": 0.7,
-    "ats_pick": "Duke (-9.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 5.0,
+    "model_proj_total": 51.4,
+    "ats_edge": 4.5,
+    "ats_pick": "Tulane (+9.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 0.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868084,
@@ -1653,11 +1817,13 @@
     "closing_total": 55.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T21:00:00.000Z)",
-    "model_proj_spread": 4.9,
-    "model_proj_total": 40.7,
-    "ats_edge": 0.6,
+    "model_proj_spread": 2.6,
+    "model_proj_total": 50.2,
+    "ats_edge": 2.9,
     "ats_pick": "Eastern Washington (+5.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 5.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868022,
@@ -1673,11 +1839,13 @@
     "closing_total": 47.5,
     "total_open": 47.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T19:30:00.000Z)",
-    "model_proj_spread": 3.9,
-    "model_proj_total": 43.5,
-    "ats_edge": 17.9,
+    "model_proj_spread": 2.8,
+    "model_proj_total": 50.4,
+    "ats_edge": 16.8,
     "ats_pick": "Holy Cross (+14.0)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867855,
@@ -1693,11 +1861,13 @@
     "closing_total": 52.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T22:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 43.4,
-    "ats_edge": 1.5,
-    "ats_pick": "Indiana State (-2.5)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 2.1,
+    "model_proj_total": 50.3,
+    "ats_edge": 0.4,
+    "ats_pick": "Southeast Missouri State (+2.5)",
+    "ats_result": "WIN",
+    "ou_edge": 2.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866618,
@@ -1713,11 +1883,13 @@
     "closing_total": 49.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T22:00:00.000Z)",
-    "model_proj_spread": 1.9,
-    "model_proj_total": 41.3,
-    "ats_edge": 8.9,
+    "model_proj_spread": 0.7,
+    "model_proj_total": 50.1,
+    "ats_edge": 7.7,
     "ats_pick": "North Carolina A&T (+7.0)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.6,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858202,
@@ -1733,11 +1905,13 @@
     "closing_total": 50.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T19:30:00.000Z)",
-    "model_proj_spread": 8.0,
-    "model_proj_total": 68.8,
-    "ats_edge": 4.0,
-    "ats_pick": "Virginia (-4.0)",
-    "ats_result": "WIN"
+    "model_proj_spread": 1.0,
+    "model_proj_total": 51.8,
+    "ats_edge": 3.0,
+    "ats_pick": "NC State (+4.0)",
+    "ats_result": "LOSS",
+    "ou_edge": 1.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401862693,
@@ -1753,11 +1927,13 @@
     "closing_total": 55.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-30T02:00:00.000Z)",
-    "model_proj_spread": 1.2,
-    "model_proj_total": 51.8,
-    "ats_edge": 2.8,
-    "ats_pick": "Memphis (+4.0)",
-    "ats_result": "WIN"
+    "model_proj_spread": 4.2,
+    "model_proj_total": 51.2,
+    "ats_edge": 0.2,
+    "ats_pick": "UNLV (-4.0)",
+    "ats_result": "LOSS",
+    "ou_edge": 4.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867977,
@@ -1773,11 +1949,13 @@
     "closing_total": 51.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T23:00:00.000Z)",
-    "model_proj_spread": 1.9,
-    "model_proj_total": 41.3,
-    "ats_edge": 12.4,
+    "model_proj_spread": 0.4,
+    "model_proj_total": 50.2,
+    "ats_edge": 10.9,
     "ats_pick": "Texas Southern (+10.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 1.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856776,
@@ -1793,11 +1971,13 @@
     "closing_total": 53.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-04T00:00:00.000Z)",
-    "model_proj_spread": 8.4,
-    "model_proj_total": 55.6,
-    "ats_edge": 1.9,
+    "model_proj_spread": 7.1,
+    "model_proj_total": 51.1,
+    "ats_edge": 0.6,
     "ats_pick": "Georgia Tech (-6.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867988,
@@ -1813,11 +1993,13 @@
     "closing_total": 48.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T22:00:00.000Z)",
-    "model_proj_spread": 1.9,
-    "model_proj_total": 41.3,
-    "ats_edge": 10.6,
+    "model_proj_spread": 1.2,
+    "model_proj_total": 50.2,
+    "ats_edge": 11.3,
     "ats_pick": "Bucknell (+12.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.7,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868049,
@@ -1833,11 +2015,13 @@
     "closing_total": 49.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T23:00:00.000Z)",
-    "model_proj_spread": 1.9,
-    "model_proj_total": 42.1,
-    "ats_edge": 9.4,
+    "model_proj_spread": 1.5,
+    "model_proj_total": 50.3,
+    "ats_edge": 9.0,
     "ats_pick": "Lamar (+7.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867935,
@@ -1853,11 +2037,13 @@
     "closing_total": 46.5,
     "total_open": 46.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T23:30:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 39.2,
-    "ats_edge": 2.5,
+    "model_proj_spread": 2.9,
+    "model_proj_total": 50.1,
+    "ats_edge": 1.4,
     "ats_pick": "Howard (-1.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868110,
@@ -1873,11 +2059,13 @@
     "closing_total": 59.5,
     "total_open": 58.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-30T01:00:00.000Z)",
-    "model_proj_spread": 4.2,
-    "model_proj_total": 47.0,
-    "ats_edge": 11.3,
+    "model_proj_spread": 3.0,
+    "model_proj_total": 50.6,
+    "ats_edge": 12.5,
     "ats_pick": "Southern Utah (+15.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 8.9,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868235,
@@ -1893,11 +2081,13 @@
     "closing_total": 54.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-30T01:00:00.000Z)",
-    "model_proj_spread": 7.8,
-    "model_proj_total": 43.0,
-    "ats_edge": 11.7,
+    "model_proj_spread": 5.3,
+    "model_proj_total": 50.5,
+    "ats_edge": 14.2,
     "ats_pick": "Prairie View A&M (+19.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401874042,
@@ -1913,11 +2103,13 @@
     "closing_total": 57.5,
     "total_open": 60.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T23:00:00.000Z)",
-    "model_proj_spread": 2.9,
-    "model_proj_total": 42.3,
-    "ats_edge": 19.6,
+    "model_proj_spread": 2.2,
+    "model_proj_total": 50.2,
+    "ats_edge": 20.3,
     "ats_pick": "East Texas A&M (+22.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 7.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868139,
@@ -1933,11 +2125,13 @@
     "closing_total": 54.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T23:00:00.000Z)",
-    "model_proj_spread": 3.9,
-    "model_proj_total": 39.3,
-    "ats_edge": 0.9,
+    "model_proj_spread": 3.2,
+    "model_proj_total": 50.2,
+    "ats_edge": 0.2,
     "ats_pick": "Western Carolina (-3.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401872615,
@@ -1953,11 +2147,13 @@
     "closing_total": 58.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T23:00:00.000Z)",
-    "model_proj_spread": 4.6,
-    "model_proj_total": 44.0,
-    "ats_edge": 45.9,
+    "model_proj_spread": 3.6,
+    "model_proj_total": 50.4,
+    "ats_edge": 46.9,
     "ats_pick": "Stetson (+50.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 8.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868149,
@@ -1973,11 +2169,13 @@
     "closing_total": 55.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T23:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 39.2,
-    "ats_edge": 3.0,
+    "model_proj_spread": 3.2,
+    "model_proj_total": 50.0,
+    "ats_edge": 3.8,
     "ats_pick": "Samford (+7.0)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 5.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868305,
@@ -1993,11 +2191,13 @@
     "closing_total": 49.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T23:00:00.000Z)",
-    "model_proj_spread": 1.1,
-    "model_proj_total": 42.1,
-    "ats_edge": 13.6,
+    "model_proj_spread": 0.4,
+    "model_proj_total": 50.4,
+    "ats_edge": 12.9,
     "ats_pick": "McNeese (+12.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.9,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868118,
@@ -2013,11 +2213,13 @@
     "closing_total": 57.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-30T02:00:00.000Z)",
-    "model_proj_spread": -0.9,
-    "model_proj_total": 44.1,
-    "ats_edge": 31.6,
+    "model_proj_spread": -1.0,
+    "model_proj_total": 50.4,
+    "ats_edge": 31.5,
     "ats_pick": "Utah Tech (+32.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 7.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868154,
@@ -2033,11 +2235,13 @@
     "closing_total": 60.5,
     "total_open": 62.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T19:00:00.000Z)",
-    "model_proj_spread": 1.7,
-    "model_proj_total": 41.5,
-    "ats_edge": 27.2,
+    "model_proj_spread": 0.3,
+    "model_proj_total": 50.1,
+    "ats_edge": 25.8,
     "ats_pick": "Portland State (+25.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 10.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868194,
@@ -2053,11 +2257,13 @@
     "closing_total": 49.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-30T00:30:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 39.2,
-    "ats_edge": 16.5,
+    "model_proj_spread": 0.6,
+    "model_proj_total": 50.0,
+    "ats_edge": 13.1,
     "ats_pick": "Tennessee State (+12.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868261,
@@ -2073,11 +2279,13 @@
     "closing_total": 46.5,
     "total_open": 44.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-28T22:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 43.4,
-    "ats_edge": 1.5,
-    "ats_pick": "New Haven (-2.5)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 2.0,
+    "model_proj_total": 50.4,
+    "ats_edge": 0.5,
+    "ats_pick": "Marist (+2.5)",
+    "ats_result": "WIN",
+    "ou_edge": 3.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868007,
@@ -2093,11 +2301,13 @@
     "closing_total": 55.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-28T22:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 39.2,
-    "ats_edge": 12.5,
+    "model_proj_spread": 2.6,
+    "model_proj_total": 50.0,
+    "ats_edge": 11.1,
     "ats_pick": "Fordham (+8.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 5.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868073,
@@ -2113,11 +2323,13 @@
     "closing_total": 53.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T02:00:00.000Z)",
-    "model_proj_spread": 3.8,
-    "model_proj_total": 41.0,
-    "ats_edge": 9.3,
+    "model_proj_spread": 1.2,
+    "model_proj_total": 50.2,
+    "ats_edge": 6.7,
     "ats_pick": "Cal Poly (+5.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401864570,
@@ -2133,11 +2345,13 @@
     "closing_total": 53.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T23:00:00.000Z)",
-    "model_proj_spread": 26.0,
-    "model_proj_total": 47.4,
-    "ats_edge": 5.5,
+    "model_proj_spread": 18.5,
+    "model_proj_total": 50.5,
+    "ats_edge": 13.0,
     "ats_pick": "New Mexico State (+31.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866408,
@@ -2153,11 +2367,13 @@
     "closing_total": 52.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T22:30:00.000Z)",
-    "model_proj_spread": 7.4,
-    "model_proj_total": 24.8,
-    "ats_edge": 1.1,
+    "model_proj_spread": 0.3,
+    "model_proj_total": 49.5,
+    "ats_edge": 8.2,
     "ats_pick": "Sacramento State (+8.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401864577,
@@ -2173,11 +2389,13 @@
     "closing_total": 46.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T21:30:00.000Z)",
-    "model_proj_spread": 12.7,
-    "model_proj_total": 49.7,
-    "ats_edge": 6.2,
-    "ats_pick": "North Dakota State (-6.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 4.5,
+    "model_proj_total": 50.5,
+    "ats_edge": 2.0,
+    "ats_pick": "Jacksonville State (+6.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 4.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856766,
@@ -2193,11 +2411,13 @@
     "closing_total": 46.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T16:00:00.000Z)",
-    "model_proj_spread": 12.2,
-    "model_proj_total": 61.4,
-    "ats_edge": 4.7,
+    "model_proj_spread": 9.2,
+    "model_proj_total": 51.2,
+    "ats_edge": 1.7,
     "ats_pick": "TCU (-7.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401864494,
@@ -2213,11 +2433,13 @@
     "closing_total": 61.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-08-29T19:00:00.000Z)",
-    "model_proj_spread": 33.1,
-    "model_proj_total": 59.1,
-    "ats_edge": 4.4,
+    "model_proj_spread": 24.3,
+    "model_proj_total": 51.1,
+    "ats_edge": 13.2,
     "ats_pick": "San Jos\u00e9 State (+37.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 10.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866615,
@@ -2233,11 +2455,13 @@
     "closing_total": 50.5,
     "total_open": null,
     "line_source": "Draft Kings closing line frozen at kickoff (2026-08-27T22:00:00.000Z)",
-    "model_proj_spread": 1.9,
-    "model_proj_total": 41.3,
-    "ats_edge": 6.4,
+    "model_proj_spread": 2.0,
+    "model_proj_total": 50.2,
+    "ats_edge": 6.5,
     "ats_pick": "Delaware State (+4.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867865,
@@ -2253,11 +2477,13 @@
     "closing_total": 49.5,
     "total_open": null,
     "line_source": "Draft Kings closing line frozen at kickoff (2026-08-27T23:00:00.000Z)",
-    "model_proj_spread": 1.9,
-    "model_proj_total": 41.3,
-    "ats_edge": 2.6,
+    "model_proj_spread": 1.7,
+    "model_proj_total": 50.1,
+    "ats_edge": 2.8,
     "ats_pick": "Eastern Illinois (+4.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.6,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868060,
@@ -2273,11 +2499,13 @@
     "closing_total": 59.5,
     "total_open": null,
     "line_source": "Draft Kings closing line frozen at kickoff (2026-08-27T23:00:00.000Z)",
-    "model_proj_spread": 5.9,
-    "model_proj_total": 41.1,
-    "ats_edge": 8.6,
+    "model_proj_spread": 3.2,
+    "model_proj_total": 50.2,
+    "ats_edge": 11.3,
     "ats_pick": "Gardner-Webb (+14.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 9.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868240,
@@ -2293,11 +2521,13 @@
     "closing_total": 50.5,
     "total_open": null,
     "line_source": "Draft Kings closing line frozen at kickoff (2026-08-27T23:00:00.000Z)",
-    "model_proj_spread": 5.1,
-    "model_proj_total": 40.3,
-    "ats_edge": 8.6,
+    "model_proj_spread": 2.8,
+    "model_proj_total": 50.2,
+    "ats_edge": 6.3,
     "ats_pick": "West Georgia (+3.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868315,
@@ -2313,11 +2543,13 @@
     "closing_total": 51.5,
     "total_open": null,
     "line_source": "Draft Kings closing line frozen at kickoff (2026-08-27T23:00:00.000Z)",
-    "model_proj_spread": 5.3,
-    "model_proj_total": 44.7,
-    "ats_edge": 19.2,
+    "model_proj_spread": 4.0,
+    "model_proj_total": 50.4,
+    "ats_edge": 20.5,
     "ats_pick": "Houston Christian (+24.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 1.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868070,
@@ -2333,11 +2565,13 @@
     "closing_total": 50.5,
     "total_open": null,
     "line_source": "Draft Kings closing line frozen at kickoff (2026-08-27T23:30:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 39.2,
-    "ats_edge": 1.0,
-    "ats_pick": "UT Martin (-3.0)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 2.8,
+    "model_proj_total": 50.0,
+    "ats_edge": 0.2,
+    "ats_pick": "Central Arkansas (+3.0)",
+    "ats_result": "WIN",
+    "ou_edge": 0.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868962,
@@ -2353,11 +2587,13 @@
     "closing_total": 51.5,
     "total_open": null,
     "line_source": "Draft Kings closing line frozen at kickoff (2026-08-27T23:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 39.2,
-    "ats_edge": 24.5,
+    "model_proj_spread": 3.3,
+    "model_proj_total": 49.9,
+    "ats_edge": 25.2,
     "ats_pick": "Mississippi Valley State (+28.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.6,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867874,
@@ -2373,11 +2609,13 @@
     "closing_total": 44.5,
     "total_open": null,
     "line_source": "Draft Kings closing line frozen at kickoff (2026-08-28T00:00:00.000Z)",
-    "model_proj_spread": 5.9,
-    "model_proj_total": 45.3,
-    "ats_edge": 21.6,
+    "model_proj_spread": 3.9,
+    "model_proj_total": 50.5,
+    "ats_edge": 23.6,
     "ats_pick": "Long Island University (+27.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401874035,
@@ -2393,11 +2631,13 @@
     "closing_total": 55.5,
     "total_open": null,
     "line_source": "Draft Kings closing line frozen at kickoff (2026-08-27T23:00:00.000Z)",
-    "model_proj_spread": 4.4,
-    "model_proj_total": 49.4,
-    "ats_edge": 23.9,
+    "model_proj_spread": 2.7,
+    "model_proj_total": 50.7,
+    "ats_edge": 22.2,
     "ats_pick": "West Florida (+19.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868169,
@@ -2413,11 +2653,13 @@
     "closing_total": 45.5,
     "total_open": null,
     "line_source": "Draft Kings closing line frozen at kickoff (2026-08-27T23:00:00.000Z)",
-    "model_proj_spread": 1.9,
-    "model_proj_total": 41.3,
-    "ats_edge": 5.6,
+    "model_proj_spread": 1.6,
+    "model_proj_total": 50.2,
+    "ats_edge": 5.9,
     "ats_pick": "Charleston Southern (+7.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866532,
@@ -2433,11 +2675,13 @@
     "closing_total": 46.5,
     "total_open": null,
     "line_source": "Draft Kings closing line frozen at kickoff (2026-08-27T22:00:00.000Z)",
-    "model_proj_spread": 1.9,
-    "model_proj_total": 41.3,
-    "ats_edge": 0.6,
+    "model_proj_spread": 1.1,
+    "model_proj_total": 50.3,
+    "ats_edge": 1.4,
     "ats_pick": "Maine (+2.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401860881,
@@ -2453,11 +2697,13 @@
     "closing_total": 54.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T22:00:00.000Z)",
-    "model_proj_spread": 11.4,
-    "model_proj_total": 62.2,
-    "ats_edge": 1.9,
-    "ats_pick": "Boise State (-9.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 1.8,
+    "model_proj_total": 51.4,
+    "ats_edge": 7.7,
+    "ats_pick": "Memphis (+9.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 3.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858428,
@@ -2473,11 +2719,13 @@
     "closing_total": 49.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:30:00.000Z)",
-    "model_proj_spread": 16.6,
-    "model_proj_total": 70.4,
-    "ats_edge": 10.9,
+    "model_proj_spread": 10.7,
+    "model_proj_total": 51.9,
+    "ats_edge": 16.8,
     "ats_pick": "Western Michigan (+27.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 2.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858424,
@@ -2493,18 +2741,20 @@
     "closing_total": 54.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-04T01:00:00.000Z)",
-    "model_proj_spread": 22.3,
-    "model_proj_total": 50.3,
-    "ats_edge": 3.2,
+    "model_proj_spread": 13.6,
+    "model_proj_total": 50.6,
+    "ats_edge": 11.9,
     "ats_pick": "UAB (+25.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401864498,
     "week": 1,
     "home": "New Mexico",
     "away": "Central Michigan",
-    "is_fbs_matchup": true,
+    "is_fbs_matchup": false,
     "final_score": "New Mexico 38 - Central Michigan 7",
     "closing_timestamp": "2026-09-06T02:00:00.000Z",
     "closing_provider": "DraftKings",
@@ -2513,11 +2763,13 @@
     "closing_total": 47.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T02:00:00.000Z)",
-    "model_proj_spread": 19.6,
-    "model_proj_total": 44.8,
-    "ats_edge": 9.1,
-    "ats_pick": "New Mexico (-10.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 8.0,
+    "model_proj_total": 50.2,
+    "ats_edge": 2.5,
+    "ats_pick": "Central Michigan (+10.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 2.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858430,
@@ -2533,11 +2785,13 @@
     "closing_total": 47.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:00:00.000Z)",
-    "model_proj_spread": 23.0,
-    "model_proj_total": 55.8,
-    "ats_edge": 0.5,
+    "model_proj_spread": 7.0,
+    "model_proj_total": 51.2,
+    "ats_edge": 16.5,
     "ats_pick": "Ohio (+23.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.7,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867889,
@@ -2553,11 +2807,13 @@
     "closing_total": 54.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-03T23:00:00.000Z)",
-    "model_proj_spread": -0.9,
-    "model_proj_total": 44.1,
-    "ats_edge": 19.6,
+    "model_proj_spread": -1.1,
+    "model_proj_total": 50.3,
+    "ats_edge": 19.4,
     "ats_pick": "Samford (+20.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856810,
@@ -2573,11 +2829,13 @@
     "closing_total": 48.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": 8.9,
-    "model_proj_total": 79.5,
-    "ats_edge": 1.9,
-    "ats_pick": "BYU (-7.0)",
-    "ats_result": "WIN"
+    "model_proj_spread": 4.4,
+    "model_proj_total": 53.4,
+    "ats_edge": 2.6,
+    "ats_pick": "Arizona (+7.0)",
+    "ats_result": "LOSS",
+    "ou_edge": 4.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856636,
@@ -2593,11 +2851,13 @@
     "closing_total": 58.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:30:00.000Z)",
-    "model_proj_spread": 10.2,
-    "model_proj_total": 69.8,
-    "ats_edge": 3.7,
-    "ats_pick": "Auburn (-6.5)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 5.3,
+    "model_proj_total": 51.7,
+    "ats_edge": 1.2,
+    "ats_pick": "Baylor (+6.5)",
+    "ats_result": "WIN",
+    "ou_edge": 6.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858221,
@@ -2613,11 +2873,13 @@
     "closing_total": 47.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": 15.5,
-    "model_proj_total": 53.7,
-    "ats_edge": 2.0,
+    "model_proj_spread": 3.5,
+    "model_proj_total": 51.9,
+    "ats_edge": 14.0,
     "ats_pick": "Old Dominion (+17.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858433,
@@ -2633,11 +2895,13 @@
     "closing_total": 52.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:30:00.000Z)",
-    "model_proj_spread": 16.2,
-    "model_proj_total": 81.6,
-    "ats_edge": 8.3,
+    "model_proj_spread": 11.0,
+    "model_proj_total": 52.6,
+    "ats_edge": 13.5,
     "ats_pick": "Boise State (+24.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866622,
@@ -2653,11 +2917,13 @@
     "closing_total": 50.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-03T23:00:00.000Z)",
-    "model_proj_spread": 6.1,
-    "model_proj_total": 41.3,
-    "ats_edge": 2.1,
-    "ats_pick": "Stony Brook (-4.0)",
-    "ats_result": "PUSH"
+    "model_proj_spread": 3.0,
+    "model_proj_total": 50.2,
+    "ats_edge": 1.0,
+    "ats_pick": "Lindenwood (+4.0)",
+    "ats_result": "PUSH",
+    "ou_edge": 0.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856674,
@@ -2673,11 +2939,13 @@
     "closing_total": 46.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": -11.2,
-    "model_proj_total": 72.4,
-    "ats_edge": 2.7,
-    "ats_pick": "Alabama (-8.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": -5.7,
+    "model_proj_total": 52.9,
+    "ats_edge": 2.8,
+    "ats_pick": "Kentucky (+8.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 6.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858443,
@@ -2693,11 +2961,13 @@
     "closing_total": 53.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:15:00.000Z)",
-    "model_proj_spread": 8.1,
-    "model_proj_total": 60.7,
-    "ats_edge": 5.4,
+    "model_proj_spread": 1.4,
+    "model_proj_total": 51.6,
+    "ats_edge": 12.1,
     "ats_pick": "San Diego State (+13.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.9,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858204,
@@ -2713,11 +2983,13 @@
     "closing_total": 50.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-03T23:00:00.000Z)",
-    "model_proj_spread": 18.9,
-    "model_proj_total": 43.9,
-    "ats_edge": 8.6,
+    "model_proj_spread": 10.9,
+    "model_proj_total": 50.3,
+    "ats_edge": 16.6,
     "ats_pick": "Akron (+27.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.2,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856681,
@@ -2733,11 +3005,13 @@
     "closing_total": 55.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": -8.6,
-    "model_proj_total": 71.8,
-    "ats_edge": 3.9,
+    "model_proj_spread": -6.5,
+    "model_proj_total": 52.7,
+    "ats_edge": 6.0,
     "ats_pick": "Georgia Tech (+12.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401864497,
@@ -2753,11 +3027,13 @@
     "closing_total": 55.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T02:00:00.000Z)",
-    "model_proj_spread": 1.4,
-    "model_proj_total": 46.4,
-    "ats_edge": 4.4,
+    "model_proj_spread": -1.0,
+    "model_proj_total": 51.0,
+    "ats_edge": 2.0,
     "ats_pick": "Hawai'i (+3.0)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858426,
@@ -2773,11 +3049,13 @@
     "closing_total": 44.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T20:15:00.000Z)",
-    "model_proj_spread": 30.2,
-    "model_proj_total": 51.6,
-    "ats_edge": 1.3,
+    "model_proj_spread": 20.9,
+    "model_proj_total": 50.9,
+    "ats_edge": 10.6,
     "ats_pick": "Northern Illinois (+31.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 6.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856665,
@@ -2793,11 +3071,13 @@
     "closing_total": 53.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:45:00.000Z)",
-    "model_proj_spread": 32.8,
-    "model_proj_total": 52.0,
-    "ats_edge": 2.7,
+    "model_proj_spread": 22.3,
+    "model_proj_total": 50.7,
+    "ats_edge": 13.2,
     "ats_pick": "Kent State (+35.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858438,
@@ -2813,11 +3093,13 @@
     "closing_total": 46.5,
     "total_open": 47.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T23:30:00.000Z)",
-    "model_proj_spread": 25.9,
-    "model_proj_total": 77.3,
-    "ats_edge": 4.9,
-    "ats_pick": "Notre Dame (-21.0)",
-    "ats_result": "WIN"
+    "model_proj_spread": 12.8,
+    "model_proj_total": 52.6,
+    "ats_edge": 8.2,
+    "ats_pick": "Wisconsin (+21.0)",
+    "ats_result": "LOSS",
+    "ou_edge": 6.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401862699,
@@ -2833,11 +3115,13 @@
     "closing_total": 53.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": 18.3,
-    "model_proj_total": 50.1,
-    "ats_edge": 3.8,
-    "ats_pick": "South Florida (-14.5)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 11.6,
+    "model_proj_total": 50.6,
+    "ats_edge": 2.9,
+    "ats_pick": "Florida International (+14.5)",
+    "ats_result": "WIN",
+    "ou_edge": 2.9,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401870763,
@@ -2853,11 +3137,13 @@
     "closing_total": 52.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": 12.6,
-    "model_proj_total": 31.4,
-    "ats_edge": 3.9,
+    "model_proj_spread": 9.2,
+    "model_proj_total": 49.6,
+    "ats_edge": 7.3,
     "ats_pick": "Sam Houston (+16.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 2.9,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401860878,
@@ -2873,11 +3159,13 @@
     "closing_total": 46.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T22:00:00.000Z)",
-    "model_proj_spread": 8.7,
-    "model_proj_total": 32.1,
-    "ats_edge": 6.2,
+    "model_proj_spread": 2.7,
+    "model_proj_total": 49.7,
+    "ats_edge": 0.2,
     "ats_pick": "Colorado State (-2.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858210,
@@ -2893,11 +3181,13 @@
     "closing_total": 53.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T02:30:00.000Z)",
-    "model_proj_spread": -3.4,
-    "model_proj_total": 55.0,
-    "ats_edge": 0.9,
-    "ats_pick": "UCLA (-2.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 3.0,
+    "model_proj_total": 50.6,
+    "ats_edge": 5.5,
+    "ats_pick": "California (+2.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 2.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856634,
@@ -2913,11 +3203,13 @@
     "closing_total": 52.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:00:00.000Z)",
-    "model_proj_spread": 24.0,
-    "model_proj_total": 68.0,
-    "ats_edge": 3.5,
+    "model_proj_spread": 10.1,
+    "model_proj_total": 52.1,
+    "ats_edge": 17.4,
     "ats_pick": "East Carolina (+27.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856637,
@@ -2933,11 +3225,13 @@
     "closing_total": 59.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:45:00.000Z)",
-    "model_proj_spread": 28.0,
-    "model_proj_total": 59.4,
-    "ats_edge": 2.5,
-    "ats_pick": "Florida (-25.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 13.1,
+    "model_proj_total": 51.1,
+    "ats_edge": 12.4,
+    "ats_pick": "Florida Atlantic (+25.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 8.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401860884,
@@ -2953,11 +3247,13 @@
     "closing_total": 65.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": -2.6,
-    "model_proj_total": 53.0,
-    "ats_edge": 5.1,
+    "model_proj_spread": -6.3,
+    "model_proj_total": 51.3,
+    "ats_edge": 8.8,
     "ats_pick": "UTSA (+2.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 14.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858217,
@@ -2973,11 +3269,13 @@
     "closing_total": 51.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": 5.6,
-    "model_proj_total": 66.8,
-    "ats_edge": 0.9,
-    "ats_pick": "Duke (+6.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 6.9,
+    "model_proj_total": 52.1,
+    "ats_edge": 0.4,
+    "ats_pick": "Illinois (-6.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 0.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856778,
@@ -2993,11 +3291,13 @@
     "closing_total": 50.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:00:00.000Z)",
-    "model_proj_spread": 19.7,
-    "model_proj_total": 54.7,
-    "ats_edge": 1.3,
+    "model_proj_spread": 10.2,
+    "model_proj_total": 51.0,
+    "ats_edge": 10.8,
     "ats_pick": "Oregon State (+21.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858434,
@@ -3013,11 +3313,13 @@
     "closing_total": 53.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:30:00.000Z)",
-    "model_proj_spread": 24.5,
-    "model_proj_total": 59.5,
-    "ats_edge": 1.0,
-    "ats_pick": "Penn State (-23.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 11.1,
+    "model_proj_total": 51.5,
+    "ats_edge": 12.4,
+    "ats_pick": "Marshall (+23.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 2.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867883,
@@ -3033,11 +3335,13 @@
     "closing_total": 56.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T00:00:00.000Z)",
-    "model_proj_spread": 1.8,
-    "model_proj_total": 41.4,
-    "ats_edge": 22.3,
+    "model_proj_spread": 1.4,
+    "model_proj_total": 50.2,
+    "ats_edge": 21.9,
     "ats_pick": "Northern Colorado (+20.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868158,
@@ -3053,11 +3357,13 @@
     "closing_total": 58.5,
     "total_open": 58.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T00:00:00.000Z)",
-    "model_proj_spread": 7.8,
-    "model_proj_total": 43.0,
-    "ats_edge": 6.7,
+    "model_proj_spread": 4.7,
+    "model_proj_total": 50.3,
+    "ats_edge": 9.8,
     "ats_pick": "Weber State (+14.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 8.2,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868119,
@@ -3073,11 +3379,13 @@
     "closing_total": 59.5,
     "total_open": 59.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T00:30:00.000Z)",
-    "model_proj_spread": 6.8,
-    "model_proj_total": 46.2,
-    "ats_edge": 38.7,
+    "model_proj_spread": 4.8,
+    "model_proj_total": 50.4,
+    "ats_edge": 40.7,
     "ats_pick": "Butler (+45.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 9.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868967,
@@ -3093,11 +3401,13 @@
     "closing_total": 54.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T16:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 39.2,
-    "ats_edge": 6.5,
+    "model_proj_spread": 3.8,
+    "model_proj_total": 50.0,
+    "ats_edge": 6.7,
     "ats_pick": "Texas Southern (+10.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866626,
@@ -3113,11 +3423,13 @@
     "closing_total": 58.5,
     "total_open": 57.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T22:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 43.4,
-    "ats_edge": 36.5,
+    "model_proj_spread": 2.5,
+    "model_proj_total": 50.3,
+    "ats_edge": 35.0,
     "ats_pick": "Davidson (+32.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 8.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868000,
@@ -3133,11 +3445,13 @@
     "closing_total": 49.5,
     "total_open": 47.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T17:00:00.000Z)",
-    "model_proj_spread": 1.9,
-    "model_proj_total": 41.3,
-    "ats_edge": 2.6,
+    "model_proj_spread": 0.4,
+    "model_proj_total": 50.2,
+    "ats_edge": 4.1,
     "ats_pick": "Holy Cross (+4.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868071,
@@ -3153,11 +3467,13 @@
     "closing_total": 55.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": -1.3,
-    "model_proj_total": 44.5,
-    "ats_edge": 8.8,
+    "model_proj_spread": -1.0,
+    "model_proj_total": 50.4,
+    "ats_edge": 8.5,
     "ats_pick": "West Florida (+7.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 5.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866624,
@@ -3173,11 +3489,13 @@
     "closing_total": 58.5,
     "total_open": 58.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T18:00:00.000Z)",
-    "model_proj_spread": 4.5,
-    "model_proj_total": 43.9,
-    "ats_edge": 8.0,
+    "model_proj_spread": 3.3,
+    "model_proj_total": 50.5,
+    "ats_edge": 9.2,
     "ats_pick": "Sacred Heart (+12.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 8.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868336,
@@ -3193,11 +3511,13 @@
     "closing_total": 48.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T22:00:00.000Z)",
-    "model_proj_spread": 0.6,
-    "model_proj_total": 42.6,
-    "ats_edge": 11.1,
+    "model_proj_spread": 0.2,
+    "model_proj_total": 50.4,
+    "ats_edge": 10.7,
     "ats_pick": "Chattanooga (+10.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868163,
@@ -3213,11 +3533,13 @@
     "closing_total": 54.5,
     "total_open": 57.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T02:00:00.000Z)",
-    "model_proj_spread": 1.7,
-    "model_proj_total": 41.5,
-    "ats_edge": 16.2,
+    "model_proj_spread": 1.4,
+    "model_proj_total": 50.2,
+    "ats_edge": 15.9,
     "ats_pick": "San Diego (+14.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867924,
@@ -3233,11 +3555,13 @@
     "closing_total": 42.5,
     "total_open": 41.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 43.4,
-    "ats_edge": 2.5,
+    "model_proj_spread": 2.3,
+    "model_proj_total": 50.3,
+    "ats_edge": 4.2,
     "ats_pick": "Stonehill (+6.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 7.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868085,
@@ -3253,11 +3577,13 @@
     "closing_total": 52.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": 2.2,
-    "model_proj_total": 41.6,
-    "ats_edge": 4.8,
+    "model_proj_spread": 2.4,
+    "model_proj_total": 50.2,
+    "ats_edge": 4.6,
     "ats_pick": "Northern Iowa (+7.0)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868306,
@@ -3273,11 +3599,13 @@
     "closing_total": 55.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T00:00:00.000Z)",
-    "model_proj_spread": 4.8,
-    "model_proj_total": 44.2,
-    "ats_edge": 18.7,
+    "model_proj_spread": 4.4,
+    "model_proj_total": 50.4,
+    "ats_edge": 19.1,
     "ats_pick": "East Texas A&M (+23.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 5.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867989,
@@ -3293,11 +3621,13 @@
     "closing_total": 54.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T22:00:00.000Z)",
-    "model_proj_spread": 4.3,
-    "model_proj_total": 43.1,
-    "ats_edge": 26.8,
+    "model_proj_spread": 2.7,
+    "model_proj_total": 50.3,
+    "ats_edge": 25.2,
     "ats_pick": "Bucknell (+22.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868111,
@@ -3313,11 +3643,13 @@
     "closing_total": 60.5,
     "total_open": 57.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T19:00:00.000Z)",
-    "model_proj_spread": 5.9,
-    "model_proj_total": 45.3,
-    "ats_edge": 29.6,
+    "model_proj_spread": 3.8,
+    "model_proj_total": 50.4,
+    "ats_edge": 31.7,
     "ats_pick": "Drake (+35.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 10.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401862702,
@@ -3333,11 +3665,13 @@
     "closing_total": 45.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": -0.6,
-    "model_proj_total": 60.2,
-    "ats_edge": 3.6,
-    "ats_pick": "South Florida (+3.0)",
-    "ats_result": "WIN"
+    "model_proj_spread": 3.3,
+    "model_proj_total": 51.9,
+    "ats_edge": 0.3,
+    "ats_pick": "Army (-3.0)",
+    "ats_result": "LOSS",
+    "ou_edge": 6.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867684,
@@ -3353,11 +3687,13 @@
     "closing_total": 61.5,
     "total_open": 61.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": -3.3,
-    "model_proj_total": 46.5,
-    "ats_edge": 48.8,
+    "model_proj_spread": -1.7,
+    "model_proj_total": 50.5,
+    "ats_edge": 47.2,
     "ats_pick": "Chicago State (+45.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 11.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401869127,
@@ -3373,11 +3709,13 @@
     "closing_total": 43.5,
     "total_open": 45.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T22:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 39.2,
-    "ats_edge": 18.0,
+    "model_proj_spread": 2.5,
+    "model_proj_total": 50.1,
+    "ats_edge": 16.5,
     "ats_pick": "Howard (+14.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867939,
@@ -3393,11 +3731,13 @@
     "closing_total": 54.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T19:00:00.000Z)",
-    "model_proj_spread": 1.9,
-    "model_proj_total": 41.3,
-    "ats_edge": 21.4,
+    "model_proj_spread": 0.4,
+    "model_proj_total": 50.2,
+    "ats_edge": 19.9,
     "ats_pick": "Florida A&M (+19.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856790,
@@ -3413,11 +3753,13 @@
     "closing_total": 55.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": 12.9,
-    "model_proj_total": 67.1,
-    "ats_edge": 5.9,
-    "ats_pick": "Pittsburgh (-7.0)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 6.7,
+    "model_proj_total": 52.3,
+    "ats_edge": 0.3,
+    "ats_pick": "UCF (+7.0)",
+    "ats_result": "WIN",
+    "ou_edge": 3.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858216,
@@ -3433,11 +3775,13 @@
     "closing_total": 56.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": 5.2,
-    "model_proj_total": 48.0,
-    "ats_edge": 1.7,
+    "model_proj_spread": 9.7,
+    "model_proj_total": 50.5,
+    "ats_edge": 6.2,
     "ats_pick": "Syracuse (-3.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 6.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858442,
@@ -3453,11 +3797,13 @@
     "closing_total": 50.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": -15.6,
-    "model_proj_total": 60.4,
-    "ats_edge": 8.9,
+    "model_proj_spread": -14.4,
+    "model_proj_total": 52.0,
+    "ats_edge": 10.1,
     "ats_pick": "Temple (+24.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 1.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858446,
@@ -3473,11 +3819,13 @@
     "closing_total": 55.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": 21.8,
-    "model_proj_total": 60.6,
-    "ats_edge": 6.7,
+    "model_proj_spread": 17.6,
+    "model_proj_total": 52.0,
+    "ats_edge": 10.9,
     "ats_pick": "Utah State (+28.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868186,
@@ -3493,11 +3841,13 @@
     "closing_total": 50.5,
     "total_open": 47.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T17:30:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 39.2,
-    "ats_edge": 4.5,
+    "model_proj_spread": 3.5,
+    "model_proj_total": 50.3,
+    "ats_edge": 5.0,
     "ats_pick": "Gardner-Webb (+8.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867692,
@@ -3513,11 +3863,13 @@
     "closing_total": 54.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T22:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 39.2,
-    "ats_edge": 5.5,
+    "model_proj_spread": 3.0,
+    "model_proj_total": 50.2,
+    "ats_edge": 6.5,
     "ats_pick": "Delaware State (+9.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401864432,
@@ -3533,11 +3885,13 @@
     "closing_total": 51.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T02:30:00.000Z)",
-    "model_proj_spread": 5.1,
-    "model_proj_total": 38.5,
-    "ats_edge": 6.6,
-    "ats_pick": "Nevada (+1.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": -2.8,
+    "model_proj_total": 50.0,
+    "ats_edge": 1.3,
+    "ats_pick": "Western Kentucky (-1.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 1.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401864495,
@@ -3553,11 +3907,13 @@
     "closing_total": 55.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-04T22:30:00.000Z)",
-    "model_proj_spread": 3.1,
-    "model_proj_total": 29.1,
-    "ats_edge": 1.6,
+    "model_proj_spread": 2.5,
+    "model_proj_total": 49.3,
+    "ats_edge": 1.0,
     "ats_pick": "Eastern Michigan (-1.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 6.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858207,
@@ -3573,11 +3929,13 @@
     "closing_total": 47.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:30:00.000Z)",
-    "model_proj_spread": 23.8,
-    "model_proj_total": 55.2,
-    "ats_edge": 7.3,
-    "ats_pick": "Pittsburgh (-16.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 10.2,
+    "model_proj_total": 51.0,
+    "ats_edge": 6.3,
+    "ats_pick": "Miami (OH) (+16.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 3.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856780,
@@ -3593,11 +3951,13 @@
     "closing_total": 54.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:00:00.000Z)",
-    "model_proj_spread": 12.6,
-    "model_proj_total": 40.0,
-    "ats_edge": 8.4,
+    "model_proj_spread": 7.6,
+    "model_proj_total": 50.0,
+    "ats_edge": 13.4,
     "ats_pick": "Coastal Carolina (+21.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867845,
@@ -3613,11 +3973,13 @@
     "closing_total": 58.5,
     "total_open": 59.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T00:00:00.000Z)",
-    "model_proj_spread": 1.2,
-    "model_proj_total": 42.0,
-    "ats_edge": 21.7,
+    "model_proj_spread": 0.3,
+    "model_proj_total": 50.3,
+    "ats_edge": 20.8,
     "ats_pick": "Western Illinois (+20.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 8.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867875,
@@ -3633,11 +3995,13 @@
     "closing_total": 53.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T20:00:00.000Z)",
-    "model_proj_spread": 5.9,
-    "model_proj_total": 45.3,
-    "ats_edge": 22.6,
+    "model_proj_spread": 3.5,
+    "model_proj_total": 50.5,
+    "ats_edge": 25.0,
     "ats_pick": "St. Thomas (MN) (+28.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401864496,
@@ -3653,11 +4017,13 @@
     "closing_total": 55.5,
     "total_open": 58.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T17:00:00.000Z)",
-    "model_proj_spread": 3.0,
-    "model_proj_total": 42.4,
-    "ats_edge": 28.5,
+    "model_proj_spread": 1.3,
+    "model_proj_total": 50.3,
+    "ats_edge": 30.2,
     "ats_pick": "Duquesne (+31.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 5.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868017,
@@ -3673,11 +4039,13 @@
     "closing_total": 46.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:30:00.000Z)",
-    "model_proj_spread": 3.9,
-    "model_proj_total": 43.5,
-    "ats_edge": 26.4,
+    "model_proj_spread": 2.9,
+    "model_proj_total": 50.3,
+    "ats_edge": 25.4,
     "ats_pick": "Georgetown (+22.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868274,
@@ -3693,11 +4061,13 @@
     "closing_total": 54.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T22:00:00.000Z)",
-    "model_proj_spread": 5.0,
-    "model_proj_total": 40.2,
-    "ats_edge": 17.5,
+    "model_proj_spread": 2.4,
+    "model_proj_total": 50.2,
+    "ats_edge": 20.1,
     "ats_pick": "Presbyterian (+22.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856781,
@@ -3713,11 +4083,13 @@
     "closing_total": 48.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": 16.8,
-    "model_proj_total": 64.8,
-    "ats_edge": 0.7,
+    "model_proj_spread": 14.2,
+    "model_proj_total": 51.8,
+    "ats_edge": 3.3,
     "ats_pick": "Washington State (+17.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401862705,
@@ -3733,11 +4105,13 @@
     "closing_total": 57.5,
     "total_open": 61.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:45:00.000Z)",
-    "model_proj_spread": 9.2,
-    "model_proj_total": 53.2,
-    "ats_edge": 12.2,
+    "model_proj_spread": -2.8,
+    "model_proj_total": 50.6,
+    "ats_edge": 0.2,
     "ats_pick": "North Texas (+3.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.9,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401864575,
@@ -3753,11 +4127,13 @@
     "closing_total": 48.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 10.5,
-    "model_proj_total": 46.7,
-    "ats_edge": 1.0,
-    "ats_pick": "Tulane (-9.5)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 7.4,
+    "model_proj_total": 50.6,
+    "ats_edge": 2.1,
+    "ats_pick": "South Alabama (+9.5)",
+    "ats_result": "WIN",
+    "ou_edge": 2.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856664,
@@ -3773,11 +4149,13 @@
     "closing_total": 51.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T00:00:00.000Z)",
-    "model_proj_spread": 35.6,
-    "model_proj_total": 54.6,
-    "ats_edge": 4.9,
+    "model_proj_spread": 28.8,
+    "model_proj_total": 51.0,
+    "ats_edge": 11.7,
     "ats_pick": "UTEP (+40.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858432,
@@ -3793,11 +4171,13 @@
     "closing_total": 55.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T16:30:00.000Z)",
-    "model_proj_spread": 45.1,
-    "model_proj_total": 60.9,
-    "ats_edge": 4.4,
+    "model_proj_spread": 42.2,
+    "model_proj_total": 51.4,
+    "ats_edge": 7.3,
     "ats_pick": "Ball State (+49.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858429,
@@ -3813,11 +4193,13 @@
     "closing_total": 48.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T00:00:00.000Z)",
-    "model_proj_spread": 4.2,
-    "model_proj_total": 57.8,
-    "ats_edge": 5.8,
+    "model_proj_spread": -0.7,
+    "model_proj_total": 51.1,
+    "ats_edge": 10.7,
     "ats_pick": "Toledo (+10.0)",
-    "ats_result": "PUSH"
+    "ats_result": "PUSH",
+    "ou_edge": 2.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856673,
@@ -3833,11 +4215,13 @@
     "closing_total": 55.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:45:00.000Z)",
-    "model_proj_spread": 34.2,
-    "model_proj_total": 65.8,
-    "ats_edge": 6.3,
+    "model_proj_spread": 34.6,
+    "model_proj_total": 52.2,
+    "ats_edge": 5.9,
     "ats_pick": "Western Kentucky (+40.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866418,
@@ -3853,11 +4237,13 @@
     "closing_total": 49.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T22:00:00.000Z)",
-    "model_proj_spread": 0.4,
-    "model_proj_total": 39.4,
-    "ats_edge": 1.1,
+    "model_proj_spread": -0.9,
+    "model_proj_total": 50.3,
+    "ats_edge": 2.4,
     "ats_pick": "Jacksonville State (+1.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858440,
@@ -3873,11 +4259,13 @@
     "closing_total": 49.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": 18.9,
-    "model_proj_total": 43.9,
-    "ats_edge": 1.4,
-    "ats_pick": "Michigan State (-17.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 9.5,
+    "model_proj_total": 50.1,
+    "ats_edge": 8.0,
+    "ats_pick": "Eastern Michigan (+17.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 0.6,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401862708,
@@ -3893,11 +4281,13 @@
     "closing_total": 53.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": 13.1,
-    "model_proj_total": 24.1,
-    "ats_edge": 3.6,
-    "ats_pick": "UAB (-9.5)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 6.0,
+    "model_proj_total": 48.4,
+    "ats_edge": 3.5,
+    "ats_pick": "UL Monroe (+9.5)",
+    "ats_result": "WIN",
+    "ou_edge": 5.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401864571,
@@ -3913,11 +4303,13 @@
     "closing_total": 55.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": 7.3,
-    "model_proj_total": 44.3,
-    "ats_edge": 0.8,
-    "ats_pick": "East Carolina (-6.5)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 0.9,
+    "model_proj_total": 50.5,
+    "ats_edge": 5.6,
+    "ats_pick": "App State (+6.5)",
+    "ats_result": "WIN",
+    "ou_edge": 5.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858444,
@@ -3933,11 +4325,13 @@
     "closing_total": 52.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": -7.1,
-    "model_proj_total": 51.7,
-    "ats_edge": 4.4,
+    "model_proj_spread": -0.6,
+    "model_proj_total": 51.4,
+    "ats_edge": 10.9,
     "ats_pick": "UConn (+11.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401859184,
@@ -3953,11 +4347,13 @@
     "closing_total": 54.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": 38.4,
-    "model_proj_total": 63.6,
-    "ats_edge": 6.1,
+    "model_proj_spread": 30.0,
+    "model_proj_total": 52.4,
+    "ats_edge": 14.5,
     "ats_pick": "Rice (+44.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401871045,
@@ -3973,11 +4369,13 @@
     "closing_total": 55.5,
     "total_open": 57.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 9.9,
-    "model_proj_total": 31.5,
-    "ats_edge": 2.6,
+    "model_proj_spread": 3.5,
+    "model_proj_total": 49.5,
+    "ats_edge": 9.0,
     "ats_pick": "Middle Tennessee (+12.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858219,
@@ -3993,11 +4391,13 @@
     "closing_total": 54.5,
     "total_open": 57.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:30:00.000Z)",
-    "model_proj_spread": 17.7,
-    "model_proj_total": 52.5,
-    "ats_edge": 1.8,
+    "model_proj_spread": 6.0,
+    "model_proj_total": 51.0,
+    "ats_edge": 13.5,
     "ats_pick": "Georgia Southern (+19.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858445,
@@ -4013,11 +4413,13 @@
     "closing_total": 58.5,
     "total_open": 63.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-13T03:00:00.000Z)",
-    "model_proj_spread": 25.7,
-    "model_proj_total": 65.5,
-    "ats_edge": 4.8,
+    "model_proj_spread": 19.5,
+    "model_proj_total": 52.1,
+    "ats_edge": 11.0,
     "ats_pick": "Louisiana (+30.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401864578,
@@ -4033,11 +4435,13 @@
     "closing_total": 50.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-13T03:59:00.000Z)",
-    "model_proj_spread": 12.0,
-    "model_proj_total": 35.6,
-    "ats_edge": 4.5,
-    "ats_pick": "Hawai'i (-7.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 6.2,
+    "model_proj_total": 49.8,
+    "ats_edge": 1.3,
+    "ats_pick": "New Mexico State (+7.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 0.7,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856783,
@@ -4053,11 +4457,13 @@
     "closing_total": 52.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:30:00.000Z)",
-    "model_proj_spread": -20.5,
-    "model_proj_total": 63.9,
-    "ats_edge": 5.0,
-    "ats_pick": "Oregon State (+25.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": -31.0,
+    "model_proj_total": 51.8,
+    "ats_edge": 5.5,
+    "ats_pick": "Texas Tech (-25.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 0.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858441,
@@ -4073,11 +4479,13 @@
     "closing_total": 48.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 31.3,
-    "model_proj_total": 49.7,
-    "ats_edge": 0.8,
-    "ats_pick": "Nebraska (-30.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 24.2,
+    "model_proj_total": 50.8,
+    "ats_edge": 6.3,
+    "ats_pick": "Bowling Green (+30.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 2.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401862695,
@@ -4093,11 +4501,13 @@
     "closing_total": 52.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": 13.6,
-    "model_proj_total": 45.0,
-    "ats_edge": 3.1,
-    "ats_pick": "Memphis (-10.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 8.1,
+    "model_proj_total": 50.3,
+    "ats_edge": 2.4,
+    "ats_pick": "Arkansas State (+10.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 2.2,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856660,
@@ -4113,11 +4523,13 @@
     "closing_total": 48.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:30:00.000Z)",
-    "model_proj_spread": 12.8,
-    "model_proj_total": 77.2,
-    "ats_edge": 2.8,
-    "ats_pick": "LSU (-10.0)",
-    "ats_result": "WIN"
+    "model_proj_spread": 3.2,
+    "model_proj_total": 52.4,
+    "ats_edge": 6.8,
+    "ats_pick": "Clemson (+10.0)",
+    "ats_result": "LOSS",
+    "ou_edge": 3.9,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856662,
@@ -4133,11 +4545,13 @@
     "closing_total": 54.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:30:00.000Z)",
-    "model_proj_spread": 32.6,
-    "model_proj_total": 44.4,
-    "ats_edge": 4.1,
-    "ats_pick": "Mississippi State (-28.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 12.6,
+    "model_proj_total": 50.0,
+    "ats_edge": 15.9,
+    "ats_pick": "UL Monroe (+28.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 4.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856668,
@@ -4153,11 +4567,13 @@
     "closing_total": 53.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-05T23:00:00.000Z)",
-    "model_proj_spread": 35.9,
-    "model_proj_total": 61.5,
-    "ats_edge": 2.6,
+    "model_proj_spread": 26.7,
+    "model_proj_total": 51.3,
+    "ats_edge": 11.8,
     "ats_pick": "Missouri State (+38.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856684,
@@ -4173,11 +4589,13 @@
     "closing_total": 54.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T20:15:00.000Z)",
-    "model_proj_spread": 20.6,
-    "model_proj_total": 59.8,
-    "ats_edge": 0.1,
-    "ats_pick": "Vanderbilt (-20.5)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 12.5,
+    "model_proj_total": 51.9,
+    "ats_edge": 8.0,
+    "ats_pick": "Delaware (+20.5)",
+    "ats_result": "WIN",
+    "ou_edge": 2.6,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866414,
@@ -4193,11 +4611,13 @@
     "closing_total": 47.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T22:00:00.000Z)",
-    "model_proj_spread": 9.1,
-    "model_proj_total": 32.7,
-    "ats_edge": 0.6,
-    "ats_pick": "Florida International (-8.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": -0.5,
+    "model_proj_total": 49.7,
+    "ats_edge": 9.0,
+    "ats_pick": "Buffalo (+8.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 2.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856661,
@@ -4213,11 +4633,13 @@
     "closing_total": 55.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-06T23:30:00.000Z)",
-    "model_proj_spread": 7.8,
-    "model_proj_total": 80.4,
-    "ats_edge": 1.3,
-    "ats_pick": "Ole Miss (-6.5)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 4.9,
+    "model_proj_total": 52.5,
+    "ats_edge": 1.6,
+    "ats_pick": "Louisville (+6.5)",
+    "ats_result": "WIN",
+    "ou_edge": 3.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856676,
@@ -4233,11 +4655,13 @@
     "closing_total": 59.5,
     "total_open": 61.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:45:00.000Z)",
-    "model_proj_spread": 36.0,
-    "model_proj_total": 52.4,
-    "ats_edge": 8.5,
+    "model_proj_spread": 30.6,
+    "model_proj_total": 50.8,
+    "ats_edge": 13.9,
     "ats_pick": "Charlotte (+44.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 8.7,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856677,
@@ -4253,11 +4677,13 @@
     "closing_total": 54.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": -4.5,
-    "model_proj_total": 66.7,
-    "ats_edge": 6.0,
-    "ats_pick": "Mississippi State (+1.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 3.8,
+    "model_proj_total": 52.2,
+    "ats_edge": 2.3,
+    "ats_pick": "Minnesota (-1.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 2.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401860883,
@@ -4273,11 +4699,13 @@
     "closing_total": 44.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-13T02:30:00.000Z)",
-    "model_proj_spread": 20.1,
-    "model_proj_total": 39.5,
-    "ats_edge": 2.6,
-    "ats_pick": "Fresno State (-17.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 0.2,
+    "model_proj_total": 50.0,
+    "ats_edge": 17.3,
+    "ats_pick": "Sacramento State (+17.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 5.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858214,
@@ -4293,11 +4721,13 @@
     "closing_total": 53.5,
     "total_open": null,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-11T23:30:00.000Z)",
-    "model_proj_spread": 2.1,
-    "model_proj_total": 44.7,
-    "ats_edge": 0.9,
+    "model_proj_spread": 0.8,
+    "model_proj_total": 50.2,
+    "ats_edge": 2.2,
     "ats_pick": "Rutgers (+3.0)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858224,
@@ -4313,11 +4743,13 @@
     "closing_total": 51.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": -1.2,
-    "model_proj_total": 54.2,
-    "ats_edge": 1.8,
+    "model_proj_spread": 2.0,
+    "model_proj_total": 51.4,
+    "ats_edge": 5.0,
     "ats_pick": "Purdue (+3.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401862707,
@@ -4333,11 +4765,13 @@
     "closing_total": 51.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": -3.2,
-    "model_proj_total": 33.2,
-    "ats_edge": 9.3,
+    "model_proj_spread": -2.9,
+    "model_proj_total": 49.7,
+    "ats_edge": 9.6,
     "ats_pick": "Sam Houston (+12.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 1.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401864502,
@@ -4353,11 +4787,13 @@
     "closing_total": 47.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-13T02:00:00.000Z)",
-    "model_proj_spread": -3.1,
-    "model_proj_total": 52.9,
+    "model_proj_spread": 0.1,
+    "model_proj_total": 51.3,
     "ats_edge": 1.6,
-    "ats_pick": "North Dakota State (-1.5)",
-    "ats_result": "WIN"
+    "ats_pick": "Air Force (+1.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 3.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867796,
@@ -4373,11 +4809,13 @@
     "closing_total": 55.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:30:00.000Z)",
-    "model_proj_spread": 24.5,
-    "model_proj_total": 65.1,
-    "ats_edge": 10.0,
+    "model_proj_spread": 12.4,
+    "model_proj_total": 52.4,
+    "ats_edge": 22.1,
     "ats_pick": "Louisiana Tech (+34.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401869955,
@@ -4393,11 +4831,13 @@
     "closing_total": 55.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 5.7,
-    "model_proj_total": 33.9,
-    "ats_edge": 1.3,
+    "model_proj_spread": 4.7,
+    "model_proj_total": 50.3,
+    "ats_edge": 2.3,
     "ats_pick": "Georgia State (+7.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 5.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856671,
@@ -4413,11 +4853,13 @@
     "closing_total": 56.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:45:00.000Z)",
-    "model_proj_spread": 22.3,
-    "model_proj_total": 57.3,
-    "ats_edge": 10.2,
+    "model_proj_spread": 7.6,
+    "model_proj_total": 51.4,
+    "ats_edge": 24.9,
     "ats_pick": "Southern Miss (+32.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 5.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401862703,
@@ -4433,11 +4875,13 @@
     "closing_total": 59.5,
     "total_open": 57.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:30:00.000Z)",
-    "model_proj_spread": -2.9,
-    "model_proj_total": 41.9,
-    "ats_edge": 1.1,
-    "ats_pick": "Florida Atlantic (+4.0)",
-    "ats_result": "WIN"
+    "model_proj_spread": -11.7,
+    "model_proj_total": 50.5,
+    "ats_edge": 7.7,
+    "ats_pick": "Navy (-4.0)",
+    "ats_result": "LOSS",
+    "ou_edge": 9.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401860882,
@@ -4453,11 +4897,13 @@
     "closing_total": 57.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 0.6,
-    "model_proj_total": 43.8,
-    "ats_edge": 18.9,
+    "model_proj_spread": 1.1,
+    "model_proj_total": 50.5,
+    "ats_edge": 18.4,
     "ats_pick": "Southern Utah (+19.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 7.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856791,
@@ -4473,11 +4919,13 @@
     "closing_total": 56.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T17:00:00.000Z)",
-    "model_proj_spread": 9.3,
-    "model_proj_total": 45.5,
-    "ats_edge": 32.2,
+    "model_proj_spread": 2.8,
+    "model_proj_total": 50.4,
+    "ats_edge": 38.7,
     "ats_pick": "UT Martin (+41.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 6.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867876,
@@ -4493,11 +4941,13 @@
     "closing_total": 60.5,
     "total_open": 58.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-13T02:00:00.000Z)",
-    "model_proj_spread": 0.3,
-    "model_proj_total": 43.9,
-    "ats_edge": 25.8,
+    "model_proj_spread": -5.7,
+    "model_proj_total": 50.5,
+    "ats_edge": 19.8,
     "ats_pick": "Portland State (+25.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 10.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868150,
@@ -4513,11 +4963,13 @@
     "closing_total": 51.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 7.2,
-    "model_proj_total": 43.4,
-    "ats_edge": 0.7,
-    "ats_pick": "SE Louisiana (-6.5)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 4.4,
+    "model_proj_total": 50.2,
+    "ats_edge": 2.1,
+    "ats_pick": "North Alabama (+6.5)",
+    "ats_result": "WIN",
+    "ou_edge": 1.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866630,
@@ -4533,11 +4985,13 @@
     "closing_total": 47.5,
     "total_open": 47.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T21:00:00.000Z)",
-    "model_proj_spread": 5.9,
-    "model_proj_total": 42.1,
-    "ats_edge": 4.1,
+    "model_proj_spread": 3.0,
+    "model_proj_total": 49.4,
+    "ats_edge": 7.0,
     "ats_pick": "Merrimack (+10.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 1.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858439,
@@ -4553,11 +5007,13 @@
     "closing_total": 66.5,
     "total_open": 64.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": 30.5,
-    "model_proj_total": 66.7,
-    "ats_edge": 27.0,
+    "model_proj_spread": 35.0,
+    "model_proj_total": 52.0,
+    "ats_edge": 22.5,
     "ats_pick": "Howard (+57.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 14.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868093,
@@ -4573,11 +5029,13 @@
     "closing_total": 51.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T20:00:00.000Z)",
-    "model_proj_spread": 4.6,
-    "model_proj_total": 41.4,
-    "ats_edge": 1.1,
-    "ats_pick": "Idaho (-3.5)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 1.9,
+    "model_proj_total": 49.7,
+    "ats_edge": 1.6,
+    "ats_pick": "Lamar (+3.5)",
+    "ats_result": "WIN",
+    "ou_edge": 1.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858213,
@@ -4593,11 +5051,13 @@
     "closing_total": 66.5,
     "total_open": 62.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-11T00:00:00.000Z)",
-    "model_proj_spread": 31.6,
-    "model_proj_total": 67.8,
-    "ats_edge": 27.9,
+    "model_proj_spread": 38.0,
+    "model_proj_total": 51.8,
+    "ats_edge": 21.5,
     "ats_pick": "Florida A&M (+59.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 14.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868008,
@@ -4613,11 +5073,13 @@
     "closing_total": 54.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:30:00.000Z)",
-    "model_proj_spread": 1.0,
-    "model_proj_total": 37.2,
-    "ats_edge": 35.5,
+    "model_proj_spread": 4.5,
+    "model_proj_total": 49.3,
+    "ats_edge": 32.0,
     "ats_pick": "Fordham (+36.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 5.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856786,
@@ -4633,11 +5095,13 @@
     "closing_total": 61.5,
     "total_open": 60.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 14.8,
-    "model_proj_total": 51.0,
-    "ats_edge": 21.7,
+    "model_proj_spread": 6.8,
+    "model_proj_total": 50.8,
+    "ats_edge": 29.7,
     "ats_pick": "Western Carolina (+36.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 10.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866415,
@@ -4653,11 +5117,13 @@
     "closing_total": 49.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T17:00:00.000Z)",
-    "model_proj_spread": -1.7,
-    "model_proj_total": 34.5,
-    "ats_edge": 20.2,
+    "model_proj_spread": -6.3,
+    "model_proj_total": 49.7,
+    "ats_edge": 24.8,
     "ats_pick": "Colgate (+18.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.2,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866417,
@@ -4673,11 +5139,13 @@
     "closing_total": 47.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T17:00:00.000Z)",
-    "model_proj_spread": 0.5,
-    "model_proj_total": 40.5,
-    "ats_edge": 30.0,
+    "model_proj_spread": -0.1,
+    "model_proj_total": 49.5,
+    "ats_edge": 30.6,
     "ats_pick": "Holy Cross (+30.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866629,
@@ -4693,11 +5161,13 @@
     "closing_total": 51.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T22:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 40.2,
-    "ats_edge": 7.5,
+    "model_proj_spread": 2.3,
+    "model_proj_total": 49.5,
+    "ats_edge": 5.8,
     "ats_pick": "Hampton (+3.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866413,
@@ -4713,11 +5183,13 @@
     "closing_total": 52.5,
     "total_open": 57.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T18:00:00.000Z)",
-    "model_proj_spread": -8.4,
-    "model_proj_total": 31.6,
-    "ats_edge": 21.9,
+    "model_proj_spread": -8.5,
+    "model_proj_total": 49.1,
+    "ats_edge": 22.0,
     "ats_pick": "Stony Brook (+13.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858215,
@@ -4733,11 +5205,13 @@
     "closing_total": 56.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-11T23:00:00.000Z)",
-    "model_proj_spread": 21.3,
-    "model_proj_total": 60.9,
-    "ats_edge": 17.2,
+    "model_proj_spread": 10.1,
+    "model_proj_total": 51.3,
+    "ats_edge": 28.4,
     "ats_pick": "Villanova (+38.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 5.2,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868123,
@@ -4753,11 +5227,13 @@
     "closing_total": 54.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T21:00:00.000Z)",
-    "model_proj_spread": 3.0,
-    "model_proj_total": 43.4,
-    "ats_edge": 1.5,
+    "model_proj_spread": -6.3,
+    "model_proj_total": 50.3,
+    "ats_edge": 10.8,
     "ats_pick": "Incarnate Word (+4.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.2,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858218,
@@ -4773,11 +5249,13 @@
     "closing_total": 54.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": 11.8,
-    "model_proj_total": 48.2,
-    "ats_edge": 23.7,
+    "model_proj_spread": 3.8,
+    "model_proj_total": 50.8,
+    "ats_edge": 31.7,
     "ats_pick": "East Tennessee State (+35.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.7,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867929,
@@ -4793,11 +5271,13 @@
     "closing_total": 56.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": 15.5,
-    "model_proj_total": 55.5,
-    "ats_edge": 31.0,
+    "model_proj_spread": 10.5,
+    "model_proj_total": 50.9,
+    "ats_edge": 36.0,
     "ats_pick": "Wagner (+46.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 5.6,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401864504,
@@ -4813,11 +5293,13 @@
     "closing_total": 58.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-13T01:00:00.000Z)",
-    "model_proj_spread": -1.1,
-    "model_proj_total": 36.5,
-    "ats_edge": 22.6,
+    "model_proj_spread": -2.4,
+    "model_proj_total": 49.6,
+    "ats_edge": 23.9,
     "ats_pick": "Cal Poly (+21.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 8.9,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866420,
@@ -4833,11 +5315,13 @@
     "closing_total": 53.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": -6.7,
-    "model_proj_total": 33.3,
-    "ats_edge": 30.2,
+    "model_proj_spread": -1.4,
+    "model_proj_total": 49.4,
+    "ats_edge": 24.9,
     "ats_pick": "Sacred Heart (+23.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858225,
@@ -4853,11 +5337,13 @@
     "closing_total": 51.5,
     "total_open": 59.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-17T23:30:00.000Z)",
-    "model_proj_spread": 16.9,
-    "model_proj_total": 64.3,
-    "ats_edge": 6.4,
-    "ats_pick": "Pittsburgh (-10.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 9.6,
+    "model_proj_total": 51.8,
+    "ats_edge": 0.9,
+    "ats_pick": "Syracuse (+10.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 0.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866633,
@@ -4873,11 +5359,13 @@
     "closing_total": 55.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": 5.9,
-    "model_proj_total": 42.1,
-    "ats_edge": 18.6,
+    "model_proj_spread": 8.3,
+    "model_proj_total": 49.7,
+    "ats_edge": 16.2,
     "ats_pick": "North Carolina A&T (+24.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 5.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856789,
@@ -4893,11 +5381,13 @@
     "closing_total": 56.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-13T00:00:00.000Z)",
-    "model_proj_spread": 19.8,
-    "model_proj_total": 56.0,
-    "ats_edge": 24.7,
+    "model_proj_spread": 3.8,
+    "model_proj_total": 51.4,
+    "ats_edge": 40.7,
     "ats_pick": "Grambling (+44.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 5.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401872616,
@@ -4913,11 +5403,13 @@
     "closing_total": 54.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 4.6,
-    "model_proj_total": 44.6,
-    "ats_edge": 37.9,
+    "model_proj_spread": 5.7,
+    "model_proj_total": 50.7,
+    "ats_edge": 36.8,
     "ats_pick": "New Haven (+42.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856784,
@@ -4933,11 +5425,13 @@
     "closing_total": 55.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-13T00:08:00.000Z)",
-    "model_proj_spread": 16.8,
-    "model_proj_total": 53.0,
-    "ats_edge": 20.7,
+    "model_proj_spread": 7.7,
+    "model_proj_total": 50.9,
+    "ats_edge": 29.8,
     "ats_pick": "Prairie View A&M (+37.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868241,
@@ -4953,11 +5447,13 @@
     "closing_total": 56.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 1.9,
-    "model_proj_total": 40.1,
-    "ats_edge": 29.6,
+    "model_proj_spread": 2.9,
+    "model_proj_total": 49.3,
+    "ats_edge": 28.6,
     "ats_pick": "West Georgia (+31.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 7.2,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856686,
@@ -4973,11 +5469,13 @@
     "closing_total": 54.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": -16.1,
-    "model_proj_total": 74.9,
-    "ats_edge": 8.4,
+    "model_proj_spread": -12.6,
+    "model_proj_total": 53.0,
+    "ats_edge": 11.9,
     "ats_pick": "Arkansas (+24.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868355,
@@ -4993,11 +5491,13 @@
     "closing_total": 49.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 44.0,
-    "ats_edge": 4.5,
+    "model_proj_spread": 6.2,
+    "model_proj_total": 50.0,
+    "ats_edge": 2.3,
     "ats_pick": "Arkansas-Pine Bluff (+8.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868187,
@@ -5013,11 +5513,13 @@
     "closing_total": 55.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": 8.7,
-    "model_proj_total": 44.9,
-    "ats_edge": 20.8,
+    "model_proj_spread": 2.5,
+    "model_proj_total": 50.1,
+    "ats_edge": 27.0,
     "ats_pick": "Gardner-Webb (+29.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 5.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856785,
@@ -5033,11 +5535,13 @@
     "closing_total": 57.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": 10.6,
-    "model_proj_total": 46.8,
-    "ats_edge": 27.9,
+    "model_proj_spread": 6.5,
+    "model_proj_total": 50.1,
+    "ats_edge": 32.0,
     "ats_pick": "Weber State (+38.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 7.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401864506,
@@ -5053,11 +5557,13 @@
     "closing_total": 44.5,
     "total_open": 47.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T20:00:00.000Z)",
-    "model_proj_spread": -1.7,
-    "model_proj_total": 34.5,
-    "ats_edge": 25.2,
+    "model_proj_spread": -1.6,
+    "model_proj_total": 49.6,
+    "ats_edge": 25.1,
     "ats_pick": "Northern Colorado (+23.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 5.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858222,
@@ -5073,11 +5579,13 @@
     "closing_total": 50.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-11T23:00:00.000Z)",
-    "model_proj_spread": 16.6,
-    "model_proj_total": 52.8,
-    "ats_edge": 16.9,
+    "model_proj_spread": 5.5,
+    "model_proj_total": 50.7,
+    "ats_edge": 28.0,
     "ats_pick": "Richmond (+33.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866632,
@@ -5093,11 +5601,13 @@
     "closing_total": 44.5,
     "total_open": 44.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 44.0,
-    "ats_edge": 6.5,
+    "model_proj_spread": -1.2,
+    "model_proj_total": 49.8,
+    "ats_edge": 1.3,
     "ats_pick": "Long Island University (+2.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 5.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866416,
@@ -5113,11 +5623,13 @@
     "closing_total": 45.5,
     "total_open": 47.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": -4.7,
-    "model_proj_total": 31.5,
-    "ats_edge": 14.7,
+    "model_proj_spread": -7.9,
+    "model_proj_total": 49.3,
+    "ats_edge": 17.9,
     "ats_pick": "Wofford (+10.0)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868112,
@@ -5133,11 +5645,13 @@
     "closing_total": 56.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:00:00.000Z)",
-    "model_proj_spread": 7.7,
-    "model_proj_total": 43.9,
-    "ats_edge": 28.8,
+    "model_proj_spread": 11.9,
+    "model_proj_total": 50.1,
+    "ats_edge": 24.6,
     "ats_pick": "Utah Tech (+36.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866419,
@@ -5153,11 +5667,13 @@
     "closing_total": 52.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": 11.9,
-    "model_proj_total": 51.9,
-    "ats_edge": 24.6,
+    "model_proj_spread": 10.4,
+    "model_proj_total": 50.4,
+    "ats_edge": 26.1,
     "ats_pick": "Central Connecticut (+36.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868326,
@@ -5173,11 +5689,13 @@
     "closing_total": 52.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T20:00:00.000Z)",
-    "model_proj_spread": 4.2,
-    "model_proj_total": 41.6,
-    "ats_edge": 19.3,
+    "model_proj_spread": -0.6,
+    "model_proj_total": 50.4,
+    "ats_edge": 24.1,
     "ats_pick": "Alabama State (+23.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 2.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401869130,
@@ -5193,11 +5711,13 @@
     "closing_total": 53.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 5.9,
-    "model_proj_total": 42.1,
-    "ats_edge": 14.6,
+    "model_proj_spread": 5.5,
+    "model_proj_total": 49.5,
+    "ats_edge": 15.0,
     "ats_pick": "Northwestern State (+20.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868061,
@@ -5213,11 +5733,13 @@
     "closing_total": 62.5,
     "total_open": 62.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T21:00:00.000Z)",
-    "model_proj_spread": 3.9,
-    "model_proj_total": 43.9,
-    "ats_edge": 32.6,
+    "model_proj_spread": -0.5,
+    "model_proj_total": 50.3,
+    "ats_edge": 37.0,
     "ats_pick": "Morehead State (+36.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 12.2,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858220,
@@ -5233,11 +5755,13 @@
     "closing_total": 56.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-11T23:00:00.000Z)",
-    "model_proj_spread": 19.5,
-    "model_proj_total": 59.5,
-    "ats_edge": 28.0,
+    "model_proj_spread": 10.2,
+    "model_proj_total": 51.6,
+    "ats_edge": 37.3,
     "ats_pick": "Norfolk State (+47.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856691,
@@ -5253,11 +5777,13 @@
     "closing_total": 59.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T20:15:00.000Z)",
-    "model_proj_spread": 7.4,
-    "model_proj_total": 81.0,
-    "ats_edge": 4.4,
+    "model_proj_spread": 8.2,
+    "model_proj_total": 52.8,
+    "ats_edge": 5.2,
     "ats_pick": "South Carolina (-3.0)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 6.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867856,
@@ -5273,11 +5799,13 @@
     "closing_total": 49.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 44.0,
-    "ats_edge": 7.0,
+    "model_proj_spread": 1.0,
+    "model_proj_total": 49.6,
+    "ats_edge": 4.0,
     "ats_pick": "Eastern Illinois (+3.0)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868246,
@@ -5293,11 +5821,13 @@
     "closing_total": 50.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 1.2,
-    "model_proj_total": 43.0,
-    "ats_edge": 6.7,
+    "model_proj_spread": -2.8,
+    "model_proj_total": 50.0,
+    "ats_edge": 2.7,
     "ats_pick": "Nicholls (+5.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868374,
@@ -5313,11 +5843,13 @@
     "closing_total": 54.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T22:00:00.000Z)",
-    "model_proj_spread": 5.0,
-    "model_proj_total": 41.2,
-    "ats_edge": 10.5,
+    "model_proj_spread": 8.0,
+    "model_proj_total": 50.2,
+    "ats_edge": 7.5,
     "ats_pick": "Furman (+15.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868033,
@@ -5333,11 +5865,13 @@
     "closing_total": 47.5,
     "total_open": 47.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T18:00:00.000Z)",
-    "model_proj_spread": 6.1,
-    "model_proj_total": 42.3,
-    "ats_edge": 7.4,
+    "model_proj_spread": 8.7,
+    "model_proj_total": 50.5,
+    "ats_edge": 4.8,
     "ats_pick": "William & Mary (+13.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856787,
@@ -5353,11 +5887,13 @@
     "closing_total": 61.5,
     "total_open": 60.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 20.3,
-    "model_proj_total": 56.5,
-    "ats_edge": 31.2,
+    "model_proj_spread": 12.0,
+    "model_proj_total": 51.2,
+    "ats_edge": 39.5,
     "ats_pick": "Southern (+51.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 10.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868195,
@@ -5373,11 +5909,13 @@
     "closing_total": 49.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 40.2,
-    "ats_edge": 7.5,
+    "model_proj_spread": 10.7,
+    "model_proj_total": 49.7,
+    "ats_edge": 14.2,
     "ats_pick": "Alabama A&M (+3.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.2,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866412,
@@ -5393,11 +5931,13 @@
     "closing_total": 45.5,
     "total_open": 41.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T19:30:00.000Z)",
-    "model_proj_spread": -1.9,
-    "model_proj_total": 38.1,
-    "ats_edge": 28.4,
+    "model_proj_spread": -6.5,
+    "model_proj_total": 50.1,
+    "ats_edge": 33.0,
     "ats_pick": "Robert Morris (+26.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866631,
@@ -5413,11 +5953,13 @@
     "closing_total": 43.5,
     "total_open": 43.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T22:00:00.000Z)",
-    "model_proj_spread": 4.4,
-    "model_proj_total": 44.4,
-    "ats_edge": 9.1,
+    "model_proj_spread": -2.5,
+    "model_proj_total": 49.9,
+    "ats_edge": 16.0,
     "ats_pick": "Stonehill (+13.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867867,
@@ -5433,11 +5975,13 @@
     "closing_total": 47.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 2.1,
-    "model_proj_total": 42.1,
-    "ats_edge": 12.4,
+    "model_proj_spread": -0.6,
+    "model_proj_total": 50.0,
+    "ats_edge": 15.1,
     "ats_pick": "Valparaiso (+14.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 2.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868102,
@@ -5453,11 +5997,13 @@
     "closing_total": 58.5,
     "total_open": 58.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T22:00:00.000Z)",
-    "model_proj_spread": 6.0,
-    "model_proj_total": 42.2,
-    "ats_edge": 16.5,
+    "model_proj_spread": 9.6,
+    "model_proj_total": 50.0,
+    "ats_edge": 12.9,
     "ats_pick": "San Diego (+22.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 8.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858223,
@@ -5473,11 +6019,13 @@
     "closing_total": 58.5,
     "total_open": 58.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T20:00:00.000Z)",
-    "model_proj_spread": 22.9,
-    "model_proj_total": 63.5,
-    "ats_edge": 9.6,
+    "model_proj_spread": 12.4,
+    "model_proj_total": 52.0,
+    "ats_edge": 20.1,
     "ats_pick": "UC Davis (+32.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 6.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868171,
@@ -5493,11 +6041,13 @@
     "closing_total": 45.5,
     "total_open": 45.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T22:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 44.0,
-    "ats_edge": 1.0,
+    "model_proj_spread": 4.4,
+    "model_proj_total": 50.0,
+    "ats_edge": 1.4,
     "ats_pick": "The Citadel (-3.0)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868236,
@@ -5513,11 +6063,13 @@
     "closing_total": 56.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 0.4,
-    "model_proj_total": 43.8,
-    "ats_edge": 19.9,
+    "model_proj_spread": 0.8,
+    "model_proj_total": 51.0,
+    "ats_edge": 20.3,
     "ats_pick": "McNeese (+19.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 5.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858226,
@@ -5533,11 +6085,13 @@
     "closing_total": 55.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-18T23:30:00.000Z)",
-    "model_proj_spread": -14.2,
-    "model_proj_total": 78.2,
-    "ats_edge": 6.3,
+    "model_proj_spread": -11.3,
+    "model_proj_total": 52.9,
+    "ats_edge": 9.2,
     "ats_pick": "Wake Forest (+20.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 2.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858229,
@@ -5553,11 +6107,13 @@
     "closing_total": 44.5,
     "total_open": 44.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": 6.6,
-    "model_proj_total": 61.4,
-    "ats_edge": 3.6,
+    "model_proj_spread": 4.5,
+    "model_proj_total": 51.5,
+    "ats_edge": 1.5,
     "ats_pick": "Clemson (-3.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 7.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868285,
@@ -5573,11 +6129,13 @@
     "closing_total": 56.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T20:00:00.000Z)",
-    "model_proj_spread": 2.1,
-    "model_proj_total": 42.1,
-    "ats_edge": 12.4,
+    "model_proj_spread": 2.0,
+    "model_proj_total": 49.2,
+    "ats_edge": 12.5,
     "ats_pick": "Stetson (+14.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 7.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867890,
@@ -5593,11 +6151,13 @@
     "closing_total": 53.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 6.6,
-    "model_proj_total": 46.6,
-    "ats_edge": 0.9,
+    "model_proj_spread": 5.2,
+    "model_proj_total": 50.4,
+    "ats_edge": 2.3,
     "ats_pick": "Southeast Missouri State (+7.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401864505,
@@ -5613,11 +6173,13 @@
     "closing_total": 53.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-13T01:00:00.000Z)",
-    "model_proj_spread": -4.1,
-    "model_proj_total": 32.1,
-    "ats_edge": 31.6,
+    "model_proj_spread": -5.8,
+    "model_proj_total": 49.0,
+    "ats_edge": 33.3,
     "ats_pick": "Texas Southern (+27.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866421,
@@ -5633,11 +6195,13 @@
     "closing_total": 54.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T22:30:00.000Z)",
-    "model_proj_spread": 10.3,
-    "model_proj_total": 51.5,
-    "ats_edge": 19.2,
+    "model_proj_spread": 0.7,
+    "model_proj_total": 50.7,
+    "ats_edge": 28.8,
     "ats_pick": "Monmouth (+29.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867990,
@@ -5653,11 +6217,13 @@
     "closing_total": 47.5,
     "total_open": 47.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T17:30:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 44.0,
-    "ats_edge": 12.5,
+    "model_proj_spread": -0.8,
+    "model_proj_total": 49.6,
+    "ats_edge": 7.7,
     "ats_pick": "VMI (+8.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401865252,
@@ -5673,11 +6239,13 @@
     "closing_total": 54.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T20:00:00.000Z)",
-    "model_proj_spread": 13.7,
-    "model_proj_total": 53.7,
-    "ats_edge": 28.8,
+    "model_proj_spread": 13.2,
+    "model_proj_total": 50.6,
+    "ats_edge": 29.3,
     "ats_pick": "Mercyhurst (+42.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868050,
@@ -5693,11 +6261,13 @@
     "closing_total": 50.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-13T00:00:00.000Z)",
-    "model_proj_spread": 3.6,
-    "model_proj_total": 45.2,
-    "ats_edge": 6.6,
-    "ats_pick": "Abilene Christian (+3.0)",
-    "ats_result": "LOSS"
+    "model_proj_spread": -3.2,
+    "model_proj_total": 50.4,
+    "ats_edge": 0.2,
+    "ats_pick": "Stephen F. Austin (-3.0)",
+    "ats_result": "WIN",
+    "ou_edge": 0.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867895,
@@ -5713,11 +6283,13 @@
     "closing_total": 54.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T18:00:00.000Z)",
-    "model_proj_spread": 4.1,
-    "model_proj_total": 44.1,
-    "ats_edge": 18.4,
+    "model_proj_spread": 6.9,
+    "model_proj_total": 49.9,
+    "ats_edge": 15.6,
     "ats_pick": "Duquesne (+22.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.6,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868255,
@@ -5733,11 +6305,13 @@
     "closing_total": 59.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T18:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 44.0,
-    "ats_edge": 7.5,
+    "model_proj_spread": 3.0,
+    "model_proj_total": 49.8,
+    "ats_edge": 8.5,
     "ats_pick": "Drake (+11.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 9.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866628,
@@ -5753,11 +6327,13 @@
     "closing_total": 48.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:00:00.000Z)",
-    "model_proj_spread": 3.1,
-    "model_proj_total": 43.1,
-    "ats_edge": 5.4,
+    "model_proj_spread": -1.8,
+    "model_proj_total": 50.8,
+    "ats_edge": 10.3,
     "ats_pick": "Elon (+8.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856672,
@@ -5773,11 +6349,13 @@
     "closing_total": 66.5,
     "total_open": 65.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T21:30:00.000Z)",
-    "model_proj_spread": 23.6,
-    "model_proj_total": 63.6,
-    "ats_edge": 27.9,
+    "model_proj_spread": 16.7,
+    "model_proj_total": 51.7,
+    "ats_edge": 34.8,
     "ats_pick": "Campbell (+51.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 14.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401871046,
@@ -5793,11 +6371,13 @@
     "closing_total": 53.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": -1.4,
-    "model_proj_total": 34.8,
-    "ats_edge": 17.9,
+    "model_proj_spread": -3.8,
+    "model_proj_total": 49.2,
+    "ats_edge": 20.3,
     "ats_pick": "Lindenwood (+16.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858447,
@@ -5813,11 +6393,13 @@
     "closing_total": 52.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:15:00.000Z)",
-    "model_proj_spread": 11.4,
-    "model_proj_total": 47.6,
-    "ats_edge": 32.1,
+    "model_proj_spread": 3.5,
+    "model_proj_total": 50.7,
+    "ats_edge": 40.0,
     "ats_pick": "Western Illinois (+43.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 1.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401864503,
@@ -5833,11 +6415,13 @@
     "closing_total": 47.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": -5.9,
-    "model_proj_total": 35.5,
-    "ats_edge": 3.4,
+    "model_proj_spread": -13.6,
+    "model_proj_total": 49.8,
+    "ats_edge": 11.1,
     "ats_pick": "Illinois State (-2.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 2.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867884,
@@ -5853,11 +6437,13 @@
     "closing_total": 61.5,
     "total_open": 58.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T18:00:00.000Z)",
-    "model_proj_spread": 5.9,
-    "model_proj_total": 42.5,
-    "ats_edge": 9.6,
+    "model_proj_spread": 5.8,
+    "model_proj_total": 50.8,
+    "ats_edge": 9.7,
     "ats_pick": "Eastern Washington (+15.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 10.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856680,
@@ -5873,11 +6459,13 @@
     "closing_total": 57.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 25.2,
-    "model_proj_total": 61.4,
-    "ats_edge": 19.3,
+    "model_proj_spread": 27.8,
+    "model_proj_total": 51.4,
+    "ats_edge": 16.7,
     "ats_pick": "Towson (+44.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868028,
@@ -5893,11 +6481,13 @@
     "closing_total": 47.5,
     "total_open": 47.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T16:30:00.000Z)",
-    "model_proj_spread": 2.1,
-    "model_proj_total": 42.1,
-    "ats_edge": 13.4,
+    "model_proj_spread": -3.6,
+    "model_proj_total": 49.8,
+    "ats_edge": 19.1,
     "ats_pick": "Marist (+15.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 2.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401864500,
@@ -5913,11 +6503,13 @@
     "closing_total": 51.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-13T02:30:00.000Z)",
-    "model_proj_spread": -0.3,
-    "model_proj_total": 45.1,
-    "ats_edge": 4.2,
-    "ats_pick": "Nevada (+4.5)",
-    "ats_result": "LOSS"
+    "model_proj_spread": -4.9,
+    "model_proj_total": 50.9,
+    "ats_edge": 0.4,
+    "ats_pick": "Montana State (-4.5)",
+    "ats_result": "WIN",
+    "ou_edge": 0.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868386,
@@ -5933,11 +6525,13 @@
     "closing_total": 48.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T23:00:00.000Z)",
-    "model_proj_spread": 7.2,
-    "model_proj_total": 43.4,
-    "ats_edge": 19.3,
+    "model_proj_spread": 9.3,
+    "model_proj_total": 50.1,
+    "ats_edge": 17.2,
     "ats_pick": "Samford (+26.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 1.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868141,
@@ -5953,11 +6547,13 @@
     "closing_total": 48.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-12T22:00:00.000Z)",
-    "model_proj_spread": 4.1,
-    "model_proj_total": 40.3,
-    "ats_edge": 7.1,
+    "model_proj_spread": -0.9,
+    "model_proj_total": 49.7,
+    "ats_edge": 2.1,
     "ats_pick": "Eastern Kentucky (+3.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 1.2,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856812,
@@ -5973,11 +6569,13 @@
     "closing_total": 51.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": 1.2,
-    "model_proj_total": 63.4,
-    "ats_edge": 6.7,
+    "model_proj_spread": 1.0,
+    "model_proj_total": 52.0,
+    "ats_edge": 6.5,
     "ats_pick": "Kansas (+5.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401869940,
@@ -5993,11 +6591,13 @@
     "closing_total": 56.5,
     "total_open": 58.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T15:30:00.000Z)",
-    "model_proj_spread": 8.2,
-    "model_proj_total": 41.4,
-    "ats_edge": 3.7,
-    "ats_pick": "Delaware (-4.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 4.5,
+    "model_proj_total": 50.1,
+    "ats_edge": 0.0,
+    "ats_pick": "Coastal Carolina (+4.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 6.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858454,
@@ -6013,11 +6613,13 @@
     "closing_total": 58.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": 42.4,
-    "model_proj_total": 60.8,
-    "ats_edge": 10.1,
+    "model_proj_spread": 49.6,
+    "model_proj_total": 55.6,
+    "ats_edge": 2.9,
     "ats_pick": "Kent State (+52.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856792,
@@ -6033,11 +6635,13 @@
     "closing_total": 49.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": 16.3,
-    "model_proj_total": 65.5,
-    "ats_edge": 4.2,
+    "model_proj_spread": 11.5,
+    "model_proj_total": 52.1,
+    "ats_edge": 9.0,
     "ats_pick": "Tulane (+20.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 2.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858456,
@@ -6053,11 +6657,13 @@
     "closing_total": 48.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": 29.4,
-    "model_proj_total": 54.6,
-    "ats_edge": 10.1,
+    "model_proj_spread": 27.2,
+    "model_proj_total": 51.4,
+    "ats_edge": 12.3,
     "ats_pick": "Buffalo (+39.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.9,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856694,
@@ -6073,11 +6679,13 @@
     "closing_total": 49.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:30:00.000Z)",
-    "model_proj_spread": 23.2,
-    "model_proj_total": 76.4,
-    "ats_edge": 6.7,
+    "model_proj_spread": 18.7,
+    "model_proj_total": 52.7,
+    "ats_edge": 2.2,
     "ats_pick": "Texas A&M (-16.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856798,
@@ -6093,11 +6701,13 @@
     "closing_total": 43.5,
     "total_open": 45.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": 24.8,
-    "model_proj_total": 42.6,
-    "ats_edge": 1.3,
-    "ats_pick": "Iowa State (-23.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 22.1,
+    "model_proj_total": 50.1,
+    "ats_edge": 1.4,
+    "ats_pick": "Bowling Green (+23.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 6.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401860889,
@@ -6113,11 +6723,13 @@
     "closing_total": 62.5,
     "total_open": 63.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": -2.5,
-    "model_proj_total": 51.9,
-    "ats_edge": 5.5,
+    "model_proj_spread": 1.7,
+    "model_proj_total": 50.7,
+    "ats_edge": 1.3,
     "ats_pick": "North Texas (+3.0)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 11.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858448,
@@ -6133,11 +6745,13 @@
     "closing_total": 55.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T18:00:00.000Z)",
-    "model_proj_spread": 13.3,
-    "model_proj_total": 58.9,
-    "ats_edge": 21.2,
+    "model_proj_spread": 8.3,
+    "model_proj_total": 51.5,
+    "ats_edge": 26.2,
     "ats_pick": "Southern Illinois (+34.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 4.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856797,
@@ -6153,11 +6767,13 @@
     "closing_total": 50.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:30:00.000Z)",
-    "model_proj_spread": 16.3,
-    "model_proj_total": 50.7,
-    "ats_edge": 1.8,
-    "ats_pick": "Cincinnati (-14.5)",
-    "ats_result": "LOSS"
+    "model_proj_spread": 8.7,
+    "model_proj_total": 51.1,
+    "ats_edge": 5.8,
+    "ats_pick": "Miami (OH) (+14.5)",
+    "ats_result": "WIN",
+    "ou_edge": 0.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866422,
@@ -6173,11 +6789,13 @@
     "closing_total": 49.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T20:00:00.000Z)",
-    "model_proj_spread": 19.6,
-    "model_proj_total": 34.2,
-    "ats_edge": 5.1,
-    "ats_pick": "Liberty (-14.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 12.6,
+    "model_proj_total": 49.2,
+    "ats_edge": 1.9,
+    "ats_pick": "Ball State (+14.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 0.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858471,
@@ -6193,11 +6811,13 @@
     "closing_total": 48.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T20:00:00.000Z)",
-    "model_proj_spread": 19.8,
-    "model_proj_total": 60.6,
-    "ats_edge": 17.7,
+    "model_proj_spread": 14.9,
+    "model_proj_total": 51.7,
+    "ats_edge": 22.6,
     "ats_pick": "Northern Iowa (+37.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858460,
@@ -6213,11 +6833,13 @@
     "closing_total": 43.5,
     "total_open": 45.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:30:00.000Z)",
-    "model_proj_spread": 16.2,
-    "model_proj_total": 42.2,
-    "ats_edge": 7.3,
+    "model_proj_spread": 12.2,
+    "model_proj_total": 50.2,
+    "ats_edge": 11.3,
     "ats_pick": "Eastern Michigan (+23.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 6.7,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401862710,
@@ -6233,11 +6855,13 @@
     "closing_total": 48.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T22:00:00.000Z)",
-    "model_proj_spread": 2.3,
-    "model_proj_total": 45.3,
-    "ats_edge": 0.2,
-    "ats_pick": "East Carolina (+2.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 4.6,
+    "model_proj_total": 51.0,
+    "ats_edge": 2.1,
+    "ats_pick": "Old Dominion (-2.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 2.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401856695,
@@ -6253,11 +6877,13 @@
     "closing_total": 50.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:45:00.000Z)",
-    "model_proj_spread": 9.4,
-    "model_proj_total": 71.4,
-    "ats_edge": 6.4,
+    "model_proj_spread": 3.9,
+    "model_proj_total": 52.7,
+    "ats_edge": 0.9,
     "ats_pick": "Vanderbilt (-3.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 2.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858455,
@@ -6273,11 +6899,13 @@
     "closing_total": 71.5,
     "total_open": 66.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T02:30:00.000Z)",
-    "model_proj_spread": 28.1,
-    "model_proj_total": 65.3,
-    "ats_edge": 30.4,
+    "model_proj_spread": 32.1,
+    "model_proj_total": 51.5,
+    "ats_edge": 26.4,
     "ats_pick": "Portland State (+58.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 20.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401862774,
@@ -6293,11 +6921,13 @@
     "closing_total": 48.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:00:00.000Z)",
-    "model_proj_spread": 13.9,
-    "model_proj_total": 51.9,
-    "ats_edge": 9.4,
+    "model_proj_spread": 11.1,
+    "model_proj_total": 51.1,
+    "ats_edge": 6.6,
     "ats_pick": "Toledo (-4.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401864508,
@@ -6313,11 +6943,13 @@
     "closing_total": 39.5,
     "total_open": 39.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T17:00:00.000Z)",
-    "model_proj_spread": 3.1,
-    "model_proj_total": 29.3,
-    "ats_edge": 4.6,
+    "model_proj_spread": 0.2,
+    "model_proj_total": 49.4,
+    "ats_edge": 1.7,
     "ats_pick": "Central Michigan (+1.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 9.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867804,
@@ -6333,11 +6965,13 @@
     "closing_total": 50.5,
     "total_open": 55.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T20:00:00.000Z)",
-    "model_proj_spread": 15.1,
-    "model_proj_total": 56.7,
-    "ats_edge": 4.4,
+    "model_proj_spread": 10.6,
+    "model_proj_total": 51.4,
+    "ats_edge": 8.9,
     "ats_pick": "Louisiana Tech (+19.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.9,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401856801,
@@ -6353,11 +6987,13 @@
     "closing_total": 55.5,
     "total_open": 57.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:30:00.000Z)",
-    "model_proj_spread": 26.9,
-    "model_proj_total": 65.7,
-    "ats_edge": 0.4,
-    "ats_pick": "Utah (-26.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 23.8,
+    "model_proj_total": 52.0,
+    "ats_edge": 2.7,
+    "ats_pick": "Utah State (+26.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 3.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858451,
@@ -6373,11 +7009,13 @@
     "closing_total": 48.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": 15.9,
-    "model_proj_total": 47.1,
-    "ats_edge": 6.6,
+    "model_proj_spread": 11.5,
+    "model_proj_total": 50.9,
+    "ats_edge": 11.0,
     "ats_pick": "Akron (+22.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858457,
@@ -6393,11 +7031,13 @@
     "closing_total": 58.5,
     "total_open": 57.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:30:00.000Z)",
-    "model_proj_spread": -16.1,
-    "model_proj_total": 65.9,
-    "ats_edge": 4.9,
+    "model_proj_spread": -11.5,
+    "model_proj_total": 52.1,
+    "ats_edge": 9.5,
     "ats_pick": "Rutgers (+21.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858449,
@@ -6413,11 +7053,13 @@
     "closing_total": 59.5,
     "total_open": 59.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T20:00:00.000Z)",
-    "model_proj_spread": 34.2,
-    "model_proj_total": 64.0,
-    "ats_edge": 10.3,
+    "model_proj_spread": 36.1,
+    "model_proj_total": 52.1,
+    "ats_edge": 8.4,
     "ats_pick": "Western Kentucky (+44.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 7.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858231,
@@ -6433,11 +7075,13 @@
     "closing_total": 51.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T20:00:00.000Z)",
-    "model_proj_spread": 15.0,
-    "model_proj_total": 53.6,
-    "ats_edge": 5.5,
+    "model_proj_spread": 10.1,
+    "model_proj_total": 50.9,
+    "ats_edge": 0.6,
     "ats_pick": "Duke (-9.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401862771,
@@ -6453,11 +7097,13 @@
     "closing_total": 62.5,
     "total_open": 62.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T22:00:00.000Z)",
-    "model_proj_spread": 1.5,
-    "model_proj_total": 37.3,
-    "ats_edge": 3.0,
+    "model_proj_spread": 1.4,
+    "model_proj_total": 49.6,
+    "ats_edge": 3.1,
     "ats_pick": "Florida International (+4.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 12.9,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858450,
@@ -6473,11 +7119,13 @@
     "closing_total": 48.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:30:00.000Z)",
-    "model_proj_spread": 32.0,
-    "model_proj_total": 52.8,
-    "ats_edge": 2.5,
+    "model_proj_spread": 33.2,
+    "model_proj_total": 50.8,
+    "ats_edge": 1.3,
     "ats_pick": "UTEP (+34.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 2.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858228,
@@ -6493,11 +7141,13 @@
     "closing_total": 57.5,
     "total_open": 58.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": 11.7,
-    "model_proj_total": 50.7,
-    "ats_edge": 26.8,
+    "model_proj_spread": 5.7,
+    "model_proj_total": 51.1,
+    "ats_edge": 32.8,
     "ats_pick": "Mercer (+38.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866424,
@@ -6513,11 +7163,13 @@
     "closing_total": 50.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:30:00.000Z)",
-    "model_proj_spread": -4.6,
-    "model_proj_total": 36.2,
-    "ats_edge": 35.1,
+    "model_proj_spread": -3.8,
+    "model_proj_total": 49.6,
+    "ats_edge": 34.3,
     "ats_pick": "Stonehill (+30.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.9,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868317,
@@ -6533,11 +7185,13 @@
     "closing_total": 48.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T20:30:00.000Z)",
-    "model_proj_spread": -12.5,
-    "model_proj_total": 30.7,
-    "ats_edge": 22.0,
+    "model_proj_spread": -7.7,
+    "model_proj_total": 49.1,
+    "ats_edge": 17.2,
     "ats_pick": "SE Louisiana (+9.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.6,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866634,
@@ -6553,11 +7207,13 @@
     "closing_total": 51.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T18:30:00.000Z)",
-    "model_proj_spread": 4.9,
-    "model_proj_total": 43.9,
-    "ats_edge": 14.4,
+    "model_proj_spread": 1.5,
+    "model_proj_total": 50.3,
+    "ats_edge": 11.0,
     "ats_pick": "Stony Brook (+9.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 1.2,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867979,
@@ -6573,11 +7229,13 @@
     "closing_total": 53.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T22:00:00.000Z)",
-    "model_proj_spread": 2.2,
-    "model_proj_total": 43.0,
-    "ats_edge": 4.8,
+    "model_proj_spread": 0.8,
+    "model_proj_total": 50.2,
+    "ats_edge": 6.2,
     "ats_pick": "North Carolina Central (+7.0)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867898,
@@ -6593,11 +7251,13 @@
     "closing_total": 59.5,
     "total_open": 59.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:00:00.000Z)",
-    "model_proj_spread": 6.5,
-    "model_proj_total": 47.3,
-    "ats_edge": 35.0,
+    "model_proj_spread": 12.7,
+    "model_proj_total": 50.5,
+    "ats_edge": 28.8,
     "ats_pick": "Central Connecticut (+41.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 9.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867846,
@@ -6613,11 +7273,13 @@
     "closing_total": 53.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:00:00.000Z)",
-    "model_proj_spread": 4.7,
-    "model_proj_total": 45.5,
-    "ats_edge": 24.8,
+    "model_proj_spread": 8.0,
+    "model_proj_total": 50.2,
+    "ats_edge": 21.5,
     "ats_pick": "Eastern Illinois (+29.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.3,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401858233,
@@ -6633,11 +7295,13 @@
     "closing_total": 65.5,
     "total_open": 65.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:30:00.000Z)",
-    "model_proj_spread": 4.6,
-    "model_proj_total": 45.4,
-    "ats_edge": 53.9,
+    "model_proj_spread": 6.3,
+    "model_proj_total": 49.7,
+    "ats_edge": 52.2,
     "ats_pick": "Wagner (+58.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 15.8,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866636,
@@ -6653,11 +7317,13 @@
     "closing_total": 56.5,
     "total_open": 56.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T22:00:00.000Z)",
-    "model_proj_spread": 5.8,
-    "model_proj_total": 43.0,
-    "ats_edge": 14.7,
+    "model_proj_spread": 4.5,
+    "model_proj_total": 49.5,
+    "ats_edge": 16.0,
     "ats_pick": "North Carolina A&T (+20.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 7.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401858227,
@@ -6673,11 +7339,13 @@
     "closing_total": 54.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T18:00:00.000Z)",
-    "model_proj_spread": 3.1,
-    "model_proj_total": 43.9,
-    "ats_edge": 34.4,
+    "model_proj_spread": 5.4,
+    "model_proj_total": 49.8,
+    "ats_edge": 32.1,
     "ats_pick": "Maine (+37.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.7,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868023,
@@ -6693,11 +7361,13 @@
     "closing_total": 50.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T18:00:00.000Z)",
-    "model_proj_spread": 4.2,
-    "model_proj_total": 44.6,
-    "ats_edge": 25.2,
+    "model_proj_spread": -0.2,
+    "model_proj_total": 50.0,
+    "ats_edge": 20.8,
     "ats_pick": "Holy Cross (+21.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.5,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401860890,
@@ -6713,11 +7383,13 @@
     "closing_total": 51.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:30:00.000Z)",
-    "model_proj_spread": 6.2,
-    "model_proj_total": 47.0,
-    "ats_edge": 32.3,
+    "model_proj_spread": 6.3,
+    "model_proj_total": 49.9,
+    "ats_edge": 32.2,
     "ats_pick": "Duquesne (+38.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.6,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867805,
@@ -6733,11 +7405,13 @@
     "closing_total": 53.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": 5.8,
-    "model_proj_total": 43.0,
-    "ats_edge": 15.8,
+    "model_proj_spread": 1.9,
+    "model_proj_total": 50.1,
+    "ats_edge": 11.9,
     "ats_pick": "New Haven (+10.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866638,
@@ -6753,11 +7427,13 @@
     "closing_total": 44.5,
     "total_open": 44.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T17:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 41.2,
-    "ats_edge": 6.5,
+    "model_proj_spread": 1.1,
+    "model_proj_total": 49.9,
+    "ats_edge": 3.6,
     "ats_pick": "Bryant (+2.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 5.4,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868275,
@@ -6773,11 +7449,13 @@
     "closing_total": 66.5,
     "total_open": 62.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T18:30:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 41.2,
-    "ats_edge": 29.5,
+    "model_proj_spread": 3.7,
+    "model_proj_total": 49.7,
+    "ats_edge": 29.8,
     "ats_pick": "Presbyterian (+33.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 16.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867826,
@@ -6793,11 +7471,13 @@
     "closing_total": 50.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T17:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 41.2,
-    "ats_edge": 8.5,
+    "model_proj_spread": 4.4,
+    "model_proj_total": 50.2,
+    "ats_edge": 8.1,
     "ats_pick": "Cornell (+12.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.3,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868397,
@@ -6813,11 +7493,13 @@
     "closing_total": 42.5,
     "total_open": 42.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T17:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 44.8,
-    "ats_edge": 8.0,
+    "model_proj_spread": 5.4,
+    "model_proj_total": 49.6,
+    "ats_edge": 9.4,
     "ats_pick": "Davidson (+4.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 7.1,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866641,
@@ -6833,11 +7515,13 @@
     "closing_total": 49.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T20:00:00.000Z)",
-    "model_proj_spread": 5.8,
-    "model_proj_total": 43.0,
-    "ats_edge": 0.3,
-    "ats_pick": "Norfolk State (-5.5)",
-    "ats_result": "WIN"
+    "model_proj_spread": 4.7,
+    "model_proj_total": 49.9,
+    "ats_edge": 0.8,
+    "ats_pick": "Hampton (+5.5)",
+    "ats_result": "LOSS",
+    "ou_edge": 0.4,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868142,
@@ -6853,11 +7537,13 @@
     "closing_total": 46.5,
     "total_open": 45.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T22:00:00.000Z)",
-    "model_proj_spread": 2.3,
-    "model_proj_total": 43.1,
-    "ats_edge": 9.2,
+    "model_proj_spread": -3.4,
+    "model_proj_total": 50.4,
+    "ats_edge": 14.9,
     "ats_pick": "Dayton (+11.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.9,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867686,
@@ -6873,11 +7559,13 @@
     "closing_total": 54.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T17:00:00.000Z)",
-    "model_proj_spread": -0.6,
-    "model_proj_total": 49.4,
-    "ats_edge": 21.1,
+    "model_proj_spread": 1.6,
+    "model_proj_total": 50.8,
+    "ats_edge": 18.9,
     "ats_pick": "Chicago State (+20.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866635,
@@ -6893,11 +7581,13 @@
     "closing_total": 50.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:30:00.000Z)",
-    "model_proj_spread": 3.5,
-    "model_proj_total": 45.3,
-    "ats_edge": 6.0,
+    "model_proj_spread": 2.1,
+    "model_proj_total": 50.5,
+    "ats_edge": 4.6,
     "ats_pick": "UAlbany (+2.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 0.0,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866640,
@@ -6913,11 +7603,13 @@
     "closing_total": 44.5,
     "total_open": 44.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T22:00:00.000Z)",
-    "model_proj_spread": 2.2,
-    "model_proj_total": 43.0,
-    "ats_edge": 6.3,
+    "model_proj_spread": -1.8,
+    "model_proj_total": 50.0,
+    "ats_edge": 10.3,
     "ats_pick": "Morgan State (+8.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 5.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867834,
@@ -6933,11 +7625,13 @@
     "closing_total": 50.5,
     "total_open": 50.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": 5.9,
-    "model_proj_total": 43.1,
-    "ats_edge": 11.6,
+    "model_proj_spread": 6.7,
+    "model_proj_total": 50.7,
+    "ats_edge": 10.8,
     "ats_pick": "Dartmouth (+17.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.2,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868242,
@@ -6953,11 +7647,13 @@
     "closing_total": 53.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": 3.2,
-    "model_proj_total": 42.2,
-    "ats_edge": 13.3,
+    "model_proj_spread": 6.3,
+    "model_proj_total": 49.7,
+    "ats_edge": 10.2,
     "ats_pick": "West Georgia (+16.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867908,
@@ -6973,11 +7669,13 @@
     "closing_total": 49.5,
     "total_open": 45.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": 4.2,
-    "model_proj_total": 44.6,
-    "ats_edge": 22.7,
+    "model_proj_spread": 0.2,
+    "model_proj_total": 49.6,
+    "ats_edge": 18.7,
     "ats_pick": "Long Island University (+18.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 0.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401867991,
@@ -6993,11 +7691,13 @@
     "closing_total": 46.5,
     "total_open": 48.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:00:00.000Z)",
-    "model_proj_spread": 5.8,
-    "model_proj_total": 43.0,
-    "ats_edge": 9.3,
+    "model_proj_spread": 3.2,
+    "model_proj_total": 50.2,
+    "ats_edge": 6.7,
     "ats_pick": "Bucknell (+3.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868018,
@@ -7013,11 +7713,13 @@
     "closing_total": 45.5,
     "total_open": 47.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T19:30:00.000Z)",
-    "model_proj_spread": 2.2,
-    "model_proj_total": 43.0,
-    "ats_edge": 13.3,
+    "model_proj_spread": 2.7,
+    "model_proj_total": 49.5,
+    "ats_edge": 12.8,
     "ats_pick": "Georgetown (+15.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 4.0,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868051,
@@ -7033,11 +7735,13 @@
     "closing_total": 55.5,
     "total_open": 54.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T20:00:00.000Z)",
-    "model_proj_spread": 2.8,
-    "model_proj_total": 44.2,
-    "ats_edge": 4.3,
+    "model_proj_spread": 2.2,
+    "model_proj_total": 49.8,
+    "ats_edge": 3.7,
     "ats_pick": "Idaho (+1.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 5.7,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868337,
@@ -7053,11 +7757,13 @@
     "closing_total": 43.5,
     "total_open": 43.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T22:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 41.2,
-    "ats_edge": 2.5,
+    "model_proj_spread": 1.6,
+    "model_proj_total": 50.0,
+    "ats_edge": 0.1,
     "ats_pick": "Chattanooga (-1.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 6.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867817,
@@ -7073,11 +7779,13 @@
     "closing_total": 47.5,
     "total_open": 47.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T16:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 41.2,
-    "ats_edge": 1.0,
+    "model_proj_spread": 6.1,
+    "model_proj_total": 49.7,
+    "ats_edge": 3.1,
     "ats_pick": "Columbia (-3.0)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 2.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401868009,
@@ -7093,11 +7801,13 @@
     "closing_total": 51.5,
     "total_open": 51.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T22:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 41.2,
-    "ats_edge": 12.5,
+    "model_proj_spread": 5.0,
+    "model_proj_total": 49.4,
+    "ats_edge": 11.5,
     "ats_pick": "Fordham (+16.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 2.1,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401868159,
@@ -7113,11 +7823,13 @@
     "closing_total": 62.5,
     "total_open": 57.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T18:00:00.000Z)",
-    "model_proj_spread": 2.5,
-    "model_proj_total": 46.3,
-    "ats_edge": 15.0,
+    "model_proj_spread": 2.9,
+    "model_proj_total": 50.3,
+    "ats_edge": 15.4,
     "ats_pick": "St. Thomas (MN) (+12.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 12.2,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401866637,
@@ -7133,11 +7845,13 @@
     "closing_total": 46.5,
     "total_open": 49.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T22:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 44.8,
-    "ats_edge": 8.5,
+    "model_proj_spread": 8.7,
+    "model_proj_total": 50.3,
+    "ats_edge": 3.8,
     "ats_pick": "Sacred Heart (+12.5)",
-    "ats_result": "WIN"
+    "ats_result": "WIN",
+    "ou_edge": 3.8,
+    "ou_result": "LOSS"
   },
   {
     "game_id": 401866639,
@@ -7153,11 +7867,13 @@
     "closing_total": 51.5,
     "total_open": 52.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T17:00:00.000Z)",
-    "model_proj_spread": 4.7,
-    "model_proj_total": 44.7,
-    "ats_edge": 19.2,
+    "model_proj_spread": -0.8,
+    "model_proj_total": 50.0,
+    "ats_edge": 13.7,
     "ats_pick": "New Hampshire (+14.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 1.5,
+    "ou_result": "WIN"
   },
   {
     "game_id": 401867857,
@@ -7173,10 +7889,12 @@
     "closing_total": 53.5,
     "total_open": 53.5,
     "line_source": "DraftKings closing line frozen at kickoff (2026-09-19T17:00:00.000Z)",
-    "model_proj_spread": 4.0,
-    "model_proj_total": 44.8,
-    "ats_edge": 18.5,
+    "model_proj_spread": 2.4,
+    "model_proj_total": 50.0,
+    "ats_edge": 20.1,
     "ats_pick": "Valparaiso (+22.5)",
-    "ats_result": "LOSS"
+    "ats_result": "LOSS",
+    "ou_edge": 3.5,
+    "ou_result": "LOSS"
   }
 ]
