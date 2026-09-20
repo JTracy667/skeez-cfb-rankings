@@ -3107,8 +3107,9 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             "line_source": market_odds.get("source"),
             # Compare model differential to market line (both + = home favorite)
             "line_vs_model": round(diff + (market_odds.get("spread") or 0), 1) if market_odds.get("spread") is not None else None,
-            "spread_stars": (5 if abs(round(diff + (market_odds.get("spread") or 0), 1)) >= 7.0 else (3 if abs(round(diff + (market_odds.get("spread") or 0), 1)) >= 3.5 else 0)) if market_odds.get("spread") is not None else 0,
-            "total_stars": 3 if (total_vs_model is not None and abs(total_vs_model) >= 4.0) else 0,
+            "spread_stars": 0,  # CFO enforcement: Spread stars gated OFF until ATS clears break-even
+            "total_stars": 3 if (total_vs_model is not None and 4.0 <= abs(total_vs_model) < 7.0) else 0,  # CFO enforcement: 3-Star Totals only (5-star totals vetoed)
+            "is_star_pick": bool(total_vs_model is not None and 4.0 <= abs(total_vs_model) < 7.0),
             # Over/under projection
             "model_total": model_total,
             "total_vs_model": total_vs_model,
@@ -3628,7 +3629,8 @@ def api_record():
     su = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
     ats = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
     total_rec = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
-    stars_rec = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
+    stars_totals = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
+    stars_spreads = {"wins": 0, "losses": 0, "pushes": 0, "graded": 0}
     for r in record.get("results", []):
         for bucket, field in ((su, "su_result"), (ats, "ats_result"), (total_rec, "total_result")):
             v = r.get(field)
@@ -3638,18 +3640,21 @@ def api_record():
                 bucket["losses"] += 1; bucket["graded"] += 1
             elif v == "push":
                 bucket["pushes"] += 1
-        # Track star plays (high-confidence totals >= 4.0 or spreads >= 3.5)
+        # CFO enforcement: Split totals stars vs spread stars
         tot_res = r.get("total_result")
         ats_res = r.get("ats_result")
         if tot_res in ("W", "L") and r.get("total") is not None:
-            # Check if this total was a star pick
-            if r.get("total_stars", 0) >= 3 or abs((r.get("model_total") or 50) - (r.get("total") or 50)) >= 4.0:
-                if tot_res == "W": stars_rec["wins"] += 1; stars_rec["graded"] += 1
-                elif tot_res == "L": stars_rec["losses"] += 1; stars_rec["graded"] += 1
-        elif ats_res in ("W", "L") and r.get("spread") is not None:
-            if r.get("spread_stars", 0) >= 3 or abs((r.get("differential") or 0) + (r.get("spread") or 0)) >= 3.5:
-                if ats_res == "W": stars_rec["wins"] += 1; stars_rec["graded"] += 1
-                elif ats_res == "L": stars_rec["losses"] += 1; stars_rec["graded"] += 1
+            tot_diff = abs((r.get("model_total") or 50) - (r.get("total") or 50))
+            if 4.0 <= tot_diff < 7.0 or r.get("total_stars") == 3:
+                if tot_res == "W": stars_totals["wins"] += 1; stars_totals["graded"] += 1
+                elif tot_res == "L": stars_totals["losses"] += 1; stars_totals["graded"] += 1
+                elif tot_res == "push": stars_totals["pushes"] += 1
+        if ats_res in ("W", "L") and r.get("spread") is not None:
+            sp_diff = abs((r.get("differential") or 0) + (r.get("spread") or 0))
+            if sp_diff >= 3.5 or r.get("spread_stars", 0) >= 3:
+                if ats_res == "W": stars_spreads["wins"] += 1; stars_spreads["graded"] += 1
+                elif ats_res == "L": stars_spreads["losses"] += 1; stars_spreads["graded"] += 1
+                elif ats_res == "push": stars_spreads["pushes"] += 1
     return {
         "season": record.get("season"),
         "updated": record.get("updated"),
@@ -3658,11 +3663,15 @@ def api_record():
         "su": su,
         "ats": ats,
         "total": total_rec,
-        "stars": stars_rec,
+        "stars": stars_totals,
+        "stars_totals": stars_totals,
+        "stars_spreads": stars_spreads,
         "su_str": f"{su['wins']}-{su['losses']}" + (f"-{su['pushes']}" if su['pushes'] else ""),
         "ats_str": f"{ats['wins']}-{ats['losses']}" + (f"-{ats['pushes']}" if ats['pushes'] else ""),
         "total_str": f"{total_rec['wins']}-{total_rec['losses']}" + (f"-{total_rec['pushes']}" if total_rec['pushes'] else ""),
-        "stars_str": f"{stars_rec['wins']}-{stars_rec['losses']}" + (f"-{stars_rec['pushes']}" if stars_rec['pushes'] else ""),
+        "stars_str": f"{stars_totals['wins']}-{stars_totals['losses']}" + (f"-{stars_totals['pushes']}" if stars_totals['pushes'] else ""),
+        "stars_totals_str": f"{stars_totals['wins']}-{stars_totals['losses']}" + (f"-{stars_totals['pushes']}" if stars_totals['pushes'] else ""),
+        "stars_spreads_str": f"{stars_spreads['wins']}-{stars_spreads['losses']}" + (f"-{stars_spreads['pushes']}" if stars_spreads['pushes'] else ""),
     }
 
 

@@ -209,7 +209,7 @@ nav a.active{color:var(--accent)}
   <div class="controls">
     <input type="text" class="search-box" id="searchBox" placeholder="Search teams...">
     <button class="filter-btn active" data-conf="all">All</button>
-    <button class="filter-btn" data-conf="stars" style="color:#fbbf24;font-weight:700">⭐ Star Plays Only</button>
+    <button class="filter-btn" data-conf="stars" style="color:#10b981;font-weight:700">⭐ 3-Star Totals Only</button>
     <button class="filter-btn" data-conf="SEC">SEC</button>
     <button class="filter-btn" data-conf="Big Ten">Big Ten</button>
     <button class="filter-btn" data-conf="Big 12">Big 12</button>
@@ -390,7 +390,7 @@ function renderSummary(data) {
     const totCard = document.getElementById('totalCard');
     if (totCard) totCard.innerHTML = `<div class="val ${rec.total && rec.total.wins > rec.total.losses ? 'good' : ''}">${tot}</div><div class="label">O/U</div>`;
     const starsCard = document.getElementById('starsCard');
-    if (starsCard) starsCard.innerHTML = `<div class="val ${rec.stars && rec.stars.wins > rec.stars.losses ? 'good' : ''}">${stars}</div><div class="label">⭐ Star Plays</div>`;
+    if (starsCard) starsCard.innerHTML = `<div class="val ${rec.stars_totals && rec.stars_totals.wins > rec.stars_totals.losses ? 'good' : ''}">${stars}</div><div class="label">⭐ 3-Star Totals</div>`;
   }).catch(() => {});
   document.getElementById('summaryRow').innerHTML = `
     <div class="summary-card"><div class="val">${m.length}</div><div class="label">Matchups</div></div>
@@ -399,7 +399,7 @@ function renderSummary(data) {
     <div class="summary-card record" id="suCard"><div class="val">…</div><div class="label">Straight-Up</div></div>
     <div class="summary-card record" id="atsCard"><div class="val">…</div><div class="label">ATS</div></div>
     <div class="summary-card record" id="totalCard"><div class="val">…</div><div class="label">O/U</div></div>
-    <div class="summary-card record" id="starsCard"><div class="val">…</div><div class="label">⭐ Star Plays</div></div>
+    <div class="summary-card record" id="starsCard"><div class="val">…</div><div class="label">⭐ 3-Star Totals</div></div>
   `;
 }
 
@@ -467,12 +467,8 @@ function matchupMetaBarHtml(m) {
     const cls = m.over_pick === 'over' ? 'up' : 'down';
     parts.push(`<div class="ou-pick ${cls}">Model ${m.model_total} → ${m.over_pick.toUpperCase()} ${m.line_total} (${m.total_vs_model > 0 ? '+' : ''}${m.total_vs_model})</div>`);
   }
-  if (m.spread_stars >= 5) {
-    parts.push(`<div class="star-badge five-star">⭐⭐⭐⭐⭐ 5-STAR SPREAD (${m.ats_pick || 'Fav'})</div>`);
-  } else if (m.spread_stars >= 3) {
-    parts.push(`<div class="star-badge three-star">⭐⭐⭐ 3-STAR SPREAD (${m.ats_pick || 'Fav'})</div>`);
-  }
-  if (m.total_stars >= 3) {
+  // CFO enforcement: 3-Star Totals only (spread stars gated OFF; 5-star totals vetoed)
+  if (m.total_stars === 3) {
     parts.push(`<div class="star-badge total-star">⭐⭐⭐ 3-STAR TOTAL (${m.over_pick ? m.over_pick.toUpperCase() : 'O/U'} ${m.line_total || ''})</div>`);
   }
   if (!parts.length) return '';
