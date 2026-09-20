@@ -35,6 +35,14 @@ class TestCFBInjuries(unittest.TestCase):
         self.assertEqual(pts, 0.0, "Backup QB must receive 0.0 deduction")
         self.assertEqual(tier, "backup_qb")
 
+    def test_south_carolina_backup_qb_suffix_regression(self):
+        """L. Anderson III (backup QB) must NOT trigger deduction when Lanorris Sellers is starter."""
+        sc_team = {"conf": "SEC", "composite": 82.5, "sp_plus": 16.9}
+        starters = {"South Carolina": {"player": "Lanorris Sellers", "att": 46.0, "last_name": "sellers"}}
+        pts, tier = scraper.calculate_player_deduction("South Carolina", "L. Anderson III", "QB", "Out - Undisclosed", sc_team, starters)
+        self.assertEqual(pts, 0.0, "L. Anderson III is backup and must receive 0.0 deduction")
+        self.assertEqual(tier, "backup_qb")
+
     def test_star_qb_questionable_half_deduction(self):
         """Star QB Questionable must receive 50% deduction (-5.0 pts)."""
         star_team = {"conf": "SEC", "composite": 88.0, "sp_plus": 25.0}

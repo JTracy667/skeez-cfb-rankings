@@ -173,6 +173,25 @@ COVERS_SLUG_MAP = {
 POWER_4_CONFERENCES = {"SEC", "Big Ten", "Big 12", "ACC"}
 
 
+def _clean_name(raw_name: str) -> tuple[str, str]:
+    """
+    Returns (cleaned_last_name, first_initial) with generational suffixes removed.
+    E.g. 'L. Anderson III' -> ('anderson', 'l')
+         'Lanorris Sellers' -> ('sellers', 'l')
+         'Michael Van Buren Jr.' -> ('buren', 'm')
+    """
+    if not raw_name:
+        return "", ""
+    parts = [p.strip(".,") for p in raw_name.strip().split() if p.strip(".,")]
+    if not parts:
+        return "", ""
+    while len(parts) > 1 and parts[-1].lower() in {"jr", "sr", "ii", "iii", "iv", "v"}:
+        parts.pop()
+    last = parts[-1].lower() if parts else ""
+    first_initial = parts[0][0].lower() if parts and parts[0] else ""
+    return last, first_initial
+
+
 def _load_team_analytics() -> dict[str, dict]:
     """Load cached team analytics to determine team strength and conference."""
     if os.path.exists(CFBD_ANALYTICS_FILE):
@@ -209,12 +228,14 @@ def _load_team_starters() -> dict[str, dict]:
                     team = row.get("team")
                     player = row.get("player")
                     att = float(row.get("stat", 0))
+                    clean_last, first_init = _clean_name(player)
                     team_entry = starters.setdefault(team, {"qb": None})
                     if not team_entry["qb"] or att > team_entry["qb"]["att"]:
                         team_entry["qb"] = {
                             "player": player,
                             "att": att,
-                            "last_name": player.split()[-1].lower() if player else ""
+                            "last_name": clean_last,
+                            "first_init": first_init
                         }
             if starters:
                 with open(CFBD_STARTERS_FILE, "w") as f:
@@ -246,14 +267,18 @@ def _load_player_ppa() -> dict:
             for p in r.json():
                 team = p.get("team")
                 name = p.get("name") or ""
-                last = name.split()[-1].lower() if name else ""
+                last, init = _clean_name(name)
                 tot = (p.get("totalPPA") or {}).get("all") or 0.0
                 if team and last:
-                    key = (team, last)
+                    # Key by (team, last, init) and also (team, last)
+                    key = (team, last, init)
                     if key not in ppa_map or tot > ppa_map[key]:
                         ppa_map[key] = round(tot, 2)
+                    fallback_key = (team, last, "")
+                    if fallback_key not in ppa_map or tot > ppa_map[fallback_key]:
+                        ppa_map[fallback_key] = round(tot, 2)
             if ppa_map:
-                serializable = {f"{k[0]}:::{k[1]}": v for k, v in ppa_map.items()}
+                serializable = {f"{k[0]}:::{k[1]}:::{k[2]}": v for k, v in ppa_map.items()}
                 with open(CFBD_PPA_FILE, "w") as f:
                     json.dump(serializable, f, indent=2)
                 print(f"[ppa] Cached {len(ppa_map)} player PPA entries")
@@ -305,7 +330,7 @@ def calculate_player_deduction(
     conf = team_info.get("conf", "")
     comp = team_info.get("composite", 50.0)
     sp = team_info.get("sp_plus", 0.0)
-    player_last = player_name.split()[-1].lower() if player_name else ""
+    player_last, player_init = _clean_name(player_name)
 
     if pos == "QB":
         # Check against true team starting QB
@@ -318,10 +343,15 @@ def calculate_player_deduction(
         else:
             starter_info = {}
         starter_last = starter_info.get("last_name", "").lower() if starter_info else ""
+        starter_player = starter_info.get("player", "")
+        starter_clean_last, starter_init = _clean_name(starter_player) if starter_player else (starter_last, "")
 
         # If team has a known starter and this player is NOT the starter, deduction is 0.0!
-        if starter_last and player_last != starter_last:
-            return 0.0, "backup_qb"
+        if starter_clean_last:
+            if player_last != starter_clean_last:
+                return 0.0, "backup_qb"
+            if player_init and starter_init and player_init != starter_init:
+                return 0.0, "backup_qb"
 
         # Star QB criteria: high composite or high SP+ on elite programs
         if comp >= 80.0 or sp >= 18.0 or team_name in ["Texas", "Georgia", "Ohio State", "Alabama", "Miami", "Notre Dame", "Oregon", "LSU", "USC", "Tennessee", "Penn State"]:
@@ -338,7 +368,15 @@ def calculate_player_deduction(
     elif pos in ("RB", "WR", "TE"):
         # PPA Verification: only deduct if player is an actual top producer (Total PPA >= 7.0)
         ppa_table = ppa_map or {}
-        player_total_ppa = ppa_table.get((team_name, player_last), 0.0)
+        # Try exact (team, last, init) first; fallback to (team, last, "") only if no init given
+        player_total_ppa = 0.0
+        if (team_name, player_last, player_init) in ppa_table:
+            player_total_ppa = ppa_table[(team_name, player_last, player_init)]
+        elif not player_init and (team_name, player_last, "") in ppa_table:
+            player_total_ppa = ppa_table[(team_name, player_last, "")]
+        elif (team_name, player_last) in ppa_table and not player_init:
+            player_total_ppa = ppa_table[(team_name, player_last)]
+
         if player_total_ppa < 7.0:
             return 0.0, "reserve_skill"
 
