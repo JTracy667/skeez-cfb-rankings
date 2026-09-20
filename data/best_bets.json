@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "updated": "2026-08-14T16:05:52.997550",
+  "updated": "2026-09-19T17:36:23.067643",
   "picks": [
     {
       "key": "ohio state|ball state",
@@ -143,5 +143,126 @@
       "model_total": 68.3
     }
   ],
-  "results": []
+  "results": [
+    {
+      "key": "ohio state|ball state",
+      "week": 1,
+      "home": "Ohio State",
+      "away": "Ball State",
+      "home_score": 56,
+      "away_score": 3,
+      "spread_pick": "away",
+      "over_pick": null,
+      "spread_result": "L",
+      "total_result": null
+    },
+    {
+      "key": "indiana|north texas",
+      "week": 1,
+      "home": "Indiana",
+      "away": "North Texas",
+      "home_score": 52,
+      "away_score": 16,
+      "spread_pick": "away",
+      "over_pick": null,
+      "spread_result": "W",
+      "total_result": null
+    },
+    {
+      "key": "oklahoma|utep",
+      "week": 1,
+      "home": "Oklahoma",
+      "away": "UTEP",
+      "home_score": 51,
+      "away_score": 0,
+      "spread_pick": "away",
+      "over_pick": "over",
+      "spread_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "texas a&m|missouri state",
+      "week": 1,
+      "home": "Texas A&M",
+      "away": "Missouri State",
+      "home_score": 50,
+      "away_score": 0,
+      "spread_pick": "away",
+      "over_pick": "over",
+      "spread_result": "L",
+      "total_result": "L"
+    },
+    {
+      "key": "south carolina|kent state",
+      "week": 1,
+      "home": "South Carolina",
+      "away": "Kent State",
+      "home_score": 57,
+      "away_score": 0,
+      "spread_pick": "away",
+      "over_pick": "over",
+      "spread_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "stanford|miami",
+      "week": 1,
+      "home": "Stanford",
+      "away": "Miami",
+      "home_score": 6,
+      "away_score": 45,
+      "spread_pick": "home",
+      "over_pick": "over",
+      "spread_result": "W",
+      "total_result": "W"
+    },
+    {
+      "key": "rutgers|massachusetts",
+      "week": 1,
+      "home": "Rutgers",
+      "away": "Massachusetts",
+      "home_score": 21,
+      "away_score": 37,
+      "spread_pick": "away",
+      "over_pick": "under",
+      "spread_result": "W",
+      "total_result": "L"
+    },
+    {
+      "key": "texas|texas state",
+      "week": 1,
+      "home": "Texas",
+      "away": "Texas State",
+      "home_score": 59,
+      "away_score": 7,
+      "spread_pick": "away",
+      "over_pick": "over",
+      "spread_result": "L",
+      "total_result": "W"
+    },
+    {
+      "key": "usc|san jos\u00e9 state",
+      "week": 1,
+      "home": "USC",
+      "away": "San Jos\u00e9 State",
+      "home_score": 42,
+      "away_score": 26,
+      "spread_pick": "away",
+      "over_pick": null,
+      "spread_result": "W",
+      "total_result": null
+    },
+    {
+      "key": "lsu|clemson",
+      "week": 1,
+      "home": "LSU",
+      "away": "Clemson",
+      "home_score": 51,
+      "away_score": 10,
+      "spread_pick": "away",
+      "over_pick": "over",
+      "spread_result": "L",
+      "total_result": "W"
+    }
+  ]
 }

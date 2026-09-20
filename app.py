@@ -393,8 +393,11 @@ def _start_scheduler() -> None:
     import threading
 
     def _loop():
-        # Sleep first so we never block the readiness probe / cold start.
-        time.sleep(60)
+        # Short delay only — never block the readiness probe / cold start, but
+        # refresh ASAP so a baked-in data snapshot can't ship stale. (Cutover
+        # requirement: pull live data immediately on container start.)
+        time.sleep(10)
+        first_tick = True
         while True:
             # Failure retry: shorter sleep after a failed refresh so a transient
             # API outage doesn't leave stale lines up for a full interval.
@@ -409,6 +412,15 @@ def _start_scheduler() -> None:
             except Exception as e:
                 print(f"[scheduler] refresh error: {e} — retrying in 15 min")
                 sleep_s = min(sleep_s, 900)
+            # On the first tick, also recompute rankings from the live ESPN feed
+            # so composites reflect current data, not the baked seed snapshot.
+            if first_tick:
+                first_tick = False
+                try:
+                    if refresh_rankings_from_espn():
+                        print("[scheduler] startup rankings refresh ok")
+                except Exception as e:
+                    print(f"[scheduler] startup rankings refresh failed: {e}")
             # Weekly CFBD ratings sync (Sunday 3pm ET). Runs on the first tick
             # after it's due; a failed pull retries next tick (ts not advanced).
             try:
@@ -680,9 +692,12 @@ def api_team(rank: int):
             return t
     raise HTTPException(404, f"No team at rank {rank}")
 
-@app.post("/api/rankings/refresh")
-def api_refresh():
-    """Force-refresh the ESPN data feed, computing composites."""
+def refresh_rankings_from_espn() -> bool:
+    """Recompute rankings from the live ESPN feed. True on success.
+
+    Used by POST /api/rankings/refresh and the startup scheduler tick so a
+    container booting from a baked seed snapshot immediately converges on
+    live data instead of serving stale composites."""
     _rankings_cache.clear()
     live = fetch_espn_poll()
     if live:
@@ -704,7 +719,15 @@ def api_refresh():
             "teams": teams,
         }
         _cache_set(_rankings_cache, result)
-        return {"status": "refreshed", "source": "espn", "teams": len(teams)}
+        return True
+    return False
+
+
+@app.post("/api/rankings/refresh")
+def api_refresh():
+    """Force-refresh the ESPN data feed, computing composites."""
+    if refresh_rankings_from_espn():
+        return {"status": "refreshed", "source": "espn", "teams": 25}
     else:
         return {"status": "fallback", "source": "local", "note": "ESPN fetch failed, using local data"}
 

@@ -1,4 +1,12 @@
 {
+  "Arkansas State": {
+    "qb": {
+      "player": "Trey Owens",
+      "att": 71.0,
+      "last_name": "owens",
+      "first_init": "t"
+    }
+  },
   "Central Arkansas": {
     "qb": {
       "player": "Donovyn Omolo",
@@ -23,6 +31,14 @@
       "first_init": "d"
     }
   },
+  "Virginia Tech": {
+    "qb": {
+      "player": "Ethan Grunkemeyer",
+      "att": 101.0,
+      "last_name": "grunkemeyer",
+      "first_init": "e"
+    }
+  },
   "NC State": {
     "qb": {
       "player": "CJ Bailey",
@@ -39,6 +55,14 @@
       "first_init": "e"
     }
   },
+  "San Diego State": {
+    "qb": {
+      "player": "Jayden Denegal",
+      "att": 67.0,
+      "last_name": "denegal",
+      "first_init": "j"
+    }
+  },
   "Bryant": {
     "qb": {
       "player": "Brennan Myer",
@@ -50,7 +74,7 @@
   "Prairie View A&M": {
     "qb": {
       "player": "Tevin Carter",
-      "att": 87.0,
+      "att": 111.0,
       "last_name": "carter",
       "first_init": "t"
     }
@@ -74,7 +98,7 @@
   "Colorado State": {
     "qb": {
       "player": "Hauss Hejny",
-      "att": 63.0,
+      "att": 73.0,
       "last_name": "hejny",
       "first_init": "h"
     }
@@ -106,7 +130,7 @@
   "James Madison": {
     "qb": {
       "player": "Camden Coleman",
-      "att": 27.0,
+      "att": 54.0,
       "last_name": "coleman",
       "first_init": "c"
     }
@@ -114,7 +138,7 @@
   "Maryland": {
     "qb": {
       "player": "Malik Washington",
-      "att": 72.0,
+      "att": 115.0,
       "last_name": "washington",
       "first_init": "m"
     }
@@ -135,6 +159,14 @@
       "first_init": "d"
     }
   },
+  "Ohio": {
+    "qb": {
+      "player": "Nick Poulos",
+      "att": 36.0,
+      "last_name": "poulos",
+      "first_init": "n"
+    }
+  },
   "Florida Atlantic": {
     "qb": {
       "player": "Caden Veltkamp",
@@ -151,6 +183,14 @@
       "first_init": "k"
     }
   },
+  "Louisiana": {
+    "qb": {
+      "player": "D'Wayne' Winfield",
+      "att": 63.0,
+      "last_name": "winfield",
+      "first_init": "d"
+    }
+  },
   "Grambling": {
     "qb": {
       "player": "RJ Johnson III",
@@ -159,26 +199,26 @@
       "first_init": "r"
     }
   },
+  "Stephen F. Austin": {
+    "qb": {
+      "player": "Gavin Rutherford",
+      "att": 106.0,
+      "last_name": "rutherford",
+      "first_init": "g"
+    }
+  },
   "Colorado": {
     "qb": {
       "player": "Julian Lewis",
-      "att": 50.0,
+      "att": 79.0,
       "last_name": "lewis",
-      "first_init": "j"
-    }
-  },
-  "Oklahoma": {
-    "qb": {
-      "player": "John Mateer",
-      "att": 50.0,
-      "last_name": "mateer",
       "first_init": "j"
     }
   },
   "Florida": {
     "qb": {
       "player": "Aaron Philo",
-      "att": 42.0,
+      "att": 64.0,
       "last_name": "philo",
       "first_init": "a"
     }
@@ -189,6 +229,30 @@
       "att": 81.0,
       "last_name": "lockhart",
       "first_init": "j"
+    }
+  },
+  "Boise State": {
+    "qb": {
+      "player": "Maddux Madsen",
+      "att": 88.0,
+      "last_name": "madsen",
+      "first_init": "m"
+    }
+  },
+  "South Dakota": {
+    "qb": {
+      "player": "Austyn Modrzewski",
+      "att": 93.0,
+      "last_name": "modrzewski",
+      "first_init": "a"
+    }
+  },
+  "Northwestern": {
+    "qb": {
+      "player": "Aidan Chiles",
+      "att": 46.0,
+      "last_name": "chiles",
+      "first_init": "a"
     }
   },
   "New Haven": {
@@ -242,9 +306,17 @@
   "Virginia": {
     "qb": {
       "player": "Beau Pribula",
-      "att": 25.0,
+      "att": 58.0,
       "last_name": "pribula",
       "first_init": "b"
+    }
+  },
+  "Texas": {
+    "qb": {
+      "player": "Arch Manning",
+      "att": 97.0,
+      "last_name": "manning",
+      "first_init": "a"
     }
   },
   "Toledo": {
@@ -253,14 +325,6 @@
       "att": 96.0,
       "last_name": "richter",
       "first_init": "j"
-    }
-  },
-  "LSU": {
-    "qb": {
-      "player": "Sam Leavitt",
-      "att": 66.0,
-      "last_name": "leavitt",
-      "first_init": "s"
     }
   },
   "Butler": {
@@ -279,12 +343,12 @@
       "first_init": "m"
     }
   },
-  "UT Rio Grande Valley": {
+  "Northern Colorado": {
     "qb": {
-      "player": "Garret Rangel",
-      "att": 75.0,
-      "last_name": "rangel",
-      "first_init": "g"
+      "player": "Kenny Lueth",
+      "att": 99.0,
+      "last_name": "lueth",
+      "first_init": "k"
     }
   },
   "William & Mary": {
@@ -301,6 +365,14 @@
       "att": 53.0,
       "last_name": "hayes",
       "first_init": "b"
+    }
+  },
+  "LSU": {
+    "qb": {
+      "player": "Sam Leavitt",
+      "att": 93.0,
+      "last_name": "leavitt",
+      "first_init": "s"
     }
   },
   "Nebraska": {
@@ -325,6 +397,14 @@
       "att": 95.0,
       "last_name": "minicucci",
       "first_init": "n"
+    }
+  },
+  "San Jos\u00e9 State": {
+    "qb": {
+      "player": "Luke Weaver",
+      "att": 143.0,
+      "last_name": "weaver",
+      "first_init": "l"
     }
   },
   "Troy": {
@@ -359,14 +439,6 @@
       "first_init": "d"
     }
   },
-  "Oregon State": {
-    "qb": {
-      "player": "Braden Atkinson",
-      "att": 99.0,
-      "last_name": "atkinson",
-      "first_init": "b"
-    }
-  },
   "Jacksonville State": {
     "qb": {
       "player": "Caden Creel",
@@ -375,36 +447,12 @@
       "first_init": "c"
     }
   },
-  "McNeese": {
-    "qb": {
-      "player": "Devin Lippold",
-      "att": 83.0,
-      "last_name": "lippold",
-      "first_init": "d"
-    }
-  },
   "Boston College": {
     "qb": {
       "player": "Mason McKenzie",
       "att": 85.0,
       "last_name": "mckenzie",
       "first_init": "m"
-    }
-  },
-  "Furman": {
-    "qb": {
-      "player": "Jake Garcia",
-      "att": 73.0,
-      "last_name": "garcia",
-      "first_init": "j"
-    }
-  },
-  "BYU": {
-    "qb": {
-      "player": "Bear Bachmeier",
-      "att": 46.0,
-      "last_name": "bachmeier",
-      "first_init": "b"
     }
   },
   "Valparaiso": {
@@ -431,6 +479,14 @@
       "first_init": "d"
     }
   },
+  "Utah Tech": {
+    "qb": {
+      "player": "Bronson Barben",
+      "att": 110.0,
+      "last_name": "barben",
+      "first_init": "b"
+    }
+  },
   "Duke": {
     "qb": {
       "player": "Walker Eget",
@@ -453,14 +509,6 @@
       "att": 99.0,
       "last_name": "sharpe",
       "first_init": "l"
-    }
-  },
-  "Tennessee": {
-    "qb": {
-      "player": "Faizon Brandon",
-      "att": 38.0,
-      "last_name": "brandon",
-      "first_init": "f"
     }
   },
   "Villanova": {
@@ -511,14 +559,6 @@
       "first_init": "d"
     }
   },
-  "Houston Christian": {
-    "qb": {
-      "player": "Cutter Stewart",
-      "att": 45.0,
-      "last_name": "stewart",
-      "first_init": "c"
-    }
-  },
   "Southern Illinois": {
     "qb": {
       "player": "DJ Williams",
@@ -538,7 +578,7 @@
   "West Virginia": {
     "qb": {
       "player": "Michael Hawkins Jr.",
-      "att": 21.0,
+      "att": 38.0,
       "last_name": "hawkins",
       "first_init": "m"
     }
@@ -556,14 +596,6 @@
       "player": "Justin Lamson",
       "att": 101.0,
       "last_name": "lamson",
-      "first_init": "j"
-    }
-  },
-  "San Diego State": {
-    "qb": {
-      "player": "Jayden Denegal",
-      "att": 34.0,
-      "last_name": "denegal",
       "first_init": "j"
     }
   },
@@ -615,6 +647,14 @@
       "first_init": "d"
     }
   },
+  "Delaware State": {
+    "qb": {
+      "player": "Ui Ale",
+      "att": 98.0,
+      "last_name": "ale",
+      "first_init": "u"
+    }
+  },
   "Arizona State": {
     "qb": {
       "player": "Cutter Boley",
@@ -650,17 +690,33 @@
   "TCU": {
     "qb": {
       "player": "Jaden Craig",
-      "att": 63.0,
+      "att": 92.0,
       "last_name": "craig",
       "first_init": "j"
     }
   },
-  "Stephen F. Austin": {
+  "Weber State": {
     "qb": {
-      "player": "Gavin Rutherford",
-      "att": 81.0,
-      "last_name": "rutherford",
-      "first_init": "g"
+      "player": "Nate Dahle",
+      "att": 126.0,
+      "last_name": "dahle",
+      "first_init": "n"
+    }
+  },
+  "Fresno State": {
+    "qb": {
+      "player": "Jayden Mandal",
+      "att": 70.0,
+      "last_name": "mandal",
+      "first_init": "j"
+    }
+  },
+  "Tennessee": {
+    "qb": {
+      "player": "Faizon Brandon",
+      "att": 64.0,
+      "last_name": "brandon",
+      "first_init": "f"
     }
   },
   "South Carolina": {
@@ -669,14 +725,6 @@
       "att": 86.0,
       "last_name": "sellers",
       "first_init": "l"
-    }
-  },
-  "Cal Poly": {
-    "qb": {
-      "player": "Anthony Grigsby Jr.",
-      "att": 102.0,
-      "last_name": "grigsby",
-      "first_init": "a"
     }
   },
   "Florida International": {
@@ -711,6 +759,14 @@
       "first_init": "k"
     }
   },
+  "Montana": {
+    "qb": {
+      "player": "Keali'i Ah Yat",
+      "att": 143.0,
+      "last_name": "yat",
+      "first_init": "k"
+    }
+  },
   "Mercyhurst": {
     "qb": {
       "player": "Alex Gevaudan",
@@ -722,17 +778,25 @@
   "Sacramento State": {
     "qb": {
       "player": "Jackson Sharman",
-      "att": 59.0,
+      "att": 100.0,
       "last_name": "sharman",
       "first_init": "j"
     }
   },
-  "Virginia Tech": {
+  "UAB": {
     "qb": {
-      "player": "Ethan Grunkemeyer",
-      "att": 62.0,
-      "last_name": "grunkemeyer",
-      "first_init": "e"
+      "player": "Ryder Burton",
+      "att": 72.0,
+      "last_name": "burton",
+      "first_init": "r"
+    }
+  },
+  "Ole Miss": {
+    "qb": {
+      "player": "Trinidad Chambliss",
+      "att": 110.0,
+      "last_name": "chambliss",
+      "first_init": "t"
     }
   },
   "Wagner": {
@@ -751,20 +815,20 @@
       "first_init": "c"
     }
   },
-  "North Alabama": {
-    "qb": {
-      "player": "Destin Wade",
-      "att": 72.0,
-      "last_name": "wade",
-      "first_init": "d"
-    }
-  },
   "Elon": {
     "qb": {
       "player": "Brady Stober",
       "att": 38.0,
       "last_name": "stober",
       "first_init": "b"
+    }
+  },
+  "Stetson": {
+    "qb": {
+      "player": "Tom von Grote",
+      "att": 96.0,
+      "last_name": "grote",
+      "first_init": "t"
     }
   },
   "North Texas": {
@@ -783,14 +847,6 @@
       "first_init": "c"
     }
   },
-  "Michigan State": {
-    "qb": {
-      "player": "Alessio Milivojevic",
-      "att": 54.0,
-      "last_name": "milivojevic",
-      "first_init": "a"
-    }
-  },
   "Eastern Washington": {
     "qb": {
       "player": "Nate Bell",
@@ -807,20 +863,20 @@
       "first_init": "g"
     }
   },
-  "South Dakota": {
-    "qb": {
-      "player": "Austyn Modrzewski",
-      "att": 66.0,
-      "last_name": "modrzewski",
-      "first_init": "a"
-    }
-  },
   "Tarleton State": {
     "qb": {
       "player": "Kaden Anderson",
       "att": 125.0,
       "last_name": "anderson",
       "first_init": "k"
+    }
+  },
+  "Oklahoma": {
+    "qb": {
+      "player": "John Mateer",
+      "att": 75.0,
+      "last_name": "mateer",
+      "first_init": "j"
     }
   },
   "Wisconsin": {
@@ -834,7 +890,7 @@
   "UTSA": {
     "qb": {
       "player": "Owen McCown",
-      "att": 69.0,
+      "att": 92.0,
       "last_name": "mccown",
       "first_init": "o"
     }
@@ -895,6 +951,14 @@
       "first_init": "m"
     }
   },
+  "UT Rio Grande Valley": {
+    "qb": {
+      "player": "Garret Rangel",
+      "att": 81.0,
+      "last_name": "rangel",
+      "first_init": "g"
+    }
+  },
   "Columbia": {
     "qb": {
       "player": "Chase Goodwin",
@@ -927,20 +991,20 @@
       "first_init": "j"
     }
   },
-  "Northern Colorado": {
-    "qb": {
-      "player": "Kenny Lueth",
-      "att": 85.0,
-      "last_name": "lueth",
-      "first_init": "k"
-    }
-  },
   "USC": {
     "qb": {
       "player": "Jayden Maiava",
       "att": 115.0,
       "last_name": "maiava",
       "first_init": "j"
+    }
+  },
+  "Florida A&M": {
+    "qb": {
+      "player": "Isaiah Knowles",
+      "att": 45.0,
+      "last_name": "knowles",
+      "first_init": "i"
     }
   },
   "Memphis": {
@@ -959,22 +1023,6 @@
       "first_init": "j"
     }
   },
-  "UAB": {
-    "qb": {
-      "player": "Ryder Burton",
-      "att": 47.0,
-      "last_name": "burton",
-      "first_init": "r"
-    }
-  },
-  "New Mexico": {
-    "qb": {
-      "player": "Luke Moga",
-      "att": 26.0,
-      "last_name": "moga",
-      "first_init": "l"
-    }
-  },
   "Indiana State": {
     "qb": {
       "player": "Elijah Owens",
@@ -983,20 +1031,28 @@
       "first_init": "e"
     }
   },
-  "Alcorn State": {
+  "Alabama A&M": {
     "qb": {
-      "player": "Jaylon Tolbert",
-      "att": 95.0,
-      "last_name": "tolbert",
-      "first_init": "j"
+      "player": "Cornelious Brown",
+      "att": 132.0,
+      "last_name": "brown",
+      "first_init": "c"
     }
   },
-  "Florida A&M": {
+  "South Alabama": {
     "qb": {
-      "player": "Isaiah Knowles",
-      "att": 45.0,
-      "last_name": "knowles",
-      "first_init": "i"
+      "player": "Bishop Davenport",
+      "att": 59.0,
+      "last_name": "davenport",
+      "first_init": "b"
+    }
+  },
+  "Charlotte": {
+    "qb": {
+      "player": "Cole Gonzales",
+      "att": 97.0,
+      "last_name": "gonzales",
+      "first_init": "c"
     }
   },
   "SMU": {
@@ -1103,12 +1159,20 @@
       "first_init": "k"
     }
   },
-  "San Jos\u00e9 State": {
+  "McNeese": {
     "qb": {
-      "player": "Luke Weaver",
-      "att": 105.0,
-      "last_name": "weaver",
-      "first_init": "l"
+      "player": "Devin Lippold",
+      "att": 112.0,
+      "last_name": "lippold",
+      "first_init": "d"
+    }
+  },
+  "Bowie State": {
+    "qb": {
+      "player": "Kyle Hawkins",
+      "att": 12.0,
+      "last_name": "hawkins",
+      "first_init": "k"
     }
   },
   "Southern Miss": {
@@ -1143,6 +1207,14 @@
       "first_init": "a"
     }
   },
+  "New Mexico": {
+    "qb": {
+      "player": "Luke Moga",
+      "att": 34.0,
+      "last_name": "moga",
+      "first_init": "l"
+    }
+  },
   "Baylor": {
     "qb": {
       "player": "Nate Bennett",
@@ -1159,20 +1231,12 @@
       "first_init": "g"
     }
   },
-  "Northwestern": {
+  "BYU": {
     "qb": {
-      "player": "Aidan Chiles",
-      "att": 24.0,
-      "last_name": "chiles",
-      "first_init": "a"
-    }
-  },
-  "Notre Dame": {
-    "qb": {
-      "player": "C.J. Carr",
-      "att": 49.0,
-      "last_name": "carr",
-      "first_init": "c"
+      "player": "Bear Bachmeier",
+      "att": 62.0,
+      "last_name": "bachmeier",
+      "first_init": "b"
     }
   },
   "Chattanooga": {
@@ -1185,10 +1249,10 @@
   },
   "Northwestern State": {
     "qb": {
-      "player": "Abram Johnston",
-      "att": 62.0,
-      "last_name": "johnston",
-      "first_init": "a"
+      "player": "Zach Wilcke",
+      "att": 77.0,
+      "last_name": "wilcke",
+      "first_init": "z"
     }
   },
   "Abilene Christian": {
@@ -1295,22 +1359,6 @@
       "first_init": "c"
     }
   },
-  "Kennesaw State": {
-    "qb": {
-      "player": "Rickie Collins",
-      "att": 58.0,
-      "last_name": "collins",
-      "first_init": "r"
-    }
-  },
-  "San Diego": {
-    "qb": {
-      "player": "Dom Nankil",
-      "att": 53.0,
-      "last_name": "nankil",
-      "first_init": "d"
-    }
-  },
   "Missouri State": {
     "qb": {
       "player": "Skyler Locklear",
@@ -1324,6 +1372,14 @@
       "player": "Jacurri Brown",
       "att": 35.0,
       "last_name": "brown",
+      "first_init": "j"
+    }
+  },
+  "East Texas A&M": {
+    "qb": {
+      "player": "Jack Jacobs",
+      "att": 50.0,
+      "last_name": "jacobs",
       "first_init": "j"
     }
   },
@@ -1341,14 +1397,6 @@
       "att": 80.0,
       "last_name": "mccown",
       "first_init": "a"
-    }
-  },
-  "Fresno State": {
-    "qb": {
-      "player": "Jayden Mandal",
-      "att": 41.0,
-      "last_name": "mandal",
-      "first_init": "j"
     }
   },
   "Albany State": {
@@ -1383,6 +1431,14 @@
       "first_init": "j"
     }
   },
+  "Notre Dame": {
+    "qb": {
+      "player": "C.J. Carr",
+      "att": 73.0,
+      "last_name": "carr",
+      "first_init": "c"
+    }
+  },
   "Rutgers": {
     "qb": {
       "player": "Dylan Lonergan",
@@ -1391,12 +1447,12 @@
       "first_init": "d"
     }
   },
-  "Weber State": {
+  "UC Davis": {
     "qb": {
-      "player": "Nate Dahle",
-      "att": 100.0,
-      "last_name": "dahle",
-      "first_init": "n"
+      "player": "Treynor Cleeland",
+      "att": 133.0,
+      "last_name": "cleeland",
+      "first_init": "t"
     }
   },
   "UL Monroe": {
@@ -1431,28 +1487,12 @@
       "first_init": "d"
     }
   },
-  "Incarnate Word": {
-    "qb": {
-      "player": "Emmett Brown",
-      "att": 57.0,
-      "last_name": "brown",
-      "first_init": "e"
-    }
-  },
   "Harvard": {
     "qb": {
       "player": "Charlie Smith",
       "att": 19.0,
       "last_name": "smith",
       "first_init": "c"
-    }
-  },
-  "Texas": {
-    "qb": {
-      "player": "Arch Manning",
-      "att": 64.0,
-      "last_name": "manning",
-      "first_init": "a"
     }
   },
   "Illinois": {
@@ -1479,6 +1519,14 @@
       "first_init": "m"
     }
   },
+  "South Carolina State": {
+    "qb": {
+      "player": "Keely Watson",
+      "att": 73.0,
+      "last_name": "watson",
+      "first_init": "k"
+    }
+  },
   "Louisville": {
     "qb": {
       "player": "Lincoln Kienholz",
@@ -1487,12 +1535,12 @@
       "first_init": "l"
     }
   },
-  "Arkansas State": {
+  "Alcorn State": {
     "qb": {
-      "player": "Trey Owens",
-      "att": 47.0,
-      "last_name": "owens",
-      "first_init": "t"
+      "player": "Jaylon Tolbert",
+      "att": 139.0,
+      "last_name": "tolbert",
+      "first_init": "j"
     }
   },
   "Sam Houston": {
@@ -1501,6 +1549,14 @@
       "att": 108.0,
       "last_name": "locke",
       "first_init": "l"
+    }
+  },
+  "Houston Christian": {
+    "qb": {
+      "player": "Cutter Stewart",
+      "att": 67.0,
+      "last_name": "stewart",
+      "first_init": "c"
     }
   },
   "VMI": {
@@ -1519,6 +1575,14 @@
       "first_init": "d"
     }
   },
+  "Furman": {
+    "qb": {
+      "player": "Jake Garcia",
+      "att": 95.0,
+      "last_name": "garcia",
+      "first_init": "j"
+    }
+  },
   "Kentucky": {
     "qb": {
       "player": "Kenny Minchey",
@@ -1535,22 +1599,6 @@
       "first_init": "c"
     }
   },
-  "Stetson": {
-    "qb": {
-      "player": "Tom von Grote",
-      "att": 57.0,
-      "last_name": "grote",
-      "first_init": "t"
-    }
-  },
-  "Ohio": {
-    "qb": {
-      "player": "Nick Poulos",
-      "att": 36.0,
-      "last_name": "poulos",
-      "first_init": "n"
-    }
-  },
   "Miami": {
     "qb": {
       "player": "Darian Mensah",
@@ -1559,10 +1607,18 @@
       "first_init": "d"
     }
   },
+  "Purdue": {
+    "qb": {
+      "player": "Ryan Browne",
+      "att": 101.0,
+      "last_name": "browne",
+      "first_init": "r"
+    }
+  },
   "North Dakota State": {
     "qb": {
       "player": "Nathan Hayes",
-      "att": 67.0,
+      "att": 91.0,
       "last_name": "hayes",
       "first_init": "n"
     }
@@ -1575,28 +1631,12 @@
       "first_init": "b"
     }
   },
-  "Charlotte": {
-    "qb": {
-      "player": "Cole Gonzales",
-      "att": 62.0,
-      "last_name": "gonzales",
-      "first_init": "c"
-    }
-  },
   "UTEP": {
     "qb": {
       "player": "EJ Colson",
       "att": 42.0,
       "last_name": "colson",
       "first_init": "e"
-    }
-  },
-  "Delaware State": {
-    "qb": {
-      "player": "Ui Ale",
-      "att": 76.0,
-      "last_name": "ale",
-      "first_init": "u"
     }
   },
   "Central Oklahoma": {
@@ -1621,14 +1661,6 @@
       "att": 105.0,
       "last_name": "lopez",
       "first_init": "g"
-    }
-  },
-  "Ole Miss": {
-    "qb": {
-      "player": "Trinidad Chambliss",
-      "att": 62.0,
-      "last_name": "chambliss",
-      "first_init": "t"
     }
   },
   "UT Martin": {
@@ -1671,12 +1703,12 @@
       "first_init": "d"
     }
   },
-  "Bowie State": {
+  "Incarnate Word": {
     "qb": {
-      "player": "Kyle Hawkins",
-      "att": 2.0,
-      "last_name": "hawkins",
-      "first_init": "k"
+      "player": "Emmett Brown",
+      "att": 103.0,
+      "last_name": "brown",
+      "first_init": "e"
     }
   },
   "North Carolina Central": {
@@ -1685,22 +1717,6 @@
       "att": 83.0,
       "last_name": "layne",
       "first_init": "n"
-    }
-  },
-  "UC Davis": {
-    "qb": {
-      "player": "Treynor Cleeland",
-      "att": 96.0,
-      "last_name": "cleeland",
-      "first_init": "t"
-    }
-  },
-  "South Florida": {
-    "qb": {
-      "player": "Michael Van Buren Jr.",
-      "att": 48.0,
-      "last_name": "buren",
-      "first_init": "m"
     }
   },
   "Hawai'i": {
@@ -1717,22 +1733,6 @@
       "att": 84.0,
       "last_name": "mendoza",
       "first_init": "a"
-    }
-  },
-  "Utah Tech": {
-    "qb": {
-      "player": "Bronson Barben",
-      "att": 78.0,
-      "last_name": "barben",
-      "first_init": "b"
-    }
-  },
-  "Montana": {
-    "qb": {
-      "player": "Keali'i Ah Yat",
-      "att": 103.0,
-      "last_name": "yat",
-      "first_init": "k"
     }
   },
   "Stony Brook": {
@@ -1759,6 +1759,14 @@
       "first_init": "e"
     }
   },
+  "Michigan State": {
+    "qb": {
+      "player": "Alessio Milivojevic",
+      "att": 71.0,
+      "last_name": "milivojevic",
+      "first_init": "a"
+    }
+  },
   "North Dakota": {
     "qb": {
       "player": "Jerry Kaminski",
@@ -1773,6 +1781,30 @@
       "att": 126.0,
       "last_name": "wood",
       "first_init": "j"
+    }
+  },
+  "Oregon State": {
+    "qb": {
+      "player": "Braden Atkinson",
+      "att": 129.0,
+      "last_name": "atkinson",
+      "first_init": "b"
+    }
+  },
+  "Northern Arizona": {
+    "qb": {
+      "player": "Ty Pennington",
+      "att": 105.0,
+      "last_name": "pennington",
+      "first_init": "t"
+    }
+  },
+  "UCLA": {
+    "qb": {
+      "player": "Nico Iamaleava",
+      "att": 75.0,
+      "last_name": "iamaleava",
+      "first_init": "n"
     }
   },
   "West Florida": {
@@ -1791,6 +1823,14 @@
       "first_init": "c"
     }
   },
+  "South Florida": {
+    "qb": {
+      "player": "Michael Van Buren Jr.",
+      "att": 80.0,
+      "last_name": "buren",
+      "first_init": "m"
+    }
+  },
   "Old Dominion": {
     "qb": {
       "player": "Quinn Henicle",
@@ -1807,14 +1847,6 @@
       "first_init": "k"
     }
   },
-  "Purdue": {
-    "qb": {
-      "player": "Ryan Browne",
-      "att": 71.0,
-      "last_name": "browne",
-      "first_init": "r"
-    }
-  },
   "Akron": {
     "qb": {
       "player": "Cibastian Broughton",
@@ -1826,7 +1858,7 @@
   "Auburn": {
     "qb": {
       "player": "Byrum Brown",
-      "att": 63.0,
+      "att": 98.0,
       "last_name": "brown",
       "first_init": "b"
     }
@@ -1839,28 +1871,12 @@
       "first_init": "a"
     }
   },
-  "UCLA": {
-    "qb": {
-      "player": "Nico Iamaleava",
-      "att": 44.0,
-      "last_name": "iamaleava",
-      "first_init": "n"
-    }
-  },
   "Colgate": {
     "qb": {
       "player": "Jake Stearney",
       "att": 99.0,
       "last_name": "stearney",
       "first_init": "j"
-    }
-  },
-  "Alabama A&M": {
-    "qb": {
-      "player": "Cornelious Brown",
-      "att": 100.0,
-      "last_name": "brown",
-      "first_init": "c"
     }
   },
   "Central Connecticut": {
@@ -1887,6 +1903,14 @@
       "first_init": "w"
     }
   },
+  "North Alabama": {
+    "qb": {
+      "player": "Destin Wade",
+      "att": 102.0,
+      "last_name": "wade",
+      "first_init": "d"
+    }
+  },
   "Marist": {
     "qb": {
       "player": "Sonny Mannino",
@@ -1901,22 +1925,6 @@
       "att": 41.0,
       "last_name": "snyder",
       "first_init": "j"
-    }
-  },
-  "East Texas A&M": {
-    "qb": {
-      "player": "Eric Rodriguez",
-      "att": 47.0,
-      "last_name": "rodriguez",
-      "first_init": "e"
-    }
-  },
-  "Boise State": {
-    "qb": {
-      "player": "Maddux Madsen",
-      "att": 57.0,
-      "last_name": "madsen",
-      "first_init": "m"
     }
   },
   "Lafayette": {
@@ -1949,14 +1957,6 @@
       "att": 61.0,
       "last_name": "holmes",
       "first_init": "e"
-    }
-  },
-  "Louisiana": {
-    "qb": {
-      "player": "D'Wayne' Winfield",
-      "att": 43.0,
-      "last_name": "winfield",
-      "first_init": "d"
     }
   },
   "UNLV": {
@@ -2023,28 +2023,12 @@
       "first_init": "a"
     }
   },
-  "South Carolina State": {
-    "qb": {
-      "player": "Keely Watson",
-      "att": 48.0,
-      "last_name": "watson",
-      "first_init": "k"
-    }
-  },
   "Bucknell": {
     "qb": {
       "player": "Chris Dietrich",
       "att": 108.0,
       "last_name": "dietrich",
       "first_init": "c"
-    }
-  },
-  "Tennessee State": {
-    "qb": {
-      "player": "Daylin Lee",
-      "att": 101.0,
-      "last_name": "lee",
-      "first_init": "d"
     }
   },
   "Navy": {
@@ -2055,20 +2039,20 @@
       "first_init": "b"
     }
   },
-  "Northern Arizona": {
-    "qb": {
-      "player": "Ty Pennington",
-      "att": 78.0,
-      "last_name": "pennington",
-      "first_init": "t"
-    }
-  },
   "Bethune-Cookman": {
     "qb": {
       "player": "Tyler Jefferson",
       "att": 36.0,
       "last_name": "jefferson",
       "first_init": "t"
+    }
+  },
+  "Tennessee State": {
+    "qb": {
+      "player": "Daylin Lee",
+      "att": 128.0,
+      "last_name": "lee",
+      "first_init": "d"
     }
   },
   "Washington": {
@@ -2090,7 +2074,7 @@
   "App State": {
     "qb": {
       "player": "Malachi Singleton",
-      "att": 52.0,
+      "att": 94.0,
       "last_name": "singleton",
       "first_init": "m"
     }
@@ -2103,20 +2087,20 @@
       "first_init": "c"
     }
   },
+  "San Diego": {
+    "qb": {
+      "player": "Dom Nankil",
+      "att": 83.0,
+      "last_name": "nankil",
+      "first_init": "d"
+    }
+  },
   "Fairmont State": {
     "qb": {
       "player": "Deven Sisler",
       "att": 9.0,
       "last_name": "sisler",
       "first_init": "d"
-    }
-  },
-  "South Alabama": {
-    "qb": {
-      "player": "Bishop Davenport",
-      "att": 59.0,
-      "last_name": "davenport",
-      "first_init": "b"
     }
   },
   "Middle Tennessee": {
@@ -2183,6 +2167,14 @@
       "first_init": "b"
     }
   },
+  "Cal Poly": {
+    "qb": {
+      "player": "Anthony Grigsby Jr.",
+      "att": 125.0,
+      "last_name": "grigsby",
+      "first_init": "a"
+    }
+  },
   "New Hampshire": {
     "qb": {
       "player": "Brooks Bentley",
@@ -2197,6 +2189,14 @@
       "att": 135.0,
       "last_name": "kim",
       "first_init": "n"
+    }
+  },
+  "Kennesaw State": {
+    "qb": {
+      "player": "Rickie Collins",
+      "att": 92.0,
+      "last_name": "collins",
+      "first_init": "r"
     }
   },
   "Edward Waters": {
