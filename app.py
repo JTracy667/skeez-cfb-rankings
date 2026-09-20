@@ -1229,9 +1229,14 @@ def _cfbd_weather(week: int, year: int = CFBD_YEAR) -> dict:
     try:
         url = f"{CFBD_BASE}/games/weather"
         params = {"year": year, "week": week}
-        data = _http_get(url, params=params, retries=2, base_delay=0.5)
+        # CFBD_HEADERS is REQUIRED here: /games/weather is an authenticated
+        # endpoint and returns 401 without it. Omitting the header made the
+        # whole wind/temp overlay silently inert (every game weather={},
+        # wind_penalty=0) while still looking "wired up" in the API payload.
+        data = _http_get(url, params=params, headers=CFBD_HEADERS, retries=2, base_delay=0.5)
         if not data:
-            data = _http_get(url, params={"year": CFBD_YEAR_FALLBACK, "week": week}, retries=2, base_delay=0.5)
+            data = _http_get(url, params={"year": CFBD_YEAR_FALLBACK, "week": week},
+                             headers=CFBD_HEADERS, retries=2, base_delay=0.5)
         out = {}
         for g in (data or []):
             h = g.get("homeTeam", "")
