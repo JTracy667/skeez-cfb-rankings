@@ -33,10 +33,14 @@ nav a.active{color:var(--accent)}
 .matchup-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem;display:flex;flex-direction:column;transition:border-color .2s,transform .15s}
 .matchup-card:hover{border-color:var(--accent);transform:translateY(-1px)}
 .matchup-main{display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;width:100%}
-.matchup-injury-bar{display:flex;gap:.5rem;margin-top:.75rem;padding-top:.6rem;border-top:1px dashed var(--border);flex-wrap:wrap;width:100%}
+.matchup-meta-bar{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:.65rem;padding-top:.55rem;border-top:1px solid rgba(255,255,255,0.06);width:100%;text-align:center}
+.matchup-meta-bar:empty{display:none}
+.matchup-meta-bar .game-date{font-size:.72rem;color:var(--text-dim);font-weight:500}
+.matchup-meta-bar .ou-pick,.matchup-meta-bar .line-vs-model{font-size:.68rem}
+.matchup-injury-bar{display:flex;gap:.5rem;margin-top:.65rem;padding-top:.55rem;border-top:1px dashed rgba(239,68,68,0.35);flex-wrap:wrap;width:100%}
 .injury-pill{flex:1 1 180px;display:flex;align-items:center;justify-content:space-between;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;padding:.35rem .65rem;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s}
 .injury-pill:active{background:rgba(239,68,68,0.28)}
-.injury-pill .pill-tag{background:rgba(239,68,68,0.22);padding:.1rem .35rem;border-radius:4px;font-size:.65rem;margin-left:.5rem;white-space:nowrap}
+.injury-pill .pill-tag{background:rgba(239,68,68,0.22);padding:.1rem .35rem;border-radius:4px;font-size:.65rem;margin-left:.5rem;white-space:nowrap;flex-shrink:0}
 .team-side{display:flex;align-items:center;gap:.75rem;min-width:0;overflow:hidden}
 .team-side > div:not(.team-logo){min-width:0;flex:1;overflow:hidden}
 .team-side.away{justify-content:flex-end;text-align:right}
@@ -120,7 +124,7 @@ nav a.active{color:var(--accent)}
 .footer{text-align:center;padding:1.5rem;color:var(--text-dim);font-size:.75rem;border-top:1px solid var(--border)}
 /* ── MOBILE-FIRST OVERRIDES (Sep 8) ── phones are the primary device */
 @media(max-width:768px){
-  .container{padding:12px}
+  .container{padding:8px 10px}
   .header h1{font-size:1.3rem;line-height:1.25}
   .header .subtitle{font-size:.85rem}
   .header nav{flex-wrap:wrap;gap:.4rem .6rem;font-size:.8rem}
@@ -134,21 +138,29 @@ nav a.active{color:var(--accent)}
 
   /* matchup card: KEEP desktop 3-column layout on mobile (user-directed) —
      home logo+text left, away logo+text right, scores between. Just compact. */
-    .matchup-card{padding:.75rem}
-    .matchup-main{grid-template-columns:1fr auto 1fr;gap:.5rem}
-    .matchup-injury-bar{gap:.35rem;margin-top:.5rem;padding-top:.5rem}
-    .injury-pill{flex:1 1 100%;padding:.3rem .55rem;font-size:.68rem}
-    .team-logo{width:38px;height:38px;border-radius:8px}
-    .team-name{font-size:.95rem;line-height:1.25;overflow-wrap:normal;word-break:keep-all;hyphens:none}
-    .team-meta{font-size:.7rem;flex-wrap:wrap}
-    .team-side.away .team-meta{flex-direction:row-reverse}
-    .sp-row{font-size:.62rem}
-    .final-score{font-size:.75rem;padding:0 5px;margin-left:4px}
-    .final-winner{font-size:1.2rem;margin-left:4px}
+  .matchup-card{padding:.6rem .55rem;overflow:hidden}
+  .matchup-main{grid-template-columns:1fr 78px 1fr;gap:.35rem;align-items:center;width:100%}
+  .matchup-meta-bar{gap:2px;margin-top:.4rem;padding-top:.35rem;border-top:1px solid rgba(255,255,255,0.07);width:100%;text-align:center}
+  .matchup-meta-bar .game-date{font-size:.68rem}
+  .matchup-meta-bar .ou-pick,.matchup-meta-bar .line-vs-model{font-size:.62rem}
+  .matchup-injury-bar{flex-direction:column;gap:.3rem;margin-top:.35rem;padding-top:.35rem;border-top:1px dashed rgba(239,68,68,0.35);width:100%}
+  .injury-pill{width:100%;box-sizing:border-box;flex:1 1 100%;padding:.32rem .55rem;font-size:.68rem;border-radius:6px}
+  .injury-pill .pill-tag{font-size:.65rem;flex-shrink:0;margin-left:.4rem}
+  .team-side{gap:.4rem;min-width:0;overflow:hidden}
+  .team-logo{width:34px;height:34px;border-radius:6px;flex-shrink:0}
+  .team-name{font-size:clamp(.72rem, 3.2vw, .82rem);font-weight:700;line-height:1.15;white-space:normal;word-break:normal;overflow-wrap:normal;hyphens:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .team-meta{font-size:.65rem;gap:.2rem;flex-wrap:nowrap;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+  .team-side.away .team-meta{justify-content:flex-end}
+  .sp-row{font-size:.6rem;margin-top:1px;white-space:nowrap}
+  .final-score{font-size:.75rem;padding:0 5px;margin-left:4px}
+  .final-winner{font-size:1.1rem;margin-left:3px}
 
-  /* vs section: compact but same structure as desktop */
-  .vs-section{text-align:center;min-width:96px}
-  .vs-score{font-size:1.15rem;margin:.15rem 0}
+  /* vs section: compact scores and spread badge */
+  .vs-section{width:78px;min-width:78px;max-width:78px;text-align:center;overflow:hidden;padding:0}
+  .vs-label{font-size:.65rem;letter-spacing:.03em}
+  .vs-score{font-size:1.15rem;font-weight:800;margin:0;line-height:1.15}
+  .line-overlay{font-size:.65rem;margin:.15rem 0}
+  .diff-badge{font-size:.58rem;padding:.12rem .3rem;border-radius:4px;white-space:normal;line-height:1.1;display:block}
   .diff-badge,.ou-pick,.line-vs-model,.game-date,.line-mv-chip{font-size:.62rem}
 
   /* controls: search full width, conf chips scroll in one swipeable row */
@@ -408,6 +420,34 @@ function spClass(val) {
   return val >= 0.9 ? 'high' : val >= 0.7 ? '' : 'low';
 }
 
+function matchupMetaBarHtml(m) {
+  const parts = [];
+  const dateStr = formatGameDate(m.date);
+  const weatherStr = weatherTagHtml(m);
+  const neutralStr = m.neutral_site ? ' · 🏟️ Neutral Site' : '';
+  if (dateStr !== '—' || weatherStr || neutralStr) {
+    parts.push(`<div class="game-date">${dateStr}${neutralStr}${weatherStr}</div>`);
+  }
+  if (m.wind_penalty > 0) {
+    parts.push(`<div class="ou-pick down" style="margin-top:2px">💨 Wind Adj: -${m.wind_penalty} pts to total</div>`);
+  }
+  const mvHtml = movementChipHtml(m);
+  if (mvHtml) {
+    parts.push(mvHtml);
+  }
+  if (m.line_vs_model !== undefined && m.line_vs_model !== null) {
+    const cls = m.line_vs_model > 1 ? 'up' : m.line_vs_model < -1 ? 'down' : '';
+    const txt = m.line_vs_model > 0 ? 'covers +' + m.line_vs_model : m.line_vs_model < 0 ? 'under -' + Math.abs(m.line_vs_model) : '≈ model';
+    parts.push(`<div class="line-vs-model ${cls}">Line ${txt}</div>`);
+  }
+  if (m.over_pick) {
+    const cls = m.over_pick === 'over' ? 'up' : 'down';
+    parts.push(`<div class="ou-pick ${cls}">Model ${m.model_total} → ${m.over_pick.toUpperCase()} ${m.line_total} (${m.total_vs_model > 0 ? '+' : ''}${m.total_vs_model})</div>`);
+  }
+  if (!parts.length) return '';
+  return `<div class="matchup-meta-bar">${parts.join('')}</div>`;
+}
+
 function matchupInjuryBarHtml(m) {
   const hasHome = m.home_injuries && m.home_injuries.length && m.home_injury_adj;
   const hasAway = m.away_injuries && m.away_injuries.length && m.away_injury_adj;
@@ -584,17 +624,6 @@ function renderMatchups() {
             : `<div class="line-overlay"><span class="line-na">No line</span></div>`
           }
           <div class="diff-badge ${diffBadgeClass(m)}">${diffBadgeText(m)}</div>
-          ${movementChipHtml(m)}
-          <div class="game-date">${formatGameDate(m.date)}${m.neutral_site ? ' · 🏟️ Neutral Site' : ''}${weatherTagHtml(m)}</div>
-          ${m.wind_penalty > 0 ? `<div class="ou-pick down" style="margin-top:2px">💨 Wind Adj: -${m.wind_penalty} pts to total</div>` : ''}
-          ${m.line_vs_model !== undefined && m.line_vs_model !== null
-            ? `<div class="line-vs-model ${m.line_vs_model > 1 ? 'up' : m.line_vs_model < -1 ? 'down' : ''}">Line ${m.line_vs_model > 0 ? 'covers +' + m.line_vs_model : m.line_vs_model < 0 ? 'under -' + Math.abs(m.line_vs_model) : '≈ model'}</div>`
-            : ''
-          }
-          ${m.over_pick
-            ? `<div class="ou-pick ${m.over_pick === 'over' ? 'up' : 'down'}">Model ${m.model_total} → ${m.over_pick.toUpperCase()} ${m.line_total} (${m.total_vs_model > 0 ? '+' : ''}${m.total_vs_model})</div>`
-            : ''
-          }
         </div>
         <div class="team-side away">
           <div>
@@ -609,6 +638,7 @@ function renderMatchups() {
           <div class="team-logo"><img src="${m.away_logo_url || ''}" alt="${m.away}" onerror="this.style.display='none'"></div>
         </div>
       </div>
+      ${matchupMetaBarHtml(m)}
       ${matchupInjuryBarHtml(m)}
     </div>
   `).join('');
