@@ -33,14 +33,19 @@ nav a.active{color:var(--accent)}
 .matchup-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem;display:flex;flex-direction:column;transition:border-color .2s,transform .15s}
 .matchup-card:hover{border-color:var(--accent);transform:translateY(-1px)}
 .matchup-main{display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;width:100%}
-.matchup-meta-bar{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:.65rem;padding-top:.55rem;border-top:1px solid rgba(255,255,255,0.06);width:100%;text-align:center}
+.matchup-meta-bar{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:.65rem;padding:.5rem .75rem;background:rgba(11,13,19,0.7);border:1px solid rgba(255,255,255,0.08);border-radius:8px;width:100%;text-align:center;box-sizing:border-box}
 .matchup-meta-bar:empty{display:none}
-.matchup-meta-bar .game-date{font-size:.72rem;color:var(--text-dim);font-weight:500}
+.matchup-meta-bar .game-date{font-size:.74rem;color:#e2e8f0;font-weight:500;line-height:1.35}
 .matchup-meta-bar .ou-pick,.matchup-meta-bar .line-vs-model{font-size:.68rem}
+.high-wind-badge{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:rgba(245,158,11,0.18);border:1px solid #f59e0b;color:#fef08a;font-weight:800;font-size:.74rem;letter-spacing:.03em;padding:.3rem .75rem;border-radius:6px;box-shadow:0 0 12px rgba(245,158,11,0.25);text-transform:uppercase;white-space:nowrap;margin:2px 0}
+.weather-temp{font-weight:600;color:#f1f5f9}
+.weather-wind.high{color:#93c5fd;font-weight:700}
+.weather-wind{color:#e2e8f0;font-weight:500}
+.weather-dome{color:#cbd5e1;font-weight:500}
 .matchup-injury-bar{display:flex;gap:.5rem;margin-top:.65rem;padding-top:.55rem;border-top:1px dashed rgba(239,68,68,0.35);flex-wrap:wrap;width:100%}
-.injury-pill{flex:1 1 180px;display:flex;align-items:center;justify-content:space-between;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;padding:.35rem .65rem;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s}
+.injury-pill{flex:1 1 180px;display:flex;align-items:center;justify-content:space-between;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#fee2e2;padding:.35rem .65rem;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s}
 .injury-pill:active{background:rgba(239,68,68,0.28)}
-.injury-pill .pill-tag{background:rgba(239,68,68,0.22);padding:.1rem .35rem;border-radius:4px;font-size:.65rem;margin-left:.5rem;white-space:nowrap;flex-shrink:0}
+.injury-pill .pill-tag{background:rgba(239,68,68,0.35);color:#ffffff;padding:.1rem .35rem;border-radius:4px;font-size:.65rem;margin-left:.5rem;white-space:nowrap;flex-shrink:0}
 .team-side{display:flex;align-items:center;gap:.75rem;min-width:0;overflow:hidden}
 .team-side > div:not(.team-logo){min-width:0;flex:1;overflow:hidden}
 .team-side.away{justify-content:flex-end;text-align:right}
@@ -65,7 +70,7 @@ nav a.active{color:var(--accent)}
 .line-vs-model{font-size:0.68rem;font-weight:500;padding:0.1rem 0.4rem;border-radius:4px}
 .line-vs-model.up{color:var(--up);background:rgba(52,221,177,.1)}
 .line-vs-model.down{color:var(--down);background:rgba(248,113,113,.1)}
-.game-date{font-size:0.68rem;color:var(--text-dim);margin:0.2rem 0;font-weight:500}
+.game-date{font-size:0.72rem;color:#e2e8f0;margin:0.2rem 0;font-weight:500}
 .sp-row{display:flex;gap:.5rem;align-items:center;font-size:.72rem;color:var(--text-dim);margin-top:.2rem}
 .sp-val{font-weight:600}
 .sp-val.high{color:var(--up)}
@@ -77,7 +82,7 @@ nav a.active{color:var(--accent)}
 .summary-card.record .val{font-variant-numeric:tabular-nums}
 .summary-card.record .val.good{color:var(--up)}
 .pick-arrow{font-weight:800;color:var(--up);font-size:1.1rem;margin:0 4px;flex-shrink:0;text-shadow:0 0 8px rgba(52,211,153,0.4)}
-.injury-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:4px;font-size:.65rem;font-weight:700;color:#fca5a5;background:rgba(239,68,68,0.18);border:1px solid rgba(239,68,68,0.35);margin-top:3px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.injury-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:4px;font-size:.65rem;font-weight:700;color:#fee2e2;background:rgba(239,68,68,0.18);border:1px solid rgba(239,68,68,0.35);margin-top:3px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .injury-badge:active{background:rgba(239,68,68,0.35);transform:scale(0.97)}
 
 /* Mobile-friendly Injury Modal */
@@ -92,13 +97,13 @@ nav a.active{color:var(--accent)}
 .injury-modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem}
 .injury-modal-title{font-size:1.15rem;font-weight:800;color:var(--text)}
 .injury-modal-close{background:rgba(255,255,255,0.1);border:none;color:var(--text);font-size:1.4rem;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.injury-modal-sub{font-size:.82rem;color:#fca5a5;font-weight:700;margin-bottom:1rem}
+.injury-modal-sub{font-size:.82rem;color:#fee2e2;font-weight:700;margin-bottom:1rem}
 .injury-modal-body{overflow-y:auto;display:flex;flex-direction:column;gap:.6rem;padding-bottom:.5rem}
 .injury-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.65rem .8rem;display:flex;flex-direction:column;gap:.25rem}
 .injury-item-top{display:flex;justify-content:space-between;align-items:center}
 .injury-item-name{font-weight:700;font-size:.92rem}
-.injury-item-pos{background:rgba(239,68,68,0.2);color:#fca5a5;padding:.1rem .4rem;border-radius:4px;font-size:.7rem;font-weight:800;margin-left:.4rem}
-.injury-item-pts{font-weight:800;font-size:.88rem;color:#fca5a5}
+.injury-item-pos{background:rgba(239,68,68,0.25);color:#fee2e2;padding:.1rem .4rem;border-radius:4px;font-size:.7rem;font-weight:800;margin-left:.4rem}
+.injury-item-pts{font-weight:800;font-size:.88rem;color:#fee2e2}
 .injury-item-status{font-size:.78rem;color:var(--text-dim)}
 .final-winner{font-weight:800;color:var(--up);font-size:1.35rem;margin-left:6px;text-shadow:0 0 10px rgba(52,211,153,0.6)}
 .final-score{font-weight:800;color:var(--text);background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:1px 7px;margin-left:6px;font-size:0.95rem;font-variant-numeric:tabular-nums}
@@ -140,12 +145,13 @@ nav a.active{color:var(--accent)}
      home logo+text left, away logo+text right, scores between. Just compact. */
   .matchup-card{padding:.6rem .55rem;overflow:hidden}
   .matchup-main{grid-template-columns:1fr 78px 1fr;gap:.35rem;align-items:center;width:100%}
-  .matchup-meta-bar{gap:2px;margin-top:.4rem;padding-top:.35rem;border-top:1px solid rgba(255,255,255,0.07);width:100%;text-align:center}
-  .matchup-meta-bar .game-date{font-size:.68rem}
-  .matchup-meta-bar .ou-pick,.matchup-meta-bar .line-vs-model{font-size:.62rem}
+  .matchup-meta-bar{gap:3px;margin-top:.45rem;padding:.4rem .55rem;background:rgba(11,13,19,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:8px;width:100%;text-align:center;box-sizing:border-box}
+  .matchup-meta-bar .game-date{font-size:.70rem;color:#e2e8f0;font-weight:500;line-height:1.3}
+  .matchup-meta-bar .ou-pick,.matchup-meta-bar .line-vs-model{font-size:.64rem}
+  .high-wind-badge{font-size:.68rem;padding:.26rem .55rem;gap:5px;box-shadow:0 0 10px rgba(245,158,11,0.2)}
   .matchup-injury-bar{flex-direction:column;gap:.3rem;margin-top:.35rem;padding-top:.35rem;border-top:1px dashed rgba(239,68,68,0.35);width:100%}
-  .injury-pill{width:100%;box-sizing:border-box;flex:1 1 100%;padding:.32rem .55rem;font-size:.68rem;border-radius:6px}
-  .injury-pill .pill-tag{font-size:.65rem;flex-shrink:0;margin-left:.4rem}
+  .injury-pill{width:100%;box-sizing:border-box;flex:1 1 100%;padding:.35rem .6rem;font-size:.70rem;border-radius:6px;color:#fee2e2}
+  .injury-pill .pill-tag{font-size:.65rem;flex-shrink:0;margin-left:.4rem;background:rgba(239,68,68,0.35);color:#ffffff}
   .team-side{gap:.4rem;min-width:0;overflow:hidden}
   .team-logo{width:34px;height:34px;border-radius:6px;flex-shrink:0}
   .team-name{font-size:clamp(.72rem, 3.2vw, .82rem);font-weight:700;line-height:1.15;white-space:normal;word-break:normal;overflow-wrap:normal;hyphens:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -161,7 +167,7 @@ nav a.active{color:var(--accent)}
   .vs-score{font-size:1.15rem;font-weight:800;margin:0;line-height:1.15}
   .line-overlay{font-size:.65rem;margin:.15rem 0}
   .diff-badge{font-size:.58rem;padding:.12rem .3rem;border-radius:4px;white-space:normal;line-height:1.1;display:block}
-  .diff-badge,.ou-pick,.line-vs-model,.game-date,.line-mv-chip{font-size:.62rem}
+  .diff-badge,.line-mv-chip{font-size:.62rem}
 
   /* controls: search full width, conf chips scroll in one swipeable row */
   .controls{gap:.4rem}
@@ -428,6 +434,14 @@ function matchupMetaBarHtml(m) {
   if (dateStr !== '—' || weatherStr || neutralStr) {
     parts.push(`<div class="game-date">${dateStr}${neutralStr}${weatherStr}</div>`);
   }
+  const wx = m.weather || {};
+  const isIndoor = !!(wx.indoor || wx.gameIndoors || wx.is_indoor);
+  const isOutdoor = !isIndoor;
+  const windVal = wx.wind !== undefined ? wx.wind : wx.windSpeed;
+  const windMph = typeof windVal === 'number' ? windVal : parseFloat(windVal || 0);
+  if (isOutdoor && !isNaN(windMph) && windMph >= 20) {
+    parts.push(`<div class="high-wind-badge">🌬️ 20+ WIND — LEAN UNDER</div>`);
+  }
   if (m.wind_penalty > 0) {
     parts.push(`<div class="ou-pick down" style="margin-top:2px">💨 Wind Adj: -${m.wind_penalty} pts to total</div>`);
   }
@@ -550,18 +564,20 @@ function formatGameDate(dateStr) {
 }
 
 function weatherTagHtml(m) {
-  if (!m.weather || !Object.keys(m.weather).length) return '';
-  if (m.weather.indoor) return ' · 🏟️ Dome';
-  const wind = m.weather.wind || 0;
-  const temp = m.weather.temp ? `${Math.round(m.weather.temp)}°` : '';
-  const cond = m.weather.condition || '';
+  const wx = m.weather || {};
+  if (!Object.keys(wx).length) return '';
+  if (wx.indoor) return ' · <span class="weather-dome">🏟️ Dome</span>';
+  const windVal = wx.wind !== undefined ? wx.wind : wx.windSpeed;
+  const wind = typeof windVal === 'number' ? windVal : parseFloat(windVal || 0);
+  const temp = wx.temp ? `${Math.round(wx.temp)}°` : '';
+  const cond = wx.condition || '';
   let windStr = '';
   if (wind >= 15) {
-    windStr = `<span style="color:#60a5fa;font-weight:700">💨 ${wind}mph</span>`;
+    windStr = `<span class="weather-wind high">💨 ${wind}mph</span>`;
   } else if (wind > 0) {
-    windStr = `💨 ${wind}mph`;
+    windStr = `<span class="weather-wind">💨 ${wind}mph</span>`;
   }
-  const parts = [temp, windStr, cond].filter(Boolean).join(' ');
+  const parts = [temp ? `<span class="weather-temp">${temp}</span>` : '', windStr, cond].filter(Boolean).join(' ');
   return parts ? ` · ${parts}` : '';
 }
 
