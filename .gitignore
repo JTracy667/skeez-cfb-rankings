@@ -41,3 +41,7 @@ Thumbs.db
 .idea/
 data/odds_cache.json
 _server*.log
+
+# Nightly cache pre-warm heartbeat (local runtime artifact)
+data/last_cache_warm.json
+data/last_cache_warm_error.json
