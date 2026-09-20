@@ -103,18 +103,12 @@ def reconstruct_pit_team_data(preseason_map: dict, weekly_stats: dict, team_name
 def run_backtest(year: int = 2026) -> dict:
     client = app.httpx.Client(timeout=20)
     
-    # 1. Load frozen pre-season baseline
+    # 1. Load frozen pre-season baseline (including frozen 247 Team Talent Composite)
     if not PRESEASON_FILE.exists():
         raise RuntimeError("Missing data/cfbd_analytics_preseason.json")
     with open(PRESEASON_FILE, "r", encoding="utf-8") as f:
         preseason_list = json.load(f)
     preseason_map = {t["name"]: t for t in preseason_list}
-    
-    # Enrich with 247 Team Talent Composite
-    talent_map = app._cfbd_talent()
-    for name, data in preseason_map.items():
-        if name in talent_map:
-            data["talent_score"] = talent_map[name].get("talent")
 
     # 2. Cache prior-week game stats for point-in-time reconstruction
     weekly_game_stats = build_weekly_stats_cache(client, weeks=(1, 2, 3))

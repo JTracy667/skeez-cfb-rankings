@@ -58,5 +58,20 @@ class TestBacktestFixture(unittest.TestCase):
         wk3 = summary["walk_forward_weeks"]["week_3"]
         self.assertIn("60.0%", wk3["5star_record"])
 
+    def test_frozen_preseason_talent_integrity(self):
+        """Verify that 247 Team Talent Composite is frozen on disk in the preseason snapshot with zero live leakage."""
+        preseason_path = DATA_DIR / "cfbd_analytics_preseason.json"
+        self.assertTrue(preseason_path.exists(), "Preseason snapshot file must exist")
+        
+        with open(preseason_path, "r", encoding="utf-8") as f:
+            teams = json.load(f)
+            
+        team_map = {t["name"]: t for t in teams}
+        for top_fbs in ("Georgia", "Alabama", "Ohio State", "Texas"):
+            self.assertIn(top_fbs, team_map)
+            t_score = team_map[top_fbs].get("talent_score")
+            self.assertIsNotNone(t_score, f"{top_fbs} must have frozen talent_score on disk")
+            self.assertGreater(t_score, 900.0, f"{top_fbs} talent composite should exceed 900.0")
+
 if __name__ == "__main__":
     unittest.main()
