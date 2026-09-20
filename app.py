@@ -693,34 +693,26 @@ def api_team(rank: int):
     raise HTTPException(404, f"No team at rank {rank}")
 
 def refresh_rankings_from_espn() -> bool:
-    """Recompute rankings from the live ESPN feed. True on success.
+    """Warm/rebuild the rankings cache from the canonical CFBD analytics seed.
 
-    Used by POST /api/rankings/refresh and the startup scheduler tick so a
-    container booting from a baked seed snapshot immediately converges on
-    live data instead of serving stale composites."""
+    Uses the EXACT same pipeline as GET /api/rankings (get_rankings()), so a
+    container booting from a baked snapshot immediately serves the same
+    enriched composites production serves.
+
+    BUGFIX: the previous implementation recomputed from the bare ESPN poll
+    stub and cached that 25-field payload, dropping every CFBD metric
+    (SP+/Elo/FPI/talent/havoc). Because the startup scheduler tick called it,
+    a container refreshed on boot served degraded numbers until the 300s cache
+    expired. Rebuild from data/cfbd_analytics.json instead (the rankings page's
+    source of truth); the live ESPN poll still feeds the AP/Coaches columns via
+    get_rankings()."""
     _rankings_cache.clear()
-    live = fetch_espn_poll()
-    if live:
-        teams = [t for t in live if t.get("rank", 0) > 0]
-        team_map = _build_team_map()
-        for team in teams:
-            name = team["name"]
-            td = team_map.get(name, {})
-            proj = project_score_multi_factor(td, is_home=True)
-            team["composite"] = proj["composite"]
-            logo = _LOGO_MAP.get(name.lower())
-            if logo:
-                team["logo_url"] = logo
-        teams = sorted(teams, key=lambda t: t.get("composite", 0), reverse=True)
-        result = {
-            "week": datetime.now().strftime("%B %d, %Y"),
-            "season": datetime.now().year,
-            "updated": datetime.now().isoformat(),
-            "teams": teams,
-        }
-        _cache_set(_rankings_cache, result)
+    try:
+        get_rankings()
         return True
-    return False
+    except Exception as e:
+        print(f"[rankings refresh] {e}")
+        return False
 
 
 @app.post("/api/rankings/refresh")
