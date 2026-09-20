@@ -1,0 +1,56 @@
+{
+  "season": 2026,
+  "total_evaluated_games": 354,
+  "ats_tiers": {
+    "all_picks": {
+      "record": "185-161-3",
+      "win_pct": 53.5,
+      "decided_games": 346,
+      "min_edge": 0.5
+    },
+    "tier_1_edge_2pt": {
+      "record": "166-147-1",
+      "win_pct": 53.0,
+      "decided_games": 313,
+      "min_edge": 2.0
+    },
+    "tier_2_3star_3.5pt": {
+      "record": "155-134-1",
+      "win_pct": 53.6,
+      "decided_games": 289,
+      "min_edge": 3.5
+    },
+    "tier_3_5star_5.5pt": {
+      "record": "137-119-1",
+      "win_pct": 53.5,
+      "decided_games": 256,
+      "min_edge": 5.5
+    },
+    "high_edge_7pt": {
+      "record": "127-106-1",
+      "win_pct": 54.5,
+      "decided_games": 233,
+      "min_edge": 7.0
+    }
+  },
+  "totals_tiers": {
+    "all_totals": {
+      "record": "173-161-0",
+      "win_pct": 51.8,
+      "decided_games": 334,
+      "min_edge": 0.5
+    },
+    "totals_3star_4pt": {
+      "record": "86-77-0",
+      "win_pct": 52.8,
+      "decided_games": 163,
+      "min_edge": 4.0
+    },
+    "totals_5star_7pt": {
+      "record": "29-32-0",
+      "win_pct": 47.5,
+      "decided_games": 61,
+      "min_edge": 7.0
+    }
+  }
+}
