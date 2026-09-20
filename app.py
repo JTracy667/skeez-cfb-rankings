@@ -2316,14 +2316,10 @@ def project_head_to_head(
         boost = +FCS_BLOWOUT_BOOST   # home (FBS) gains 20 pts
     avg = (hc + ac) / 2.0
     total = 51.0 + (avg - 50.0) * 0.10 + boost
-    # Two-regime margin curve calibrated to real spreads (Aug 30):
-    # mid-tier gaps price shallow (Iowa -3 w/ comp gap 18), blowouts steep (OSU -51 w/ gap ~55).
+    # Calibrated margin curve: 1.0 pt of margin per 1.0 pt of composite gap
+    # Replaces the legacy 0.45 compression that artificially suppressed favorites
     gap_ = hc - ac
-    mag = abs(gap_)
-    if mag <= 25:
-        margin = gap_ * 0.45
-    else:
-        margin = (11.25 if gap_ > 0 else -11.25) + (gap_ - 25 if gap_ > 0 else gap_ + 25) * 1.1
+    margin = gap_ * 1.0
     if not neutral_site:
         margin += 2.5  # HFA
     margin += boost  # boost widens the margin in the FBS side's favor

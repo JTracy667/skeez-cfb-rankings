@@ -3,72 +3,72 @@
   "closing_line_provenance": "Explicit provider hierarchy (DraftKings primary, Bovada secondary) with kickoff closing timestamp.",
   "point_in_time_isolation": "Strict prior-week reconstruction: week 1 uses frozen preseason baseline; weeks > 1 only ingest stats from completed games (past_wk < week), with zero future leakage.",
   "fcs_exclusion_applied": true,
-  "total_evaluated_games": 359,
-  "fbs_matchups_evaluated": 130,
+  "total_evaluated_games": 360,
+  "fbs_matchups_evaluated": 131,
   "fbs_ats_tiers": {
     "all_fbs_picks": {
-      "record": "46-73-2",
-      "win_pct": 38.7,
-      "decided_games": 119,
+      "record": "56-66-2",
+      "win_pct": 45.9,
+      "decided_games": 122,
       "min_edge": 0.5
     },
     "tier_1_2pt": {
-      "record": "39-60-2",
-      "win_pct": 39.4,
-      "decided_games": 99,
+      "record": "44-54-2",
+      "win_pct": 44.9,
+      "decided_games": 98,
       "min_edge": 2.0
     },
     "tier_2_3star_3.5pt": {
-      "record": "36-43-2",
-      "win_pct": 45.6,
-      "decided_games": 79,
+      "record": "31-40-1",
+      "win_pct": 43.7,
+      "decided_games": 71,
       "min_edge": 3.5
     },
     "tier_3_5star_7pt": {
-      "record": "29-29-1",
-      "win_pct": 50.0,
-      "decided_games": 58,
+      "record": "17-20-1",
+      "win_pct": 45.9,
+      "decided_games": 37,
       "min_edge": 7.0
     }
   },
   "fbs_totals_tiers": {
     "all_totals": {
-      "record": "75-47-0",
-      "win_pct": 61.5,
-      "decided_games": 122,
+      "record": "76-45-0",
+      "win_pct": 62.8,
+      "decided_games": 121,
       "min_edge": 0.5
     },
     "totals_3star_4pt": {
-      "record": "26-22-0",
-      "win_pct": 54.2,
+      "record": "27-21-0",
+      "win_pct": 56.2,
       "decided_games": 48,
       "min_edge": 4.0
     },
     "totals_5star_7pt": {
-      "record": "6-8-0",
-      "win_pct": 42.9,
-      "decided_games": 14,
+      "record": "4-8-0",
+      "win_pct": 33.3,
+      "decided_games": 12,
       "min_edge": 7.0
     }
   },
   "walk_forward_weeks": {
     "week_1": {
       "total_fbs_games": 50,
-      "all_fbs_record": "18-30-2 (37.5%)",
-      "3star_record": "13-19-2 (40.6%)",
-      "5star_record": "13-15-1 (46.4%)"
+      "all_fbs_record": "23-25-2 (47.9%)",
+      "3star_record": "9-12-1 (42.9%)",
+      "5star_record": "3-6-1 (33.3%)"
     },
     "week_2": {
       "total_fbs_games": 49,
-      "all_fbs_record": "20-29-0 (40.8%)",
-      "3star_record": "16-17-0 (48.5%)",
-      "5star_record": "10-10-0 (50.0%)"
+      "all_fbs_record": "21-28-0 (42.9%)",
+      "3star_record": "15-19-0 (44.1%)",
+      "5star_record": "8-11-0 (42.1%)"
     },
     "week_3": {
-      "total_fbs_games": 31,
-      "all_fbs_record": "12-19-0 (38.7%)",
-      "3star_record": "7-7-0 (50.0%)",
-      "5star_record": "6-4-0 (60.0%)"
+      "total_fbs_games": 32,
+      "all_fbs_record": "14-18-0 (43.8%)",
+      "3star_record": "7-9-0 (43.8%)",
+      "5star_record": "6-3-0 (66.7%)"
     }
   }
 }

@@ -54,9 +54,9 @@ class TestBacktestFixture(unittest.TestCase):
         self.assertIn("week_2", summary["walk_forward_weeks"])
         self.assertIn("week_3", summary["walk_forward_weeks"])
         
-        # Verify Week 3 5-star reaches 60.0% as in-season data matures
+        # Verify Week 3 5-star reaches 66.7% as in-season data matures
         wk3 = summary["walk_forward_weeks"]["week_3"]
-        self.assertIn("60.0%", wk3["5star_record"])
+        self.assertIn("66.7%", wk3["5star_record"])
 
     def test_frozen_preseason_talent_integrity(self):
         """Verify that 247 Team Talent Composite is frozen on disk in the preseason snapshot with zero live leakage."""
