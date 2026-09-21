@@ -25,7 +25,7 @@ of blocking the resume. Intended to be launched DETACHED (background) so a turn
 timeout can never kill it:  nohup python -u run_all.py > logs/backfill.log 2>&1 &
 
 Guarantees: checkpoint per (season, endpoint); resume never restart; idempotent;
-D1 90K row-writes/day guard; CFBD + D1 budget counters logged per chunk.
+D1 write guard (D1_DAILY_WRITE_CAP, 2M/day on Workers PAID — 50M rows/month); CFBD + D1 budget counters logged per chunk.
 """
 from __future__ import annotations
 

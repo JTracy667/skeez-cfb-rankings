@@ -38,9 +38,13 @@
 
 ## B. CLOUDFLARE PLATFORM RISKS
 
-### B1. D1 100K row-writes/day — backfill vs live sharing one budget
-- Live needs ~1–6K/day. Backfill must target ≤90K/day to leave live headroom.
-- Plan: backfill capped at 90K rows/day → 190K rows ≈ 2–3 days. Enforced in the script, not hoped for.
+### B1. D1 row-writes — SUPERSEDED 2026-09-21: account is Workers PAID
+- Worker's bundle/index quota claim of "100K row-writes/day" was the FREE tier. Verified
+  via Cloudflare API `/accounts/<id>/subscriptions` -> `rate_plan.id = workers_paid`:
+  **50,000,000 rows written/MONTH**, no daily tier ceiling.
+- Live needs ~1–6K/day. Backfill now runs under a 2M/day runaway guard
+  (`D1_DAILY_WRITE_CAP`), which comfortably fits the whole 2021–2026 backfill inside
+  the monthly pool. Enforced in the script (and externally by the monitor), not hoped for.
 
 ### B2. D1 storage 5 GB
 - Team-level data fits with room to spare. The only balloon risk is `raw_payloads`

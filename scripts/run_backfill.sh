@@ -4,8 +4,9 @@
 #
 # Entry point: starts the SUPERVISOR, which owns the worker.
 #   * no worker alive -> supervisor launches one (detached from any turn),
-#   * worker stops on the 90K/day D1 write cap -> supervisor waits out the cap
-#     (ledger rolls at UTC midnight = 17:00 PT under PDT) and resumes,
+#   * worker stops on the D1 write guard (D1_DAILY_WRITE_CAP, now 2M/day on the
+#     Workers PAID plan: 50M rows written/MONTH) -> supervisor waits it out if it
+#     ever trips (ledger rolls at UTC midnight = 17:00 PT under PDT) and resumes,
 #   * a FAILED chunk (a write D1 did not confirm) -> supervisor exits 1 for a human,
 #   * all chunks done -> supervisor exits 0.
 #

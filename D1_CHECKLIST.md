@@ -31,9 +31,15 @@ If blocked >15 min on any item: post the blocker to the CSuite group and STOP �
 - [ ] FCS: all FCS games/stats stored with division tag (receipt)
 - [ ] CFBD FCS Coaches Poll 2021–2026 stored as fcs_rating observations (receipt)
 - [ ] Massey ratings 2021–2026 backfilled from archives (receipt)
-- [ ] Daily caps respected every day (receipt: cfbd_calls + rows_written logged per run, ≤90K)
+- [ ] Daily caps respected every day (receipt: cfbd_calls + rows_written logged per run, ≤2M/day guard on Workers PAID)
 
-## PHASE 4 — LIVE WIRE-UP ⏳
+## PHASE 3.5 — STANDING BUDGET METERS (CEO directive: counters always rolling, never ad-hoc)
+- [ ] Daily usage ledger per API, appended on every call batch: CFBD (calls/day), Odds API (calls/month), PropLine (calls/day), D1 (confirmed rows written/day) — persisted to data/budget_ledger.json
+- [ ] Caps recorded from Jeff's stated plan (authoritative): CFBD **30,000 calls/month** (cheap to tier up if needed) · Odds API 20,000/month · PropLine **5,000/day** · D1 Workers Paid 50M rows-written/month. Ledger tracks against THESE, alerts at 80%/95%.
+- [ ] Threshold alerts wired to the monitor: any API at 80% of its real cap → group alert; 95% → auto-pause that consumer (same enforcement pattern as D1)
+- [ ] "What's our burn?" answerable from the ledger file in one read — no polling, no estimates
+
+
 - [ ] Hourly refresh appends odds_snapshots (receipt: row delta after one poll)
 - [ ] Nightly rankings_daily archive job scheduled (receipt: first run)
 - [ ] model_predictions written pre-kickoff

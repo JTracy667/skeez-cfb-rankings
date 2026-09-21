@@ -1,5 +1,12 @@
 # D1 write-budget finding — index maintenance makes writes cost 4× (2026-09-21)
 
+> **SUPERSEDED IN PART (later 2026-09-21).** The 4× index multiplier is real and still
+> drives the counter, but the *budget* it was measured against was the free tier. The
+> account is Workers PAID (API-verified: `rate_plan.id == "workers_paid"` = 50M rows
+> written/MONTH). `D1_DAILY_WRITE_CAP` is now 2,000,000/day — a runaway guard, not a
+> tier ceiling — so the whole 2021–2026 backfill no longer needs multi-day pacing.
+
+
 **Finding (CTO, verified live).** A single 9-row `INSERT ... ON CONFLICT DO UPDATE` into
 `games` is reported by the D1 API as **36 rows written** (`meta.rows_written = 36`,
 `meta.changes = 9`). Probe receipt:

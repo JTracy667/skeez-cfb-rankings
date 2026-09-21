@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """backfill_supervisor.py — keeps the D1 backfill moving to COMPLETION unattended.
 
-Why: the worker stops politely when the 90K/day D1 write cap is hit (correct — the
-free tier allows 100K/day). Without a supervisor that is where the job sits until a
-human notices. This loop:
+Why: the worker stops politely when the D1 write guard trips. Without a supervisor
+that is where the job sits until a human notices. The account is Workers PAID
+(50M rows written/MONTH, API-verified 2026-09-21), so the guard is D1_DAILY_WRITE_CAP
+= 2,000,000/day — runaway protection, not a tier ceiling. This loop:
 
   * exits 0 once every expected chunk is done (or recorded no_data);
   * exits 1 if a chunk FAILED — a failed chunk means the counter caught something
@@ -31,7 +32,9 @@ LOG = os.path.join(REPO, "logs", "backfill.log")
 SEASONS = [2021, 2022, 2023, 2024, 2025, 2026]
 JOBS = ["teams", "games", "lines", "ratings", "season_stats"]
 EXPECTED = [f"{s}:{j}" for s in SEASONS for j in JOBS]
-CAP = int(os.environ.get("D1_DAILY_WRITE_CAP", "90000"))
+# Workers PAID (verified via API 2026-09-21) = 50M rows written/MONTH, so the old
+# 90K/day free-tier ceiling is gone. 2M/day is a runaway guard with huge headroom.
+CAP = int(os.environ.get("D1_DAILY_WRITE_CAP", "2000000"))
 LEDGER = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
                       "hermes", "d1_write_ledger.json")
 POLL = 60

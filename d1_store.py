@@ -19,8 +19,12 @@ from the local side: a batch the API reports as 0 rows written raises
 ConfirmedWriteError, so a "done" chunk can never mean "wrote nothing".
 
 Additive + safe: nothing here runs until a caller imports it. Callers must fall
-back to local cache on failure (D1_RISK_REGISTER B4). The budget guard enforces
-the D1 row-WRITE cap (free tier 100K/day; backfill <= 90K, leaving live headroom).
+fall back to local cache on failure (D1_RISK_REGISTER B4). The budget guard enforces
+the D1 row-WRITE cap: the account is on Workers PAID (verified 2026-09-21 against the
+Cloudflare API: /accounts/<id>/subscriptions -> rate_plan.id == "workers_paid"), i.e.
+50,000,000 rows written/MONTH — there is no 100K/day tier limit. D1_DAILY_WRITE_CAP
+defaults to 2,000,000/day, which is pure pacing/runaway protection with huge headroom
+inside the 50M monthly pool; the ledger still counts CONFIRMED writes either way.
 """
 from __future__ import annotations
 
@@ -92,7 +96,7 @@ def ledger_written() -> int:
 
 def assert_headroom(n_rows: int, daily_cap: int | None = None) -> None:
     """Refuse to START a write that would exceed the daily cap (check only)."""
-    cap = daily_cap if daily_cap is not None else int(os.environ.get("D1_DAILY_WRITE_CAP", "90000"))
+    cap = daily_cap if daily_cap is not None else int(os.environ.get("D1_DAILY_WRITE_CAP", "2000000"))
     led = _load_ledger()
     if led["rows_written"] + n_rows > cap:
         raise BudgetExceeded(f"D1 daily write budget: {led['rows_written']}+{n_rows} > {cap}")
