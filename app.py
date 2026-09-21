@@ -88,7 +88,27 @@ class RankingsResponse(BaseModel):
     teams: list[Team]
 
 # ── App ──
-app = FastAPI(title="Skeez CFB Rankings API", version="1.0.0")
+# Interactive docs are disabled on the public deploy: /openapi.json + /docs were
+# serving an unauthenticated MAP of the API, including the 10 mutating POST
+# endpoints (refresh/fetch/injuries-override/record-ingest). Hiding the map is
+# not the fix for those endpoints lacking auth, but it removes the invitation.
+app = FastAPI(title="Skeez CFB Rankings API", version="1.0.0",
+              docs_url=None, redoc_url=None, openapi_url=None)
+
+
+@app.middleware("http")
+async def _security_headers(request, call_next):
+    """Baseline hardening headers on every response.
+
+    HSTS is deliberately NOT set here — it belongs at the zone/CDN layer so it
+    covers the whole domain and can be rolled back independently of the app.
+    """
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+    return response
 
 app.add_middleware(
     CORSMiddleware,
