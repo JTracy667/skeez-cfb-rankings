@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS teams (
   name         TEXT,
   abbr         TEXT,
   conference   TEXT,
-  first_season INTEGER
+  first_season INTEGER,
+  classification TEXT            -- fbs | fcs | ii | iii  (CFBD /teams; FCS slicing)
 );
 
 CREATE TABLE IF NOT EXISTS players (

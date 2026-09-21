@@ -28,9 +28,10 @@ If blocked >15 min on any item: post the blocker to the CSuite group and STOP �
 - [x] 2022 complete — games 3705 · stat_observations 9193 (940 rating obs) · closing_lines 1413; all 5 chunks in checkpoint `done`
 - [ ] 2023, 2024, 2025 complete  ← 2023 COMPLETE (games 3734 / stat_obs 6802 / lines 1347); 2024 in progress (2024:teams done, walking 2024:games→season_stats); 2025 pending
 - [ ] 2026 wks 1–3 complete
-- [ ] FCS: all FCS games/stats stored with division tag (receipt)
-- [ ] CFBD FCS Coaches Poll 2021–2026 stored as fcs_rating observations (receipt)
-- [ ] Massey ratings 2021–2026 backfilled from archives (receipt)
+- [x] FCS games stored + division tag (receipt 2026-09-21): `/games` with no filter already returns every classification (2025: 3,831 games / 563 non-FBS schools); division tag delivered as `teams.classification` (fbs 138 · fcs 128 · ii 170 · iii 248; 4,046 confirmed writes, `scripts/backfill_fcs_extras.py`)
+- [ ] FCS-specific STATS — ⛔ BLOCKED, not deliverable from CFBD: `/stats/season?division=fcs` and `/games?division=fcs` SILENTLY ignore the filter (return the same FBS rows, probed live). Needs another source; do not fake it.
+- [x] CFBD FCS Coaches Poll 2021–2026 stored as fcs_rating observations — receipt: 5,514 confirmed writes (2021:1003 · 2022:1030 · 2023:1006 · 2024:1083 · 2025:1083 · 2026:309), 96 CFBD calls, `scripts/backfill_fcs_extras.py`
+- [ ] Massey ratings 2021–2026 — ⛔ BLOCKED: CFBD `/ratings/massey` returns 0 rows (endpoint unpopulated); needs an external archive scrape (masseyratings.com), a separate build
 - [ ] Daily caps respected every day (receipt: cfbd_calls + rows_written logged per run, ≤2M/day guard on Workers PAID)
 
 ## PHASE 3.5 — STANDING BUDGET METERS (CEO directive: counters always rolling, never ad-hoc)
