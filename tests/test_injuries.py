@@ -8,10 +8,21 @@ import sys
 import unittest
 from fastapi.testclient import TestClient
 
+TEST_ADMIN_TOKEN = "test-admin-token"
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Admin token for the mutating endpoints must be set BEFORE app is imported
+# (the dependency reads it at import time and fails closed when unset).
+os.environ.setdefault("ADMIN_TOKEN", TEST_ADMIN_TOKEN)
 
 import app
 import scripts.fetch_injuries as scraper
+
+# Deterministic regardless of import order: another test module may have
+# imported app before ADMIN_TOKEN was set, in which case the env var alone is
+# not enough (the module-level constant is already bound).
+app.ADMIN_TOKEN = TEST_ADMIN_TOKEN
 
 
 class TestCFBInjuries(unittest.TestCase):
@@ -95,15 +106,55 @@ class TestCFBInjuries(unittest.TestCase):
             "status": "Out",
             "deduction": -10.0
         }
-        r_post = self.client.post("/api/injuries/override", json=override_payload)
+        r_post = self.client.post("/api/injuries/override", json=override_payload,
+                                  headers={"X-Admin-Token": TEST_ADMIN_TOKEN})
         self.assertEqual(r_post.status_code, 200)
         res = r_post.json()
         self.assertEqual(res["status"], "updated")
         self.assertEqual(res["net_injury_points"], -10.0)
 
         # Clear override
-        r_clear = self.client.post("/api/injuries/override", json={"team": "TestState", "action": "clear"})
+        r_clear = self.client.post("/api/injuries/override", json={"team": "TestState", "action": "clear"},
+                                   headers={"X-Admin-Token": TEST_ADMIN_TOKEN})
         self.assertEqual(r_clear.status_code, 200)
+
+
+class TestAdminGate(unittest.TestCase):
+    """Ops/mutating endpoints must reject callers without the admin token.
+
+    Guards the Sep 2026 finding that all 10 POST routes were callable by anyone.
+    The 2 routes the site's own pages use (/api/analytics/fetch and
+    /api/schedule/fetch) are deliberately NOT in this list — they are throttled
+    instead, because a public page cannot hold a secret.
+    """
+
+    LOCKED = ["/api/rankings/refresh", "/api/refresh", "/api/analytics/refresh-if-due",
+              "/api/schedule/update", "/api/injuries/sync", "/api/injuries/override",
+              "/api/record/ingest", "/api/record/repair-ats"]
+
+    def setUp(self):
+        self.client = TestClient(app.app)
+
+    def test_locked_endpoints_reject_tokenless_and_wrong_token(self):
+        for route in self.LOCKED:
+            r = self.client.post(route, json={})
+            self.assertEqual(r.status_code, 401,
+                             f"{route} accepted a tokenless POST ({r.status_code})")
+            r2 = self.client.post(route, json={}, headers={"X-Admin-Token": "definitely-wrong"})
+            self.assertEqual(r2.status_code, 401,
+                             f"{route} accepted a wrong token ({r2.status_code})")
+
+    def test_open_endpoints_still_public(self):
+        for route in ["/api/health", "/api/rankings", "/api/analytics",
+                      "/api/schedule/current-week", "/api/win-totals"]:
+            r = self.client.get(route)
+            self.assertEqual(r.status_code, 200, f"{route} broke: {r.status_code}")
+
+    def test_ui_page_loaders_stay_open(self):
+        """The Schedule page POSTs this on load; locking it would break the UI."""
+        r = self.client.post("/api/schedule/fetch?week=99", json={"week": 99})
+        self.assertIn(r.status_code, (200, 502),
+                      f"/api/schedule/fetch must not require a token ({r.status_code})")
 
 
 if __name__ == "__main__":

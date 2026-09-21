@@ -45,3 +45,4 @@ data/best_line_ts.json
 # Nightly cache pre-warm heartbeat (local runtime artifact)
 data/last_cache_warm.json
 data/last_cache_warm_error.json
+.admin_token

@@ -2,6 +2,7 @@
 
 import json
 import os
+import hmac
 import re
 import time
 import math
@@ -12,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 
 import httpx
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -110,6 +111,28 @@ async def _security_headers(request, call_next):
     response.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
     return response
 
+
+# ── Admin gate for ops/mutating endpoints ──
+# The public site is read-only by design. These routes change stored data
+# (injuries, records, schedule) or force live third-party fetches, so they
+# require a shared secret header. The dependency FAILS CLOSED when the secret is
+# not configured: a forgotten env var must never silently re-open the endpoints.
+# Nothing internal depends on the HTTP layer — the in-process scheduler calls
+# these functions directly — so a misconfiguration cannot stop the app working.
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "").strip()
+
+
+def require_admin(x_admin_token: str | None = Header(default=None)):
+    """Reject requests without the admin token (401) or with no token set (503)."""
+    if not ADMIN_TOKEN:
+        raise HTTPException(503, "admin auth not configured — set ADMIN_TOKEN")
+    if not x_admin_token or not hmac.compare_digest(x_admin_token, ADMIN_TOKEN):
+        raise HTTPException(401, "admin token required")
+    return True
+
+
+_ADMIN = [Depends(require_admin)]
+
 app.add_middleware(
     CORSMiddleware,
     # Local app — restrict to localhost/dev origins instead of wide-open "*".
@@ -136,6 +159,13 @@ LINE_HISTORY_FILE = BASE_DIR / "data" / "line_history.json"  # snapshots for lin
 CACHE_TTL = 300  # 5 minutes (rankings)
 ANALYTICS_TTL = 600  # 10 minutes (analytics)
 ODDS_TTL = 86400  # 24 hours — live odds pulled ONCE per day, cached all other times
+# Public-endpoint throttles (see /api/analytics/fetch and /api/schedule/fetch):
+# these two are called by the site's own pages, so they cannot carry a secret
+# header — instead a repeat call inside the TTL reuses the cached payload so a
+# visitor cannot burn the CFBD/odds quota by hammering them.
+ANALYTICS_FETCH_TTL = 300
+SCHEDULE_FETCH_TTL = 300
+_SCHEDULE_FETCH_CACHE: dict = {}   # (week, year) -> {"ts": float, "data": dict}
 # Background auto-refresh: how often to wake and re-pull lines + grade results.
 # Default 6 hours; 0 disables the scheduler. Env-tunable for production.
 REFRESH_INTERVAL_SECONDS = int(os.environ.get("REFRESH_INTERVAL_SECONDS", 6 * 3600))
@@ -737,7 +767,7 @@ def refresh_rankings_from_espn() -> bool:
         return False
 
 
-@app.post("/api/rankings/refresh")
+@app.post("/api/rankings/refresh", dependencies=_ADMIN)
 def api_refresh():
     """Force-refresh the ESPN data feed, computing composites."""
     if refresh_rankings_from_espn():
@@ -2604,8 +2634,17 @@ def fetch_live_analytics():
 
 @app.post("/api/analytics/fetch")
 def api_analytics_fetch():
-    """Force-fetch live analytics data from CFBD API and persist to disk."""
+    """Force-fetch live analytics data from CFBD API and persist to disk.
+
+    Public endpoint (the Analytics page's refresh button), so it is throttled
+    instead of token-gated: a repeat call inside ANALYTICS_FETCH_TTL returns the
+    cached payload rather than re-pulling every CFBD metric."""
     import traceback
+    cached = _cache_get(_analytics_cache, ANALYTICS_FETCH_TTL)
+    if cached:
+        return {"status": "throttled", "source": "cache",
+                "teams": len(cached.get("teams", [])), "updated": cached.get("updated"),
+                "note": f"live fetch suppressed — analytics pulled <{ANALYTICS_FETCH_TTL}s ago"}
     try:
         # Do NOT touch the rankings cache — analytics lives in its own store
         analytics = fetch_live_analytics()
@@ -2675,7 +2714,7 @@ def api_analytics_pull_status():
     }
 
 
-@app.post("/api/analytics/refresh-if-due")
+@app.post("/api/analytics/refresh-if-due", dependencies=_ADMIN)
 def api_analytics_refresh_if_due():
     """Anchor-gated CFBD analytics pull — deterministic trigger for hosts whose
     background thread can sleep (e.g. Cloudflare Containers with sleepAfter).
@@ -3063,7 +3102,7 @@ def api_projections():
         return {"error": str(e), "projections": []}
 
 
-@app.post("/api/schedule/update")
+@app.post("/api/schedule/update", dependencies=_ADMIN)
 def api_schedule_update(matchups: list[dict]):
     """Update weekly matchups. Validates input to prevent junk/XSS in the schedule file."""
     if len(matchups) > 200:
@@ -3092,7 +3131,18 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
     """Fetch the full FBS slate for a week from CFBD and project scores.
 
     Source is CFBD's season game list (same as Win Totals) — ESPN's scoreboard
-    was dropped after its week=N param started truncating to 25 events."""
+    was dropped after its week=N param started truncating to 25 events.
+
+    Called by the Schedule page on load, so it is throttled rather than
+    token-gated: a repeat call for the same week inside SCHEDULE_FETCH_TTL
+    reuses the cached payload instead of re-hitting CFBD + the odds feeds."""
+    _key = (week, year)
+    _hit = _SCHEDULE_FETCH_CACHE.get(_key)
+    if _hit and time.time() - _hit["ts"] < SCHEDULE_FETCH_TTL:
+        _cached = dict(_hit["data"])
+        _cached["cached"] = True
+        _cached["note"] = ((_cached.get("note") or "") + " (reused from cache)").strip()
+        return _cached
     matchups = fetch_cfbd_schedule(week, year)
     if matchups is None:
         raise HTTPException(502, "CFBD schedule fetch failed")
@@ -3232,8 +3282,10 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             }
     except Exception as e:
         print(f"[Schedule] finals overlay failed: {e}")
-    return {"week": week, "season": year, "updated": datetime.now().isoformat(),
-            "matchups": enriched, "has_odds": len(odds_map) > 0, "note": note}
+    _payload = {"week": week, "season": year, "updated": datetime.now().isoformat(),
+                "matchups": enriched, "has_odds": len(odds_map) > 0, "note": note}
+    _SCHEDULE_FETCH_CACHE[_key] = {"ts": time.time(), "data": _payload}
+    return _payload
 
 
 @app.get("/api/schedule/weeks")
@@ -3262,7 +3314,7 @@ def api_injuries():
         return {"error": str(e), "teams": {}}
 
 
-@app.post("/api/injuries/sync")
+@app.post("/api/injuries/sync", dependencies=_ADMIN)
 def api_injuries_sync():
     """Trigger the live injury scraper to refresh active injuries from Covers."""
     try:
@@ -3279,7 +3331,7 @@ def api_injuries_sync():
         raise HTTPException(500, f"Injury sync failed: {e}")
 
 
-@app.post("/api/injuries/override")
+@app.post("/api/injuries/override", dependencies=_ADMIN)
 def api_injuries_override(payload: dict):
     """Set or remove a manual player injury override.
     Format: {"team": "Texas", "player": "Quinn Ewers", "pos": "QB", "status": "Out", "deduction": -10.0}
@@ -3756,7 +3808,7 @@ def api_record():
     }
 
 
-@app.post("/api/record/ingest")
+@app.post("/api/record/ingest", dependencies=_ADMIN)
 def api_record_ingest():
     """Force a results-ingestion run (pull final scores + grade picks)."""
     try:
@@ -3771,7 +3823,7 @@ def api_record_ingest():
         return {"error": str(e), "graded": 0}
 
 
-@app.post("/api/record/repair-ats")
+@app.post("/api/record/repair-ats", dependencies=_ADMIN)
 def api_record_repair_ats(spread: float, ats_pick: str, key: str):
     """One-off repair: restore a pick's spread/ats_pick erased by the Aug 29
     re-lock bug (re-lock fired against a suppressed live-game line, writing
@@ -3940,7 +3992,7 @@ def api_best_bets_record():
     }
 
 
-@app.post("/api/refresh")
+@app.post("/api/refresh", dependencies=_ADMIN)
 def api_refresh():
     """Manually trigger a full refresh (lines + final scores + grading)."""
     try:

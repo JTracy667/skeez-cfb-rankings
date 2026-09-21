@@ -13,6 +13,9 @@ export class CFBPowerRankings extends Container {
 		// slow the odds/grading refresh from hourly to app.py's 6h default — the
 		// line-movement log and CLV tracking depend on that cadence.
 		REFRESH_INTERVAL_SECONDS: "3600",
+		// Shared secret the cron uses to call the anchor-gated pull, which is now
+		// an admin-gated route (ops writes are locked; public pages are not).
+		ADMIN_TOKEN: env.ADMIN_TOKEN,
 	};
 }
 
@@ -32,7 +35,12 @@ export default {
 			try {
 				const container = getContainer(env.CFBPOWER_RANKINGS);
 				const res = await container.fetch(
-					new Request("http://cfb-container/api/analytics/refresh-if-due", { method: "POST" }),
+					new Request("http://cfb-container/api/analytics/refresh-if-due", {
+						method: "POST",
+						// This route is admin-gated (ops writes locked); the cron is
+						// an authorised internal caller, so it presents the secret.
+						headers: { "X-Admin-Token": env.ADMIN_TOKEN ?? "" },
+					}),
 				);
 				console.log(`[cron] refresh-if-due -> ${res.status} ${await res.text()}`);
 			} catch (e) {
