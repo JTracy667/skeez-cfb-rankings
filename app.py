@@ -12,6 +12,8 @@ from pathlib import Path
 from datetime import datetime, timedelta, timezone
 
 import httpx
+
+import cfbd_shared  # shared CFBD client (side-effect free) — see no-parallel-impl directive
 import uvicorn
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -844,18 +846,10 @@ CFBD_YEAR = 2026  # 2026 season
 CFBD_YEAR_FALLBACK = 2025
 
 def _cfbd_get(endpoint: str, year: int = CFBD_YEAR, **extra) -> list:
-    """Fetch JSON from CFBD API with auth, retry with exponential backoff.
-
-    `extra` passes additional query params (week, seasonType, team, ...). Added so
-    the D1 backfill reuses THIS client for historical ranged pulls instead of
-    forking its own HTTP path (CEO directive: no parallel implementations).
-    """
-    url = f"{CFBD_BASE}/{endpoint}"
-    params = {"year": year, **extra}
-    data = _http_get(url, params=params, headers=CFBD_HEADERS)
-    if data is None:
-        return []
-    return data if isinstance(data, list) else [data]
+    """Delegate to the SHARED CFBD client (cfbd_shared.cfbd_get) so the live app
+    and the D1 backfill can never drift (CEO directive: no parallel impls).
+    `extra` carries ranged params (week, seasonType, team, ...)."""
+    return cfbd_shared.cfbd_get(endpoint, year=year, **extra)
 
 
 class _PropLineQuotaExhausted(Exception):
@@ -907,11 +901,8 @@ def _http_get(url: str, params: dict | None = None, headers: dict | None = None,
     return data
 
 def _cfbd_teams() -> dict:
-    """Fetch all FBS teams with logos, conferences, colors."""
-    data = _cfbd_get("teams", CFBD_YEAR)
-    if not data:
-        data = _cfbd_get("teams", CFBD_YEAR_FALLBACK)
-    return {t["school"]: t for t in data}
+    """All teams keyed by school name (delegates to the shared matcher)."""
+    return cfbd_shared.teams_by_name(CFBD_YEAR)
 
 def _cfbd_fpi() -> dict:
     """Fetch FPI ratings, falling back to 2025 if 2026 empty."""

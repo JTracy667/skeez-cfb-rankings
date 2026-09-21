@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import d1_store  # noqa: E402
-import app as appmod  # noqa: E402 — reuse the LIVE app's CFBD client + team matcher
+import cfbd_shared  # noqa: E402 — the SHARED CFBD client (also used by app.py)
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CKPT = os.path.join(REPO, "data", "backfill_checkpoint.json")
@@ -47,14 +47,14 @@ UNMATCHED: list[str] = []
 
 
 def cfbd(path: str, params: dict | None = None, tries: int = 4):
-    """Thin adapter over the LIVE APP's CFBD client (app._cfbd_get) — no private
-    HTTP/auth layer. `params` map onto the client's extra query kwargs."""
+    """Thin adapter over the SHARED CFBD client (cfbd_shared.cfbd_get) — the same
+    client the live app uses. `params` map onto its extra query kwargs."""
     global CALLS
     p = dict(params or {})
     year = p.pop("year", SEASONS[-1])
     CALLS += 1
     time.sleep(THROTTLE)          # backfill-specific pacing (the app polls hourly)
-    return appmod._cfbd_get(path, year=year, **p)
+    return cfbd_shared.cfbd_get(path, year=year, **p)
 
 
 # ------------------------------------------------------------------ checkpoint
@@ -89,10 +89,10 @@ def _tid(name: str | None):
 def load_name_map(season: int) -> None:
     """REUSE the live app's team matcher (app._cfbd_teams -> {school: team}).
     Loaded independently of the teams chunk so a resumed run still maps names."""
-    for school, t in (appmod._cfbd_teams() or {}).items():
+    for school, t in (cfbd_shared.teams_by_name() or {}).items():
         if t.get("id"):
             NAME2ID.setdefault(school, t["id"])
-    print(f"  name->id map loaded from app._cfbd_teams(): {len(NAME2ID)} teams")
+    print(f"  name->id map loaded from cfbd_shared.teams_by_name(): {len(NAME2ID)} teams")
 
 
 # ------------------------------------------------------------------- workers
