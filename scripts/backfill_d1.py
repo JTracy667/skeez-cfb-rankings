@@ -84,7 +84,12 @@ def _save(c: dict) -> None:
     os.makedirs(os.path.dirname(CKPT), exist_ok=True)
     c["done"] = sorted(set(c.get("done", [])))
     c["cfbd_calls"] = CALLS
-    c["rows_written"] = ROWS_WRITTEN            # CONFIRMED by the D1 API, this run
+    # CONFIRMED writes, self-healing: this process's total, never lower than what
+    # an earlier process already stamped, and never lower than the sum of the
+    # per-chunk confirmed receipts (a fresh process starts at 0 — a cap-stop must
+    # not wipe the day's receipt).
+    receipts = sum(int(v.get("confirmed", 0)) for v in (c.get("chunks") or {}).values())
+    c["rows_written"] = max(int(c.get("rows_written") or 0), ROWS_WRITTEN, receipts)
     c["d1_ledger_written"] = d1_store.ledger_written()   # day total, D1-confirmed
     if not c.get("started"):
         c["started"] = _ts()
@@ -254,9 +259,10 @@ def run(seasons: list[int]) -> int:
                 except d1_store.BudgetExceeded as e:
                     print(f"  STOP: D1 daily write cap on {tag}: {e}", flush=True)
                     _save(ck)
-                    print(f"  checkpoint saved; re-run to resume (rows_written={ROWS_WRITTEN}).",
-                          flush=True)
-                    return 0
+                    print(f"  checkpoint saved; resume after the cap resets "
+                          f"(rows_written={_load().get('rows_written')}, "
+                          f"d1_today={d1_store.ledger_written()}).", flush=True)
+                    return 3            # 3 = daily write cap (supervisor waits for the reset)
                 except Exception as e:  # noqa: BLE001 — a chunk that cannot confirm its
                     # writes is a FAILURE, never a silent 'done'.
                     ck.setdefault("failed", {})[tag] = f"{type(e).__name__}: {e}"

@@ -152,6 +152,13 @@ def main() -> int:
         rc = launch_worker()
         after = len(load_json(CKPT, {}).get("done", []))
         log(f"worker exited rc={rc}; checkpoint={after} done")
+        if rc == 3:
+            # Worker reported the D1 daily write cap explicitly: wait for the reset
+            # instead of relaunching into the same cap.
+            sleep_until_next_utc_day(f"worker hit the D1 daily write cap "
+                                     f"(d1_today={ledger_state()[1]})")
+            no_progress = 0
+            continue
         if rc == 0 and after <= before:
             no_progress += 1
             if no_progress >= NO_PROGRESS_LIMIT:

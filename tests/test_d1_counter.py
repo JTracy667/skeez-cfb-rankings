@@ -28,6 +28,10 @@ os.environ["CF_D1_TOKEN"] = re.search(
 os.chdir(REPO)
 sys.path.insert(0, REPO)
 sys.path.insert(0, os.path.join(REPO, "scripts"))
+# The daily write cap can legitimately be exhausted when this runs; the test asserts
+# the COUNTER, not the cap, and writes ~20 probe rows. Raise the guard for the test
+# process only (the real ledger is still charged the confirmed rows).
+os.environ.setdefault("D1_DAILY_WRITE_CAP", "200000")
 import d1_store           # noqa: E402
 import backfill_d1 as bf  # noqa: E402
 
