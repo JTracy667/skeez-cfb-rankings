@@ -79,3 +79,36 @@ def teams_by_name(year: int = CFBD_YEAR) -> dict:
     if not data:
         data = cfbd_get("teams", year=CFBD_YEAR_FALLBACK)
     return {t["school"]: t for t in data if t.get("school")}
+
+
+def team_aliases(year: int = CFBD_YEAR) -> dict:
+    """{any-name-or-alias: team_id} for NAME->ID matching in the archive.
+
+    CFBD's ratings/stats endpoints key by team NAME, and some rows use an ALIAS the
+    `school` field does not carry (live examples: ratings say "Albany" while /teams
+    says "UAlbany"; "Southeastern Louisiana" vs "SE Louisiana"; "UTRGV" vs
+    "UT Rio Grande Valley"). Those rows were silently skipped. Canonical `school`
+    names always win (setdefault), so this is additive and cannot re-point a team
+    that already matched. Deliberately a SEPARATE function: teams_by_name() stays
+    exactly as the live app expects (adding alias keys there would duplicate teams
+    for any caller that iterates its values)."""
+    out: dict[str, int] = {}
+    data = cfbd_get("teams", year=year) or cfbd_get("teams", year=CFBD_YEAR_FALLBACK) or []
+    for t in data:
+        if not t.get("id"):
+            continue
+        if t.get("school"):
+            out.setdefault(t["school"], t["id"])
+    for t in data:
+        if not t.get("id"):
+            continue
+        for alias in (t.get("alternateNames") or []):
+            if alias and alias not in out:
+                out[alias] = t["id"]
+    # Names whose canonical school is itself the alias form the endpoints emit.
+    for alias, canonical in (("Albany", "UAlbany"),
+                             ("Southeastern Louisiana", "SE Louisiana"),
+                             ("UTRGV", "UT Rio Grande Valley")):
+        if canonical in out:
+            out.setdefault(alias, out[canonical])
+    return out

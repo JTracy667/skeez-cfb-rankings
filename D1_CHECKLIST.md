@@ -21,18 +21,19 @@ If blocked >15 min on any item: post the blocker to the CSuite group and STOP �
 - [x] stop-cause of 2022:teams halt named in report — D1_PHASE2_REPORT.md §1: the run was killed with its Hermes turn (registry proc_56c94d68c66f reaped at 13:17; log ends mid-chunk with no DONE/FAIL/traceback) — not a crash, not a cap breach (50/4,500 calls, ~19K/90K rows)
 - [x] app.py edit smoke-checked (compiles; diff reviewed by CEO before next deploy) — `python -m py_compile app.py` OK (commit bdd19b7); CEO diff review still owed pre-deploy
 
-## PHASE 3 — BACKFILL 🔄 (running detached; Phase 2 complete)
+## PHASE 3 — BACKFILL ✅ (COMPLETE 2026-09-21; all 30 chunks, supervisor rc=0)
 - [x] Desktop power pinned — receipt `powercfg /q`: AC standby = Never (0x0), AC hibernate = Never (0x0). Already pinned; no change needed (nothing to ask Jeff)
 - [x] Backfill running detached (survives turn ends), lock file present — worker pid 34468 (started 13:29:48 PT via scripts/run_backfill.sh + nohup) is ALIVE while its launching shell (pid 31300) is DEAD; supervisor pid 37432 heartbeating in logs/supervisor.log; lock data/backfill.lock = 34468
 - [x] 2021: all 5 endpoints verified in D1 (receipt: D1 row counts) — teams 671 · games 2454 · stat_observations 9124 (incl. 934 rating obs) · closing_lines 849
 - [x] 2022 complete — games 3705 · stat_observations 9193 (940 rating obs) · closing_lines 1413; all 5 chunks in checkpoint `done`
-- [ ] 2023, 2024, 2025 complete  ← 2023 COMPLETE (games 3734 / stat_obs 6802 / lines 1347); 2024 in progress (2024:teams done, walking 2024:games→season_stats); 2025 pending
-- [ ] 2026 wks 1–3 complete
+- [x] 2023, 2024, 2025 complete — ✅ 2026-09-21: supervisor finished ALL 30 chunks (rc=0). games by season: 2021 2,454 · 2022 3,705 · 2023 3,734 · 2024 3,801 · 2025 3,831 · 2026 3,679 (total 21,204); stat_observations by season 9,449 / 9,518 / 9,648 / 9,657 / 9,827 / 9,495 (total 57,594); closing_lines 849 / 1,413 / 1,347 / 1,507 / 1,547 / 521 (total 7,184). Receipt: `logs/supervisor.log` "COMPLETE: all 30 chunks done/no_data"
+- [x] 2026 wks 1–3 complete — receipt: 2026 games 3,679 · lines 1,042 · ratings 2,800 · season_stats 15,906 confirmed writes
+- [x] Name→ID gaps closed — the run ended with `UNMATCHED ['Albany','Southeastern Louisiana','UTRGV']` (CFBD ratings emit an alias, not /teams' school: UAlbany / SE Louisiana / UT Rio Grande Valley). Fixed by a SEPARATE alias namespace (`cfbd_shared.team_aliases()`, canonical names still win) + `scripts/backfill_unmatched_names.py` re-ingest: 14 confirmed writes (only 2025–2026 had such rows).
 - [x] FCS games stored + division tag (receipt 2026-09-21): `/games` with no filter already returns every classification (2025: 3,831 games / 563 non-FBS schools); division tag delivered as `teams.classification` (fbs 138 · fcs 128 · ii 170 · iii 248; 4,046 confirmed writes, `scripts/backfill_fcs_extras.py`)
 - [ ] FCS-specific STATS — ⛔ BLOCKED, not deliverable from CFBD: `/stats/season?division=fcs` and `/games?division=fcs` SILENTLY ignore the filter (return the same FBS rows, probed live). Needs another source; do not fake it.
 - [x] CFBD FCS Coaches Poll 2021–2026 stored as fcs_rating observations — receipt: 5,514 confirmed writes (2021:1003 · 2022:1030 · 2023:1006 · 2024:1083 · 2025:1083 · 2026:309), 96 CFBD calls, `scripts/backfill_fcs_extras.py`
 - [ ] Massey ratings 2021–2026 — ⛔ BLOCKED: CFBD `/ratings/massey` returns 0 rows (endpoint unpopulated); needs an external archive scrape (masseyratings.com), a separate build
-- [ ] Daily caps respected every day (receipt: cfbd_calls + rows_written logged per run, ≤2M/day guard on Workers PAID)
+- [x] Daily caps respected every day (receipt: cfbd_calls + rows_written logged per run) — 2026-09-21 ledger closed at **288,330** D1-confirmed rows written against the **2,000,000/day** guard on Workers PAID (50M/month pool ⇒ ~0.6% of the month). Never near the guard; no free-tier daily ceiling exists.
 
 ## PHASE 3.5 — STANDING BUDGET METERS (CEO directive: counters always rolling, never ad-hoc)
 - [ ] Daily usage ledger per API, appended on every call batch: CFBD (calls/day), Odds API (calls/month), PropLine (calls/day), D1 (confirmed rows written/day) — persisted to data/budget_ledger.json

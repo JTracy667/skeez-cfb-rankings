@@ -51,6 +51,7 @@ CALLS = 0           # CFBD requests this run
 SRC_ROWS = 0        # rows the CURRENT chunk's CFBD calls returned
 ROWS_WRITTEN = 0    # rows D1 CONFIRMED writing this run
 NAME2ID: dict[str, int] = {}
+ALIAS2ID: dict[str, int] = {}
 UNMATCHED: list[str] = []
 
 
@@ -102,6 +103,8 @@ def _tid(name: str | None):
     if not name or name == "nationalAverages":
         return None
     tid = NAME2ID.get(name)
+    if tid is None:
+        tid = ALIAS2ID.get(name)      # CFBD ratings emit aliases ("Albany", "UTRGV")
     if tid is None and name not in UNMATCHED:
         UNMATCHED.append(name)
     return tid
@@ -113,8 +116,13 @@ def load_name_map(season: int) -> None:
     for school, t in (cfbd_shared.teams_by_name() or {}).items():
         if t.get("id"):
             NAME2ID.setdefault(school, t["id"])
-    print(f"  name->id map loaded from cfbd_shared.teams_by_name(): {len(NAME2ID)} teams",
-          flush=True)
+    # Aliases are a SEPARATE namespace so teams_by_name() stays app-identical.
+    try:
+        ALIAS2ID.update(cfbd_shared.team_aliases())
+    except Exception as e:  # noqa: BLE001 — never block a backfill on alias enrichment
+        print(f"  alias map unavailable ({e})", flush=True)
+    print(f"  name->id map loaded from cfbd_shared.teams_by_name(): {len(NAME2ID)} teams"
+          f" (+{len(ALIAS2ID)} aliases)", flush=True)
 
 
 # ------------------------------------------------------------------- workers
