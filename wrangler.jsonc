@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cfb-power-rankings",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-13",
+  "containers": [
+    {
+      "max_instances": 1,
+      "class_name": "CFBPowerRankings",
+      "image": "registry.cloudflare.com/90c2c31beec12cb7de1c249ade1eb773/cfb-power-rankings:v9",
+      "instance_type": "basic"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "CFBPOWER_RANKINGS",
+        "class_name": "CFBPowerRankings"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["CFBPowerRankings"]
+    }
+  ],
+  // Anchor wake-ups for the CFBD analytics sync (app rule: Sun/Mon/Tue/Wed
+  // 21:00 America/New_York). 21:00 ET == 01:00Z under EDT and 02:00Z under EST,
+  // so BOTH hours are listed — a single fixed UTC hour would miss the anchor
+  // for half the year. The container self-determines due-ness, so the extra
+  // wake is a cheap no-op. Cron days are UTC: Sun 21:00 ET is Monday 01:00Z.
+  "triggers": {
+    "crons": ["0 1 * * 1,2,3,4", "0 2 * * 1,2,3,4"]
+  }
+}

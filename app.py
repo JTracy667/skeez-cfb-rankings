@@ -2633,6 +2633,47 @@ def api_analytics_fetch():
         traceback.print_exc()
         raise HTTPException(500, str(e))
 
+@app.get("/api/analytics/pull-status")
+def api_analytics_pull_status():
+    """Read-only: when the weekly CFBD analytics sync (SP+/Elo/FPI/talent) last
+    ran and whether the most recent Sun/Mon/Tue/Wed 21:00 ET anchor is still
+    outstanding. Exposing this lets both environments be verified for refresh
+    parity instead of inferred from cache build times."""
+    ts = _load_last_analytics_pull()
+    due_at = _most_recent_anchor_et()
+    now = time.time()
+    return {
+        "last_pull_utc": (datetime.fromtimestamp(ts, timezone.utc).isoformat() if ts else None),
+        "last_pull_age_hours": (round((now - ts) / 3600, 2) if ts else None),
+        "due": weekly_analytics_due(),
+        "anchors": [f"{('Mon','Tue','Wed','Thu','Fri','Sat','Sun')[wd]} {hr:02d}:00 ET"
+                    for wd, hr in _ANALYTICS_ANCHORS],
+        "most_recent_anchor_utc": (due_at.astimezone(timezone.utc).isoformat() if due_at else None),
+        "scheduler_interval_seconds": REFRESH_INTERVAL_SECONDS,
+    }
+
+
+@app.post("/api/analytics/refresh-if-due")
+def api_analytics_refresh_if_due():
+    """Anchor-gated CFBD analytics pull — deterministic trigger for hosts whose
+    background thread can sleep (e.g. Cloudflare Containers with sleepAfter).
+    Idempotent: pulls only when the latest Sun/Mon/Tue/Wed 21:00 ET anchor
+    postdates the last recorded pull, exactly like the in-process scheduler."""
+    try:
+        if not weekly_analytics_due():
+            ts = _load_last_analytics_pull()
+            return {"due": False, "pulled": False,
+                    "last_pull_utc": (datetime.fromtimestamp(ts, timezone.utc).isoformat() if ts else None)}
+        res = run_weekly_analytics_pull()
+        if res.get("pulled"):
+            _save_last_analytics_pull(time.time())
+        ts = _load_last_analytics_pull()
+        return {"due": True, "pulled": bool(res.get("pulled")), "teams": res.get("teams", 0),
+                "last_pull_utc": (datetime.fromtimestamp(ts, timezone.utc).isoformat() if ts else None)}
+    except Exception as e:
+        print(f"[POST /api/analytics/refresh-if-due ERROR] {e}")
+        raise HTTPException(500, str(e))
+
 # ── CFBD Schedule Fetcher ──
 # The Schedule page uses CFBD's full-season game list (the same source Win
 # Totals already relies on) instead of ESPN's scoreboard — ESPN's week=N param
@@ -2697,13 +2738,14 @@ _current_week_cache: dict = {}
 def current_season_week(year: int = CFBD_YEAR) -> int | None:
     """The season week the schedule page should show by default.
 
-    Rule (user-directed): the week flips OVER on MONDAY — a week becomes
-    current at Monday 00:00 ET before its Thursday kickoff, so by the time
-    Monday rolls around the page already shows the upcoming week. Derived
-    from CFBD's real game dates (each week's earliest FBS kickoff, walked
-    back to the preceding Monday), so bye weeks and calendar quirks are
-    handled automatically. Before the first switch Monday -> earliest week;
-    after the last one -> latest week. None if the season has no games.
+    Rule (user-corrected Sep 20 2026): the page shows the UPCOMING slate. A
+    week becomes current 4 days before its first kickoff, floored to midnight
+    ET — i.e. Sunday for the standard Thursday slate, the moment the prior
+    week's games are done. (The old Monday 00:00 ET cutover left the page
+    defaulting to a slate that had already been played all Sunday.) Derived
+    from CFBD's real game dates, so bye weeks and calendar quirks are handled
+    automatically. Before the first cutover -> earliest week; after the last
+    one -> latest week. None if the season has no games.
     """
     cached = _current_week_cache.get(year)
     if cached is not None and time.time() - cached[1] < 3600:
@@ -2731,17 +2773,19 @@ def current_season_week(year: int = CFBD_YEAR) -> int | None:
         return None
     ET = timezone(timedelta(hours=-4))  # EDT; cutover precision of a day makes DST irrelevant
     now = datetime.now(timezone.utc)
-    switch_mondays = []
+    switch_points = []
     for wk, start in earliest_by_week.items():
         local = start.astimezone(ET)
-        # Walk back to this week's Monday 00:00 ET (weekday(): Mon=0)
-        monday = (local - timedelta(days=local.weekday())).replace(
+        # Cutover = 4 days before this week's first kickoff, floored to 00:00 ET
+        # (Sunday for the standard Thu-Sat slate): the upcoming week becomes
+        # current as soon as the previous week's games are in the books.
+        cutover = (local - timedelta(days=4)).replace(
             hour=0, minute=0, second=0, microsecond=0)
-        switch_mondays.append((monday, wk))
-    switch_mondays.sort()
-    current = switch_mondays[0][1]  # before/at first switch -> earliest week
-    for monday, wk in switch_mondays:
-        if now >= monday:
+        switch_points.append((cutover, wk))
+    switch_points.sort()
+    current = switch_points[0][1]  # before/at first switch -> earliest week
+    for point, wk in switch_points:
+        if now >= point:
             current = wk
     _current_week_cache[year] = (current, time.time())
     return current
@@ -2749,7 +2793,7 @@ def current_season_week(year: int = CFBD_YEAR) -> int | None:
 
 @app.get("/api/schedule/current-week")
 def api_schedule_current_week(year: int = CFBD_YEAR):
-    """Week the schedule page should default to (Monday week-over rule)."""
+    """Week the schedule page should default to (upcoming-slate rule)."""
     try:
         wk = current_season_week(year)
         weeks = cfbd_weeks(year)

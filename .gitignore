@@ -9,12 +9,8 @@ venv/
 .env
 .env.local
 
-# Cloudflare Worker-side files (not needed by Render container)
+# Cloudflare Worker-side deps (not needed by Render container)
 node_modules/
-wrangler.jsonc
-package.json
-package-lock.json
-CLOUDFLARE_DEPLOY.md
 
 # Data caches (regenerated live by the app)
 data/espn_week0_2026.json

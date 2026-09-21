@@ -1,0 +1,20 @@
+{
+  "name": "cfb-power-rankings-cloudflare",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "containers:list": "wrangler containers list",
+    "images:list": "wrangler containers images list"
+  },
+  "devDependencies": {
+    "@cloudflare/containers": "^0.3.7",
+    "wrangler": "^4.135.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "workerd@1.20260811.1": true
+  }
+}
