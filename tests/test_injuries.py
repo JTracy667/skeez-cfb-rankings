@@ -122,15 +122,17 @@ class TestCFBInjuries(unittest.TestCase):
 class TestAdminGate(unittest.TestCase):
     """Ops/mutating endpoints must reject callers without the admin token.
 
-    Guards the Sep 2026 finding that all 10 POST routes were callable by anyone.
-    The 2 routes the site's own pages use (/api/analytics/fetch and
-    /api/schedule/fetch) are deliberately NOT in this list — they are throttled
-    instead, because a public page cannot hold a secret.
+    Guards the Sep 2026 finding that the POST routes were callable by anyone.
+    Only ONE route stays deliberately public — /api/schedule/fetch, which the
+    Schedule page POSTs on load (a public page cannot hold a secret; it is
+    throttled with a 300s cache instead). /api/analytics/fetch used to be public
+    for the Analytics refresh button; that button was removed, so the route is
+    now gated like the rest.
     """
 
     LOCKED = ["/api/rankings/refresh", "/api/refresh", "/api/analytics/refresh-if-due",
               "/api/schedule/update", "/api/injuries/sync", "/api/injuries/override",
-              "/api/record/ingest", "/api/record/repair-ats"]
+              "/api/record/ingest", "/api/record/repair-ats", "/api/analytics/fetch"]
 
     def setUp(self):
         self.client = TestClient(app.app)

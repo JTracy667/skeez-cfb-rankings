@@ -2632,13 +2632,15 @@ def fetch_live_analytics():
         print(f"[CFBD analytics fetch failed] {e}")
         return None
 
-@app.post("/api/analytics/fetch")
+@app.post("/api/analytics/fetch", dependencies=_ADMIN)
 def api_analytics_fetch():
     """Force-fetch live analytics data from CFBD API and persist to disk.
 
-    Public endpoint (the Analytics page's refresh button), so it is throttled
-    instead of token-gated: a repeat call inside ANALYTICS_FETCH_TTL returns the
-    cached payload rather than re-pulling every CFBD metric."""
+    Ops-only: the Analytics page's manual refresh button was removed (the server
+    keeps the data current on its own — hourly line refresh plus the Sun/Mon/Tue/
+    Wed 9pm PT anchor), so nothing public calls this any more and it carries the
+    admin gate like the other mutating routes. The 300s throttle stays as a
+    backstop for authorised callers."""
     import traceback
     cached = _cache_get(_analytics_cache, ANALYTICS_FETCH_TTL)
     if cached:

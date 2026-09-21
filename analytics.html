@@ -160,8 +160,7 @@ img.team-logo {
     <a href="/schedule">Schedule</a>
     <span>·</span>
     <a href="/win-totals">Win Totals</a>
-    <button class="tab-btn" id="refreshAnalyticsBtn" style="margin-left:8px;cursor:pointer">🔄 Refresh</button>
-  </nav>
+      </nav>
 </div>
 <div class="container">
   <input type="text" class="search-box" id="search" placeholder="Search teams...">
@@ -232,18 +231,11 @@ async function fetchAnalytics() {
   }
 }
 
-// Force a live CFBD fetch + reload (explicit user action only)
-async function refreshAnalytics() {
-  const btn = document.getElementById('refreshAnalyticsBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Refreshing…'; }
-  try {
-    const r = await fetch(`${API}/analytics/fetch`, { method: 'POST' });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  } catch (e) {
-    console.error('Live fetch failed (using cached data):', e);
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🔄 Refresh'; }
-  }
+// Auto-reload: the SERVER keeps the numbers current (hourly line refresh plus
+// the Sun/Mon/Tue/Wed 9pm PT CFBD anchor), so the page only re-reads what's
+// already there. No manual "force a live fetch" button — and therefore no
+// public endpoint that anyone can use to trigger third-party API pulls.
+async function reloadAnalytics() {
   await fetchAnalytics();
   await fetchProjectionsAndOdds();
 }
@@ -537,8 +529,12 @@ document.getElementById('tabs').addEventListener('click', e => {
 // ── Search ──
 document.getElementById('search').addEventListener('input', renderAll);
 
-// ── Refresh (explicit live CFBD fetch) ──
-document.getElementById('refreshAnalyticsBtn').addEventListener('click', refreshAnalytics);
+// ── Auto-refresh: re-read the server's data every 5 min, and whenever the tab
+// regains focus (so a page parked in a background tab is current on return) ──
+setInterval(reloadAnalytics, 5 * 60 * 1000);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') reloadAnalytics();
+});
 
 // ── Init ──
 async function init() {
