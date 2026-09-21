@@ -209,7 +209,10 @@ def run(seasons: list[int]) -> None:
                 ck.setdefault("done", []).append(tag)
                 _save(ck)
                 print(f"  {tag}: {n} rows  [cfbd_calls={CALLS}]")
-        print(f"\nDONE. done-chunks={len(_load()['done'])} cfbd_calls={CALLS}")
+        c = _load()
+        c["rows_written"] = d1_store.ledger_written()
+        _save(c)
+        print(f"\nDONE. done-chunks={len(c['done'])} cfbd_calls={CALLS} rows_written={c['rows_written']}")
         if UNMATCHED:
             print(f"UNMATCHED team names (skipped): {sorted(set(UNMATCHED))}")
     finally:
