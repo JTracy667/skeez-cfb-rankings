@@ -19,9 +19,9 @@ export default {
 
 	// Deterministic refresh trigger. Containers sleep after 20m idle, which
 	// stops app.py's background scheduler thread — so on this host the
-	// Sun/Mon/Tue/Wed 21:00 ET CFBD analytics sync would otherwise depend on
-	// inbound traffic. These crons wake the container at the anchor and the
-	// app's own due-check decides whether to pull
+	// Sun/Mon/Tue/Wed 21:00 PT (America/Los_Angeles) CFBD analytics sync would
+	// otherwise depend on inbound traffic. These crons wake the container at the
+	// anchor and the app's own due-check decides whether to pull
 	// (POST /api/analytics/refresh-if-due is idempotent: no anchor, no pull).
 	async scheduled(controller, env, ctx) {
 		ctx.waitUntil((async () => {

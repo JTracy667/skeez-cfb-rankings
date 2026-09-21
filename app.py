@@ -227,7 +227,7 @@ def _snapshot_lines(odds_map: dict) -> list[dict]:
                     "home": home, "away": away, "market": market,
                     "old": old_v, "new": new_v, "delta": round(new_v - old_v, 1),
                     "ts": now_ts,
-                    "when": datetime.now(_ET_TZ).strftime("%a %I:%M %p") if _ET_TZ else datetime.now().strftime("%a %I:%M %p"),
+                    "when": datetime.now(_PT_TZ).strftime("%a %I:%M %p") if _PT_TZ else datetime.now().strftime("%a %I:%M %p"),
                 })
     # Persist: snapshot overwritten (new baseline) + events appended to the log
     try:
@@ -239,34 +239,36 @@ def _snapshot_lines(odds_map: dict) -> list[dict]:
     return movements
 
 
-# ── Weekly CFBD ratings sync (Sunday 3pm ET) ──
+# ── Weekly CFBD ratings sync (Sun–Wed 9pm PT) ──
 # Once a week, re-pull CFBD's updated ratings (SP+/FPI/Elo/CPI/PPG) so the
 # composite rankings and win totals reflect results as they land. The due-date
-# is "most recent Sunday 15:00 America/New_York"; we persist the last pull ts
-# to disk so a container restart doesn't re-pull every scheduler tick until
-# the next anchor (and a failed pull retries on the following hourly tick).
+# is "most recent Sun/Mon/Tue/Wed 21:00 America/Los_Angeles"; we persist the last
+# pull ts to disk so a container restart doesn't re-pull every scheduler tick
+# until the next anchor (and a failed pull retries on the following tick).
 try:
     from zoneinfo import ZoneInfo
-    _ET_TZ = ZoneInfo("America/New_York")
-except Exception:  # tzdata missing — fall back to UTC-4 (EDT) approximation
-    _ET_TZ = None
+    _PT_TZ = ZoneInfo("America/Los_Angeles")
+except Exception:  # tzdata missing — fall back to UTC-7 (PDT) approximation
+    _PT_TZ = None
 WEEKLY_ANALYTICS_FILE = BASE_DIR / "data" / "last_analytics_pull.json"
 
-# Sync anchors: Sunday 9pm ET (post-Saturday results), Monday 9pm ET (short-week
-# seasons: Sunday games + Monday poll releases), Tuesday 9pm ET (CFBD's SP+/FPI
+# Sync anchors: Sunday 9pm PT (post-Saturday results), Monday 9pm PT (short-week
+# seasons: Sunday games + Monday poll releases), Tuesday 9pm PT (CFBD's SP+/FPI
 # update irregularly Sun night through Wed — Tue catches the stragglers), +
-# Wednesday 9pm ET (mid-week, when most line movement happens and best-bet edges
+# Wednesday 9pm PT (mid-week, when most line movement happens and best-bet edges
 # are widest).
+# Timezone corrected ET -> PT Sep 20 2026 (Jeff): the anchor is 9pm PACIFIC.
+# Under EDT the old 21:00 ET anchor fired at 6pm PT — three hours early.
 _ANALYTICS_ANCHORS = ((6, 21), (0, 21), (1, 21), (2, 21))  # (weekday, hour) — Python Mon=0: Sun=6, Mon=0, Tue=1, Wed=2
 # Mon anchor added Sep 6: short-week seasons (Sunday games) release polls/ratings
 # Monday, and Sun->Wed left Mon/Tue results unreflected for up to 4 days.
 
 
-def _most_recent_anchor_et(now=None):
-    """Most recent sync anchor (Sun/Wed 21:00 ET), inclusive of today if past."""
-    if _ET_TZ is None:
+def _most_recent_anchor_pt(now=None):
+    """Most recent sync anchor (Sun/Mon/Tue/Wed 21:00 PT), inclusive of today if past."""
+    if _PT_TZ is None:
         return None
-    now = now or datetime.now(_ET_TZ)
+    now = now or datetime.now(_PT_TZ)
     best = None
     for wd, hr in _ANALYTICS_ANCHORS:
         days_back = (now.weekday() - wd) % 7
@@ -296,8 +298,8 @@ def _save_last_analytics_pull(ts: float):
 
 
 def weekly_analytics_due() -> bool:
-    """True if the most recent Sun/Wed 3pm ET anchor postdates our last pull."""
-    due_at = _most_recent_anchor_et()
+    """True if the most recent Sun/Mon/Tue/Wed 21:00 PT anchor postdates our last pull."""
+    due_at = _most_recent_anchor_pt()
     if due_at is None:
         return False
     return time.time() > due_at.timestamp() and \
@@ -421,7 +423,7 @@ def _start_scheduler() -> None:
                         print("[scheduler] startup rankings refresh ok")
                 except Exception as e:
                     print(f"[scheduler] startup rankings refresh failed: {e}")
-            # Weekly CFBD ratings sync (Sunday 3pm ET). Runs on the first tick
+            # Weekly CFBD ratings sync (Sun-Wed 9pm PT). Runs on the first tick
             # after it's due; a failed pull retries next tick (ts not advanced).
             try:
                 if weekly_analytics_due():
@@ -2636,17 +2638,17 @@ def api_analytics_fetch():
 @app.get("/api/analytics/pull-status")
 def api_analytics_pull_status():
     """Read-only: when the weekly CFBD analytics sync (SP+/Elo/FPI/talent) last
-    ran and whether the most recent Sun/Mon/Tue/Wed 21:00 ET anchor is still
+    ran and whether the most recent Sun/Mon/Tue/Wed 21:00 PT anchor is still
     outstanding. Exposing this lets both environments be verified for refresh
     parity instead of inferred from cache build times."""
     ts = _load_last_analytics_pull()
-    due_at = _most_recent_anchor_et()
+    due_at = _most_recent_anchor_pt()
     now = time.time()
     return {
         "last_pull_utc": (datetime.fromtimestamp(ts, timezone.utc).isoformat() if ts else None),
         "last_pull_age_hours": (round((now - ts) / 3600, 2) if ts else None),
         "due": weekly_analytics_due(),
-        "anchors": [f"{('Mon','Tue','Wed','Thu','Fri','Sat','Sun')[wd]} {hr:02d}:00 ET"
+        "anchors": [f"{('Mon','Tue','Wed','Thu','Fri','Sat','Sun')[wd]} {hr:02d}:00 PT"
                     for wd, hr in _ANALYTICS_ANCHORS],
         "most_recent_anchor_utc": (due_at.astimezone(timezone.utc).isoformat() if due_at else None),
         "scheduler_interval_seconds": REFRESH_INTERVAL_SECONDS,
@@ -2657,7 +2659,7 @@ def api_analytics_pull_status():
 def api_analytics_refresh_if_due():
     """Anchor-gated CFBD analytics pull — deterministic trigger for hosts whose
     background thread can sleep (e.g. Cloudflare Containers with sleepAfter).
-    Idempotent: pulls only when the latest Sun/Mon/Tue/Wed 21:00 ET anchor
+    Idempotent: pulls only when the latest Sun/Mon/Tue/Wed 21:00 PT anchor
     postdates the last recorded pull, exactly like the in-process scheduler."""
     try:
         if not weekly_analytics_due():
