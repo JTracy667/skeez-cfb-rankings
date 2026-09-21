@@ -843,10 +843,15 @@ THE_ODDS_BASE = "https://api.the-odds-api.com/v4"
 CFBD_YEAR = 2026  # 2026 season
 CFBD_YEAR_FALLBACK = 2025
 
-def _cfbd_get(endpoint: str, year: int = CFBD_YEAR) -> list:
-    """Fetch JSON from CFBD API with auth, retry with exponential backoff."""
+def _cfbd_get(endpoint: str, year: int = CFBD_YEAR, **extra) -> list:
+    """Fetch JSON from CFBD API with auth, retry with exponential backoff.
+
+    `extra` passes additional query params (week, seasonType, team, ...). Added so
+    the D1 backfill reuses THIS client for historical ranged pulls instead of
+    forking its own HTTP path (CEO directive: no parallel implementations).
+    """
     url = f"{CFBD_BASE}/{endpoint}"
-    params = {"year": year}
+    params = {"year": year, **extra}
     data = _http_get(url, params=params, headers=CFBD_HEADERS)
     if data is None:
         return []

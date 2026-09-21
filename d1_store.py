@@ -4,20 +4,18 @@
 Purpose: persist the app's history (odds snapshots, stat observations, daily
 rankings, closing lines, model predictions) into D1 `cfb-history`.
 
-SECURITY (deliberate): this module reads its token from `CF_D1_TOKEN` FIRST.
-Provision a Cloudflare token scoped to D1 (account-level "D1:Edit") and put THAT
-in the container env. Do NOT hand the app the broad zone token (DNS:Edit) —
-`CLOUDFLARE_API_TOKEN` is only a local-dev fallback and is never sent from the
-container in production.
+SECURITY (deliberate): the token is read from `CF_D1_TOKEN` FIRST. Provision a
+Cloudflare token scoped to D1 (account-level "D1:Edit") for the container env.
+Do NOT hand the app the broad zone token (DNS:Edit) — `CLOUDFLARE_API_TOKEN` is
+a local-dev fallback only.
 
-Additive + safe: nothing here runs until the app imports and calls it, and the
-whole write-path is behind env flag D1_WRITE_ENABLED. If D1 is unreachable the
-callers must fall back to the local cache (see D1_RISK_REGISTER B4) — every
-helper raises on failure so the caller can decide; it never silently no-ops.
+PERFORMANCE: writes are BATCHED — one HTTP request per ~400 rows (multi-row
+VALUES / IN-list), never one request per row. A 190K-row backfill is ~500
+requests, not 190K.
 
-Budget guard: CFBD/Odds budgets live elsewhere; this module enforces the D1
-row-WRITE budget (free tier 100K/day; backfill must stay <= 90K to leave live
-headroom). A local ledger counts writes per UTC day and refuses to exceed the cap.
+Additive + safe: nothing here runs until a caller imports it. Callers must fall
+back to local cache on failure (D1_RISK_REGISTER B4). The budget guard enforces
+the D1 row-WRITE cap (free tier 100K/day; backfill <= 90K, leaving live headroom).
 """
 from __future__ import annotations
 
@@ -30,7 +28,7 @@ from datetime import datetime, timezone
 
 ACCOUNT_ID = os.environ.get("CF_ACCOUNT_ID", "90c2c31beec12cb7de1c249ade1eb773")
 D1_DB_ID = os.environ.get("CF_D1_DB_ID", "c3ec3149-cc85-483b-b727-5a18e3d5a1b9")
-D1_DB_NAME = os.environ.get("CF_D1_DB_NAME", "cfb-history")
+CHUNK = 400
 
 
 def _token() -> str:
@@ -45,7 +43,7 @@ def _api_url() -> str:
             f"/d1/database/{D1_DB_ID}/query")
 
 
-# ------------------------------------------------------------------ budget guard
+# --------------------------------------------------------------- budget guard
 _LEDGER = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
                        "hermes", "d1_write_ledger.json")
 
@@ -78,6 +76,10 @@ class BudgetExceeded(RuntimeError):
     pass
 
 
+def ledger_written() -> int:
+    return _load_ledger()["rows_written"]
+
+
 def write_budget_ok(n_rows: int, daily_cap: int | None = None) -> None:
     cap = daily_cap if daily_cap is not None else int(os.environ.get("D1_DAILY_WRITE_CAP", "90000"))
     led = _load_ledger()
@@ -94,123 +96,131 @@ def query(sql: str, params: list | None = None, timeout: int = 60) -> list[dict]
     req = urllib.request.Request(_api_url(), data=body, method="POST",
                                  headers={"Authorization": f"Bearer {_token()}",
                                           "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            payload = json.loads(r.read())
-    except urllib.error.HTTPError as e:
-        raise RuntimeError(f"D1 HTTP {e.code}: {e.read()[:300]!r}") from e
+    last = None
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                payload = json.loads(r.read())
+            break
+        except urllib.error.HTTPError as e:
+            body = e.read()[:300]
+            if e.code >= 500 or e.code == 429:
+                last = f"D1 HTTP {e.code}: {body!r}"
+                time.sleep(2 * (attempt + 1))
+                continue
+            raise RuntimeError(f"D1 HTTP {e.code}: {body!r}") from e
+        except Exception as e:  # noqa: BLE001 — transient resets on long runs
+            last = repr(e)
+            time.sleep(2 * (attempt + 1))
+            continue
+    else:
+        raise RuntimeError(f"D1 unreachable after retries: {last}")
     if not payload.get("success"):
         raise RuntimeError(f"D1 error: {payload.get('errors')}")
     res = payload.get("result") or []
     return (res[0].get("results") if res else []) or []
 
 
-def _exec(sql: str) -> list[dict]:
-    return query(sql)
-
-
-# ------------------------------------------------------- idempotent row helpers
-def _chunks(rows: list, n: int):
+def _chunks(rows: list, n: int = CHUNK):
     for i in range(0, len(rows), n):
         yield rows[i:i + n]
 
 
-def upsert_teams(rows: list[dict], chunk: int = 200) -> int:
-    """rows: {team_id,name,abbr,conference,first_season}. Idempotent."""
+def _upsert(table: str, cols: list[str], rows: list[dict],
+            conflict: list[str] | None, update: list[str] | None) -> int:
+    """One batched multi-row INSERT per chunk (idempotent when conflict given).
+    D1 caps bound parameters at 100/query -> chunk by column count."""
     n = 0
-    for part in _chunks(rows, chunk):
+    for part in _chunks(rows, max(1, 100 // len(cols))):
         write_budget_ok(len(part))
-        for r in part:
-            query("INSERT INTO teams (team_id,name,abbr,conference,first_season) "
-                  "VALUES (?,?,?,?,?) ON CONFLICT(team_id) DO UPDATE SET "
-                  "name=excluded.name, abbr=excluded.abbr, conference=excluded.conference",
-                  [r.get("team_id"), r.get("name"), r.get("abbr"),
-                   r.get("conference"), r.get("first_season")])
-            n += 1
+        ph = ",".join("(" + ",".join("?" * len(cols)) + ")" for _ in part)
+        sql = f"INSERT INTO {table} ({','.join(cols)}) VALUES {ph}"
+        if conflict and update:
+            sql += (f" ON CONFLICT({','.join(conflict)}) DO UPDATE SET "
+                    + ",".join(f"{c}=excluded.{c}" for c in update))
+        params = [v for r in part for v in (r.get(c) for c in cols)]
+        query(sql, params)
+        n += len(part)
     return n
 
 
-def upsert_stat_observations(rows: list[dict], chunk: int = 500) -> int:
-    """rows: {subject_type,subject_id,season,week,stat_key,value,source}.
-    Idempotent via the ux_stat_obs_subject unique index."""
+def _replace_by(table: str, key_cols: list[str], cols: list[str], rows: list[dict]) -> int:
+    """For tables with no unique index: delete the chunk's keys, then batched insert.
+    D1 caps bound parameters at 100/query -> chunk by the widest column list."""
     n = 0
+    step = max(1, 100 // max(len(cols), len(key_cols)))
+    for part in _chunks(rows, step):
+        write_budget_ok(len(part))
+        keys = sorted({tuple(r.get(c) for c in key_cols) for r in part})
+        ph = ",".join("(" + ",".join("?" * len(key_cols)) + ")" for _ in keys)
+        query(f"DELETE FROM {table} WHERE ({','.join(key_cols)}) IN ({ph})",
+              [v for k in keys for v in k])
+        ph2 = ",".join("(" + ",".join("?" * len(cols)) + ")" for _ in part)
+        query(f"INSERT INTO {table} ({','.join(cols)}) VALUES {ph2}",
+              [v for r in part for v in (r.get(c) for c in cols)])
+        n += len(part)
+    return n
+
+
+# --------------------------------------------------------- typed row helpers
+def upsert_teams(rows: list[dict]) -> int:
+    return _upsert("teams", ["team_id", "name", "abbr", "conference", "first_season"],
+                   rows, ["team_id"], ["name", "abbr", "conference"])
+
+
+def upsert_stat_observations(rows: list[dict]) -> int:
     now = datetime.now(timezone.utc).isoformat()
-    for part in _chunks(rows, chunk):
-        write_budget_ok(len(part))
-        for r in part:
-            query("INSERT INTO stat_observations "
-                  "(subject_type,subject_id,season,week,stat_key,value,source,recorded_at) "
-                  "VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(subject_type,subject_id,season,stat_key,week) "
-                  "DO UPDATE SET value=excluded.value, source=excluded.source, recorded_at=excluded.recorded_at",
-                  [r.get("subject_type", "team"), r.get("subject_id"), r.get("season"),
-                   r.get("week", 0), r.get("stat_key"), r.get("value"),
-                   r.get("source", "cfbd"), now])
-            n += 1
-    return n
+    for r in rows:
+        r.setdefault("subject_type", "team")
+        r.setdefault("source", "cfbd")
+        r.setdefault("week", 0)
+        r.setdefault("recorded_at", now)
+    return _upsert("stat_observations",
+                   ["subject_type", "subject_id", "season", "week", "stat_key",
+                    "value", "source", "recorded_at"],
+                   rows, ["subject_type", "subject_id", "season", "stat_key", "week"],
+                   ["value", "source", "recorded_at"])
 
 
-def append_odds_snapshots(rows: list[dict], chunk: int = 500) -> int:
-    """rows: {game_id,book,spread_home,total,home_ml,away_ml,poll_ts}. Append-only."""
-    n = 0
-    for part in _chunks(rows, chunk):
-        write_budget_ok(len(part))
-        for r in part:
-            query("INSERT INTO odds_snapshots "
-                  "(game_id,book,spread_home,total,home_ml,away_ml,poll_ts) VALUES (?,?,?,?,?,?,?)",
-                  [r.get("game_id"), r.get("book"), r.get("spread_home"), r.get("total"),
-                   r.get("home_ml"), r.get("away_ml"),
-                   r.get("poll_ts") or datetime.now(timezone.utc).isoformat()])
-            n += 1
-    return n
+def upsert_games(rows: list[dict]) -> int:
+    return _upsert("games",
+                   ["game_id", "season", "week", "home_id", "away_id", "kickoff",
+                    "home_score", "away_score", "status", "venue", "neutrality"],
+                   rows, ["game_id"],
+                   ["home_score", "away_score", "status", "kickoff", "venue", "neutrality"])
 
 
-def upsert_rankings_daily(rows: list[dict], chunk: int = 500) -> int:
-    """rows: {team_id,date,composite,rank,model_version,season,week}."""
-    n = 0
-    for part in _chunks(rows, chunk):
-        write_budget_ok(len(part))
-        for r in part:
-            query("INSERT INTO rankings_daily "
-                  "(team_id,date,composite,rank,model_version,season,week) VALUES (?,?,?,?,?,?,?)",
-                  [r.get("team_id"), r.get("date"), r.get("composite"), r.get("rank"),
-                   r.get("model_version"), r.get("season"), r.get("week")])
-            n += 1
-    return n
+def append_odds_snapshots(rows: list[dict]) -> int:
+    now = datetime.now(timezone.utc).isoformat()
+    for r in rows:
+        r.setdefault("poll_ts", now)
+    return _upsert("odds_snapshots",
+                   ["game_id", "book", "spread_home", "total", "home_ml", "away_ml", "poll_ts"],
+                   rows, None, None)
 
 
-def upsert_closing_lines(rows: list[dict], chunk: int = 500) -> int:
-    """rows: {game_id,book,spread_home,total,home_moneyline,away_moneyline}."""
-    n = 0
-    for part in _chunks(rows, chunk):
-        write_budget_ok(len(part))
-        for r in part:
-            query("DELETE FROM closing_lines WHERE game_id=? AND book=?",
-                  [r.get("game_id"), r.get("book")])
-            query("INSERT INTO closing_lines "
-                  "(game_id,book,spread_home,total,home_moneyline,away_moneyline,captured_at) "
-                  "VALUES (?,?,?,?,?,?,?)",
-                  [r.get("game_id"), r.get("book"), r.get("spread_home"), r.get("total"),
-                   r.get("home_moneyline"), r.get("away_moneyline"),
-                   datetime.now(timezone.utc).isoformat()])
-            n += 1
-    return n
+def upsert_rankings_daily(rows: list[dict]) -> int:
+    return _replace_by("rankings_daily", ["team_id", "date"],
+                       ["team_id", "date", "composite", "rank", "model_version", "season", "week"],
+                       rows)
 
 
-def insert_model_predictions(rows: list[dict], chunk: int = 500) -> int:
-    """rows: {game_id,model_version,predicted_margin_home,predicted_total,win_prob_home}.
-    Caller MUST reject rows created after kickoff (D1_RISK_REGISTER D2)."""
-    n = 0
-    for part in _chunks(rows, chunk):
-        write_budget_ok(len(part))
-        for r in part:
-            query("INSERT INTO model_predictions "
-                  "(game_id,model_version,predicted_margin_home,predicted_total,win_prob_home,created_at) "
-                  "VALUES (?,?,?,?,?,?)",
-                  [r.get("game_id"), r.get("model_version"), r.get("predicted_margin_home"),
-                   r.get("predicted_total"), r.get("win_prob_home"),
-                   datetime.now(timezone.utc).isoformat()])
-            n += 1
-    return n
+def upsert_closing_lines(rows: list[dict]) -> int:
+    now = datetime.now(timezone.utc).isoformat()
+    for r in rows:
+        r.setdefault("captured_at", now)
+    return _replace_by("closing_lines", ["game_id", "book"],
+                       ["game_id", "book", "spread_home", "total",
+                        "home_moneyline", "away_moneyline", "captured_at"], rows)
+
+
+def insert_model_predictions(rows: list[dict]) -> int:
+    now = datetime.now(timezone.utc).isoformat()
+    for r in rows:
+        r.setdefault("created_at", now)
+    return _replace_by("model_predictions", ["game_id", "model_version"],
+                       ["game_id", "model_version", "predicted_margin_home",
+                        "predicted_total", "win_prob_home", "created_at"], rows)
 
 
 def health() -> dict:
