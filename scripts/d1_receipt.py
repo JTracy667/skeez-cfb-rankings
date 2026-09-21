@@ -15,9 +15,8 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, REPO)
 import d1_store  # noqa: E402
 
-TABLES = ["teams", "games", "stat_observations", "closing_lines",
-          "rankings_daily", "odds_snapshots", "model_predictions",
-          "raw_payloads", "stat_map"]
+TABLES = ["teams", "players", "games", "stat_observations", "closing_lines",
+          "odds_snapshots", "rankings_daily", "model_predictions", "raw_payloads"]
 
 
 def _bootstrap_token() -> None:
