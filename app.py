@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 import httpx
 
 import cfbd_shared  # shared CFBD client (side-effect free) — see no-parallel-impl directive
+import d1_write_path  # D1 live write-path (gated by D1_WRITE_ENABLED; never breaks the site)
 import uvicorn
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -414,6 +415,9 @@ def refresh_all() -> dict:
         odds_map = _fetch_odds_live()
         result["odds_refreshed"] = bool(odds_map)
         result["line_movements"] = _snapshot_lines(odds_map)
+        # D1 live write-path: append this poll to odds_snapshots (no-op unless
+        # D1_WRITE_ENABLED; never raises into the refresh).
+        result["d1_odds_rows"] = d1_write_path.snapshot_odds(odds_map, _normalize_team_name)
     except Exception as e:
         print(f"[refresh] odds refresh failed: {e}")
     try:
