@@ -9,6 +9,10 @@ export class CFBPowerRankings extends Container {
 		CFBD_API_KEY: env.CFBD_API_KEY,
 		PROPLINE_API_KEY: env.PROPLINE_API_KEY,
 		THE_ODDS_API_KEY: env.THE_ODDS_API_KEY,
+		// Match the Render service (render.yaml) so the cutover does not silently
+		// slow the odds/grading refresh from hourly to app.py's 6h default — the
+		// line-movement log and CLV tracking depend on that cadence.
+		REFRESH_INTERVAL_SECONDS: "3600",
 	};
 }
 
