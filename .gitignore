@@ -46,3 +46,8 @@ data/best_line_ts.json
 data/last_cache_warm.json
 data/last_cache_warm_error.json
 .admin_token
+
+# D1 backfill runtime state (resume artifacts — they churn every chunk)
+data/backfill.lock
+data/backfill_checkpoint.json
+logs/

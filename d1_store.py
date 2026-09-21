@@ -13,6 +13,11 @@ PERFORMANCE: writes are BATCHED — one HTTP request per ~400 rows (multi-row
 VALUES / IN-list), never one request per row. A 190K-row backfill is ~500
 requests, not 190K.
 
+WRITE ACCOUNTING (CEO directive 2026-09-21): the counter of record is the D1 API
+RESPONSE itself (`meta.rows_written` / `meta.changes`). We never infer a write
+from the local side: a batch the API reports as 0 rows written raises
+ConfirmedWriteError, so a "done" chunk can never mean "wrote nothing".
+
 Additive + safe: nothing here runs until a caller imports it. Callers must fall
 back to local cache on failure (D1_RISK_REGISTER B4). The budget guard enforces
 the D1 row-WRITE cap (free tier 100K/day; backfill <= 90K, leaving live headroom).
@@ -77,6 +82,10 @@ class BudgetExceeded(RuntimeError):
     pass
 
 
+class ConfirmedWriteError(RuntimeError):
+    """D1 reported 0 rows written for a batch that had rows to write."""
+
+
 def ledger_written() -> int:
     return _load_ledger()["rows_written"]
 
@@ -103,9 +112,27 @@ def write_budget_ok(n_rows: int, daily_cap: int | None = None) -> None:
     commit_writes(n_rows)
 
 
+def confirmed_writes(meta: dict | None) -> int:
+    """Rows the D1 API ITSELF reports as written for one statement.
+
+    NO local fallback by design: if the API does not say it wrote rows, it did not
+    write rows. This is what makes the counter trustworthy.
+    """
+    if not meta:
+        return 0
+    v = meta.get("rows_written")
+    if v is None:
+        v = meta.get("changes")
+    try:
+        return int(v or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 # ------------------------------------------------------------------------- core
-def query(sql: str, params: list | None = None, timeout: int = 60) -> list[dict]:
-    """Run one SQL statement. Returns the result rows (list of dicts)."""
+def query_full(sql: str, params: list | None = None, timeout: int = 60) -> tuple[list[dict], dict]:
+    """Run one SQL statement. Returns (rows, meta) — `meta` is the D1 API's OWN
+    accounting for the statement (changes / rows_written / rows_read)."""
     body = json.dumps({"sql": sql, "params": params or []}).encode()
     req = urllib.request.Request(_api_url(), data=body, method="POST",
                                  headers={"Authorization": f"Bearer {_token()}",
@@ -133,9 +160,15 @@ def query(sql: str, params: list | None = None, timeout: int = 60) -> list[dict]
         raise RuntimeError(f"D1 error: {payload.get('errors')}")
     global LAST_META
     res = payload.get("result") or []
-    if res and isinstance(res[0], dict):
-        LAST_META = res[0].get("meta") or {}
-    return (res[0].get("results") if res else []) or []
+    meta = (res[0].get("meta") or {}) if (res and isinstance(res[0], dict)) else {}
+    LAST_META = meta
+    return ((res[0].get("results") if res else []) or []), meta
+
+
+def query(sql: str, params: list | None = None, timeout: int = 60) -> list[dict]:
+    """Back-compat wrapper: rows only."""
+    rows, _ = query_full(sql, params, timeout)
+    return rows
 
 
 def _chunks(rows: list, n: int = CHUNK):
@@ -146,7 +179,8 @@ def _chunks(rows: list, n: int = CHUNK):
 def _upsert(table: str, cols: list[str], rows: list[dict],
             conflict: list[str] | None, update: list[str] | None) -> int:
     """One batched multi-row INSERT per chunk (idempotent when conflict given).
-    D1 caps bound parameters at 100/query -> chunk by column count."""
+    D1 caps bound parameters at 100/query -> chunk by column count.
+    Returns CONFIRMED rows written (from the D1 response), not planned rows."""
     n = 0
     for part in _chunks(rows, max(1, 100 // len(cols))):
         assert_headroom(len(part))
@@ -156,28 +190,38 @@ def _upsert(table: str, cols: list[str], rows: list[dict],
             sql += (f" ON CONFLICT({','.join(conflict)}) DO UPDATE SET "
                     + ",".join(f"{c}=excluded.{c}" for c in update))
         params = [v for r in part for v in (r.get(c) for c in cols)]
-        query(sql, params)
-        commit_writes(LAST_META.get("rows_written") or len(part))
-        n += len(part)
+        _, meta = query_full(sql, params)
+        confirmed = confirmed_writes(meta)
+        if confirmed <= 0:
+            raise ConfirmedWriteError(
+                f"{table}: D1 confirmed 0 rows written for a {len(part)}-row batch (meta={meta})")
+        commit_writes(confirmed)
+        n += confirmed
     return n
 
 
 def _replace_by(table: str, key_cols: list[str], cols: list[str], rows: list[dict]) -> int:
     """For tables with no unique index: delete the chunk's keys, then batched insert.
-    D1 caps bound parameters at 100/query -> chunk by the widest column list."""
+    D1 caps bound parameters at 100/query -> chunk by the widest column list.
+    Returns CONFIRMED rows written (delete + insert), from the D1 responses."""
     n = 0
     step = max(1, 100 // max(len(cols), len(key_cols)))
     for part in _chunks(rows, step):
         assert_headroom(len(part))
         keys = sorted({tuple(r.get(c) for c in key_cols) for r in part})
         ph = ",".join("(" + ",".join("?" * len(key_cols)) + ")" for _ in keys)
-        query(f"DELETE FROM {table} WHERE ({','.join(key_cols)}) IN ({ph})",
-              [v for k in keys for v in k])
+        _, meta_del = query_full(f"DELETE FROM {table} WHERE ({','.join(key_cols)}) IN ({ph})",
+                                 [v for k in keys for v in k])
         ph2 = ",".join("(" + ",".join("?" * len(cols)) + ")" for _ in part)
-        query(f"INSERT INTO {table} ({','.join(cols)}) VALUES {ph2}",
-              [v for r in part for v in (r.get(c) for c in cols)])
-        commit_writes(LAST_META.get("rows_written") or len(part))
-        n += len(part)
+        _, meta_ins = query_full(f"INSERT INTO {table} ({','.join(cols)}) VALUES {ph2}",
+                                 [v for r in part for v in (r.get(c) for c in cols)])
+        confirmed = confirmed_writes(meta_del) + confirmed_writes(meta_ins)
+        if confirmed <= 0:
+            raise ConfirmedWriteError(
+                f"{table}: D1 confirmed 0 rows written for a {len(part)}-row replace "
+                f"(del={meta_del} ins={meta_ins})")
+        commit_writes(confirmed)
+        n += confirmed
     return n
 
 

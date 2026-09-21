@@ -8,14 +8,24 @@ FIXES over v1 (2026-09-21, both found by post-run verification):
   * CFBD ratings/stats endpoints key by team NAME, not teamId -> build a
     name->team_id map from /teams and REQUIRE a match. Unmatched names are
     counted and reported, never silently written with a NULL id.
-  * A chunk is only marked done if it wrote rows -> no more "season_stats done,
-    0 rows written".
+  * A chunk is only marked done if it CONFIRMED writes -> no more "season_stats
+    done, 0 rows written".
   * Single-runner LOCK file -> two backfills cannot race the checkpoint.
-  * cfbd_calls counted in memory; checkpoint saved once per chunk (kills the
-    load/save race that produced duplicate 'done' entries).
+  * cfbd_calls counted in memory; checkpoint saved once per chunk.
+
+COUNTER (CEO directive 2026-09-21): `rows_written` is the sum of rows the D1 API
+confirmed it wrote (`d1_store.confirmed_writes` off the response meta). There is
+no local fallback. A chunk that fetched data but confirmed ZERO writes FAILS —
+it is recorded under `failed` in the checkpoint, is NOT marked done, and the run
+exits non-zero. Only a chunk whose CFBD source returned nothing at all is
+recorded as `no_data` (nothing to write) and skipped without failing the run.
+
+RUNNING: takes a PID-aware lock, so a killed run's stale lock is stolen instead
+of blocking the resume. Intended to be launched DETACHED (background) so a turn
+timeout can never kill it:  nohup python -u run_all.py > logs/backfill.log 2>&1 &
 
 Guarantees: checkpoint per (season, endpoint); resume never restart; idempotent;
-D1 90K row-writes/day guard; CFBD budget counter logged per run.
+D1 90K row-writes/day guard; CFBD + D1 budget counters logged per chunk.
 """
 from __future__ import annotations
 
@@ -24,8 +34,6 @@ import json
 import os
 import sys
 import time
-import urllib.error
-import urllib.request
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -35,26 +43,32 @@ import cfbd_shared  # noqa: E402 — the SHARED CFBD client (also used by app.py
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CKPT = os.path.join(REPO, "data", "backfill_checkpoint.json")
 LOCK = os.path.join(REPO, "data", "backfill.lock")
-CFBD_BASE = "https://api.collegefootballdata.com"
 SEASONS = [2021, 2022, 2023, 2024, 2025, 2026]
 THROTTLE = 0.30
 MAX_WEEK = 16
 
-KEY = None
-CALLS = 0
+CALLS = 0           # CFBD requests this run
+SRC_ROWS = 0        # rows the CURRENT chunk's CFBD calls returned
+ROWS_WRITTEN = 0    # rows D1 CONFIRMED writing this run
 NAME2ID: dict[str, int] = {}
 UNMATCHED: list[str] = []
 
 
-def cfbd(path: str, params: dict | None = None, tries: int = 4):
+def _ts() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def cfbd(path: str, params: dict | None = None):
     """Thin adapter over the SHARED CFBD client (cfbd_shared.cfbd_get) — the same
     client the live app uses. `params` map onto its extra query kwargs."""
-    global CALLS
+    global CALLS, SRC_ROWS
     p = dict(params or {})
     year = p.pop("year", SEASONS[-1])
     CALLS += 1
     time.sleep(THROTTLE)          # backfill-specific pacing (the app polls hourly)
-    return cfbd_shared.cfbd_get(path, year=year, **p)
+    data = cfbd_shared.cfbd_get(path, year=year, **p) or []
+    SRC_ROWS += len(data)
+    return data
 
 
 # ------------------------------------------------------------------ checkpoint
@@ -70,9 +84,10 @@ def _save(c: dict) -> None:
     os.makedirs(os.path.dirname(CKPT), exist_ok=True)
     c["done"] = sorted(set(c.get("done", [])))
     c["cfbd_calls"] = CALLS
-    c["rows_written"] = d1_store.ledger_written()   # ACTUAL confirmed writes, from D1 meta
+    c["rows_written"] = ROWS_WRITTEN            # CONFIRMED by the D1 API, this run
+    c["d1_ledger_written"] = d1_store.ledger_written()   # day total, D1-confirmed
     if not c.get("started"):
-        c["started"] = datetime.now(timezone.utc).isoformat()
+        c["started"] = _ts()
     with open(CKPT, "w", encoding="utf-8") as f:
         json.dump(c, f, indent=2)
 
@@ -88,12 +103,13 @@ def _tid(name: str | None):
 
 
 def load_name_map(season: int) -> None:
-    """REUSE the live app's team matcher (app._cfbd_teams -> {school: team}).
+    """REUSE the live app's team matcher (cfbd_shared.teams_by_name -> {school: team}).
     Loaded independently of the teams chunk so a resumed run still maps names."""
     for school, t in (cfbd_shared.teams_by_name() or {}).items():
         if t.get("id"):
             NAME2ID.setdefault(school, t["id"])
-    print(f"  name->id map loaded from cfbd_shared.teams_by_name(): {len(NAME2ID)} teams")
+    print(f"  name->id map loaded from cfbd_shared.teams_by_name(): {len(NAME2ID)} teams",
+          flush=True)
 
 
 # ------------------------------------------------------------------- workers
@@ -140,7 +156,7 @@ def do_lines(season: int) -> int:
 
 
 def do_ratings(season: int) -> int:
-    obs, now = [], datetime.now(timezone.utc).isoformat()
+    obs, now = [], _ts()
     for ep, key, field in [("ratings/elo", "elo", "elo"),
                            ("ratings/sp", "sp_plus", "rating"),
                            ("ratings/sp", "sp_plus_rk", "ranking"),
@@ -160,7 +176,7 @@ def do_ratings(season: int) -> int:
 
 
 def do_season_stats(season: int) -> int:
-    now = datetime.now(timezone.utc).isoformat()
+    now = _ts()
     obs = []
     for t in cfbd("stats/season", {"year": season}) or []:
         tid = _tid(t.get("team"))
@@ -180,41 +196,103 @@ JOBS = [("teams", seed_teams), ("games", do_games), ("lines", do_lines),
         ("ratings", do_ratings), ("season_stats", do_season_stats)]
 
 
-def run(seasons: list[int]) -> None:
+# ----------------------------------------------------------------------- lock
+def _pid_alive(pid: int) -> bool:
+    if os.name == "nt":
+        import subprocess
+        try:
+            out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"],
+                                 capture_output=True, text=True, timeout=15).stdout
+            return str(pid) in out
+        except Exception:  # noqa: BLE001
+            return True          # cannot tell -> assume alive (safe)
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
+def _take_lock() -> bool:
+    """Single-runner lock. A lock left by a DEAD process is stolen (that stale lock
+    is what blocked the first resume after the turn-kill)."""
     if os.path.exists(LOCK):
-        print(f"REFUSING: lock {LOCK} exists (another backfill running?). Remove to force.")
-        return
-    with open(LOCK, "w") as f:
+        try:
+            old = int(open(LOCK, encoding="utf-8").read().strip() or "0")
+        except Exception:  # noqa: BLE001
+            old = 0
+        if old and old != os.getpid() and _pid_alive(old):
+            print(f"REFUSING: lock {LOCK} held by live pid {old} (another backfill running).",
+                  flush=True)
+            return False
+        print(f"stealing stale lock {LOCK} (pid {old} is gone)", flush=True)
+    with open(LOCK, "w", encoding="utf-8") as f:
         f.write(str(os.getpid()))
+    return True
+
+
+# ------------------------------------------------------------------------ run
+def run(seasons: list[int]) -> int:
+    global SRC_ROWS, ROWS_WRITTEN
+    if not _take_lock():
+        return 2
     try:
         load_name_map(max(seasons) if seasons else SEASONS[-1])
         ck = _load()
+        ck.setdefault("chunks", {})
+        ck.setdefault("failed", {})
+        ck.setdefault("no_data", [])
         for season in seasons:
             for name, fn in JOBS:
                 tag = f"{season}:{name}"
                 if tag in ck["done"]:
-                    print(f"  skip {tag} (already done)")
+                    print(f"  skip {tag} (already done)", flush=True)
                     continue
+                SRC_ROWS = 0
                 try:
                     n = fn(season)
                 except d1_store.BudgetExceeded as e:
-                    print(f"  STOP: D1 budget hit on {tag}: {e}")
-                    print("  checkpoint saved; re-run tomorrow to resume.")
-                    return
-                if n == 0:
-                    print(f"  WARN {tag}: wrote 0 rows -> NOT marking done")
+                    print(f"  STOP: D1 daily write cap on {tag}: {e}", flush=True)
                     _save(ck)
-                    continue
-                ck = _load()
+                    print(f"  checkpoint saved; re-run to resume (rows_written={ROWS_WRITTEN}).",
+                          flush=True)
+                    return 0
+                except Exception as e:  # noqa: BLE001 — a chunk that cannot confirm its
+                    # writes is a FAILURE, never a silent 'done'.
+                    ck.setdefault("failed", {})[tag] = f"{type(e).__name__}: {e}"
+                    _save(ck)
+                    print(f"  FAIL {tag}: {type(e).__name__}: {e}", flush=True)
+                    print(f"  chunk NOT marked done; run aborted (rows_written={ROWS_WRITTEN}).",
+                          flush=True)
+                    return 1
+                ROWS_WRITTEN += n
+                if n == 0:
+                    if SRC_ROWS == 0:
+                        if tag not in ck["no_data"]:
+                            ck["no_data"].append(tag)
+                        _save(ck)
+                        print(f"  no-data {tag}: source returned 0 rows -> nothing to write",
+                              flush=True)
+                        continue
+                    ck.setdefault("failed", {})[tag] = (
+                        f"0 confirmed writes for {SRC_ROWS} source rows")
+                    _save(ck)
+                    print(f"  FAIL {tag}: source returned {SRC_ROWS} rows but D1 confirmed 0 "
+                          f"writes -> NOT marking done", flush=True)
+                    return 1
+                ck = _load()                       # re-read: survive a concurrent run
                 ck.setdefault("done", []).append(tag)
+                ck.setdefault("chunks", {})[tag] = {"confirmed": n, "at": _ts()}
+                ck.get("failed", {}).pop(tag, None)
                 _save(ck)
-                print(f"  {tag}: {n} rows  [cfbd_calls={CALLS}]")
-        c = _load()
-        c["rows_written"] = d1_store.ledger_written()
-        _save(c)
-        print(f"\nDONE. done-chunks={len(c['done'])} cfbd_calls={CALLS} rows_written={c['rows_written']}")
+                print(f"  {tag}: {n} rows confirmed  [cfbd_calls={CALLS} "
+                      f"rows_written={ROWS_WRITTEN} d1_today={d1_store.ledger_written()}]",
+                      flush=True)
+        print(f"\nDONE. done-chunks={len(_load()['done'])} cfbd_calls={CALLS} "
+              f"rows_written={ROWS_WRITTEN} d1_today={d1_store.ledger_written()}", flush=True)
         if UNMATCHED:
-            print(f"UNMATCHED team names (skipped): {sorted(set(UNMATCHED))}")
+            print(f"UNMATCHED team names (skipped): {sorted(set(UNMATCHED))}", flush=True)
+        return 0
     finally:
         try:
             os.remove(LOCK)
@@ -230,7 +308,7 @@ def main() -> None:
     if a.status:
         print(json.dumps(_load(), indent=2))
         return
-    run(a.seasons)
+    sys.exit(run(a.seasons))
 
 
 if __name__ == "__main__":
