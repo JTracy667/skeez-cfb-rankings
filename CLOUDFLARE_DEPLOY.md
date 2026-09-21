@@ -24,16 +24,23 @@ the app runs exactly as it does locally. Deployed domain: **SkeezCFB-Rankings.co
 ## Deploy
 
 ```bash
-cd C:\Users\JeffTracy\Desktop\cfb-power-rankings
+cd C:\Users\jtracy\dev\cfb-power-rankings
 npm i                    # install wrangler + containers SDK
 npx wrangler login       # one-time browser auth
 # Set your API keys as Worker secrets (never commit .env!)
 npx wrangler secret put CFBD_API_KEY
 npx wrangler secret put PROPLINE_API_KEY
 npx wrangler secret put THE_ODDS_API_KEY
-# Build image + push + deploy
+# Build + push the container image FIRST, then deploy the Worker.
+# `wrangler deploy` alone does NOT build the image — rolling out a tag that is
+# not in the registry fails with IMAGE_REGISTRY_DOESNT_CONTAIN_IMAGE.
+npx wrangler containers build . --tag cfb-power-rankings:v<N> --push
 npx wrangler deploy
 ```
+
+Non-interactive alternative to `wrangler login`: export `CLOUDFLARE_API_TOKEN`
+(account-scoped token with Workers + Containers write). `wrangler whoami` must
+show account `90c2c31beec12cb7de1c249ade1eb773` — the same account as the zone.
 
 Your app will be live at `https://cfb-power-rankings.<your-subdomain>.workers.dev`.
 Add your custom domain in the Cloudflare dashboard: **Workers & Pages → your worker
@@ -72,3 +79,34 @@ curl http://localhost:8004/api/health   # {"status":"ok","teams":25,...}
 - **CORS**: pages and API are served same-origin through the Worker (no CORS
   needed). If you add a custom domain or a Pages frontend, set the `CORS_ORIGINS`
   env var (comma-separated) — the app's allowlist reads it at startup.
+
+## Refresh parity — the analytics anchor (Sep 20 2026)
+
+The app re-pulls CFBD ratings (SP+/Elo/FPI/talent) at **Sun/Mon/Tue/Wed
+21:00 America/Los_Angeles** (`_ANALYTICS_ANCHORS`, `_PT_TZ` in app.py). Jeff's
+correction: the anchor is 9pm PACIFIC; the original 21:00 ET fired at 6pm PT.
+
+This host cannot rely on app.py's background scheduler thread for that:
+`sleepAfter = "20m"` stops the thread whenever traffic stops, so a pull would
+happen only when something woke the container. Hence:
+
+- `src/index.js` has a `scheduled()` handler that POSTs
+  `/api/analytics/refresh-if-due` (idempotent, anchor-gated — same check the
+  in-process scheduler uses, so it never double-pulls).
+- `wrangler.jsonc` registers crons **`0 4 * * 1,2,3,4`** and **`0 5 * * 1,2,3,4`**
+  (21:00 PT == 04:00Z PDT / 05:00Z PST; both hours are needed or the anchor is
+  missed for half the year; cron days are UTC — Sun 21:00 PT is Mon 04:00Z).
+- `GET /api/analytics/pull-status` exposes `last_pull_utc` / age / `due` so both
+  environments can be compared directly instead of inferring freshness from
+  cache-build timestamps inside payloads.
+
+**A new image only reaches a sleeping-or-new instance.** After
+`wrangler containers build --push` + `wrangler deploy`, a warm instance keeps
+serving the OLD image until it recycles (20m idle); verify with
+`/api/analytics/pull-status`, which only exists in v10+.
+
+**Cloudflare in front of the Worker blocks header-poor clients** (403
+`error code: 1010`) — requests with the bare `Python-urllib` signature are
+rejected while curl/browser requests pass. Any monitoring or script client must
+send a real `User-Agent` + `Accept`. Render (DNS-only) has no such filter, so
+this is a behaviour change to plan for at cutover.
