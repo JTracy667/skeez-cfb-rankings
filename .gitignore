@@ -38,6 +38,10 @@ Thumbs.db
 data/odds_cache.json
 _server*.log
 
+# Runtime artifacts written by the line store
+data/best_line_store.json
+data/best_line_ts.json
+
 # Nightly cache pre-warm heartbeat (local runtime artifact)
 data/last_cache_warm.json
 data/last_cache_warm_error.json
