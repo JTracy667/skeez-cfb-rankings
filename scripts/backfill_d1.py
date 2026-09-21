@@ -70,6 +70,7 @@ def _save(c: dict) -> None:
     os.makedirs(os.path.dirname(CKPT), exist_ok=True)
     c["done"] = sorted(set(c.get("done", [])))
     c["cfbd_calls"] = CALLS
+    c["rows_written"] = d1_store.ledger_written()   # ACTUAL confirmed writes, from D1 meta
     if not c.get("started"):
         c["started"] = datetime.now(timezone.utc).isoformat()
     with open(CKPT, "w", encoding="utf-8") as f:

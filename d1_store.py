@@ -29,6 +29,7 @@ from datetime import datetime, timezone
 ACCOUNT_ID = os.environ.get("CF_ACCOUNT_ID", "90c2c31beec12cb7de1c249ade1eb773")
 D1_DB_ID = os.environ.get("CF_D1_DB_ID", "c3ec3149-cc85-483b-b727-5a18e3d5a1b9")
 CHUNK = 400
+LAST_META: dict = {}   # meta of the most recent D1 query (carries rows_written)
 
 
 def _token() -> str:
@@ -80,13 +81,26 @@ def ledger_written() -> int:
     return _load_ledger()["rows_written"]
 
 
-def write_budget_ok(n_rows: int, daily_cap: int | None = None) -> None:
+def assert_headroom(n_rows: int, daily_cap: int | None = None) -> None:
+    """Refuse to START a write that would exceed the daily cap (check only)."""
     cap = daily_cap if daily_cap is not None else int(os.environ.get("D1_DAILY_WRITE_CAP", "90000"))
     led = _load_ledger()
     if led["rows_written"] + n_rows > cap:
         raise BudgetExceeded(f"D1 daily write budget: {led['rows_written']}+{n_rows} > {cap}")
-    led["rows_written"] += n_rows
+
+
+def commit_writes(n_rows: int) -> None:
+    """Record ACTUAL confirmed writes — taken from the D1 response's meta.rows_written,
+    never a local guess (CEO: counter must assert on the API response)."""
+    led = _load_ledger()
+    led["rows_written"] += int(n_rows)
     _save_ledger(led)
+
+
+def write_budget_ok(n_rows: int, daily_cap: int | None = None) -> None:
+    """Check + optimistically commit (for simple callers with no meta to read)."""
+    assert_headroom(n_rows, daily_cap)
+    commit_writes(n_rows)
 
 
 # ------------------------------------------------------------------------- core
@@ -117,7 +131,10 @@ def query(sql: str, params: list | None = None, timeout: int = 60) -> list[dict]
         raise RuntimeError(f"D1 unreachable after retries: {last}")
     if not payload.get("success"):
         raise RuntimeError(f"D1 error: {payload.get('errors')}")
+    global LAST_META
     res = payload.get("result") or []
+    if res and isinstance(res[0], dict):
+        LAST_META = res[0].get("meta") or {}
     return (res[0].get("results") if res else []) or []
 
 
@@ -132,7 +149,7 @@ def _upsert(table: str, cols: list[str], rows: list[dict],
     D1 caps bound parameters at 100/query -> chunk by column count."""
     n = 0
     for part in _chunks(rows, max(1, 100 // len(cols))):
-        write_budget_ok(len(part))
+        assert_headroom(len(part))
         ph = ",".join("(" + ",".join("?" * len(cols)) + ")" for _ in part)
         sql = f"INSERT INTO {table} ({','.join(cols)}) VALUES {ph}"
         if conflict and update:
@@ -140,6 +157,7 @@ def _upsert(table: str, cols: list[str], rows: list[dict],
                     + ",".join(f"{c}=excluded.{c}" for c in update))
         params = [v for r in part for v in (r.get(c) for c in cols)]
         query(sql, params)
+        commit_writes(LAST_META.get("rows_written") or len(part))
         n += len(part)
     return n
 
@@ -150,7 +168,7 @@ def _replace_by(table: str, key_cols: list[str], cols: list[str], rows: list[dic
     n = 0
     step = max(1, 100 // max(len(cols), len(key_cols)))
     for part in _chunks(rows, step):
-        write_budget_ok(len(part))
+        assert_headroom(len(part))
         keys = sorted({tuple(r.get(c) for c in key_cols) for r in part})
         ph = ",".join("(" + ",".join("?" * len(key_cols)) + ")" for _ in keys)
         query(f"DELETE FROM {table} WHERE ({','.join(key_cols)}) IN ({ph})",
@@ -158,6 +176,7 @@ def _replace_by(table: str, key_cols: list[str], cols: list[str], rows: list[dic
         ph2 = ",".join("(" + ",".join("?" * len(cols)) + ")" for _ in part)
         query(f"INSERT INTO {table} ({','.join(cols)}) VALUES {ph2}",
               [v for r in part for v in (r.get(c) for c in cols)])
+        commit_writes(LAST_META.get("rows_written") or len(part))
         n += len(part)
     return n
 
