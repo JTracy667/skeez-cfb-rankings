@@ -236,6 +236,49 @@ def _take_lock() -> bool:
     return True
 
 
+# ------------------------------------------------------------------- done-check
+# A 'done' tag is a claim about the PAST. Verify it against the live DB before
+# trusting it: if the rows aren't there (someone emptied/rebuilt a table, a manual
+# delete, a botched migration), the chunk is REOPENED and re-run instead of being
+# silently skipped forever. (Found live: the games table was emptied while
+# 2021/2022/2023:games were still marked done -> resume would have skipped it.)
+VERIFY = {
+    "teams":        ("SELECT COUNT(*) AS n FROM teams", 200),
+    "games":        ("SELECT COUNT(*) AS n FROM games WHERE season=?", 50),
+    "lines":        ("SELECT COUNT(*) AS n FROM closing_lines", 10),
+    "ratings":      ("SELECT COUNT(*) AS n FROM stat_observations WHERE season=? "
+                     "AND stat_key IN ('elo','sp_plus','fpi')", 50),
+    "season_stats": ("SELECT COUNT(*) AS n FROM stat_observations WHERE season=? "
+                     "AND stat_key NOT IN ('elo','sp_plus','sp_plus_rk','fpi','talent_rating',"
+                     "'recruiting_class_rank')", 50),
+}
+
+
+def verify_done(ck: dict) -> list[str]:
+    """Drop 'done' tags whose data is NOT in D1 right now; return the reopened tags."""
+    reopened = []
+    for tag in list(ck.get("done", [])):
+        season_s, _, name = tag.partition(":")
+        sql, minimum = VERIFY.get(name, (None, 0))
+        if not sql:
+            continue
+        try:
+            n = (d1_store.query(sql, None if "?" not in sql else [int(season_s)])
+                 or [{"n": 0}])[0]["n"]
+        except Exception as e:  # noqa: BLE001 — a failed check must not reopen blindly
+            print(f"  verify {tag}: check failed ({e}) -> keeping the marker", flush=True)
+            continue
+        if n < minimum:
+            reopened.append(tag)
+            print(f"  REOPEN {tag}: marked done but D1 holds only {n} rows (< {minimum}) "
+                  f"-> re-running", flush=True)
+    for tag in reopened:
+        ck["done"].remove(tag)
+    if reopened:
+        ck["reopened"] = sorted(set(ck.get("reopened", [])) | set(reopened))
+    return reopened
+
+
 # ------------------------------------------------------------------------ run
 def run(seasons: list[int]) -> int:
     global SRC_ROWS, ROWS_WRITTEN
@@ -247,6 +290,8 @@ def run(seasons: list[int]) -> int:
         ck.setdefault("chunks", {})
         ck.setdefault("failed", {})
         ck.setdefault("no_data", [])
+        if verify_done(ck):            # 'done' must be true of the LIVE DB, not history
+            _save(ck)
         for season in seasons:
             for name, fn in JOBS:
                 tag = f"{season}:{name}"
