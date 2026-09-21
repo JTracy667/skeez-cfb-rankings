@@ -35,6 +35,13 @@ CAP = int(os.environ.get("D1_DAILY_WRITE_CAP", "90000"))
 LEDGER = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
                       "hermes", "d1_write_ledger.json")
 POLL = 60
+# A chunk writes in ~batch-sized steps and can need thousands of rows, so the
+# supervisor must treat "within RESERVE of the cap" as capped — otherwise the
+# worker bails out of assert_headroom, exits 0, and this loop relaunches it
+# forever (observed 2026-09-21: ledger parked at 89,990/90,000, a relaunch every
+# 5s for hours). The worker's own limit is `ledger + batch > cap`.
+RESERVE = int(os.environ.get("D1_CAP_RESERVE", "2000"))
+NO_PROGRESS_LIMIT = 3   # consecutive rc=0 worker runs that advance nothing
 
 
 def log(msg: str) -> None:
@@ -108,6 +115,7 @@ def launch_worker() -> int:
 def main() -> int:
     log(f"supervisor up; {len(EXPECTED)} expected chunks")
     last_state = None
+    no_progress = 0
     while True:
         ck = load_json(CKPT, {})
         done = set(ck.get("done", [])) | set(ck.get("no_data", []))
@@ -132,14 +140,30 @@ def main() -> int:
 
         day, written = ledger_state()
         today_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        if day == today_utc and written >= CAP:
-            sleep_until_next_utc_day(f"D1 daily write cap reached ({written}/{CAP})")
+        if day == today_utc and written >= CAP - RESERVE:
+            sleep_until_next_utc_day(
+                f"D1 daily write cap reached ({written}/{CAP}, reserve {RESERVE})")
+            no_progress = 0
             continue
 
         log(f"no worker alive; {len(done)}/{len(EXPECTED)} done, resuming at {missing[0]} "
             f"(d1_today={written})")
+        before = len(done)
         rc = launch_worker()
-        log(f"worker exited rc={rc}; checkpoint={len(load_json(CKPT, {}).get('done', []))} done")
+        after = len(load_json(CKPT, {}).get("done", []))
+        log(f"worker exited rc={rc}; checkpoint={after} done")
+        if rc == 0 and after <= before:
+            no_progress += 1
+            if no_progress >= NO_PROGRESS_LIMIT:
+                # Worker keeps exiting cleanly without landing a chunk: the daily
+                # write cap (or another blocker) — do not spin, wait for the reset.
+                sleep_until_next_utc_day(
+                    f"worker made no progress in {no_progress} runs "
+                    f"({after} chunks done, d1_today={ledger_state()[1]})")
+                no_progress = 0
+                continue
+        else:
+            no_progress = 0
         if rc == 0 or rc == 1:
             time.sleep(5)          # rc=0: cap or complete; rc=1: failed -> handled next loop
         else:
