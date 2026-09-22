@@ -92,6 +92,11 @@ class RankingsResponse(BaseModel):
     season: int
     updated: str
     teams: list[Team]
+    # Which season each fallback-capable rating input was actually served from
+    # (e.g. {"srs": 2025} when CFBD has not published this season's SRS). Declared
+    # explicitly because this model does NOT allow extra keys, so an undeclared
+    # top-level field is silently dropped — which is exactly what happened first try.
+    input_vintages: dict = {}
 
 # ── App ──
 # Interactive docs are disabled on the public deploy: /openapi.json + /docs were
@@ -517,6 +522,7 @@ def run_weekly_analytics_pull() -> dict:
         if not analytics:
             print("[analytics] weekly pull returned no data; keeping existing cache")
             return summary
+        _save_rating_vintages()
         with open(_CFBD_ANALYTICS_FILE, "w") as f:
             json.dump(analytics, f, indent=2)
         _enrich_with_composite(analytics)
@@ -891,6 +897,61 @@ def _ap_rank_map() -> dict[str, int]:
 def _coaches_rank_map() -> dict[str, int]:
     return _poll_rank_map(_COACHES_NAME)
 
+def _rating_vintages(teams) -> dict:
+    """Which season each fallback-capable rating input was actually served from.
+
+    Three sources, weakest first, each overriding the previous:
+      1. data/rating_vintages.json — durable record, refreshed by the fetch path, and
+         the only source available when the served rows predate the vintage field.
+      2. the served rows themselves, which carry `srs_source_year` after a pull.
+      3. this process's fetch helpers — authoritative for a live pull.
+    Returns {} when unknown, so the UI shows NO vintage label rather than a wrong one.
+    Never guesses: a wrong label is worse than no label.
+    """
+    vintages: dict = {}
+    try:
+        with open(BASE_DIR / "data" / "rating_vintages.json") as f:
+            rec = json.load(f)
+        vintages = {k: v for k, v in rec.items() if isinstance(v, int)}
+    except Exception:
+        vintages = {}
+    # Rows beat the file: the rows are the data actually being served right now, while
+    # the file only records what some earlier pull saw. (Caught by the selftest — the
+    # first version had this backwards and silently reported a stale vintage.)
+    for t in (teams or []):
+        y = t.get("srs_source_year")
+        if y:
+            vintages["srs"] = y
+            break
+    vintages.update(RATING_SOURCE_YEARS)
+    return vintages
+
+
+def _save_rating_vintages() -> None:
+    """Persist which season each rating input was served from.
+
+    Called by the analytics fetch path right after a pull, so a later process that only
+    has the rows — or a baked seed — can still label the vintage honestly. Without this
+    the knowledge dies with the process that fetched it.
+    """
+    if not RATING_SOURCE_YEARS:
+        return
+    try:
+        rec = dict(RATING_SOURCE_YEARS)
+        try:
+            from datetime import timezone as _tz
+            rec["as_of_utc"] = datetime.now(_tz.utc).isoformat(timespec="seconds")
+        except Exception:
+            rec["as_of_utc"] = datetime.now().isoformat(timespec="seconds")
+        rec["detail"] = ("Updated by the analytics fetch path. A rating falls back to the "
+                         "previous season when CFBD has not published the current one.")
+        with open(BASE_DIR / "data" / "rating_vintages.json", "w") as f:
+            json.dump(rec, f, indent=2)
+            f.write("\n")
+    except Exception:
+        pass  # never let bookkeeping break a pull
+
+
 def get_rankings() -> RankingsResponse:
     """Return the Skeez CFB Rankings — the composite list.
 
@@ -970,6 +1031,7 @@ def get_rankings() -> RankingsResponse:
         "season": datetime.now().year,
         "updated": datetime.now().isoformat(),
         "teams": teams,
+        "input_vintages": _rating_vintages(teams),
     }
     _cache_set(_rankings_cache, result)
     return RankingsResponse(**result)
@@ -1136,6 +1198,10 @@ def api_analytics():
         "updated": datetime.now().isoformat(),
         "teams": teams,
         "source": "cfbd",
+        # Which season each fallback-capable rating input was actually served from.
+        # A consumer (or a freshness gate) can now tell a current-season value from a
+        # deliberate previous-season fallback instead of assuming recency.
+        "input_vintages": dict(RATING_SOURCE_YEARS),
     }
     _cache_set(_analytics_cache, result)
     return result
@@ -1243,25 +1309,44 @@ def _cfbd_recruiting() -> dict:
         data = _cfbd_get("recruiting/teams", CFBD_YEAR_FALLBACK)
     return {t["team"]: t for t in data}
 
+# Which SEASON each fallback-capable input was actually served from.
+#
+# srs / elo / talent fall back to the PREVIOUS season when the current season's endpoint
+# returns empty. Nothing recorded which happened, so a year-old value could be displayed
+# as if it were current — SRS was doing exactly that while carrying 12% of the composite
+# weight, and it was invisible on the analytics page. Consumers can now label the vintage
+# instead of implying it, and a freshness gate can distinguish "stale" from "by design".
+RATING_SOURCE_YEARS: dict = {}
+
+
 def _cfbd_talent() -> dict:
     """Fetch 247Sports Team Talent Composite (85-man full roster talent), falling back to 2025."""
     data = _cfbd_get("talent", CFBD_YEAR)
+    year = CFBD_YEAR
     if not data:
         data = _cfbd_get("talent", CFBD_YEAR_FALLBACK)
+        year = CFBD_YEAR_FALLBACK
+    RATING_SOURCE_YEARS["talent"] = year
     return {t["team"]: t for t in (data or [])}
 
 def _cfbd_srs() -> dict:
     """Fetch SRS ratings, falling back to 2025 if 2026 empty."""
     data = _cfbd_get("ratings/srs", CFBD_YEAR)
+    year = CFBD_YEAR
     if not data:
         data = _cfbd_get("ratings/srs", CFBD_YEAR_FALLBACK)
+        year = CFBD_YEAR_FALLBACK
+    RATING_SOURCE_YEARS["srs"] = year
     return {t["team"]: t for t in data}
 
 def _cfbd_elo() -> dict:
     """Fetch Elo ratings, falling back to 2025 if 2026 empty."""
     data = _cfbd_get("ratings/elo", CFBD_YEAR)
+    year = CFBD_YEAR
     if not data:
         data = _cfbd_get("ratings/elo", CFBD_YEAR_FALLBACK)
+        year = CFBD_YEAR_FALLBACK
+    RATING_SOURCE_YEARS["elo"] = year
     return {t["team"]: t for t in data}
 
 def _cfbd_records(year: int = CFBD_YEAR) -> dict:
@@ -3120,6 +3205,10 @@ def fetch_live_analytics():
                 "fpi_win_prob": round(fpi_win_prob, 1),
                 "cpi": round(cpi, 1),
                 "srs": round(srs_score, 2),
+                # Which season this value came from. Without it the UI cannot tell a
+                # current-season rating from a fallback — which is how a 2025 SRS was
+                # displayed as current while carrying 12% of the composite weight.
+                "srs_source_year": RATING_SOURCE_YEARS.get("srs"),
                 "elo": round(elo_rating, 1),
                 "recruiting_rank": rec_rank,
                 "recruiting_pts": round(rec_points, 2),
@@ -3199,6 +3288,7 @@ def api_analytics_fetch():
         # Do NOT touch the rankings cache — analytics lives in its own store
         analytics = fetch_live_analytics()
         if analytics:
+            _save_rating_vintages()
             # Persist to disk so the team map and future reads use fresh data
             try:
                 with open(_CFBD_ANALYTICS_FILE, "w") as f:

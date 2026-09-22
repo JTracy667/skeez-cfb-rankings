@@ -307,7 +307,16 @@ function renderFPI(filtered) {
 function renderSRS(filtered) {
   const list = filtered || teams;
   const sorted = [...list].sort((a, b) => val(b, 'srs', -999) - val(a, 'srs', -999));
-  let html = `<table><thead><tr><th>#</th><th>Team</th><th>SRS</th><th>SRS Rating</th></tr></thead><tbody>`;
+  // SRS falls back to the PREVIOUS season when CFBD has not published the current one.
+  // Label the vintage: an unlabelled year-old rating that carries 12% of the composite
+  // weight reads as current, which is exactly the confusion this prevents. Degrades to
+  // no label (never a wrong label) when the field is absent, e.g. an older disk cache.
+  const vintage = (list.find(t => t.srs_source_year) || {}).srs_source_year || null;
+  const lbl = vintage ? ` (${vintage})` : '';
+  const note = vintage
+    ? `<p class="metric-note">Showing <strong>${vintage}</strong> season SRS — CFBD has not published this season's SRS yet. This input carries 12% of the composite weight.</p>`
+    : '';
+  let html = note + `<table><thead><tr><th>#</th><th>Team</th><th>SRS${lbl}</th><th>SRS Rating</th></tr></thead><tbody>`;
   sorted.forEach((t, i) => {
     const srs = val(t, 'srs', 0);
     html += `<tr><td>${i+1}</td><td>${t.name}</td><td>${pctBadge(srs.toFixed(2))}</td><td>${srs >= 5 ? 'Elite' : srs >= 0 ? 'Above Avg' : 'Below Avg'}</td></tr>`;
@@ -473,7 +482,11 @@ function renderComposite(filtered) {
   // Composite is computed server-side (single source of truth) — same formula
   // the rankings page uses. Just sort and display it.
   const sorted = [...list].sort((a, b) => val(b, 'composite', 0) - val(a, 'composite', 0));
-  let html = `<table><thead><tr><th>#</th><th>Team</th><th>Composite</th><th>SP+</th><th>FPI</th><th>SRS</th><th>Net SR%</th><th>Net PPO</th><th>Elo</th><th>Recruit</th></tr></thead><tbody>`;
+    // Label the SRS vintage in the composite table too — same reasoning as renderSRS.
+    // Falls back to no label rather than a wrong one.
+    const srsVintage = (list.find(t => t.srs_source_year) || {}).srs_source_year || null;
+    const srsLbl = srsVintage ? ` (${srsVintage})` : '';
+    let html = `<table><thead><tr><th>#</th><th>Team</th><th>Composite</th><th>SP+</th><th>FPI</th><th>SRS${srsLbl}</th><th>Net SR%</th><th>Net PPO</th><th>Elo</th><th>Recruit</th></tr></thead><tbody>`;
   sorted.forEach((t, i) => {
     const offSr = t.off_success_rate;
     const defSr = t.def_success_rate;
