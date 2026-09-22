@@ -51,3 +51,7 @@ data/last_cache_warm_error.json
 data/backfill.lock
 data/backfill_checkpoint.json
 logs/
+
+# Ratings ETag probe runtime state (read-only experiment; churns on every probe)
+data/ratings_etag_state.json
+data/ratings_etag_history.jsonl
