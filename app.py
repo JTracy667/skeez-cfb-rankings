@@ -3,6 +3,7 @@
 import json
 import os
 import hmac
+import hashlib
 import re
 import time
 import math
@@ -434,7 +435,7 @@ def refresh_all() -> dict:
         result["d1_closing_rows"] = d1_write_path.snapshot_closing(
             _fetch_closing_lines_map(), _normalize_team_name)
         result["d1_rankings_rows"] = d1_write_path.daily_rankings(
-            lambda: get_rankings().teams, CFBD_YEAR, None)
+            lambda: get_rankings().teams, CFBD_YEAR, None, composite_version())
     except Exception as e:
         print(f"[refresh] D1 write-path failed: {e}")
     result["ts"] = datetime.now().isoformat()
@@ -2239,6 +2240,72 @@ def _fetch_odds_live() -> dict:
     return odds_map
 
 
+# ── Composite configuration — SINGLE SOURCE OF TRUTH ─────────────────────────
+# Weights live here rather than inline in the formula because:
+#   (a) there is exactly ONE place to change them, and
+#   (b) they can be HASHED into model_version. Risk register D3 requires an
+#       auto-hash of the composite config on every rankings_daily /
+#       model_predictions row, so a mid-season weight change produces a VISIBLE
+#       version break instead of silently mixing incomparable rows in the archive.
+#
+# The active weights MUST sum to 1.0 (asserted below) — the projected-score
+# calibration assumes a 0-100 composite.
+#
+# fcs_rating / massey: SLOTS EXIST AND ARE DELIBERATELY INERT (weight 0.0).
+# Enabling either changes what the model says, so per CFO doctrine and the
+# checklist's own instruction it needs JEFF'S APPROVAL on the weights — the
+# proposal is in D1_COMPOSITE_PROPOSAL.md. Do not move these without it.
+COMPOSITE_CONFIG_DEFAULT = {
+    "sp_plus": 0.18,       # anchors (45%)
+    "fpi": 0.15,
+    "srs": 0.12,
+    "elo": 0.08,           # priors / trajectory (18%)
+    "talent": 0.10,
+    "efficiency": 0.37,    # real on-field efficiency
+    "fcs_rating": 0.00,    # NOT ENABLED — awaits Jeff
+    "massey": 0.00,        # NOT ENABLED — awaits Jeff
+}
+_ENABLED_KEYS = ("sp_plus", "fpi", "srs", "elo", "talent", "efficiency")
+
+
+def composite_config() -> dict:
+    """Active composite weights.
+
+    Overridable by env (`COMPOSITE_WEIGHTS_JSON`) so a candidate weighting can be
+    measured without a code change — the hash in composite_version() then changes
+    automatically, which is what makes an experiment auditable.
+    """
+    cfg = dict(COMPOSITE_CONFIG_DEFAULT)
+    raw = os.environ.get("COMPOSITE_WEIGHTS_JSON")
+    if raw:
+        try:
+            for k, v in json.loads(raw).items():
+                cfg[str(k)] = float(v)
+        except Exception as e:  # noqa: BLE001
+            print(f"[composite] ignoring bad COMPOSITE_WEIGHTS_JSON: {e}")
+    return cfg
+
+
+def composite_version() -> str:
+    """Short stable hash of the ACTIVE composite config (risk register D3).
+
+    Stored as `model_version` on rankings_daily and model_predictions rows, so
+    rows produced under different weightings can never be silently compared.
+    """
+    cfg = composite_config()
+    blob = json.dumps({k: round(float(v), 6) for k, v in sorted(cfg.items())},
+                      sort_keys=True, separators=(",", ":"))
+    return "c" + hashlib.sha256(blob.encode()).hexdigest()[:10]
+
+
+def _assert_weights_sum(cfg: dict | None = None) -> None:
+    cfg = cfg or composite_config()
+    total = sum(float(cfg.get(k, 0.0)) for k in _ENABLED_KEYS)
+    if abs(total - 1.0) > 1e-6:
+        print(f"[composite] WARNING: enabled weights sum to {total:.4f}, expected 1.0 "
+              f"— projections will be miscalibrated")
+
+
 def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_composite: float | None = None) -> dict:
     """
     Multi-factor projected score model.
@@ -2351,17 +2418,33 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
         ppd_norm * 0.16
     )
 
-    # Weighted composite (0-100) — Total = 100%
-    # Anchors: SP+ 18%, FPI 15%, SRS 12% (45%)
-    # Priors/Trajectory: Elo 8%, Talent 10% (18%)
-    # Real On-Field Efficiency: 37%
+    # Weighted composite (0-100) — weights come from COMPOSITE_CONFIG (ONE source
+    # of truth, hashed into model_version). Numbers are identical to the previous
+    # inline literals while fcs_rating/massey sit at 0.0, so this refactor is
+    # behaviour-preserving; it just makes a weight change auditable.
+    cfg = composite_config()
+    _assert_weights_sum(cfg)
+    # `fcs_rating` IS A POLL RANK (1..25, weekly, FCS Coaches Poll) — NOT a 0-100
+    # strength score. See D1_COMPOSITE_PROPOSAL.md. Handing a rank to a composite
+    # weight would INVERT the signal (rank 25 is weaker, not stronger), so this
+    # slot stays deliberately inert. The composite is an FBS board; the correct
+    # lever for FCS opponents is the missing-data prior below (currently a flat
+    # 16.0 for every FCS team regardless of quality).
+    fcs_rank = team_data.get("fcs_rating")
+    try:
+        fcs_norm = (50.0 if fcs_rank is None
+                    else max(0.0, min(100.0, (26.0 - float(fcs_rank)) / 25.0 * 100.0)))
+    except (TypeError, ValueError):
+        fcs_norm = 50.0
     composite = (
-        sp_norm * 0.18 +
-        fpi_norm * 0.15 +
-        srs_norm * 0.12 +
-        elo_norm * 0.08 +
-        talent_norm * 0.10 +
-        eff_norm * 0.37
+        sp_norm * cfg["sp_plus"] +
+        fpi_norm * cfg["fpi"] +
+        srs_norm * cfg["srs"] +
+        elo_norm * cfg["elo"] +
+        talent_norm * cfg["talent"] +
+        eff_norm * cfg["efficiency"] +
+        fcs_norm * cfg["fcs_rating"] +
+        50.0 * cfg["massey"]
     )
 
     # Projected score: calibrated to realistic CFB scoring.
@@ -3256,7 +3339,7 @@ def _maybe_write_predictions(games: list[dict]) -> int:
             "predicted_total": round(float(home_proj) + float(away_proj), 1),
             "win_prob_home": m.get("home_win_prob"),
         })
-    n = d1_write_path.snapshot_predictions(rows, model_version="composite")
+    n = d1_write_path.snapshot_predictions(rows, model_version=composite_version())
     if n:
         print(f"[Schedule] D1 model_predictions: {n} rows written pre-kickoff")
     return n

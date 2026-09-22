@@ -142,7 +142,8 @@ def snapshot_rankings(teams, season: int | None = None, week: int | None = None,
     return d1_store.upsert_rankings_daily(rows)
 
 
-def daily_rankings(fetch_teams, season: int | None = None, week: int | None = None) -> int:
+def daily_rankings(fetch_teams, season: int | None = None, week: int | None = None,
+                   model_version: str = "composite") -> int:
     """Write rankings_daily at most ONCE per UTC day. `fetch_teams` is only called on
     the day it actually writes, so other hourly ticks cost nothing. The date is stamped
     only when rows landed, so a failure simply retries on the next tick."""
@@ -171,7 +172,7 @@ def daily_rankings(fetch_teams, season: int | None = None, week: int | None = No
     except Exception as e:  # noqa: BLE001
         print(f"[d1_write_path] rankings_daily day-guard read failed: {e}")
     try:
-        n = snapshot_rankings(fetch_teams(), season, week)
+        n = snapshot_rankings(fetch_teams(), season, week, model_version)
         if n:
             os.makedirs(os.path.dirname(_RANK_DATE_FILE), exist_ok=True)
             with open(_RANK_DATE_FILE, "w", encoding="utf-8") as f:
