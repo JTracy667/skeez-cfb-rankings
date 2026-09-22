@@ -52,12 +52,18 @@ the queries the pages actually make. That is real work, not a config change.
 
 | Data | Source | Native cadence | Serve from | Max acceptable staleness |
 |---|---|---|---|---|
-| CFBD ratings (Elo / SP+ / FPI / recruiting) | CFBD | anchor, Sun-Wed 21:00 PT | **D1** | 4 days (anchor-to-anchor) |
+| CFBD ratings (Elo / SP+ / FPI / recruiting) | CFBD | every 6h Sun-Wed (03/09/15/21 PT) | **D1** | 6h |
 | Composite rankings | computed | on ratings change | **D1** (recompute on ingest) | same as ratings |
 | Massey FCS ratings | Massey scrape | weekly snapshot (`week=0`) | **D1** | 7 days |
 | Historical games / results | CFBD `/games` | daily | **D1** | 24h |
 | Closing lines | odds provider | post-game | **D1** | n/a (historical) |
 | Player starters / PPA | CFBD | nightly (2AM PT pre-warm) | **D1** | 24h |
+
+**Ingestion window (Jeff, 2026-09-22):** CFBD ratings pull every 6 hours Sun-Wed
+(03:00 / 09:00 / 15:00 / 21:00 PT). The ~3.5-day gap Wed→Sun is expected — CFBD
+does not publish rating changes Thu-Sat. Quota impact: ~70 calls/month against
+30,000 budget (0.2%). The same pull slot can piggyback game-result updates at no
+additional quota cost.
 
 **Fast tier — keep live, with a tight TTL.** These move within minutes; serving
 them from the store would be a regression.
@@ -74,6 +80,18 @@ them from the store would be a regression.
 slow tier. A stale line served as live is worse than an outage, because it looks
 correct and it is not. Every served payload should carry the timestamp of the data
 it was built from, so staleness is always visible rather than inferred.
+
+**Prediction-level freshness gate (Jeff + CEO, 2026-09-22):** Every composite
+prediction must carry the age of its **oldest input** (SP+, Elo, FPI, recruiting).
+If any input exceeds the tier's max acceptable staleness, the prediction endpoint
+must either refuse to serve or mark the response `STALE_INPUTS` with per-input age.
+This prevents a confident-looking score prediction built on silently old ratings
+from reaching a user.
+
+**Ingestion data-quality guard (CEO, 2026-09-22):** if a pull returns suspicious
+data (team count drops sharply, all-zero ratings, missing conferences), do NOT
+overwrite the last good snapshot — log the anomaly and alert. Bad data
+overwriting good data is worse than stale data.
 
 ---
 
@@ -145,6 +163,9 @@ the slow tier, since page loads stop triggering pulls.
 | Risk | Mitigation |
 |---|---|
 | Stale odds served as live | Hard rule in §3; every payload carries its source timestamp; QA explicitly tests this |
+| Prediction served from stale inputs | Prediction freshness gate (§3): `STALE_INPUTS` flag or refuse; per-input age stamped on every prediction |
+| Bad data overwrites good snapshot | Ingestion data-quality guard (§3): anomaly check before write; alert instead of overwrite |
+| D1 unavailable during a request | Slow-tier pages fall back to last cached edge copy (short TTL); fast tier unaffected (live path) |
 | D1 read latency slows page loads | Cache at the edge with a short TTL; measure before/after on the real payload sizes |
 | Silent divergence between D1 and live | Per-field "as of" stamp surfaced in `/api/health` and page payloads |
 | Ingestion job dies unnoticed | Same heartbeat + age-check pattern as the existing pre-warm cron; watchdog alerts |
@@ -161,3 +182,6 @@ the slow tier, since page loads stop triggering pulls.
 3. **Where should scheduled ingestion run long-term** — this box (relying on a
    local cron, as the pre-warm already does), or scheduled inside Cloudflare?
    Locally is simpler today but couples site freshness to a desktop being on.
+   *CEO recommendation (2026-09-22):* start local (pattern proven), plan
+   Cloudflare-side scheduled ingestion as Phase 4b — removes the desktop-uptime
+   dependency without blocking the rest of the rollout.
