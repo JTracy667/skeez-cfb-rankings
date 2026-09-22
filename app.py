@@ -2651,10 +2651,19 @@ def project_head_to_head(
     Persistent injury adjustments modify the game margin and total directly.
 
     total  = 51 + (avg_composite - 50) * 0.10   # elite games trend slightly higher
-    margin = 0.9 * (comp_home - comp_away) + HFA (2.5 home / -1.5 away / 0 neutral)
-             — 0.9 pts margin per composite point: comp gap 40 -> ~36 pt margin
+    margin = 1.0 * (comp_home - comp_away) + HFA (2.5 home / 0 neutral)
+             — 1.0 pts margin per composite point: comp gap 40 -> ~38.5 pt margin
                (matches real 40+ spreads: OSU -51 vs Ball State etc.)
     home_score = (total + margin) / 2, away_score = (total - margin) / 2, floor 3.
+
+    NOTE for anyone auditing a projected margin from the API: `differential` is NOT
+    simply (composite gap + HFA). Three further terms apply, so a closed-form check
+    will show residuals that are NOT bugs:
+      * net_injury  — (home_injury_adj - away_injury_adj), Jeff's star-QB rule
+      * wind_penalty — total only
+      * underdog floor — when the composite gap exceeds 30 the weak side's share of
+        the total is capped, which REWRITES home_score/away_score and therefore
+        moves `differential` after margin was computed
     """
     hp = project_score_multi_factor(home_data, is_home=True)
     ap = project_score_multi_factor(away_data, is_home=False)
