@@ -792,8 +792,21 @@ def api_refresh():
 
 @app.get("/api/health")
 def api_health():
-    """Health check."""
-    return {"status": "ok", "teams": len(load_local()), "cache_ttl": CACHE_TTL}
+    """Health check.
+
+    `build` is the deployed image tag (BUILD_TAG, set by the Worker from the
+    image tag in wrangler.jsonc). It exists so a post-deploy check can tell
+    "the new image is actually serving" apart from "the old warm instance is
+    still answering" — a warm container can keep serving the previous image for
+    up to sleepAfter (20m), so a successful `wrangler deploy` alone does NOT
+    mean the change is live.
+    """
+    return {
+        "status": "ok",
+        "build": os.environ.get("BUILD_TAG", "dev"),
+        "teams": len(load_local()),
+        "cache_ttl": CACHE_TTL,
+    }
 
 @app.get("/ping")
 def ping():

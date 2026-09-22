@@ -9,13 +9,26 @@ export class CFBPowerRankings extends Container {
 		CFBD_API_KEY: env.CFBD_API_KEY,
 		PROPLINE_API_KEY: env.PROPLINE_API_KEY,
 		THE_ODDS_API_KEY: env.THE_ODDS_API_KEY,
-		// Match the Render service (render.yaml) so the cutover does not silently
-		// slow the odds/grading refresh from hourly to app.py's 6h default — the
-		// line-movement log and CLV tracking depend on that cadence.
+		// Hourly refresh so the odds/grading cadence (line-movement log, CLV
+		// tracking) stays at 3600s instead of app.py's 6h default.
 		REFRESH_INTERVAL_SECONDS: "3600",
 		// Shared secret the cron uses to call the anchor-gated pull, which is now
 		// an admin-gated route (ops writes are locked; public pages are not).
 		ADMIN_TOKEN: env.ADMIN_TOKEN,
+		// Deployed image tag, surfaced by /api/health as `build`. Lets a
+		// post-deploy check prove the NEW image is serving rather than a warm
+		// instance of the previous one (see api_health docstring).
+		BUILD_TAG: env.BUILD_TAG ?? "dev",
+		// D1 live write-path (D1_SCHEMA_SPEC §5): appends odds_snapshots,
+		// rankings_daily, closing_lines and model_predictions to D1 cfb-history.
+		// Flag OFF == pre-D1 behaviour; rollback = set this to "0" and redeploy.
+		// The token is D1-scoped (account D1:Edit only) and is read from
+		// CF_D1_TOKEN first by d1_store.py — never hand the container a token
+		// that can edit DNS, zone settings or Workers.
+		D1_WRITE_ENABLED: env.D1_WRITE_ENABLED ?? "1",
+		CF_D1_TOKEN: env.CF_D1_TOKEN,
+		CF_ACCOUNT_ID: env.CF_ACCOUNT_ID ?? "",
+		CF_D1_DB_ID: env.CF_D1_DB_ID ?? "",
 	};
 }
 

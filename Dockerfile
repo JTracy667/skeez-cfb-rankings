@@ -14,7 +14,11 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && rm -rf /var/lib/apt/lists/*
 
 # Application + data
-COPY app.py .
+# NOTE: every top-level module the app imports must be copied here. A missing
+# module = ImportError at container boot = every page 500s with
+# "Failed to start container". Glob the root *.py so a new module can never be
+# forgotten again (app.py, cfbd_shared.py, d1_store.py, d1_write_path.py).
+COPY *.py ./
 COPY index.html analytics.html schedule.html win_totals.html ./
 COPY data/ ./data/
 COPY scripts/ ./scripts/
