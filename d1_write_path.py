@@ -149,12 +149,27 @@ def daily_rankings(fetch_teams, season: int | None = None, week: int | None = No
     if not enabled():
         return 0
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # Fast path: the local marker file (works on the desktop and within a single
+    # container instance's lifetime).
     try:
         with open(_RANK_DATE_FILE, encoding="utf-8") as f:
             if json.load(f).get("date") == today:
                 return 0
     except Exception:  # noqa: BLE001
         pass
+    # Durable path — the container filesystem is EPHEMERAL, so that marker is
+    # wiped on every recycle and this function then wrote the day a SECOND time.
+    # Because the writer replaces only its own batch's keys, the two writes
+    # unioned: 2026-09-22 ended with 26 rows for one date and two different teams
+    # (ids 344 and 145) both at rank 25. D1 is the authority on "already written".
+    try:
+        rows = d1_store.query(
+            "SELECT COUNT(*) AS n FROM rankings_daily WHERE date = ?", [today])
+        if rows and int(rows[0].get("n") or 0) > 0:
+            print(f"[d1_write_path] rankings_daily already written for {today} (D1 guard) — skip")
+            return 0
+    except Exception as e:  # noqa: BLE001
+        print(f"[d1_write_path] rankings_daily day-guard read failed: {e}")
     try:
         n = snapshot_rankings(fetch_teams(), season, week)
         if n:
@@ -169,12 +184,50 @@ def daily_rankings(fetch_teams, season: int | None = None, week: int | None = No
 
 @_guard
 def snapshot_predictions(games: list[dict], model_version: str = "composite") -> int:
-    """model_predictions — MUST be called before kickoff (risk register D2)."""
-    rows = [{"game_id": g.get("game_id") or g.get("id"), "model_version": model_version,
-             "predicted_margin_home": g.get("predicted_margin_home"),
-             "predicted_total": g.get("predicted_total"),
-             "win_prob_home": g.get("win_prob_home")}
-            for g in games if (g.get("game_id") or g.get("id"))]
+    """model_predictions — MUST be written before kickoff (risk register D2).
+
+    D2 guard: a row whose kickoff has ALREADY passed is REJECTED here, at the
+    write boundary, rather than trusted to each caller. A post-hoc prediction is
+    hindsight and would poison every backtest built on this table while looking
+    perfectly healthy — the worst kind of silent corruption.
+
+    `games` carry: game_id, kickoff/date (ISO UTC), predicted_margin_home,
+    predicted_total, win_prob_home.
+    """
+    now = datetime.now(timezone.utc)
+    rows = []
+    rejected = 0
+    for g in games:
+        gid = g.get("game_id") or g.get("id")
+        if not gid:
+            continue
+        kick = g.get("kickoff") or g.get("date")
+        if kick:
+            try:
+                if datetime.fromisoformat(str(kick).replace("Z", "+00:00")) <= now:
+                    rejected += 1
+                    continue
+            except Exception:  # noqa: BLE001 — unparsable kickoff is not a licence to write
+                rejected += 1
+                continue
+        else:
+            # No kickoff at all: we cannot prove this is pre-game, so refuse.
+            rejected += 1
+            continue
+        margin = g.get("predicted_margin_home")
+        total = g.get("predicted_total")
+        wp = g.get("win_prob_home")
+        if margin is None and total is None and wp is None:
+            continue
+        rows.append({"game_id": gid, "model_version": model_version,
+                     "predicted_margin_home": margin,
+                     "predicted_total": total,
+                     "win_prob_home": wp})
+    if rejected:
+        print(f"[d1_write_path] predictions: {rejected} row(s) REFUSED (kickoff already passed "
+              f"or unknown — D2 no-hindsight guard)")
+    if not rows:
+        return 0
     return d1_store.insert_model_predictions(rows)
 
 

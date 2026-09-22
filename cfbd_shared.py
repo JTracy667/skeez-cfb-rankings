@@ -46,6 +46,19 @@ def cfbd_headers() -> dict:
     return {"Authorization": f"Bearer {_key()}", "User-Agent": "cfb-analytics/1.0"}
 
 
+def _meter(resp) -> None:
+    """Count one CFBD call and capture the provider's own quota reading (Phase 3.5).
+
+    Wrapped so metering can never break a data call: an error here is swallowed.
+    """
+    try:
+        import budget  # noqa: PLC0415 — optional dependency, never fatal
+        budget.record("cfbd", 1)
+        budget.note_headers("cfbd", dict(resp.headers))
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def cfbd_get(endpoint: str, year: int = CFBD_YEAR, retries: int = 3,
              base_delay: float = 1.0, **extra) -> list:
     """GET from CFBD with auth + exponential backoff. Returns a list ([] on failure).
@@ -55,10 +68,28 @@ def cfbd_get(endpoint: str, year: int = CFBD_YEAR, retries: int = 3,
     """
     url = f"{CFBD_BASE}/{endpoint}"
     params = {"year": year, **extra}
+    # Degraded mode (D1_RISK_REGISTER A4): at/above the pause threshold, STOP
+    # calling and let callers fall back to cached/D1 data — exhausted must mean
+    # stale-but-honest, never broken.
+    try:
+        import budget  # noqa: PLC0415
+        if not budget.should_call("cfbd"):
+            st = budget.status("cfbd")
+            print(f"[cfbd_shared] CFBD paused by budget ({st['pct']}% of {st['period']} cap) "
+                  f"— {endpoint} served from cache")
+            return []
+    except Exception:  # noqa: BLE001
+        pass
     last = None
     for attempt in range(retries):
         try:
+            import budget  # noqa: PLC0415
+            budget.record("cfbd", 1)   # every attempt costs a request, even a 404
+        except Exception:  # noqa: BLE001
+            pass
+        try:
             resp = _CLIENT.get(url, headers=cfbd_headers(), params=params)
+            _meter(resp)
             if resp.status_code == 404:
                 return []
             resp.raise_for_status()

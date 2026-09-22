@@ -102,12 +102,23 @@ def assert_headroom(n_rows: int, daily_cap: int | None = None) -> None:
         raise BudgetExceeded(f"D1 daily write budget: {led['rows_written']}+{n_rows} > {cap}")
 
 
-def commit_writes(n_rows: int) -> None:
+def commit_writes(n_rows: int, meter: bool = True) -> None:
     """Record ACTUAL confirmed writes — taken from the D1 response's meta.rows_written,
-    never a local guess (CEO: counter must assert on the API response)."""
+    never a local guess (CEO: counter must assert on the API response).
+
+    Also mirrors the number into the standing budget ledger (Phase 3.5) so the D1
+    burn is answerable alongside the API burns. `meter=False` is used for the
+    ledger's OWN writes to api_usage — counting the meter would make it feed itself.
+    """
     led = _load_ledger()
     led["rows_written"] += int(n_rows)
     _save_ledger(led)
+    if meter and int(n_rows) > 0:
+        try:
+            import budget  # noqa: PLC0415 — lazy: avoids a circular import
+            budget.record_d1_rows(int(n_rows))
+        except Exception:  # noqa: BLE001 — metering must never break a write
+            pass
 
 
 def write_budget_ok(n_rows: int, daily_cap: int | None = None) -> None:
@@ -199,7 +210,7 @@ def _upsert(table: str, cols: list[str], rows: list[dict],
         if confirmed <= 0:
             raise ConfirmedWriteError(
                 f"{table}: D1 confirmed 0 rows written for a {len(part)}-row batch (meta={meta})")
-        commit_writes(confirmed)
+        commit_writes(confirmed, meter=(table != "api_usage"))
         n += confirmed
     return n
 
@@ -235,6 +246,37 @@ def upsert_teams(rows: list[dict]) -> int:
                    rows, ["team_id"], ["name", "abbr", "conference"])
 
 
+API_USAGE_COLS = ["bucket", "period", "source", "calls", "provider_remaining",
+                  "provider_limit", "provider_used", "updated_at"]
+
+
+def upsert_api_usage(rows: list[dict]) -> int:
+    """Persist the standing budget ledger (D1_CHECKLIST Phase 3.5).
+
+    The ledger of record lives in D1, not a file, because the Cloudflare
+    container filesystem is ephemeral — a file-only ledger silently resets on
+    every instance recycle and under-reports the day's burn.
+
+    Tolerant of a true no-op: re-writing an identical value is not a failure, so
+    ConfirmedWriteError is swallowed here. The zero-write contract exists to
+    protect DATA tables; a metering table that refused to re-write an unchanged
+    counter would just alert forever.
+
+    Not metered itself (see `_upsert`'s meter flag) so the ledger cannot feed
+    its own counter.
+    """
+    if not rows:
+        return 0
+    try:
+        return _upsert("api_usage", API_USAGE_COLS, rows,
+                       ["bucket", "period", "source"],
+                       ["calls", "provider_remaining", "provider_limit",
+                        "provider_used", "updated_at"])
+    except ConfirmedWriteError as e:
+        print(f"[d1_store] api_usage no-op: {e}")
+        return 0
+
+
 def upsert_stat_observations(rows: list[dict]) -> int:
     now = datetime.now(timezone.utc).isoformat()
     for r in rows:
@@ -267,9 +309,46 @@ def append_odds_snapshots(rows: list[dict]) -> int:
 
 
 def upsert_rankings_daily(rows: list[dict]) -> int:
-    return _replace_by("rankings_daily", ["team_id", "date"],
-                       ["team_id", "date", "composite", "rank", "model_version", "season", "week"],
-                       rows)
+    """Write the daily rankings snapshot — replacing the WHOLE date partition.
+
+    A daily archive must hold that day's SINGLE view of the rankings. The generic
+    key-based replace only deletes the keys present in the batch, so a second write
+    on the same day left the first write's rows behind: observed 2026-09-22 with 26
+    rows for one date, two different teams (ids 344 and 145) both sitting at rank
+    25. Deleting the date first makes the partition exactly one row per team.
+
+    (The second write came from an ephemeral once-a-day marker file — see
+    d1_write_path.daily_rankings, which now checks D1 itself.)
+    """
+    cols = ["team_id", "date", "composite", "rank", "model_version", "season", "week"]
+    if not rows:
+        return 0
+    n = 0
+    cleared: set = set()
+    for part in _chunks(rows, max(1, 100 // len(cols))):
+        new_dates = sorted({r.get("date") for r in part if r.get("date")} - cleared)
+        if new_dates:
+            ph = ",".join("?" * len(new_dates))
+            assert_headroom(len(new_dates))
+            _, meta_del = query_full(
+                f"DELETE FROM rankings_daily WHERE date IN ({ph})", new_dates)
+            confirmed_del = confirmed_writes(meta_del)
+            commit_writes(confirmed_del)
+            n += confirmed_del
+            cleared.update(new_dates)
+        assert_headroom(len(part))
+        ph2 = ",".join("(" + ",".join("?" * len(cols)) + ")" for _ in part)
+        _, meta_ins = query_full(
+            f"INSERT INTO rankings_daily ({','.join(cols)}) VALUES {ph2}",
+            [v for r in part for v in (r.get(c) for c in cols)])
+        confirmed = confirmed_writes(meta_ins)
+        if confirmed <= 0:
+            raise ConfirmedWriteError(
+                f"rankings_daily: D1 confirmed 0 rows written for a {len(part)}-row batch "
+                f"(meta={meta_ins})")
+        commit_writes(confirmed)
+        n += confirmed
+    return n
 
 
 def upsert_closing_lines(rows: list[dict]) -> int:

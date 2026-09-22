@@ -106,3 +106,20 @@ CREATE TABLE IF NOT EXISTS raw_payloads (
   fetched_at TEXT,
   payload_gz BLOB                  -- zlib-compressed JSON
 );
+
+-- ---------------------------------------------------------------- Phase 3.5
+-- Standing budget meters (D1_CHECKLIST Phase 3.5). Ledger of RECORD for API
+-- burn: the container filesystem is ephemeral, so a file-only ledger resets on
+-- every instance recycle. Written sparsely (one row per source per bucket per
+-- flush, ~600s) so its own quota cost is negligible.
+CREATE TABLE IF NOT EXISTS api_usage (
+  bucket             TEXT,         -- 'day' | 'month'
+  period             TEXT,         -- 'YYYY-MM-DD' | 'YYYY-MM'
+  source             TEXT,         -- cfbd | odds | propline | d1
+  calls              INTEGER,      -- provider-reported usage when known, else our count
+  provider_remaining INTEGER,      -- authoritative header values (NULL if unseen)
+  provider_limit     INTEGER,
+  provider_used      INTEGER,
+  updated_at         TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_api_usage ON api_usage(bucket, period, source);

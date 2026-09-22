@@ -447,6 +447,15 @@ def refresh_all() -> dict:
         print(f"[refresh] {_propline_quota_str()}")
     except Exception:
         pass
+    # Phase 3.5: persist the standing budget meters (D1 = ledger of record; the
+    # container FS is ephemeral, so the file alone would reset on every recycle)
+    # and log the burn line so "what's our burn?" is answerable from the logs too.
+    try:
+        import budget  # noqa: PLC0415
+        budget.flush()
+        print(f"[refresh] burn: {budget.burn_line()}")
+    except Exception as e:  # noqa: BLE001
+        print(f"[refresh] budget flush skipped: {e}")
     return result
 
 
@@ -792,11 +801,47 @@ def api_health():
     up to sleepAfter (20m), so a successful `wrangler deploy` alone does NOT
     mean the change is live.
     """
-    return {
+    out = {
         "status": "ok",
         "build": os.environ.get("BUILD_TAG", "dev"),
         "teams": len(load_local()),
         "cache_ttl": CACHE_TTL,
+    }
+    # Phase 3.5: burn summary + degraded-mode staleness flag, cheap enough for a
+    # health probe. `degraded` is the flag the site/pages read to show that data
+    # is stale because an upstream quota is exhausted (stale-but-honest, never
+    # silently wrong).
+    try:
+        import budget  # noqa: PLC0415
+        rep = budget.burn_report()
+        out["budget"] = {s: {"pct": v["pct"], "level": v["level"],
+                             "used": v["used"], "limit": v["limit"]}
+                         for s, v in rep["sources"].items()}
+        out["degraded"] = bool(rep["paused"])
+        out["degraded_sources"] = rep["paused"]
+    except Exception as e:  # noqa: BLE001 — never let metering break health
+        out["budget_error"] = str(e)
+    return out
+
+
+@app.get("/api/budget")
+def api_budget():
+    """'What's our burn?' — the whole answer in ONE read (D1_CHECKLIST 3.5.4).
+
+    No polling, no estimates: provider-reported usage where the provider tells us
+    (CFBD / Odds API headers), our own confirmed counters otherwise.
+    """
+    import budget  # noqa: PLC0415
+    rep = budget.burn_report()
+    return {
+        "as_of": rep["as_of"],
+        "line": budget.burn_line(),
+        "sources": rep["sources"],
+        "alerts": rep["alerts"],
+        "paused": rep["paused"],
+        "alert_pct": budget.ALERT_PCT,
+        "pause_pct": budget.PAUSE_PCT,
+        "policy": "approaching a cap = tier-upgrade decision, not throttling (Jeff)",
     }
 
 @app.get("/ping")
@@ -1284,8 +1329,27 @@ def _cfbd_drives_for_teams(team_names: list[str]) -> dict:
     return out
 
 
+def _budget_note(source: str, headers, calls: int = 1) -> None:
+    """Meter one third-party call + capture the provider's quota headers (Phase 3.5).
+
+    Never fatal: metering must not be able to break a data fetch.
+    """
+    try:
+        import budget  # noqa: PLC0415
+        budget.record(source, calls)
+        if headers:
+            budget.note_headers(source, dict(headers))
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def _the_odds_fetch() -> list[dict]:
-    """Fetch live NCAAF spreads and totals from The Odds API."""
+    """Fetch live NCAAF spreads and totals from The Odds API.
+
+    Uses the headers-returning GET so we can read x-requests-used/remaining —
+    the provider's own accounting, which is authoritative and stateless (it
+    survives a container recycle, unlike our counters).
+    """
     url = f"{THE_ODDS_BASE}/sports/americanfootball_ncaaf/odds"
     params = {
         "apiKey": THE_ODDS_API_KEY,
@@ -1293,7 +1357,16 @@ def _the_odds_fetch() -> list[dict]:
         "markets": "spreads,totals",
         "oddsFormat": "decimal",
     }
-    data = _http_get(url, params=params, retries=3, base_delay=1.0)
+    # Degraded mode: exhausted quota => stop calling, serve cached lines (stale-but-honest)
+    try:
+        import budget  # noqa: PLC0415
+        if not budget.should_call("odds"):
+            print("[Odds] The Odds API paused by budget — serving cached lines")
+            return []
+    except Exception:  # noqa: BLE001
+        pass
+    data, hdrs = _http_get_with_headers(url, params=params, retries=3, base_delay=1.0)
+    _budget_note("odds", hdrs)
     return data if isinstance(data, list) else (data.get("events", []) if data else [])
 def _cfbd_lines() -> list:
     """Fetch betting lines from CFBD API."""
@@ -1546,6 +1619,14 @@ def _propline_fetch() -> list[dict]:
     """
     if not PROPLINE_KEY:  # Use module-level key (set from .env at startup)
         return []
+    # Degraded mode: exhausted daily quota => stop calling, serve cached lines
+    try:
+        import budget  # noqa: PLC0415
+        if not budget.should_call("propline"):
+            print("[Odds] PropLine paused by budget — serving cached lines")
+            return []
+    except Exception:  # noqa: BLE001
+        pass
     try:
         base = "https://api.prop-line.com/v1/sports/football_ncaaf"
         bulk, hdrs = _http_get_with_headers(
@@ -1554,6 +1635,7 @@ def _propline_fetch() -> list[dict]:
         if not bulk:
             return []
         _propline_quota_update(hdrs)
+        _budget_note("propline", hdrs)
         events = bulk if isinstance(bulk, list) else bulk.get("events", [])
         now = datetime.now(timezone.utc)
         ts_map = _load_best_line_ts()
@@ -1589,6 +1671,7 @@ def _propline_fetch() -> list[dict]:
                 return None
             if bh:
                 _propline_quota_update(bh)
+                _budget_note("propline", bh)
             parsed = _parse_best_line(bl or {})
             if parsed is not None:
                 ev["best_line"] = parsed
@@ -2788,6 +2871,7 @@ def fetch_cfbd_schedule(week: int = 1, year: int = CFBD_YEAR) -> list[dict] | No
             matchups.append({
                 "home": home_name,
                 "away": away_name,
+                "game_id": g.get("id"),      # CFBD game id — keys model_predictions
                 "date": g.get("startDate"),  # ISO 8601 UTC, e.g. 2026-08-29T16:00:00Z
                 "neutral_site": bool(g.get("neutralSite")),
                 "home_classification": (g.get("homeClassification") or "").upper(),
@@ -3141,6 +3225,43 @@ def api_schedule_update(matchups: list[dict]):
         json.dump(sched, f, indent=2)
     return {"status": "updated", "count": len(clean)}
 
+_PRED_LOCK = {"ts": 0.0}
+
+
+def _maybe_write_predictions(games: list[dict]) -> int:
+    """Write model_predictions for un-started games — at most once per hour.
+
+    Risk register D2: predictions must exist BEFORE kickoff, never post-hoc. The
+    margin/total/probability here are exactly the head-to-head numbers the page
+    displays, so the archive records what the model actually said; the writer
+    then rejects anything whose kickoff has passed.
+
+    Idempotent: insert_model_predictions replaces on (game_id, model_version).
+    """
+    now = time.time()
+    if now - _PRED_LOCK["ts"] < 3600:      # throttle: one attempt per hour
+        return 0
+    _PRED_LOCK["ts"] = now
+    if not d1_write_path.enabled():
+        return 0
+    rows = []
+    for m in games:
+        home_proj, away_proj = m.get("home_proj"), m.get("away_proj")
+        if home_proj is None or away_proj is None or not m.get("date"):
+            continue
+        rows.append({
+            "game_id": m.get("game_id"),
+            "date": m.get("date"),
+            "predicted_margin_home": m.get("differential"),
+            "predicted_total": round(float(home_proj) + float(away_proj), 1),
+            "win_prob_home": m.get("home_win_prob"),
+        })
+    n = d1_write_path.snapshot_predictions(rows, model_version="composite")
+    if n:
+        print(f"[Schedule] D1 model_predictions: {n} rows written pre-kickoff")
+    return n
+
+
 @app.post("/api/schedule/fetch")
 def api_schedule_fetch(week: int = 1, year: int = 2026):
     """Fetch the full FBS slate for a week from CFBD and project scores.
@@ -3297,6 +3418,15 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             }
     except Exception as e:
         print(f"[Schedule] finals overlay failed: {e}")
+    # D1 live write-path: model_predictions, written PRE-KICKOFF (risk register
+    # D2). This is the only place per-game model output is produced, so it is
+    # where those rows have to originate. Throttled to once an hour per process
+    # so a page load can't become a write storm; the writer itself refuses any
+    # game whose kickoff has already passed.
+    try:
+        _maybe_write_predictions(enriched)
+    except Exception as e:  # noqa: BLE001 — never break the schedule page
+        print(f"[Schedule] D1 predictions failed: {e}")
     _payload = {"week": week, "season": year, "updated": datetime.now().isoformat(),
                 "matchups": enriched, "has_odds": len(odds_map) > 0, "note": note}
     _SCHEDULE_FETCH_CACHE[_key] = {"ts": time.time(), "data": _payload}
