@@ -502,28 +502,19 @@ def _start_scheduler() -> None:
     t = threading.Thread(target=_loop, daemon=True, name="cfb-refresh")
     t.start()
 
-# ── Daily 04:00 UTC self-restart (Render OOM prevention) ──
-# Python/glibc RSS ratchets with game-day traffic (~220MB/day on a 512MB
-# starter plan). A clean process exit at the quietest hour lets Render's
-# restart policy spin up a fresh container, resetting RSS to ~230MB.
-def _daily_self_restart_loop():
-    import datetime as _dt
-    while True:
-        utcnow = _dt.datetime.now(_dt.timezone.utc)
-        target = utcnow.replace(hour=4, minute=0, second=0, microsecond=0)
-        if target <= utcnow:
-            target += _dt.timedelta(days=1)
-        wait_s = (target - utcnow).total_seconds()
-        print(f"[restart-watchdog] next 04:00 UTC self-restart in {wait_s/3600:.1f}h", flush=True)
-        time.sleep(max(wait_s, 60))
-        utcnow2 = _dt.datetime.now(_dt.timezone.utc)
-        if utcnow2.hour == 4 and utcnow2.minute < 10:
-            print("[restart-watchdog] daily self-restart: exiting for fresh container", flush=True)
-            os._exit(0)
-
-import threading as _threading
-_t = _threading.Thread(target=_daily_self_restart_loop, daemon=True, name="daily-restart")
-_t.start()
+# ── Daily 04:00 UTC self-restart — REMOVED (Render-era workaround) ──
+# Deleted Sep 22 2026. It existed only to cap RSS ratchet on Render's 512MB
+# starter plan by exiting at 04:00 UTC so Render's restart policy handed back a
+# fresh container. That service is retired, and on Cloudflare Containers the hack
+# was actively harmful: 04:00 UTC is exactly the Sun-Wed 21:00 PT analytics
+# anchor, so the self-kill collided with the Worker cron (`0 4 * * 1,2,3,4`)
+# firing the same minute and that night's pull was lost for ~4h (the watchdog
+# faulted twice, and the container - being traffic-driven - had no always-on
+# process to retry promptly the way Render did).
+#
+# If container memory ever needs bounding again, do NOT reintroduce a timed
+# self-exit: Containers already recycle on sleepAfter. Use the platform's
+# instance memory limit instead.
 
 # ── Data loading ──
 def load_local() -> list[dict]:
