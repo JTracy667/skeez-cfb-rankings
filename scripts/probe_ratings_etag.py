@@ -111,6 +111,36 @@ def append_history(rec):
         f.write(json.dumps(rec, sort_keys=True) + "\n")
 
 
+SRS_2026_URL = "/ratings/srs?year=2026"
+
+
+def check_srs_2026(st):
+    """Watch for CFBD starting to publish THIS season's SRS.
+
+    `ratings/srs?year=2026` returns [] today, so the app's explicit fallback serves the
+    PREVIOUS season's SRS — which is 12% of the composite weight and is displayed on the
+    analytics page unlabelled. Silent until it changes, then it says so, because that is
+    the moment the 2025 fallback stops being needed.
+
+    Costs 1 call per in-window probe. Read-only.
+    """
+    prev = st.get("srs_2026_rows")
+    try:
+        status, _, body, _ = get(SRS_2026_URL)
+        n = len(json.loads(body)) if body else 0
+    except Exception:
+        return
+    st["srs_2026_rows"] = n
+    if prev is None or n == prev:
+        return
+    if n > 0 and (prev or 0) == 0:
+        print("CFBD SRS 2026 IS NOW PUBLISHED")
+        print(f"  ratings/srs?year=2026 -> {n} rows (was 0)")
+        print("  -> the app's 2025 fallback for SRS can be retired. Until now 12% of the")
+        print("     composite weight has been riding on last season's ratings, and the")
+        print("     analytics page shows that SRS unlabelled. Jeff's call, not a silent fix.")
+
+
 def main():
     force = "--force" in sys.argv
     st = load_state()
@@ -152,6 +182,10 @@ def main():
 
     if not force and not in_release_window():
         return 0                      # silent: no release can happen outside the window
+
+    # Watch for this season's SRS appearing (see check_srs_2026).
+    check_srs_2026(st)
+    save_state(st)
 
     # --- Probe: conditional GET on the primary endpoint only (1 call).
     status, etag, body, rem = get(ENDPOINTS[PRIMARY], etag=etags.get(PRIMARY))
