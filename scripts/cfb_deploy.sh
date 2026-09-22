@@ -135,8 +135,19 @@ done
 echo "=== final page check on $NEW ==="
 fail=0
 for p in "" analytics schedule win-totals api/health; do
-  c=$(curl -s -m 45 -o /dev/null -w '%{http_code}' -A 'Mozilla/5.0' "$PUBLIC_URL/$p")
+  c=""
+  # A single transient failure must NOT roll back a good deploy. The container is
+  # often still settling immediately after an image swap: on the v23 rollout this
+  # check saw /schedule -> 000 and rolled back a build that was already live and
+  # verified, while the same page answered 200 in 0.14s moments later.
+  # A checker that cries wolf is worse than no checker — retry before judging.
+  for attempt in 1 2 3 4 5; do
+    c=$(curl -s -m 45 -o /dev/null -w '%{http_code}' -A 'Mozilla/5.0' "$PUBLIC_URL/$p")
+    [ "$c" = "200" ] && break
+    echo "   /$p -> $c (attempt $attempt/5) — retrying in 10s"
+    sleep 10
+  done
   printf '   /%-12s %s\n' "$p" "$c"
   [ "$c" = "200" ] || fail=1
 done
-[ "$fail" = "0" ] && echo "DEPLOY VERIFIED LIVE: $NEW" || { rollback "$PREV" "a public page was not 200 after the new build went live"; exit 1; }
+[ "$fail" = "0" ] && echo "DEPLOY VERIFIED LIVE: $NEW" || { rollback "$PREV" "a public page was still not 200 after 5 attempts"; exit 1; }
