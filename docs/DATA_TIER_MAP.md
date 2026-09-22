@@ -185,3 +185,130 @@ the slow tier, since page loads stop triggering pulls.
    *CEO recommendation (2026-09-22):* start local (pattern proven), plan
    Cloudflare-side scheduled ingestion as Phase 4b — removes the desktop-uptime
    dependency without blocking the rest of the rollout.
+
+---
+
+## 9. CTO review (2026-09-22) — discussion notes, not a counter-proposal
+
+*Added by CTO at Jeff's request. §1-§8 above are CEO/Jeff text and are left untouched;
+this block is my response for discussion.*
+
+### 9.1 The 6h cadence is a release-detection strategy, not a freshness target
+
+Correction accepted (Jeff): CFBD releases ratings at an unpredictable time between
+**Sunday night and Wednesday**. The cadence exists to SAMPLE that window — not because
+the numbers change four times a day. A missed release is worse than a late one, so more
+samples buy something real.
+
+This exposes something the doc does not currently state: **an age-based guard cannot
+detect a release.** If CFBD publishes Sunday 23:00 and we last pulled Sunday 21:00, our
+data is 2 hours old — comfortably "fresh" by every age rule in §3 — while missing the new
+release entirely. Age answers *"how old is what we have"*; only a schedule answers *"is
+something newer available"*. Both mechanisms are needed; neither substitutes for the other.
+
+Suggested wording for the slow-tier table: for CFBD ratings, "Max acceptable staleness:
+6h" is really **"release detection latency ≤6h inside the Sun-Wed window"**. As written it
+reads as though ratings change every 6h, which the Wed→Sun no-change window contradicts.
+
+### 9.2 Sampling shape: the window is Sun night → Wed, so sample denser *inside* it
+
+Four uniform slots/day (03/09/15/21 PT) puts Sunday 03:00/09:00/15:00 **before** the
+release window opens — roughly 3 of 16 weekly samples land where a release cannot happen.
+Not a correctness problem, a quota-and-attention one. Denser inside the window, nothing
+outside it, detects the release sooner for the same or fewer calls.
+
+### 9.3 Measured: CFBD serves ETags on the ratings endpoints
+
+Probed live today:
+
+| Probe | Result |
+|---|---|
+| `/ratings/sp?year=2026` | `ETag: W/"11a4b-..."` |
+| `/ratings/elo?year=2026` | `ETag: W/"2547-..."` |
+| `/ratings/fpi?year=2026` | `ETag: W/"a70b-..."` |
+| Conditional `If-None-Match`, valid ETag | **304, 0 bytes** |
+| Control: bogus ETag | **200** — so the 304 is not unconditional |
+| Quota cost of the 304 | **1 call** (X-CallLimit-Remaining 25756 → 25754) |
+
+So conditional polling is **not free**: a 304 costs the same call as a GET and only saves
+the body. The value is therefore *not* quota — it is that an unchanged ratings set can be
+detected **without re-parsing, recomputing composites, or writing to D1**. At ~1 call per
+probe, hourly probing inside the window is roughly 400 calls/month (~1.4% of the 30,000
+budget).
+
+**Proposal (not approved, deliberately not built yet):** probe hourly inside the
+Sun-night→Wed window with `If-None-Match`; run the full pull + composite recompute only
+when the ETag changes. Detection latency ~1h instead of 6h, and far fewer composite writes.
+
+**Caveat — the important line:** I have verified the mechanism, **not** that the ETag
+changes exactly when ratings change. That cannot be confirmed until we observe one real
+release. Do not put the primary ingest path on it before that is seen.
+
+### 9.4 The wake path is the critical path — the sampler has to actually fire
+
+Every scheme above assumes the schedule reaches the container. Today's incident is exactly
+that it did not: the 04:00 UTC anchor was due and produced no pull, and the container did
+not restart for 36+ minutes despite `sleepAfter: "20m"`. A denser schedule does not fix an
+unreliable wake — it fails more often. Ordering I would hold to: **prove one anchor wake
+(tonight, 21:00 PT), then change the cadence.**
+
+### 9.5 §1 needs one factual correction
+
+§1 states the service "sleeps after 20 minutes idle" as fact. Observed behaviour on
+2026-09-22 did not match: 36+ minutes with no restart while probes arrived inside that
+window (Cloudflare: one instance, `max_instances: 1`, firecracker). I cannot explain it. A
+plausible guess is that sleep pauses/resumes the VM so the process never re-runs its
+startup path — but I am **not** asserting that. Because decisions are being made off this
+premise, it should read as configured-vs-observed.
+
+Also worth adding to §1, since it is what made the incident hard to diagnose: **a failed
+ingest left no trace.** Nothing recorded that a pull was due and did not happen. That is
+now fixed — every container start and every pull attempt is written to D1
+(`freshness_events`), which is how the 41h → 1h before/after was reconstructed.
+
+### 9.6 Prediction freshness gate: buildable, but not as written
+
+- "Age of its **oldest input**" needs per-input timestamps (SP+/Elo/FPI/recruiting). We
+  track **one bundled pull time** today, so this is new tracking at ingest — feasible, not
+  free, and the doc implies otherwise.
+- "must either refuse to serve **or** mark" is an either/or, which QA cannot verify. Pick
+  one per surface.
+- Recommendation: **mark always** (`STALE_INPUTS` + per-input age); refuse only beyond a
+  much larger bound, if ever. For a betting tool a page that is down is worse than a page
+  that says how old it is. Since it changes what Jeff sees while deciding a bet, that is
+  his call rather than a purely technical one.
+
+### 9.7 Ingestion data-quality guard: build it — there is a real precedent
+
+Support this one strongly; it is not hypothetical here. The `refresh_rankings_from_espn()`
+regression cached a 25-field payload with every CFBD metric dropped (Elo null, SP+ 0.0).
+That *is* bad data overwriting good data, and it reached users. The anomalies it needs
+(`elo_nulls`, `sp_zero`) are already probed in the acceptance check. Staging: **log-only
+for a week to measure false positives, then enforce**, with a disable flag — a guard that
+blocks a legitimate pull during a no-change window would be its own outage.
+
+### 9.8 Phase 4b: I would reframe it
+
+The Worker cron → container path **is** Cloudflare-side scheduled ingestion; the container
+is the ingestion runner. So as written, Phase 4b is either a relabel or — the actual hazard
+— a port of the parsers into the Worker, which breaks this doc's own "parsers reused
+verbatim" hard limit and creates two implementations that will diverge silently.
+
+Reframe: **prove the wake path, monitor it, and keep the local pre-warm cron as an
+independent backstop.** The local cron is valuable *because* it is independent of
+Cloudflare; its desktop-uptime dependence is exactly why it should not be primary. Note
+today's incident was not a desktop-uptime failure, so "move it to Cloudflare" does not
+address the failure we actually had.
+
+### 9.9 Risk table: one row is target-state, not current
+
+"D1 unavailable during a request → fall back to last cached edge copy" describes Phase 3
+onward. Today pages are served from the container's in-memory/disk caches and D1 is mostly
+a **write** path, so that mitigation is not protecting anything yet. Worth marking current
+vs target so the table is not read as present-day coverage.
+
+### 9.10 One unexplained data point, for the record
+
+`2026-09-22T21:50:47Z`: a v23 container start recorded `age_hours=41.36` and did **not**
+pull, with no `pull_skip` / `pull_failed` row. It predates the durable marker, so there is
+no trace to chase. Recording it so it stays *unexplained* rather than forgotten.
