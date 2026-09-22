@@ -428,6 +428,15 @@ def refresh_all() -> dict:
         result["best_bets_graded"] = _ingest_best_bets()
     except Exception as e:
         print(f"[refresh] results grading failed: {e}")
+    try:
+        # D1 live write-path (no-op unless D1_WRITE_ENABLED; never raises into the refresh):
+        # closing lines from the app's own CFBD source, plus a once-per-day rankings snapshot.
+        result["d1_closing_rows"] = d1_write_path.snapshot_closing(
+            _fetch_closing_lines_map(), _normalize_team_name)
+        result["d1_rankings_rows"] = d1_write_path.daily_rankings(
+            lambda: get_rankings().teams, CFBD_YEAR, None)
+    except Exception as e:
+        print(f"[refresh] D1 write-path failed: {e}")
     result["ts"] = datetime.now().isoformat()
     # Memory + quota telemetry: catch spike trends before they OOM-kill the
     # service, and watch the PropLine daily budget every cycle.
