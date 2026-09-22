@@ -438,6 +438,12 @@ def refresh_all() -> dict:
             lambda: get_rankings().teams, CFBD_YEAR, None, composite_version())
     except Exception as e:
         print(f"[refresh] D1 write-path failed: {e}")
+    try:
+        # FCS ratings (Massey) on the same hourly cadence, so the FCS prior is
+        # never stale by more than one cycle. Self-contained and non-fatal.
+        result["fcs_ratings"] = refresh_fcs_ratings()
+    except Exception as e:
+        print(f"[refresh] FCS ratings refresh failed: {e}")
     result["ts"] = datetime.now().isoformat()
     # Memory + quota telemetry: catch spike trends before they OOM-kill the
     # service, and watch the PropLine daily budget every cycle.
@@ -2306,6 +2312,114 @@ def _assert_weights_sum(cfg: dict | None = None) -> None:
               f"— projections will be miscalibrated")
 
 
+# ── FCS composite (RATING-DERIVED) ───────────────────────────────────────────
+# ⚠ FLAGGED FOR FURTHER REVIEW / FINE-TUNING (Jeff, Sep 22 2026).
+#
+# Replaces a flat `fcs_composite = 16.0` that made every FCS opponent identical.
+# These values are FITTED, not chosen. The margin formula is
+#     margin = (comp_home - comp_away) + 2.5*HFA + boost
+# so the composite gap maps 1:1 onto points and the FCS composite is identifiable
+# directly as `comp_fbs + HFA - actual_margin`. Fitted over 103 completed 2026
+# FBS-vs-FCS games (the only season with real FBS composites):
+#
+#     unranked FCS opponent    -> 15   (implied 14.8)
+#     ranked FCS (poll top 25) -> 33   (implied 32.7)
+#     no rating available      -> 19   (implied 19.0 overall)
+#
+# Mean |error| on those games: 21.5 pts (old flat 16 + 15 boost) -> 13.6 pts.
+#
+# KNOWN LIMITS — not settled, revisit before trusting in larger size:
+#   * ~13.6 pts of error remains. One number per group is a coarse model.
+#   * The rank curve is NOT monotone in the data (rank 1-5 implies 34.8, rank
+#     6-15 implies 36.7; n=5 / n=10). Most likely because the top FCS teams
+#     schedule STRONGER FBS opponents rather than being weaker. Only the 2-level
+#     split is supported; finer rank resolution is not yet justified by data.
+#   * Massey's full 1..128 ordering IS loaded (see _fcs_rank_for) and is the
+#     input for that finer tuning.
+FCS_COMPOSITE_UNRANKED = 15.0
+FCS_COMPOSITE_RANKED = 33.0
+FCS_COMPOSITE_FALLBACK = 19.0
+FCS_RANKED_CUTOFF = 25        # Massey rank at/below which a team counts as ranked
+
+_FCS_RANKS: dict[int, int] = {}      # CFBD team_id -> Massey FCS rank
+_FCS_RANKS_TS = 0.0
+FCS_RATINGS_TTL = 6 * 3600
+
+
+def _team_id_for(name: str) -> int | None:
+    """CFBD team id for a name, via the SAME alias-aware map the site uses."""
+    try:
+        aliases = cfbd_shared.team_aliases(CFBD_YEAR) or {}
+    except Exception:  # noqa: BLE001
+        return None
+    hit = aliases.get(name)
+    if hit:
+        try:
+            return int(hit)
+        except (TypeError, ValueError):
+            pass
+    try:
+        import massey_fcs
+        idx = {}
+        for k, v in aliases.items():
+            try:
+                idx.setdefault(massey_fcs._norm(k), int(v))
+            except (TypeError, ValueError):
+                continue
+        for var in massey_fcs._variants(massey_fcs._norm(name)):
+            if var in idx:
+                return idx[var]
+    except Exception:  # noqa: BLE001
+        return None
+    return None
+
+
+def refresh_fcs_ratings(force: bool = False) -> int:
+    """Load Massey's FCS board into memory, keyed by CFBD TEAM ID.
+
+    Id-keyed on purpose: the app looks teams up by CFBD name, and Massey names
+    diverge ("LIU Post" is CFBD "Long Island University"), so a name-keyed cache
+    silently misses those teams. Joining through the shared alias-aware matcher
+    resolves every divergence, not just the ones with a hand alias.
+
+    NEVER raises: the site must not break if Massey is unreachable — it falls back
+    to the fitted value, which is what the old flat constant effectively was.
+    """
+    global _FCS_RANKS, _FCS_RANKS_TS
+    if not force and (time.time() - _FCS_RANKS_TS) < FCS_RATINGS_TTL:
+        return len(_FCS_RANKS)
+    try:
+        import massey_fcs
+        idx = massey_fcs.build_matcher(CFBD_YEAR)
+        aliases = massey_fcs._alias_map()
+        by_id: dict[int, int] = {}
+        for r in massey_fcs.derive_ranks(massey_fcs.fetch_fcs()):
+            tid = massey_fcs.match_team(r["massey_team"], idx, aliases)
+            if tid:
+                by_id[int(tid)] = int(r["fcs_rank"])
+        if by_id:
+            _FCS_RANKS = by_id
+            _FCS_RANKS_TS = time.time()
+    except Exception as e:  # noqa: BLE001
+        print(f"[fcs] Massey ratings refresh failed (keeping {len(_FCS_RANKS)} "
+              f"cached): {e}")
+    return len(_FCS_RANKS)
+
+
+def _fcs_rank_for(name: str) -> int | None:
+    """Massey FCS rank for a CFBD team name, or None when unknown."""
+    tid = _team_id_for(name)
+    return _FCS_RANKS.get(tid) if tid is not None else None
+
+
+def fcs_composite_for(name: str) -> float:
+    """Composite to use for an FCS opponent: ranked, unranked, or fallback."""
+    rank = _fcs_rank_for(name)
+    if rank is None:
+        return FCS_COMPOSITE_FALLBACK
+    return FCS_COMPOSITE_RANKED if rank <= FCS_RANKED_CUTOFF else FCS_COMPOSITE_UNRANKED
+
+
 def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_composite: float | None = None) -> dict:
     """
     Multi-factor projected score model.
@@ -2328,8 +2442,11 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
     classification = (team_data.get("classification") or "").upper()
     has_ratings = bool(team_data.get("sp_plus") or team_data.get("elo"))
     if not has_ratings and classification == "FCS":
-        fcs_composite = 16.0   # typical FCS vs FBS gap (50 = average FBS)
-        base_score = max(6.0, 27.0 + (fcs_composite - 50.0) * 0.55)   # ~13.6 pts
+        # NOT a flat constant any more. The composite comes from the FCS rating
+        # source, falling back to the fitted average when nothing is known about
+        # this opponent. See FCS_COMPOSITE_* for the fit and its provenance.
+        fcs_composite = float(team_data.get("fcs_composite") or FCS_COMPOSITE_FALLBACK)
+        base_score = max(6.0, 27.0 + (fcs_composite - 50.0) * 0.55)
         home_adj = 2.5 if is_home else -1.5
         projected_score = round(max(0.0, base_score + home_adj), 1)
         win_prob = round((1 / (1 + (2.718 ** (-0.08 * (fcs_composite - 50))))) * 100, 1)
@@ -2542,24 +2659,24 @@ def project_head_to_head(
     hp = project_score_multi_factor(home_data, is_home=True)
     ap = project_score_multi_factor(away_data, is_home=False)
     hc, ac = hp["composite"], ap["composite"]
-    # FBS-vs-FCS blowout boost (Sep 6, user-directed): the FCS prior (comp 16)
-    # still undershoots real annihilation spreads — week 1 model margins came in
-    # ~10-30 pts UNDER books' -40..-55 lines, so the ATS rule defaulted to the
-    # FCS dog and went 6-15. When one side has NO data (fcs_no_data) and the
-    # other is rated FBS, boost the FBS side's projection (Jeff's estimate of
-    # the true FBS-FCS gap: 12-15 pts; using 15). Total grows by the boost (all
-    # of it on the FBS side) and margin likewise, so the model takes the
-    # favorite in annihilation territory while keeping a projection on every
-    # game. Both-sides-no-data games (FCS slate noise) get no boost.
-    # Stop-gap for the 4-week FCS-feast stretch; revisit when FCS data lands.
-    FCS_BLOWOUT_BOOST = 15.0
+    # FBS-vs-FCS blowout boost REMOVED (Jeff, Sep 22 2026).
+    # It was a stop-gap from when the FCS prior was a flat composite 16: week-1
+    # margins came in ~10-30 pts under books' -40..-55 lines, so +15 was added.
+    # Now that the composite ITSELF carries the FBS/FCS gap (15 unranked / 33
+    # ranked, fitted from 103 real games), the boost double-counted: an average FBS
+    # team vs an FCS team read (50-16)+2.5+15 = 51.5 against a measured 37.2.
+    # Kept as a named zero rather than deleted so any lingering reference is
+    # obvious, and so re-adding a gap correction is a one-line change if the
+    # fitted composite later proves too tight.
+    FCS_BLOWOUT_BOOST = 0.0
     home_fcs = hp.get("data_flag") == "fcs_no_data"
     away_fcs = ap.get("data_flag") == "fcs_no_data"
     boost = 0.0
-    if home_fcs and not away_fcs:
-        boost = -FCS_BLOWOUT_BOOST   # away (FBS) gains 20 pts
-    elif away_fcs and not home_fcs:
-        boost = +FCS_BLOWOUT_BOOST   # home (FBS) gains 20 pts
+    if FCS_BLOWOUT_BOOST:
+        if home_fcs and not away_fcs:
+            boost = -FCS_BLOWOUT_BOOST   # away (FBS) gains
+        elif away_fcs and not home_fcs:
+            boost = +FCS_BLOWOUT_BOOST   # home (FBS) gains
     avg = (hc + ac) / 2.0
     total = 51.0 + (avg - 50.0) * 0.10 + boost
     # Calibrated margin curve: 1.0 pt of margin per 1.0 pt of composite gap
@@ -3387,6 +3504,13 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
         # Minnesota — Aug 30 fix).
         home["classification"] = m.get("home_classification") or home.get("classification") or ""
         away["classification"] = m.get("away_classification") or away.get("classification") or ""
+        # FCS strength: a rating-derived composite replaces the old flat prior, so a
+        # top-25 FCS opponent is no longer projected identically to a weak one. Only
+        # applied when the side genuinely has no ratings of its own.
+        if (home.get("classification") or "").upper() == "FCS" and not (home.get("sp_plus") or home.get("elo")):
+            home["fcs_composite"] = fcs_composite_for(m["home"])
+        if (away.get("classification") or "").upper() == "FCS" and not (away.get("sp_plus") or away.get("elo")):
+            away["fcs_composite"] = fcs_composite_for(m["away"])
         # Active injury adjustment lookup (Jeff Tracy rule: Star QB out = -10.0 pts)
         home_inj_data = injuries_map.get(m["home"], {})
         away_inj_data = injuries_map.get(m["away"], {})

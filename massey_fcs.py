@@ -30,8 +30,8 @@ what stops an external ranking's unknown scale from silently becoming a strength
 score.
 
 USAGE
-  python scripts/massey_fcs.py --probe     # fetch + map, write nothing
-  python scripts/massey_fcs.py --sync      # fetch + map + write to D1
+  python massey_fcs.py --probe     # fetch + map, write nothing
+  python massey_fcs.py --sync      # fetch + map + write to D1
 """
 from __future__ import annotations
 
@@ -45,7 +45,13 @@ import urllib.request
 from datetime import datetime, timezone
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_ROOT = os.path.dirname(_HERE)
+# Locate the repo root by finding cfbd_shared.py, so this module works whether it
+# sits at the repo root (shipped in the container image) or under scripts/.
+_ROOT = _HERE
+for _cand in (_HERE, os.path.dirname(_HERE)):
+    if os.path.exists(os.path.join(_cand, "cfbd_shared.py")):
+        _ROOT = _cand
+        break
 sys.path.insert(0, _ROOT)
 
 import cfbd_shared  # noqa: E402
