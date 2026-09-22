@@ -351,6 +351,20 @@ def _save_last_analytics_pull(ts: float):
         print(f"[analytics] last-pull write failed: {e}")
 
 
+def _analytics_age_hours() -> float:
+    """Age of the last successful analytics pull, in hours (None-safe -> -1.0).
+
+    NOTE: the last-pull marker is a FILE and the container filesystem is
+    ephemeral, so this resets to "never pulled" on every recycle. That is
+    deliberately eager (a cold start always re-pulls) but it also means the file
+    is not a durable history — which is exactly why freshness_events exists.
+    """
+    ts = _load_last_analytics_pull()
+    if not ts:
+        return -1.0
+    return max(0.0, (time.time() - ts) / 3600.0)
+
+
 def weekly_analytics_due() -> bool:
     """True if the most recent Sun/Mon/Tue/Wed 21:00 PT anchor postdates our last pull."""
     due_at = _most_recent_anchor_pt()
@@ -480,6 +494,17 @@ def _start_scheduler() -> None:
         # refresh ASAP so a baked-in data snapshot can't ship stale. (Cutover
         # requirement: pull live data immediately on container start.)
         time.sleep(10)
+        # Durable proof that a container start happened, and when. Without this the
+        # only evidence of a wake was a console.log that Cloudflare does not retain,
+        # which is why the 2026-09-22 staleness incident was undiagnosable after the
+        # fact. Recorded BEFORE any network work, so a slow or failed start still
+        # leaves a trace.
+        try:
+            d1_write_path.record_freshness_event(
+                "container_start", "scheduler", age_hours=_analytics_age_hours(),
+                detail=f"refresh_interval={REFRESH_INTERVAL_SECONDS}s")
+        except Exception:
+            pass
         first_tick = True
         while True:
             # Failure retry: shorter sleep after a failed refresh so a transient
@@ -511,8 +536,20 @@ def _start_scheduler() -> None:
                     res = run_weekly_analytics_pull()
                     if res["pulled"]:
                         _save_last_analytics_pull(time.time())
+                        d1_write_path.record_freshness_event(
+                            "pull_success", "scheduler", age_hours=_analytics_age_hours(),
+                            detail=str(res)[:250])
+                    else:
+                        # Due, but the pull did not happen — the state that silently
+                        # persisted for 39h. Recorded so it is never invisible again.
+                        d1_write_path.record_freshness_event(
+                            "pull_skip", "scheduler", age_hours=_analytics_age_hours(),
+                            detail=f"due but not pulled: {str(res)[:220]}")
             except Exception as e:
                 print(f"[scheduler] weekly analytics error: {e}")
+                d1_write_path.record_freshness_event(
+                    "pull_failed", "scheduler", age_hours=_analytics_age_hours(),
+                    detail=str(e)[:300])
             time.sleep(sleep_s)
 
     t = threading.Thread(target=_loop, daemon=True, name="cfb-refresh")

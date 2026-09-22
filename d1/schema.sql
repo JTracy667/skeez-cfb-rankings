@@ -123,3 +123,26 @@ CREATE TABLE IF NOT EXISTS api_usage (
   updated_at         TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_api_usage ON api_usage(bucket, period, source);
+
+-- ------------------------------------------------------------- Freshness telemetry
+-- Answers the questions nobody could answer on 2026-09-22 after ~39.5h of stale
+-- analytics: WHEN did the container last start, WHEN did a pull last succeed or
+-- fail, and WHY (which trigger). Before this table the only evidence was a
+-- console.log that Cloudflare does not retain, so the incident was undiagnosable
+-- after the fact and QA could only return INCONCLUSIVE for the freshness SLA and
+-- the cold-start self-heal.
+--
+-- Append-only and low-volume (a handful of rows per container start plus one per
+-- pull attempt), so its own quota cost is negligible. Written through the guarded
+-- D1 write-path: a telemetry failure must never affect the site.
+CREATE TABLE IF NOT EXISTS freshness_events (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts_utc    TEXT,      -- ISO8601 UTC, when the event occurred
+  event     TEXT,      -- container_start | pull_success | pull_skip | pull_failed
+  source    TEXT,      -- scheduler | cron | guard | manual  (what triggered it)
+  age_hours REAL,      -- age of the last successful pull at event time (NULL if unknown)
+  build_tag TEXT,      -- deployed image tag — makes an image swap visible in the timeline
+  detail    TEXT       -- free text or JSON (status, error, counts)
+);
+CREATE INDEX IF NOT EXISTS ix_freshness_ts    ON freshness_events(ts_utc);
+CREATE INDEX IF NOT EXISTS ix_freshness_event ON freshness_events(event, ts_utc);

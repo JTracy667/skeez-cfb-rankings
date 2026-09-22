@@ -308,6 +308,22 @@ def append_odds_snapshots(rows: list[dict]) -> int:
                    rows, None, None)
 
 
+def append_freshness_events(rows: list[dict]) -> int:
+    """Append freshness telemetry (container starts, pull attempts + outcomes).
+
+    Exists because the 2026-09-22 staleness incident was undiagnosable after the
+    fact: the only evidence was a console.log in the Worker's scheduled() handler,
+    and retained Workers Logs are not enabled, so nothing could be queried later.
+    Append-only, no conflict target, low volume.
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    for r in rows:
+        r.setdefault("ts_utc", now)
+    return _upsert("freshness_events",
+                   ["ts_utc", "event", "source", "age_hours", "build_tag", "detail"],
+                   rows, None, None)
+
+
 def upsert_rankings_daily(rows: list[dict]) -> int:
     """Write the daily rankings snapshot — replacing the WHOLE date partition.
 

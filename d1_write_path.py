@@ -252,3 +252,24 @@ def snapshot_predictions(games: list[dict], model_version: str = "composite") ->
 @_guard
 def health() -> int:
     return 1 if d1_store.health().get("ok") else 0
+
+
+@_guard
+def record_freshness_event(event: str, source: str, age_hours: float | None = None,
+                           detail: str | None = None) -> int:
+    """Append one freshness telemetry row (table: freshness_events).
+
+    Wired at the points that matter for freshness: container start, and every
+    analytics pull attempt with its outcome. Guarded like everything else here —
+    telemetry must never be able to affect the site.
+
+    `event` : container_start | pull_success | pull_skip | pull_failed
+    `source`: scheduler | cron | guard | manual  (what triggered it)
+    """
+    return d1_store.append_freshness_events([{
+        "event": event,
+        "source": source,
+        "age_hours": age_hours,
+        "build_tag": os.environ.get("BUILD_TAG", "dev"),
+        "detail": (detail or "")[:500],
+    }])
