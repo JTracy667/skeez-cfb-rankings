@@ -480,6 +480,67 @@ def refresh_all() -> dict:
     return result
 
 
+def _served_state_items() -> list[dict]:
+    """Summarise the payloads the site is CURRENTLY serving (blast-radius evidence).
+
+    Records each endpoint's own data `as_of`, a row count, and a content hash, so a
+    future staleness window can be resolved to exactly what was live instead of
+    staying INCONCLUSIVE forever (which is what happened to the 2026-09-22 one).
+
+    Deliberately limited to the two CACHED endpoints (/api/rankings, /api/analytics).
+    Summarising win-totals or schedule here would issue CFBD calls on every daemon
+    tick, which is not a trade worth making — and both derive from the same analytics
+    source, so their staleness is bounded by the analytics `as_of` recorded here.
+
+    Cheap to call: both sources are in-memory caches.
+    """
+    items: list[dict] = []
+
+    def add(endpoint, payload, as_of=None, count=None, detail=""):
+        try:
+            canon = json.dumps(payload, sort_keys=True, default=str)
+            items.append({
+                "endpoint": endpoint,
+                "as_of": str(as_of) if as_of else None,
+                "row_count": count,
+                "content_hash": hashlib.sha256(canon.encode("utf-8")).hexdigest()[:32],
+                "detail": detail[:500],
+            })
+        except Exception as e:  # noqa: BLE001 — never fatal
+            print(f"[served_state] {endpoint} summary failed (non-fatal): {e}")
+
+    # /api/rankings — the composite-ordered table the site actually shows.
+    # The sort check is recorded because "rankings sorted by composite" is a
+    # durable correctness rule; a snapshot that silently captured an unsorted
+    # table would be worth knowing about later.
+    try:
+        r = get_rankings()
+        payload = r.model_dump() if hasattr(r, "model_dump") else r
+        teams = (payload or {}).get("teams") or []
+        sorted_ok = None
+        try:
+            sorted_ok = all(teams[i]["composite"] >= teams[i + 1]["composite"]
+                            for i in range(len(teams) - 1)) if teams else None
+        except Exception:
+            sorted_ok = None
+        add("/api/rankings", payload, (payload or {}).get("updated"), len(teams),
+            f"sorted_by_composite={sorted_ok}")
+    except Exception as e:  # noqa: BLE001
+        print(f"[served_state] rankings unavailable (non-fatal): {e}")
+
+    # /api/analytics — ONLY if already cached; never force a CFBD pull from here.
+    try:
+        cached = _cache_get(_analytics_cache, ANALYTICS_TTL)
+        if cached:
+            at = cached.get("teams") or []
+            add("/api/analytics", cached, cached.get("updated"), len(at),
+                f"source={cached.get('source')}")
+    except Exception as e:  # noqa: BLE001
+        print(f"[served_state] analytics cache unavailable (non-fatal): {e}")
+
+    return items
+
+
 def _start_scheduler() -> None:
     """Background daemon thread: periodically refresh lines + grade results.
 
@@ -550,6 +611,13 @@ def _start_scheduler() -> None:
                 d1_write_path.record_freshness_event(
                     "pull_failed", "scheduler", age_hours=_analytics_age_hours(),
                     detail=str(e)[:300])
+            # Served-state snapshot — what the site is actually serving right now.
+            # Change-driven, so it writes only when a payload differs from the last
+            # state recorded today. Cheap: reads in-memory caches only.
+            try:
+                d1_write_path.snapshot_served_state(_served_state_items)
+            except Exception as e:
+                print(f"[scheduler] served-state snapshot error (non-fatal): {e}")
             time.sleep(sleep_s)
 
     t = threading.Thread(target=_loop, daemon=True, name="cfb-refresh")

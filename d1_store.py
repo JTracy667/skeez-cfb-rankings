@@ -324,6 +324,23 @@ def append_freshness_events(rows: list[dict]) -> int:
                    rows, None, None)
 
 
+def append_served_snapshots(rows: list[dict]) -> int:
+    """Append a daily served-state snapshot (see d1/schema.sql).
+
+    One row per endpoint per day: the data's own `as_of`, a row count, and a content
+    hash. Exists so a future staleness incident has an answer to "what did users
+    actually see" — the 2026-09-22 one could not be answered at all.
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    for r in rows:
+        r.setdefault("ts_utc", now)
+        r.setdefault("date", now[:10])
+    return _upsert("served_snapshots",
+                   ["date", "ts_utc", "endpoint", "as_of", "row_count",
+                    "content_hash", "build_tag", "detail"],
+                   rows, None, None)
+
+
 def upsert_rankings_daily(rows: list[dict]) -> int:
     """Write the daily rankings snapshot — replacing the WHOLE date partition.
 

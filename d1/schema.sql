@@ -146,3 +146,29 @@ CREATE TABLE IF NOT EXISTS freshness_events (
 );
 CREATE INDEX IF NOT EXISTS ix_freshness_ts    ON freshness_events(ts_utc);
 CREATE INDEX IF NOT EXISTS ix_freshness_event ON freshness_events(event, ts_utc);
+
+-- ------------------------------------------------------------- Served-state snapshots
+-- QA could not establish the user-visible BLAST RADIUS of the 2026-09-22 staleness
+-- incident: freshness_events proves how long the data was stale, but nothing
+-- retained WHAT the site actually served during that window, so "which rankings /
+-- win-totals / schedule values did users see" was unanswerable and stayed
+-- INCONCLUSIVE forever.
+--
+-- This table closes that going forward. Once per day the app summarises what it is
+-- currently serving — per endpoint: the data's own `as_of` timestamp, a row count,
+-- and a content hash — so a past window can be resolved exactly instead of guessed.
+-- Deliberately a SUMMARY (no full payloads): a few rows a day, negligible quota, and
+-- no new privacy surface.
+CREATE TABLE IF NOT EXISTS served_snapshots (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  date         TEXT,     -- 'YYYY-MM-DD' (UTC) — one snapshot set per day
+  ts_utc       TEXT,     -- when the snapshot was taken
+  endpoint     TEXT,     -- /api/rankings | /api/analytics | /api/win-totals | /api/schedule
+  as_of        TEXT,     -- timestamp of the UNDERLYING DATA (not of the request)
+  row_count    INTEGER,  -- teams / games / rows served
+  content_hash TEXT,     -- sha256[:32] of the canonical payload, to detect drift
+  build_tag    TEXT,     -- deployed image tag
+  detail       TEXT      -- free text or JSON
+);
+CREATE INDEX IF NOT EXISTS ix_served_snap_date ON served_snapshots(date);
+CREATE INDEX IF NOT EXISTS ix_served_snap_ep   ON served_snapshots(endpoint, date);

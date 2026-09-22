@@ -273,3 +273,54 @@ def record_freshness_event(event: str, source: str, age_hours: float | None = No
         "build_tag": os.environ.get("BUILD_TAG", "dev"),
         "detail": (detail or "")[:500],
     }])
+
+
+@_guard
+def snapshot_served_state(builder, force: bool = False) -> int:
+    """Record what the site is currently serving, per endpoint.
+
+    Exists so a future staleness incident can answer "what did users actually see?".
+    The 2026-09-22 incident could not be answered at all, because nothing retained
+    the served state.
+
+    `builder` is a zero-arg callable returning a list of dicts:
+        {endpoint, as_of, row_count, content_hash, detail}
+    It IS invoked on every call — it is expected to be cheap (read in-memory
+    caches only, never trigger an upstream fetch), because the content hash is what
+    decides whether anything is written. The WRITE is what gets skipped.
+
+    Change-driven rather than one-row-per-day: an endpoint is re-recorded only when
+    its content hash differs from the last row already stored for today. That yields
+    a timeline of served states — enough to pin down exactly when and for how long a
+    given value was live — instead of a single opaque daily sample. Bounded by real
+    changes, so volume stays small.
+    """
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    last: dict[str, str] = {}
+    try:
+        for r in d1_store.query(
+                "SELECT endpoint, content_hash FROM served_snapshots "
+                "WHERE date = ? ORDER BY id", [today]):
+            if r.get("endpoint"):
+                last[r["endpoint"]] = r.get("content_hash")   # ordered -> ends on newest
+    except Exception:
+        pass   # no readable history: fall through and record everything
+
+    rows = []
+    for it in (builder() or []):
+        ep = it.get("endpoint")
+        if not ep:
+            continue
+        if not force and last.get(ep) == it.get("content_hash"):
+            continue                      # unchanged since the last snapshot today
+        rows.append({
+            "endpoint": ep,
+            "as_of": it.get("as_of"),
+            "row_count": it.get("row_count"),
+            "content_hash": it.get("content_hash"),
+            "build_tag": os.environ.get("BUILD_TAG", "dev"),
+            "detail": (it.get("detail") or "")[:500],
+        })
+    if not rows:
+        return 0
+    return d1_store.append_served_snapshots(rows)
