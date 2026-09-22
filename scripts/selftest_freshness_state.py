@@ -120,6 +120,75 @@ def main():
         finally:
             d1_write_path.d1_store.get_app_state = orig
 
+    # ── 9-13: the inbound (traffic-triggered) guard ──────────────────────
+        # The pull and the telemetry writer are stubbed: these tests are about the
+        # guard's DECISIONS, and must not call CFBD or leave test rows in the prod
+        # freshness table.
+        pulled = {"n": 0}
+        events = []
+
+        def _fake_pull():
+            pulled["n"] += 1
+            return {"pulled": True, "teams": 685}
+
+        orig_pull = app.run_weekly_analytics_pull
+        orig_rec = app.d1_write_path.record_freshness_event
+        orig_save = app._save_last_analytics_pull
+        app.run_weekly_analytics_pull = _fake_pull
+        app.d1_write_path.record_freshness_event = (
+            lambda ev, src, age_hours=None, detail=None: events.append((ev, src)))
+        app._save_last_analytics_pull = lambda ts: d1_write_path.set_last_pull_ts(ts)
+        app._ANALYTICS_GUARD_LAST_ATTEMPT = 0.0
+        app.FRESHNESS_GUARD_ON = True
+        app.FRESHNESS_MAX_AGE_HOURS = 12.0
+        try:
+            # 9. fresh -> no kick
+            d1_write_path.set_last_pull_ts(time.time() - 60)
+            check("inbound guard does NOT kick when data is fresh",
+                  app.maybe_kick_staleness_guard("test-fresh") is False, "")
+
+            # 10. stale -> kicks once and the pull completes
+            d1_write_path.set_last_pull_ts(time.time() - (20 * 3600))
+            check("inbound guard kicks when data is stale",
+                  app.maybe_kick_staleness_guard("test-stale") is True, "")
+            deadline = time.time() + 15
+            while pulled["n"] == 0 and time.time() < deadline:
+                time.sleep(0.2)
+            check("kicked pull actually ran", pulled["n"] == 1, f"pull_count={pulled['n']}")
+            time.sleep(0.4)
+            check("kicked pull recorded source=guard_request",
+                  ("pull_success", "guard_request") in events, str(events[-1:]))
+            check("kicked pull durably advanced the marker",
+                  app._analytics_age_hours() < 1.0,
+                  f"age={app._analytics_age_hours():.3f}h")
+
+            # 11. min-gap: an immediate second call must not kick
+            d1_write_path.set_last_pull_ts(time.time() - (20 * 3600))
+            check("inbound guard respects the min-gap (no hammering)",
+                  app.maybe_kick_staleness_guard("test-immediate") is False
+                  and pulled["n"] == 1, f"pull_count={pulled['n']}")
+
+            # 12. lock held -> no concurrent pull, even past the gap
+            app._ANALYTICS_GUARD_LAST_ATTEMPT = 0.0
+            app._ANALYTICS_GUARD_LOCK.acquire()
+            try:
+                check("inbound guard never starts a second concurrent pull",
+                      app.maybe_kick_staleness_guard("test-locked") is False
+                      and pulled["n"] == 1, f"pull_count={pulled['n']}")
+            finally:
+                app._ANALYTICS_GUARD_LOCK.release()
+
+            # 13. rollback switch
+            app.FRESHNESS_GUARD_ON = False
+            check("inbound guard honours FRESHNESS_GUARD=0",
+                  app.maybe_kick_staleness_guard("test-off") is False, "")
+        finally:
+            app.run_weekly_analytics_pull = orig_pull
+            app.d1_write_path.record_freshness_event = orig_rec
+            app._save_last_analytics_pull = orig_save
+            app.FRESHNESS_GUARD_ON = True
+            app._ANALYTICS_GUARD_LAST_ATTEMPT = 0.0
+
     finally:
         # restore real prod state
         if original is None:

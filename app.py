@@ -8,6 +8,7 @@ import re
 import time
 import math
 import random
+import threading
 from collections import defaultdict
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
@@ -107,7 +108,18 @@ async def _security_headers(request, call_next):
 
     HSTS is deliberately NOT set here — it belongs at the zone/CDN layer so it
     covers the whole domain and can be rolled back independently of the app.
+
+    Also carries the INBOUND side of the staleness guard: every request is a chance
+    to notice the served analytics data has gone stale. This deliberately does not
+    depend on the refresh daemon being alive — a container can serve traffic
+    indefinitely with its background thread dead or wedged, and on 2026-09-22
+    nothing in the request path noticed for ~40h. The call is non-blocking (it
+    spawns a thread) and can never raise into the response.
     """
+    try:
+        maybe_kick_staleness_guard(request.url.path)
+    except Exception:
+        pass
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
@@ -413,6 +425,75 @@ def freshness_guard_due() -> bool:
     if age < 0:
         return True
     return age > FRESHNESS_MAX_AGE_HOURS
+
+
+# ── Inbound staleness guard ─────────────────────────────────────────────────
+# The daemon-loop guard above only gets a chance every REFRESH_INTERVAL_SECONDS
+# (6h) and only while the background thread is alive. That is the wrong dependency:
+# a container can serve requests indefinitely with its daemon dead or wedged, which
+# is exactly how 40h of stale data went unnoticed. This path is triggered BY TRAFFIC
+# instead, so freshness depends on nothing but the site being visited.
+_ANALYTICS_GUARD_LOCK = threading.Lock()
+_ANALYTICS_GUARD_LAST_ATTEMPT = 0.0
+_ANALYTICS_GUARD_MIN_GAP_S = float(os.environ.get("FRESHNESS_GUARD_MIN_GAP_S", "600"))
+
+
+def maybe_kick_staleness_guard(where: str = "request") -> bool:
+    """Start a background analytics pull if the served data is stale.
+
+    Returns True only when this call actually started a pull. Non-blocking by
+    design: the request that triggered it must never wait on CFBD. Three limits
+    keep it from becoming a hammer —
+
+      * freshness_guard_due()  — only when genuinely stale (> max age, or never)
+      * _ANALYTICS_GUARD_MIN_GAP_S — at most one attempt per 10 min
+      * the lock — one pull at a time, and a no-op while one is in flight
+
+    A failed attempt still records telemetry, so a guard that is failing to repair
+    is visible in D1 rather than silent.
+    """
+    global _ANALYTICS_GUARD_LAST_ATTEMPT
+    if not FRESHNESS_GUARD_ON:
+        return False
+    try:
+        if not freshness_guard_due():
+            return False
+    except Exception:
+        return False
+    now = time.time()
+    if now - _ANALYTICS_GUARD_LAST_ATTEMPT < _ANALYTICS_GUARD_MIN_GAP_S:
+        return False
+    if not _ANALYTICS_GUARD_LOCK.acquire(blocking=False):
+        return False          # a pull is already running
+    _ANALYTICS_GUARD_LAST_ATTEMPT = now
+
+    def _work():
+        try:
+            res = run_weekly_analytics_pull()
+            if res.get("pulled"):
+                _save_last_analytics_pull(time.time())
+                d1_write_path.record_freshness_event(
+                    "pull_success", "guard_request",
+                    age_hours=_analytics_age_hours(),
+                    detail=f"kicked by {where}")
+            else:
+                d1_write_path.record_freshness_event(
+                    "pull_skip", "guard_request",
+                    age_hours=_analytics_age_hours(),
+                    detail=f"stale but not pulled (kicked by {where}): {str(res)[:180]}")
+        except Exception as e:
+            d1_write_path.record_freshness_event(
+                "pull_failed", "guard_request",
+                age_hours=_analytics_age_hours(), detail=str(e)[:300])
+        finally:
+            _ANALYTICS_GUARD_LOCK.release()
+
+    try:
+        threading.Thread(target=_work, daemon=True, name="cfb-stale-guard").start()
+    except Exception:
+        _ANALYTICS_GUARD_LOCK.release()
+        return False
+    return True
 
 
 def weekly_analytics_due() -> bool:
