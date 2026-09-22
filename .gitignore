@@ -55,3 +55,6 @@ logs/
 # Ratings ETag probe runtime state (read-only experiment; churns on every probe)
 data/ratings_etag_state.json
 data/ratings_etag_history.jsonl
+
+# CFBD API transport map (regenerate with scripts/probe_api_surface.py)
+data/api_surface_map.json
