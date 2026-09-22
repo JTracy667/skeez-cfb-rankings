@@ -19,6 +19,13 @@ export class CFBPowerRankings extends Container {
 		// post-deploy check prove the NEW image is serving rather than a warm
 		// instance of the previous one (see api_health docstring).
 		BUILD_TAG: env.BUILD_TAG ?? "dev",
+		// Freshness guard: pull whenever the analytics data is older than
+		// FRESHNESS_MAX_AGE_HOURS, independent of the anchor schedule. This is what
+		// makes a missed anchor degrade to "stale until the next visitor" instead of
+		// a multi-day gap. Rollback = set FRESHNESS_GUARD=0 as a Worker secret
+		// (restores anchor-only behaviour) and redeploy.
+		FRESHNESS_GUARD: env.FRESHNESS_GUARD ?? "1",
+		FRESHNESS_MAX_AGE_HOURS: env.FRESHNESS_MAX_AGE_HOURS ?? "12",
 		// D1 live write-path (D1_SCHEMA_SPEC §5): appends odds_snapshots,
 		// rankings_daily, closing_lines and model_predictions to D1 cfb-history.
 		// Flag OFF == pre-D1 behaviour; rollback = set this to "0" and redeploy.

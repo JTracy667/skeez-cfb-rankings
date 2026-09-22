@@ -336,6 +336,20 @@ def _most_recent_anchor_pt(now=None):
 
 
 def _load_last_analytics_pull() -> float:
+    """When the analytics data was last successfully pulled.
+
+    DURABLE SOURCE FIRST (D1 app_state). The file is only a fallback, because it is
+    unreliable in two ways discovered on 2026-09-22: the container filesystem is
+    ephemeral, and `COPY data/ ./data/` bakes the WORKING TREE into the image — so a
+    stale local copy shipped and reported the same ~41h-old timestamp forever, no
+    matter how fresh the data actually was.
+    """
+    try:
+        ts = d1_write_path.get_last_pull_ts()
+        if ts:
+            return float(ts)
+    except Exception as e:  # noqa: BLE001
+        print(f"[analytics] durable last-pull read failed: {e}")
     try:
         if WEEKLY_ANALYTICS_FILE.exists():
             return float(json.loads(WEEKLY_ANALYTICS_FILE.read_text()).get("ts", 0))
@@ -345,10 +359,15 @@ def _load_last_analytics_pull() -> float:
 
 
 def _save_last_analytics_pull(ts: float):
+    """Record a successful pull. Writes D1 (truth) and the local file (fallback)."""
+    try:
+        d1_write_path.set_last_pull_ts(ts)
+    except Exception as e:  # noqa: BLE001
+        print(f"[analytics] durable last-pull write failed: {e}")
     try:
         WEEKLY_ANALYTICS_FILE.write_text(json.dumps({"ts": ts}))
     except Exception as e:
-        print(f"[analytics] last-pull write failed: {e}")
+        print(f"[analytics] last-pull file write failed: {e}")
 
 
 def _analytics_age_hours() -> float:
@@ -363,6 +382,37 @@ def _analytics_age_hours() -> float:
     if not ts:
         return -1.0
     return max(0.0, (time.time() - ts) / 3600.0)
+
+
+# ── Staleness guard ─────────────────────────────────────────────────────────
+# Replaces accidental self-healing. Until 2026-09-22 the app always believed it was
+# due, because a stale marker was baked into the image, so every container start
+# pulled. That looked like robustness but was luck — it depended on a build artifact
+# being wrong, and it is exactly what masked a missed anchor for 39 hours.
+#
+# Now that the marker is durable, an explicit age rule is REQUIRED: without it a
+# fresh container would correctly conclude "not due" and never repair stale data.
+# Flag off (FRESHNESS_GUARD=0) restores the previous anchor-only behaviour.
+FRESHNESS_GUARD_ON = os.environ.get("FRESHNESS_GUARD", "1").strip().lower() in (
+    "1", "true", "yes", "on")
+FRESHNESS_MAX_AGE_HOURS = float(os.environ.get("FRESHNESS_MAX_AGE_HOURS", "12"))
+
+
+def freshness_guard_due() -> bool:
+    """True when the analytics data is older than the allowed maximum age.
+
+    Deliberately ANCHOR-INDEPENDENT: it fires on any container start, whether that
+    start was a cron wake or an ordinary page view. So a missed anchor degrades to
+    "stale until the next visitor" instead of a multi-day gap.
+
+    A never-pulled state (-1.0, i.e. no durable marker) counts as due.
+    """
+    if not FRESHNESS_GUARD_ON:
+        return False
+    age = _analytics_age_hours()
+    if age < 0:
+        return True
+    return age > FRESHNESS_MAX_AGE_HOURS
 
 
 def weekly_analytics_due() -> bool:
@@ -593,19 +643,26 @@ def _start_scheduler() -> None:
             # Weekly CFBD ratings sync (Sun-Wed 9pm PT). Runs on the first tick
             # after it's due; a failed pull retries next tick (ts not advanced).
             try:
-                if weekly_analytics_due():
+                anchor_due = weekly_analytics_due()
+                guard_due = freshness_guard_due()
+                if anchor_due or guard_due:
+                    # `source` distinguishes "the scheduled anchor fired" from "the
+                    # age guard caught us up" -- two different stories later.
+                    src = "scheduler" if anchor_due else "guard"
                     res = run_weekly_analytics_pull()
                     if res["pulled"]:
                         _save_last_analytics_pull(time.time())
                         d1_write_path.record_freshness_event(
-                            "pull_success", "scheduler", age_hours=_analytics_age_hours(),
-                            detail=str(res)[:250])
+                            "pull_success", src, age_hours=_analytics_age_hours(),
+                            detail=f"anchor_due={anchor_due} guard_due={guard_due} "
+                                   f"{str(res)[:180]}")
                     else:
                         # Due, but the pull did not happen — the state that silently
                         # persisted for 39h. Recorded so it is never invisible again.
                         d1_write_path.record_freshness_event(
-                            "pull_skip", "scheduler", age_hours=_analytics_age_hours(),
-                            detail=f"due but not pulled: {str(res)[:220]}")
+                            "pull_skip", src, age_hours=_analytics_age_hours(),
+                            detail=f"anchor_due={anchor_due} guard_due={guard_due} "
+                                   f"not pulled: {str(res)[:160]}")
             except Exception as e:
                 print(f"[scheduler] weekly analytics error: {e}")
                 d1_write_path.record_freshness_event(

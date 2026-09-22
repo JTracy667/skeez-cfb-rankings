@@ -324,3 +324,28 @@ def snapshot_served_state(builder, force: bool = False) -> int:
     if not rows:
         return 0
     return d1_store.append_served_snapshots(rows)
+
+
+# Key for the durable "last successful analytics pull" timestamp.
+_LAST_PULL_KEY = "last_analytics_pull_ts"
+
+
+def get_last_pull_ts() -> float | None:
+    """Durable last-pull timestamp, or None when unknown.
+
+    Deliberately NOT gated by D1_WRITE_ENABLED and never raising: this is a READ, and
+    the caller falls back to the (unreliable, image-baked) file. Returns None rather
+    than 0.0 so "unknown" is distinguishable from "epoch".
+    """
+    try:
+        v = d1_store.get_app_state(_LAST_PULL_KEY)
+        return float(v) if v else None
+    except Exception as e:  # noqa: BLE001 — a read failure must not break the site
+        print(f"[d1_write_path] durable last-pull read failed (falling back to file): {e}")
+        return None
+
+
+@_guard
+def set_last_pull_ts(ts: float) -> int:
+    """Persist the last successful pull timestamp durably (survives recycles)."""
+    return d1_store.set_app_state(_LAST_PULL_KEY, repr(float(ts)))

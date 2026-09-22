@@ -341,6 +341,19 @@ def append_served_snapshots(rows: list[dict]) -> int:
                    rows, None, None)
 
 
+def get_app_state(key: str) -> str | None:
+    """Read a durable value. Returns None when absent (never raises for a miss)."""
+    rows = query("SELECT value FROM app_state WHERE key = ?", [key])
+    return rows[0]["value"] if rows else None
+
+
+def set_app_state(key: str, value: str) -> int:
+    now = datetime.now(timezone.utc).isoformat()
+    return _upsert("app_state", ["key", "value", "updated_at"],
+                   [{"key": key, "value": value, "updated_at": now}],
+                   ["key"], ["value", "updated_at"])
+
+
 def upsert_rankings_daily(rows: list[dict]) -> int:
     """Write the daily rankings snapshot — replacing the WHOLE date partition.
 

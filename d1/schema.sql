@@ -172,3 +172,22 @@ CREATE TABLE IF NOT EXISTS served_snapshots (
 );
 CREATE INDEX IF NOT EXISTS ix_served_snap_date ON served_snapshots(date);
 CREATE INDEX IF NOT EXISTS ix_served_snap_ep   ON served_snapshots(endpoint, date);
+
+-- ------------------------------------------------------------- Durable app state
+-- Small key/value store for state that must SURVIVE a container recycle.
+--
+-- Motivated by a real bug found 2026-09-22: the "last analytics pull" marker was a
+-- file (data/last_analytics_pull.json). Two things were wrong with that:
+--   1. the container filesystem is ephemeral, so the app could never durably update
+--      it -- every recycle lost the value;
+--   2. Dockerfile `COPY data/ ./data/` copies the WORKING TREE (including untracked
+--      files), so a stale local copy from Sep 20 was baked into every image. The
+--      app therefore reported the same ~41h-old "last pull" no matter how fresh the
+--      data actually was, and every fresh container believed it was due.
+-- (2) was accidentally load-bearing: that eager pull is what masked the missed
+-- anchor. It is now replaced by an explicit, age-based staleness guard.
+CREATE TABLE IF NOT EXISTS app_state (
+  key        TEXT PRIMARY KEY,
+  value      TEXT,
+  updated_at TEXT
+);

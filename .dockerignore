@@ -22,3 +22,17 @@ data/espn_scoreboard.json
 data/espn_teams_raw.json
 data/analytics.json
 data/week_schedule.json
+
+# RUNTIME STATE — must NEVER be baked into the image.
+# `COPY data/ ./data/` copies the whole working tree, including untracked files, so
+# any of these left lying around locally ships to production. This is not
+# theoretical: a stale data/last_analytics_pull.json (Sep 20) was baked into every
+# build and made the app report a fixed ~41h-old "last pull", which in turn made
+# every fresh container believe it was due. That accidental behaviour was the only
+# thing masking a missed anchor, and it hid the real freshness state from QA.
+# The durable source of truth is now D1 (app_state); these files are local-only.
+data/last_analytics_pull.json
+data/last_cache_warm.json
+data/last_cache_warm_error.json
+data/d1_rankings_last.json
+data/fcs_extras_progress.json
