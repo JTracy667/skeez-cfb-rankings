@@ -17,7 +17,7 @@ const vm = require('vm');
 
 const BASE = process.argv[2] || 'https://skeezcfb-rankings.com';
 const PAGES = ['/', '/analytics', '/schedule', '/win-totals'];
-const SETTLE_MS = Number(process.env.SETTLE_MS || 6000);
+const SETTLE_MS = Number(process.env.SETTLE_MS || 20000);
 
 const allWrites = []; // { key, html }
 const asyncErrors = []; // rejections from the page's own promise chains
