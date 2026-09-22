@@ -151,11 +151,13 @@ def daily_rankings(fetch_teams, season: int | None = None, week: int | None = No
         return 0
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     # Fast path: the local marker file (works on the desktop and within a single
-    # container instance's lifetime).
+    # container instance's lifetime). Version-aware for the same reason as the D1
+    # guard below.
     try:
         with open(_RANK_DATE_FILE, encoding="utf-8") as f:
-            if json.load(f).get("date") == today:
-                return 0
+            marker = json.load(f)
+        if marker.get("date") == today and marker.get("model_version") == model_version:
+            return 0
     except Exception:  # noqa: BLE001
         pass
     # Durable path — the container filesystem is EPHEMERAL, so that marker is
@@ -163,12 +165,27 @@ def daily_rankings(fetch_teams, season: int | None = None, week: int | None = No
     # Because the writer replaces only its own batch's keys, the two writes
     # unioned: 2026-09-22 ended with 26 rows for one date and two different teams
     # (ids 344 and 145) both at rank 25. D1 is the authority on "already written".
+    #
+    # VERSION-AWARE (Sep 22 2026, QA finding): the guard used to key on the DATE
+    # alone, so once a partition existed under the legacy literal "composite" it was
+    # never rewritten — meaning a mid-day config change could NEVER appear in the
+    # archive. That defeats risk-register D3, whose entire purpose is that a weight
+    # change produces a VISIBLE version break. Now the guard skips only when today's
+    # rows already carry the CURRENT model_version; a different version forces a
+    # rewrite (safe — the writer replaces the whole date partition).
     try:
         rows = d1_store.query(
-            "SELECT COUNT(*) AS n FROM rankings_daily WHERE date = ?", [today])
-        if rows and int(rows[0].get("n") or 0) > 0:
-            print(f"[d1_write_path] rankings_daily already written for {today} (D1 guard) — skip")
-            return 0
+            "SELECT model_version, COUNT(*) AS n FROM rankings_daily WHERE date = ? "
+            "GROUP BY model_version", [today])
+        for r in (rows or []):
+            if int(r.get("n") or 0) > 0 and (r.get("model_version") or "") == model_version:
+                print(f"[d1_write_path] rankings_daily already written for {today} "
+                      f"under {model_version} (D1 guard) — skip")
+                return 0
+        if rows:
+            found = [r.get("model_version") for r in rows]
+            print(f"[d1_write_path] rankings_daily for {today} carries {found} != "
+                  f"{model_version} — REWRITING so the version break is visible")
     except Exception as e:  # noqa: BLE001
         print(f"[d1_write_path] rankings_daily day-guard read failed: {e}")
     try:
@@ -176,7 +193,7 @@ def daily_rankings(fetch_teams, season: int | None = None, week: int | None = No
         if n:
             os.makedirs(os.path.dirname(_RANK_DATE_FILE), exist_ok=True)
             with open(_RANK_DATE_FILE, "w", encoding="utf-8") as f:
-                json.dump({"date": today, "rows": n}, f)
+                json.dump({"date": today, "rows": n, "model_version": model_version}, f)
         return n
     except Exception as e:  # noqa: BLE001
         print(f"[d1_write_path] daily_rankings failed (site unaffected): {e}")
