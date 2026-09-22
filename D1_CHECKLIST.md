@@ -35,6 +35,13 @@ If blocked >15 min on any item: post the blocker to the CSuite group and STOP �
 - [ ] Massey ratings 2021–2026 — ⛔ BLOCKED: CFBD `/ratings/massey` returns 0 rows (endpoint unpopulated); needs an external archive scrape (masseyratings.com), a separate build
 - [x] Daily caps respected every day (receipt: cfbd_calls + rows_written logged per run) — 2026-09-21 ledger closed at **288,330** D1-confirmed rows written against the **2,000,000/day** guard on Workers PAID (50M/month pool ⇒ ~0.6% of the month). Never near the guard; no free-tier daily ceiling exists.
 
+## WORK-PRODUCT REGISTRY (existing inputs — CTO consumes these BEFORE building anything new)
+- **Research brief, Sep 21 10:38 AM — "FCS Team Rating Source-Scan"**: Massey = primary FCS rating source, URL structure mapped (masseyratings.com/cf/ncaa-d1/ratings + per-team/conf pages); SRS via CFBD `/ratings/srs?classification=fcs` = qualified fallback (no preseason prior — weak weeks 0–2); SP+/FPI/Elo confirmed FBS-only. → USE for the Massey scraper and any FCS rating work. Located: Research session DB, Sep 21.
+- **docs/API_CATALOG.md + api_catalog.json** (3c32a00): authoritative endpoint map — check BEFORE concluding an endpoint doesn't exist.
+- **D1_RISK_REGISTER.md**: all D1 decisions (caps, FCS scope, degraded mode) — build to it, don't re-litigate.
+- **D1_WRITE_BUDGET_FINDING.md**: 4× index-maintenance write multiplier — cap math derives from this.
+- **D1_PHASE2_REPORT.md**: stop-cause + counter design rationale.
+
 ## PHASE 3.5 — STANDING BUDGET METERS (CEO directive: counters always rolling, never ad-hoc)
 - [ ] Daily usage ledger per API, appended on every call batch: CFBD (calls/day), Odds API (calls/month), PropLine (calls/day), D1 (confirmed rows written/day) — persisted to data/budget_ledger.json
 - [ ] Caps recorded from Jeff's stated plan (authoritative): CFBD **30,000 calls/month** (cheap to tier up if needed) · Odds API 20,000/month · PropLine **5,000/day** · D1 Workers Paid 50M rows-written/month. Ledger tracks against THESE, alerts at 80%/95%.
@@ -42,10 +49,10 @@ If blocked >15 min on any item: post the blocker to the CSuite group and STOP �
 - [ ] "What's our burn?" answerable from the ledger file in one read — no polling, no estimates
 
 
-- [ ] Hourly refresh appends odds_snapshots (receipt: row delta after one poll)
-- [ ] Nightly rankings_daily archive job scheduled (receipt: first run)
-- [ ] model_predictions written pre-kickoff
-- [ ] Degraded mode: budget breach → stop calling + staleness flag + group alert (test proven)
+- [x] Hourly refresh appends odds_snapshots — ✅ CLOSED 2026-09-22 (CTO, live D1 check): `odds_snapshots` 0 → **12,369 rows across 19 distinct `poll_ts`**, 01:52Z → 14:30Z, a steady 651 rows/poll. Was gated behind `D1_WRITE_ENABLED`; the flag + D1 token are now wired through the Worker (image v16+). Receipt: `SELECT COUNT(*), COUNT(DISTINCT poll_ts) FROM odds_snapshots`.
+- [ ] Nightly rankings_daily archive job scheduled (receipt: first run) — PARTIAL as of 2026-09-22: it has written, but only **1 distinct date (`2026-09-22`), 26 rows** against the 25 teams the live site serves. The extra row needs explaining, and "written once" is not "scheduled nightly". Do not tick until a second date appears and the 26-vs-25 gap is resolved.
+- [ ] model_predictions written pre-kickoff — OPEN: **0 rows** in D1 as of 2026-09-22. Pre-kickoff path exists but has never fired.
+- [ ] Degraded mode: budget breach → stop calling + staleness flag + group alert (test proven) — OPEN, not started.
 
 ## PHASE 5 — BACKTESTING ⏳
 - [ ] D1→local export path works
