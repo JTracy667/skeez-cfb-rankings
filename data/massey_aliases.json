@@ -1,0 +1,12 @@
+{
+  "_comment": [
+    "Massey team name -> CFBD team id. Checked BEFORE fuzzy matching.",
+    "Only add an entry when name matching genuinely cannot resolve it.",
+    "A wrong id here silently attributes one team's ratings to another, so each",
+    "entry must be verified against the CFBD team list, not inferred."
+  ],
+  "_verified": {
+    "LIU Post": "CFBD 'Long Island University' id=2341 (classification=fcs, NEC) is the FCS program Massey labels 'LIU Post'. CFBD ALSO has a separate 'Post' id=126086 (classification=ii, Northeast 10) which is a D2 school — a fuzzy match lands on that one and would be WRONG."
+  },
+  "LIU Post": 2341
+}
