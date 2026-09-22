@@ -125,6 +125,18 @@ def main():
     finally:
         d1_store_b.append_served_snapshots = orig
 
+    # CLEAN UP — same reasoning as selftest_freshness_telemetry: these are real rows in
+    # the prod served_snapshots timeline, and synthetic entries corrupt the very
+    # blast-radius history the table exists to provide. The test tags its rows
+    # detail='selftest'; delete exactly those.
+    try:
+        d1_store.query("DELETE FROM served_snapshots WHERE detail = 'selftest'")
+        left = int(d1_store.query("SELECT COUNT(*) AS n FROM served_snapshots "
+                                  "WHERE detail = 'selftest'")[0]["n"])
+        print(f"  (cleaned synthetic snapshot rows: {left} left with detail='selftest')")
+    except Exception as e:
+        print(f"  (WARNING: could not clean synthetic rows: {e})")
+
     npass = sum(1 for _, ok, _ in results if ok)
     print(f"\n{npass}/{len(results)} PASS")
     return 0 if npass == len(results) else 1

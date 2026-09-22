@@ -112,6 +112,18 @@ def main():
     finally:
         d1_store2.append_freshness_events = orig
 
+    # CLEAN UP — this test writes REAL rows into the prod freshness table, and leaving
+    # them behind is not cosmetic: they are indistinguishable from genuine container
+    # starts to anything reading the table. A watcher of mine was fooled by exactly
+    # these rows on 2026-09-22 and reported a false regression verdict off them.
+    try:
+        d1_store.query("DELETE FROM freshness_events WHERE source LIKE 'selftest%'")
+        left = int(d1_store.query("SELECT COUNT(*) AS n FROM freshness_events "
+                                  "WHERE source LIKE 'selftest%'")[0]["n"])
+        print(f"  (cleaned synthetic freshness rows: {left} left with source LIKE 'selftest%')")
+    except Exception as e:
+        print(f"  (WARNING: could not clean synthetic rows: {e})")
+
     npass = sum(1 for _, ok, _ in results if ok)
     print(f"\n{npass}/{len(results)} PASS")
     return 0 if npass == len(results) else 1
