@@ -1,0 +1,342 @@
+{
+  "oa_football_sports": [
+    {
+      "key": "americanfootball_cfl",
+      "title": "CFL",
+      "active": true,
+      "has_outrights": false
+    },
+    {
+      "key": "americanfootball_ncaaf",
+      "title": "NCAAF",
+      "active": true,
+      "has_outrights": false
+    },
+    {
+      "key": "americanfootball_ncaaf_championship_winner",
+      "title": "NCAAF Championship Winner",
+      "active": true,
+      "has_outrights": true
+    },
+    {
+      "key": "americanfootball_ncaaf_fcs",
+      "title": "NCAAF FCS",
+      "active": false,
+      "has_outrights": false
+    },
+    {
+      "key": "americanfootball_nfl",
+      "title": "NFL",
+      "active": true,
+      "has_outrights": false
+    },
+    {
+      "key": "americanfootball_nfl_preseason",
+      "title": "NFL Preseason",
+      "active": false,
+      "has_outrights": false
+    },
+    {
+      "key": "americanfootball_nfl_super_bowl_winner",
+      "title": "NFL Super Bowl Winner",
+      "active": true,
+      "has_outrights": true
+    },
+    {
+      "key": "americanfootball_ufl",
+      "title": "UFL",
+      "active": false,
+      "has_outrights": false
+    }
+  ],
+  "oa_odds_event_keys": [
+    "away_team",
+    "bookmakers",
+    "commence_time",
+    "home_team",
+    "id",
+    "sport_key",
+    "sport_title"
+  ],
+  "oa_bookmaker_obj_keys": [
+    "key",
+    "last_update",
+    "markets",
+    "title"
+  ],
+  "oa_market_obj_keys": [
+    "key",
+    "last_update",
+    "outcomes"
+  ],
+  "oa_outcome_obj_keys": [
+    "name",
+    "point",
+    "price"
+  ],
+  "oa_sample_bookmaker": "{\"key\": \"fanduel\", \"title\": \"FanDuel\", \"last_update\": \"2026-09-23T03:20:28Z\", \"markets\": [{\"key\": \"spreads\", \"last_update\": \"2026-09-23T03:20:28Z\", \"outcomes\": [{\"name\": \"Coastal Carolina Chanticleers\", \"price\": -110, \"point\": 2.5}, {\"name\": \"Liberty Flames\", \"price\": -110, \"point\": -2.5}]}]}",
+  "oa_bookmakers": {
+    "fanduel": {
+      "title": "FanDuel",
+      "n_events": 71
+    },
+    "leovegas": {
+      "title": "LeoVegas",
+      "n_events": 66
+    },
+    "boylesports": {
+      "title": "BoyleSports",
+      "n_events": 69
+    },
+    "mybookieag": {
+      "title": "MyBookie.ag",
+      "n_events": 55
+    },
+    "onexbet": {
+      "title": "1xBet",
+      "n_events": 26
+    },
+    "betrivers": {
+      "title": "BetRivers",
+      "n_events": 58
+    },
+    "unibet_nl": {
+      "title": "Unibet (NL)",
+      "n_events": 56
+    },
+    "unibet_se": {
+      "title": "Unibet (SE)",
+      "n_events": 58
+    },
+    "leovegas_se": {
+      "title": "LeoVegas (SE)",
+      "n_events": 58
+    },
+    "draftkings": {
+      "title": "DraftKings",
+      "n_events": 58
+    },
+    "gtbets": {
+      "title": "GTbets",
+      "n_events": 50
+    },
+    "nordicbet": {
+      "title": "Nordic Bet",
+      "n_events": 20
+    },
+    "coolbet": {
+      "title": "Coolbet",
+      "n_events": 57
+    },
+    "betsson": {
+      "title": "Betsson",
+      "n_events": 20
+    },
+    "lowvig": {
+      "title": "LowVig.ag",
+      "n_events": 56
+    },
+    "betonlineag": {
+      "title": "BetOnline.ag",
+      "n_events": 58
+    },
+    "williamhill_us": {
+      "title": "Caesars",
+      "n_events": 5
+    },
+    "ladbrokes_uk": {
+      "title": "Ladbrokes",
+      "n_events": 58
+    },
+    "coral": {
+      "title": "Coral",
+      "n_events": 46
+    },
+    "betmgm": {
+      "title": "BetMGM",
+      "n_events": 58
+    },
+    "betus": {
+      "title": "BetUS",
+      "n_events": 57
+    },
+    "betanysports": {
+      "title": "BetAnything",
+      "n_events": 58
+    },
+    "pinnacle": {
+      "title": "Pinnacle",
+      "n_events": 58
+    },
+    "bovada": {
+      "title": "Bovada",
+      "n_events": 58
+    },
+    "everygame": {
+      "title": "Everygame",
+      "n_events": 57
+    },
+    "matchbook": {
+      "title": "Matchbook",
+      "n_events": 5
+    },
+    "fanatics": {
+      "title": "Fanatics",
+      "n_events": 18
+    }
+  },
+  "oa_markets_seen": {
+    "spreads": 1314
+  },
+  "oa_quota": {
+    "x-requests-remaining": "19465",
+    "x-requests-last": "3",
+    "x-requests-used": "535"
+  },
+  "oa_books_incl_sharp": [
+    "pinnacle",
+    "lowvig",
+    "betonlineag",
+    "williamhill_us",
+    "draftkings",
+    "fanduel",
+    "betmgm"
+  ],
+  "oa_prop_tests": {
+    "player_pass_tds": {
+      "ok": true,
+      "error": null,
+      "n_books": 1,
+      "markets_returned": [
+        "player_pass_tds"
+      ]
+    },
+    "player_pass_yds": {
+      "ok": true,
+      "error": null,
+      "n_books": 1,
+      "markets_returned": [
+        "player_pass_yds"
+      ]
+    },
+    "player_rush_yds": {
+      "ok": true,
+      "error": null,
+      "n_books": 1,
+      "markets_returned": [
+        "player_rush_yds"
+      ]
+    },
+    "player_receptions": {
+      "ok": true,
+      "error": null,
+      "n_books": 0,
+      "markets_returned": []
+    },
+    "team_totals": {
+      "ok": true,
+      "error": null,
+      "n_books": 2,
+      "markets_returned": [
+        "team_totals"
+      ]
+    },
+    "alternate_spreads": {
+      "ok": true,
+      "error": null,
+      "n_books": 6,
+      "markets_returned": [
+        "alternate_spreads"
+      ]
+    }
+  },
+  "pl_event_keys": [
+    "away_team",
+    "away_team_id",
+    "away_team_key",
+    "away_team_logo_url",
+    "bookmakers",
+    "commence_time",
+    "home_team",
+    "home_team_id",
+    "home_team_key",
+    "home_team_logo_url",
+    "id",
+    "last_update",
+    "live",
+    "merged_from_event_ids",
+    "sport_key"
+  ],
+  "pl_bookmaker_sample": "{\"key\": \"betmgm\", \"title\": \"BetMGM\", \"last_update\": \"2026-09-23T03:19:12.461731Z\", \"link\": null, \"app_link\": null, \"pregame_only\": false, \"book_event_id\": null, \"markets\": [{\"key\": \"h2h\", \"description\": \"Moneyline\", \"last_update\": \"2026-09-23T03:19:12.461731Z\", \"period\": null, \"suspended_at\": null, \"team\": null, \"outcomes\": [{\"name\": \"Coastal Carolina\", \"description\": \"\", \"price\": 110, \"point\": null, \"book_updated_at\": null, \"book_version\": null, \"payout_multiplier\": null, \"dfs_odds_type\": null, \"last_change_at\": \"2026-09-22T23:29:09.986093Z\", \"last_seen_at\": \"2026-09-23T03:19:12.461731Z\", \"liquidity\": null, \"liquidity_updated_at\": null, \"line_gap\": null, \"book_outcome_id\": null, \"outcome_id\": null, \"player_id\": null}, {\"name\": \"Liberty\", \"description\": \"\", \"price\": -135, \"point\": null, \"book_updated_at\": null, \"book_version\": null, \"payout_multiplier\": null, \"dfs_odds_type\": null, \"last_change_at\": \"2026-09-22T23:29:09.986093Z\", \"last_seen_at\": \"2026-09-23T03:19:12.461731Z\", \"liquidity\": null, \"liquidity_updated_at\": null, \"line_gap\": null, \"book_outcome_id\": null, \"outcome_id\": null, \"player_id\": null}]}]}",
+  "pl_bookmaker_keys": [
+    "app_link",
+    "book_event_id",
+    "key",
+    "last_update",
+    "link",
+    "markets",
+    "pregame_only",
+    "title"
+  ],
+  "pl_market_keys": [
+    "description",
+    "key",
+    "last_update",
+    "outcomes",
+    "period",
+    "suspended_at",
+    "team"
+  ],
+  "pl_market_sample": "{\"key\": \"h2h\", \"description\": \"Moneyline\", \"last_update\": \"2026-09-23T03:19:12.461731Z\", \"period\": null, \"suspended_at\": null, \"team\": null, \"outcomes\": [{\"name\": \"Coastal Carolina\", \"description\": \"\", \"price\": 110, \"point\": null, \"book_updated_at\": null, \"book_version\": null, \"payout_multiplier\": null, \"dfs_odds_type\": null, \"last_change_at\": \"2026-09-22T23:29:09.986093Z\", \"last_seen_at\": \"2026-09-23T03:19:12.461731Z\", \"liquidity\": null, \"liquidity_updated_at\": null, \"line_gap\": null, \"book_outcome_id\": null, \"outcome_id\": null, \"player_id\": null}, {\"name\": \"Liberty\", \"description\": \"\", \"price\": -135, \"point\": null, \"book_updated_at\": null, \"book_version\": null, \"payout_multiplier\": null, \"dfs_odds_type\": null, \"last_change_at\": \"2026-09-22T23:29:09.986093Z\", \"last_seen_at\": \"2026-09-23T03:19:12.461731Z\", \"liquidity\": null, \"liquidity_updated_at\": null, \"line_gap\": null, \"book_outcome_id\": null, \"outcome_id\": null, \"player_id\": null}]}",
+  "pl_outcomes_keys": [
+    "book_outcome_id",
+    "book_updated_at",
+    "book_version",
+    "description",
+    "dfs_odds_type",
+    "last_change_at",
+    "last_seen_at",
+    "line_gap",
+    "liquidity",
+    "liquidity_updated_at",
+    "name",
+    "outcome_id",
+    "payout_multiplier",
+    "player_id",
+    "point",
+    "price"
+  ],
+  "pl_outcomes_sample": "{\"name\": \"Coastal Carolina\", \"description\": \"\", \"price\": 110, \"point\": null, \"book_updated_at\": null, \"book_version\": null, \"payout_multiplier\": null, \"dfs_odds_type\": null, \"last_change_at\": \"2026-09-22T23:29:09.986093Z\", \"last_seen_at\": \"2026-09-23T03:19:12.461731Z\", \"liquidity\": null, \"liquidity_updated_at\": null, \"line_gap\": null, \"book_outcome_id\": null, \"outcome_id\": null, \"player_id\": null}",
+  "pl_bookmakers": {
+    "betmgm": 57,
+    "betonlineag": 53,
+    "betrivers": 52,
+    "betus": 51,
+    "bovada": 55,
+    "draftkings": 58,
+    "fanatics": 59,
+    "fanduel": 107,
+    "fliff": 110,
+    "hardrock": 60,
+    "kalshi": 175,
+    "lowvig": 53,
+    "marathon": 53,
+    "pinnacle": 55,
+    "polymarket": 229,
+    "polymarket_us": 225,
+    "prophetx": 60,
+    "rebet": 34
+  },
+  "pl_markets_seen": {
+    "h2h": 1546
+  },
+  "pl_quota": {
+    "ratelimit-limit": "5000",
+    "ratelimit-remaining": "4595",
+    "ratelimit-reset": "74335",
+    "ratelimit-policy": "5000;w=86400",
+    "x-ratelimit-limit": "5000",
+    "x-ratelimit-remaining": "4595",
+    "x-ratelimit-reset": "1790208000"
+  }
+}
