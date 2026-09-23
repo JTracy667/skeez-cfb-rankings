@@ -124,9 +124,13 @@ def aggregate(plays: list[dict]) -> dict:
                 if ptype in PASS_TYPES:
                     acc[off]["epa_pass_sum"] += ppa
                     acc[off]["epa_pass_n"] += 1
+                    acc[dfn]["def_epa_pass_sum"] += ppa
+                    acc[dfn]["def_epa_pass_n"] += 1
                 elif ptype in RUSH_TYPES:
                     acc[off]["epa_rush_sum"] += ppa
                     acc[off]["epa_rush_n"] += 1
+                    acc[dfn]["def_epa_rush_sum"] += ppa
+                    acc[dfn]["def_epa_rush_n"] += 1
             if isinstance(yards, (int, float)) and yards >= 20:
                 acc[off]["explosive"] += 1
 
@@ -162,6 +166,10 @@ def aggregate(plays: list[dict]) -> dict:
             "explosive_rate": round(a.get("explosive", 0) / n_off, 4) if n_off else None,
             "havoc_rate": round(a.get("havoc", 0) / n_def, 4) if n_def else None,
             "def_ppa": round(a["def_ppa_sum"] / a["def_ppa_n"], 4) if a.get("def_ppa_n") else None,
+            "def_epa_pass": (round(a["def_epa_pass_sum"] / a["def_epa_pass_n"], 4)
+                             if a.get("def_epa_pass_n") else None),
+            "def_epa_rush": (round(a["def_epa_rush_sum"] / a["def_epa_rush_n"], 4)
+                             if a.get("def_epa_rush_n") else None),
             "sec_per_play": round(a["sec_sum"] / a["sec_n"], 2) if a.get("sec_n") else None,
         }
     return out
