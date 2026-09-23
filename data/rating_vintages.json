@@ -1,5 +1,7 @@
 {
+  "talent": 2026,
   "srs": 2025,
-  "as_of_utc": "2026-09-22T23:54:15+00:00",
-  "detail": "CFBD /ratings/srs?year=2026 returned 0 rows; app.py falls back to the previous season. Updated automatically by the analytics fetch path."
+  "elo": 2026,
+  "as_of_utc": "2026-09-23T17:35:28+00:00",
+  "detail": "Updated by the analytics fetch path. A rating falls back to the previous season when CFBD has not published the current one."
 }

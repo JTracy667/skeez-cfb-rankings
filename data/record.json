@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "updated": "2026-09-20T15:10:15.427005",
+  "updated": "2026-09-22T21:48:24.081289",
   "picks": [
     {
       "key": "tcu|north carolina",
@@ -5375,10 +5375,10 @@
       "ats_pick": "Washington State",
       "spread": -16.5,
       "total": 51.5,
-      "over_pick": null,
+      "over_pick": "over",
       "su_result": "W",
       "ats_result": "L",
-      "total_result": null
+      "total_result": "L"
     },
     {
       "key": "oklahoma state|oregon",
@@ -5567,10 +5567,10 @@
       "ats_pick": "Colgate",
       "spread": -18.5,
       "total": 49.5,
-      "over_pick": null,
+      "over_pick": "over",
       "su_result": "W",
       "ats_result": "W",
-      "total_result": null
+      "total_result": "L"
     },
     {
       "key": "miami (oh)|holy cross",
@@ -6924,12 +6924,12 @@
       "home_score": 48,
       "away_score": 7,
       "su_pick": "Washington State",
-      "ats_pick": null,
+      "ats_pick": "Duquesne",
       "spread": -38.5,
       "total": 51.5,
       "over_pick": "under",
       "su_result": "W",
-      "ats_result": null,
+      "ats_result": "L",
       "total_result": "L"
     },
     {

@@ -214,6 +214,8 @@ def score(rows, variant, slope=SLOPE, hfa=HFA, weights=None, decay=None, wk_filt
     import app
     Wt = weights or W
     errs, signed, margins = [], [], []
+    errs_actual, signed_actual = [], []
+    ranks_model, ranks_actual = [], []
     ats = {t: {"w": 0, "l": 0, "p": 0} for t in (0.5, 3.5, 7.0)}   # all picks / 3.5pt / 7pt edges
     for r in rows:
         if wk_filter and not wk_filter(r["week"]):
@@ -258,6 +260,13 @@ def score(rows, variant, slope=SLOPE, hfa=HFA, weights=None, decay=None, wk_filt
         errs.append(abs(m - book))
         signed.append(m - book)
         margins.append(abs(m))
+        # POWER-RANKING metric (Jeff's stated goal): how well does this grade the teams, measured
+        # against the ACTUAL final margin rather than the market's opinion. MAE-vs-book measures
+        # betability; MAE-vs-actual measures whether the team grades are right.
+        errs_actual.append(abs(m - r["actual_home_margin"]))
+        signed_actual.append(m - r["actual_home_margin"])
+        ranks_model.append(m)
+        ranks_actual.append(r["actual_home_margin"])
         edge = abs(m - book)
         pick_home = m > book
         cover = r["actual_home_margin"] - book
@@ -274,10 +283,37 @@ def score(rows, variant, slope=SLOPE, hfa=HFA, weights=None, decay=None, wk_filt
     def pct(d):
         dec = d["w"] + d["l"]
         return (100.0 * d["w"] / dec) if dec else 0.0
+    # Scale-free power-ranking measures: the compressed scale (mean |margin| ~10 vs actual ~14)
+    # dilutes MAE-vs-actual, so also measure ORDERING quality directly.
+    su_num = su_den = 0
+    for m, act in zip(ranks_model, ranks_actual):
+        if act == 0 or m == 0:
+            continue
+        su_den += 1
+        if (m > 0) == (act > 0):
+            su_num += 1
+    def _rank(vals):
+        order = sorted(range(len(vals)), key=lambda i: vals[i])
+        rk = [0.0] * len(vals)
+        for pos, i in enumerate(order):
+            rk[i] = float(pos)
+        return rk
+    rho = 0.0
+    if len(ranks_model) > 2:
+        a, b_ = _rank(ranks_model), _rank(ranks_actual)
+        ma, mb = sum(a) / len(a), sum(b_) / len(b_)
+        cov = sum((x - ma) * (y - mb) for x, y in zip(a, b_))
+        va = sum((x - ma) ** 2 for x in a) ** 0.5
+        vb = sum((y - mb) ** 2 for y in b_) ** 0.5
+        rho = (cov / (va * vb)) if va and vb else 0.0
     return {
+        "su_acc": (100.0 * su_num / su_den) if su_den else 0.0,
+        "spearman": rho,
         "n": n, "mae": sum(errs) / n if n else 0.0,
         "bias": sum(signed) / n if n else 0.0,
         "mean_abs_margin": sum(margins) / n if n else 0.0,
+        "mae_actual": sum(errs_actual) / n if n else 0.0,
+        "bias_actual": sum(signed_actual) / n if n else 0.0,
         "ats_pct": pct(ats[0.5]), "ats_decisions": ats[0.5]["w"] + ats[0.5]["l"],
         "ats_3p5_pct": pct(ats[3.5]), "ats_3p5_decisions": ats[3.5]["w"] + ats[3.5]["l"],
         "ats_7p0_pct": pct(ats[7.0]), "ats_7p0_decisions": ats[7.0]["w"] + ats[7.0]["l"],
@@ -289,6 +325,18 @@ FLOORS = [(1.0, 1, 13), (0.5, 4, 9), (0.5, 1, 8), (0.55, 1, 8), (0.65, 1, 8), (0
 # FIXED is Jeff's preferred shape (start wk1, bottom wk8, higher floor), evaluated on EVERY fold
 # rather than only when the in-sample fit happens to choose it.
 FIXED = (0.65, 1, 8)
+
+# Named shapes evaluated on EVERY fold (not just when the in-sample fit picks them), so the
+# comparison is like-for-like across seasons.
+SHAPES = {
+    "base (no decay)":         (1.0, 1, 13),
+    "wk1->wk8 floor0.65":      (0.65, 1, 8),
+    "wk4->wk9 floor0.50":      (0.50, 4, 9),
+    "wk5->wk9 floor0.50":      (0.50, 5, 9),
+    "wk4->wk9 floor0.65":      (0.65, 4, 9),
+    "wk5->wk9 floor0.65":      (0.65, 5, 9),
+    "late-only wk6 floor0.50": (0.50, 6, 9),
+}
 
 
 def run_gate(seasons, hfa_values):
@@ -332,6 +380,31 @@ def run_gate(seasons, hfa_values):
         print("  MAE surface across the floor grid (pooled fit): "
               + "  ".join(f"{f}:{score(all_rows, 'A', hfa=hfa, decay=f)['mae']:.3f}"
                           + ("*edge" if f in (0.0, 1.0) else "") for f in FLOORS))
+
+        # Like-for-like: every named shape scored on every held-out season.
+        acc = {n: {"d": [], "a": [], "wins": 0} for n in SHAPES}
+        per_fold = {n: [] for n in SHAPES}
+        for S in seasons:
+            hold = data[S]
+            b = score(hold, "A", hfa=hfa)
+            for nm, sh in SHAPES.items():
+                s = score(hold, "A", hfa=hfa, decay=sh)
+                acc[nm]["d"].append(s["mae"] - b["mae"])
+                acc[nm]["a"].append(s["ats_pct"] - b["ats_pct"])
+                acc[nm].setdefault("da", []).append(s["mae_actual"] - b["mae_actual"])
+                acc[nm].setdefault("su", []).append(s["su_acc"] - b["su_acc"])
+                acc[nm].setdefault("rho", []).append(s["spearman"] - b["spearman"])
+                acc[nm]["wins"] += 1 if s["mae"] < b["mae"] else 0
+                per_fold[nm].append(s["ats_pct"] - b["ats_pct"])
+        print(f"\n  --- LOSO per SHAPE (holdouts {seasons}) ---")
+        print(f"  {'shape':<26}{'dMAE book':>11}{'dMAE ACT':>10}{'dSU acc':>9}{'dSpearman':>11}{'dATS':>9}")
+        for nm in SHAPES:
+            v = acc[nm]
+            print(f"  {nm:<26}{sum(v['d'])/len(v['d']):>+11.3f}"
+                  f"{sum(v['da'])/len(v['da']):>+10.3f}"
+                  f"{sum(v['su'])/len(v['su']):>+8.2f}pp"
+                  f"{sum(v['rho'])/len(v['rho']):>+11.4f}"
+                  f"{sum(v['a'])/len(v['a']):>+8.2f}pp")
         pooled_a = score(all_rows, "A", hfa=hfa, decay=0.5)
         pooled_b = score(all_rows, "A", hfa=hfa)
         print(f"  POOLED all seasons @floor 0.50: base MAE {pooled_b['mae']:.3f} ATS {pooled_b['ats_pct']:.1f}%"

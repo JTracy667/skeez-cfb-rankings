@@ -1161,11 +1161,16 @@ def ping():
     """Lightweight readiness probe for Cloudflare Containers."""
     return "ok"
 
-def _enrich_with_composite(teams: list[dict]) -> list[dict]:
+def _enrich_with_composite(teams: list[dict], week: int | None = None) -> list[dict]:
     """Attach composite + factor contributions to each team dict (in place).
-    Single source of truth for the composite so rankings and analytics agree."""
+    Single source of truth for the composite so rankings and analytics agree.
+
+    Only ever called on the CURRENT board, so the week defaults to the live CFB week
+    (which is what makes the in-season talent decay apply). Callers may override.
+    """
+    _wk = week if week is not None else live_week()
     for team in teams:
-        proj = project_score_multi_factor(team, is_home=True)
+        proj = project_score_multi_factor(team, is_home=True, week=_wk)
         team["composite"] = proj["composite"]
         team["sp_contribution"] = proj["sp_contribution"]
         team["fpi_contribution"] = proj["fpi_contribution"]
@@ -2725,6 +2730,61 @@ MARGIN_POWER = 1.1
 MARGIN_SLOPE = 0.65
 HFA_POINTS = 3.5
 
+# -- Talent decay (V6.2, Jeff-approved shape, Sep 23 2026) --------------------
+# The roster/recruiting prior is a SEASON-LONG static prior; efficiency refreshes every
+# week. As real offensive/defensive production accumulates the prior should carry less,
+# with the freed weight going to in-season EFFICIENCY (never back to dropped FPI/SRS/Elo).
+# Shape fitted by leave-one-season-out over 2021-25 on BOTH HFA bases and selected on
+# POWER-RANKING metrics (straight-up accuracy + rank correlation), which is the stated
+# purpose of this board -- NOT on ATS. Hold full through week 4, then step down 20% of the
+# prior per week to a 50% floor. Effective trajectory: wk4 1.00, wk5 0.80, wk6 0.60, wk7+ 0.50.
+#   LOSO deltas vs the un-decayed composite: dSU +0.71pp, dSpearman +0.0116, dMAE(actual) -0.056
+#   Reproduce: scripts/backtest_talent_arms.py --gate
+TALENT_DECAY_START_WEEK = 4
+TALENT_DECAY_END_WEEK = 9
+TALENT_DECAY_FLOOR = 0.50
+
+
+def talent_weight_scale(week: int | None) -> float:
+    """Scale applied to the talent weight for a given week. None => 1.0 (no decay).
+
+    None is the deliberate safe default: historical grading paths (ATS/total regrades
+    over completed games) and the backtest harness must keep the un-decayed composite.
+    The live boards pass their week explicitly.
+    """
+    if week is None:
+        return 1.0
+    try:
+        wk = int(week)
+    except (TypeError, ValueError):
+        return 1.0
+    if wk <= TALENT_DECAY_START_WEEK:
+        return 1.0
+    span = max(1, TALENT_DECAY_END_WEEK - TALENT_DECAY_START_WEEK)
+    return max(TALENT_DECAY_FLOOR, 1.0 - (wk - TALENT_DECAY_START_WEEK) / span)
+
+
+_LIVE_WEEK_CACHE: dict = {"ts": 0.0, "week": None}
+
+
+def live_week() -> int | None:
+    """Current CFB week for the live boards (memoised 300s). None when unavailable.
+
+    None propagates to talent_weight_scale() as 'no decay', i.e. a lookup failure can
+    never silently apply a partial-week decay to the whole board.
+    """
+    import time as _t
+    now = _t.time()
+    if now - float(_LIVE_WEEK_CACHE.get("ts") or 0.0) < 300.0:
+        return _LIVE_WEEK_CACHE.get("week")
+    wk = None
+    try:
+        wk = current_season_week(CFBD_YEAR)
+    except Exception as e:  # noqa: BLE001
+        print(f"[composite] live week unavailable: {e}")
+    _LIVE_WEEK_CACHE.update({"ts": now, "week": wk})
+    return wk
+
 
 def composite_config() -> dict:
     """Active composite weights.
@@ -2751,8 +2811,11 @@ def composite_version() -> str:
     rows produced under different weightings can never be silently compared.
     """
     cfg = composite_config()
-    blob = json.dumps({k: round(float(v), 6) for k, v in sorted(cfg.items())},
-                      sort_keys=True, separators=(",", ":"))
+    blob = json.dumps(
+        {**{k: round(float(v), 6) for k, v in sorted(cfg.items())},
+         "_talent_decay": [TALENT_DECAY_START_WEEK, TALENT_DECAY_END_WEEK,
+                           round(TALENT_DECAY_FLOOR, 6)]},
+        sort_keys=True, separators=(",", ":"))
     return "c" + hashlib.sha256(blob.encode()).hexdigest()[:10]
 
 
@@ -2872,7 +2935,8 @@ def fcs_composite_for(name: str) -> float:
     return FCS_COMPOSITE_RANKED if rank <= FCS_RANKED_CUTOFF else FCS_COMPOSITE_UNRANKED
 
 
-def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_composite: float | None = None) -> dict:
+def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_composite: float | None = None,
+                               week: int | None = None) -> dict:
     """
     Multi-factor projected score model.
     Anchor Ratings: SP+ 18%, FPI 15%, SRS 12% (replaces collinear CPI)
@@ -2992,6 +3056,16 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
     # inline literals while fcs_rating/massey sit at 0.0, so this refactor is
     # behaviour-preserving; it just makes a weight change auditable.
     cfg = composite_config()
+    # In-season TALENT DECAY: as real offensive/defensive production accumulates, the
+    # static roster/recruiting prior carries less and the freed weight goes to in-season
+    # EFFICIENCY (see TALENT_DECAY_* at the top of this section). cfg is REBUILT, not
+    # mutated, so the module default is never altered and every contribution field
+    # downstream stays consistent with the weights actually used for this projection.
+    _tdecay = talent_weight_scale(week)
+    if _tdecay < 1.0:
+        _tal_w = cfg["talent"] * _tdecay
+        cfg = {**cfg, "talent": _tal_w,
+               "efficiency": cfg["efficiency"] + (cfg["talent"] - _tal_w)}
     _assert_weights_sum(cfg)
     # `fcs_rating` IS A POLL RANK (1..25, weekly, FCS Coaches Poll) — NOT a 0-100
     # strength score. See D1_COMPOSITE_PROPOSAL.md. Handing a rank to a composite
@@ -3108,6 +3182,7 @@ def _load_active_injuries() -> dict[str, dict]:
 def project_head_to_head(
     home_data: dict,
     away_data: dict,
+    week: int | None = None,
     neutral_site: bool = False,
     home_injury_adj: float = 0.0,
     away_injury_adj: float = 0.0,
@@ -3140,8 +3215,8 @@ def project_head_to_head(
         the total is capped, which REWRITES home_score/away_score and therefore
         moves `differential` after margin was computed
     """
-    hp = project_score_multi_factor(home_data, is_home=True)
-    ap = project_score_multi_factor(away_data, is_home=False)
+    hp = project_score_multi_factor(home_data, is_home=True, week=week)
+    ap = project_score_multi_factor(away_data, is_home=False, week=week)
     hc, ac = hp["composite"], ap["composite"]
     # FBS-vs-FCS blowout boost REMOVED (Jeff, Sep 22 2026).
     # It was a stop-gap from when the FCS prior was a flat composite 16: week-1
@@ -3788,14 +3863,14 @@ def api_schedule():
         home_injury_adj = home_inj_data.get("net_injury_points", 0.0)
         away_injury_adj = away_inj_data.get("net_injury_points", 0.0)
         # Multi-factor projection
-        home_proj_data = project_score_multi_factor(home, is_home=True)
-        away_proj_data = project_score_multi_factor(away, is_home=False)
+        home_proj_data = project_score_multi_factor(home, is_home=True, week=m.get("week"))
+        away_proj_data = project_score_multi_factor(away, is_home=False, week=m.get("week"))
         # Second pass with opponent suppression (great defenses hold bad teams
         # to single digits — 52-0 and 53-7 finals are common in CFB).
         home_proj_data = project_score_multi_factor(
-            home, is_home=True, opp_composite=away_proj_data["composite"])
+            home, is_home=True, opp_composite=away_proj_data["composite"], week=m.get("week"))
         away_proj_data = project_score_multi_factor(
-            away, is_home=False, opp_composite=home_proj_data["composite"])
+            away, is_home=False, opp_composite=home_proj_data["composite"], week=m.get("week"))
         base_diff = round(home_proj_data["projected_score"] - away_proj_data["projected_score"], 1)
         # Apply persistent injury adjustment:
         diff = round(base_diff + (home_injury_adj - away_injury_adj), 1)
@@ -3895,9 +3970,10 @@ def api_projections():
             all_teams = [t.model_dump() if hasattr(t, 'model_dump') else t.dict()
                          for t in rankings.teams]
         projections = []
+        _wk = live_week()
         for td in all_teams:
-            home_proj = project_score_multi_factor(td, is_home=True)
-            away_proj = project_score_multi_factor(td, is_home=False)
+            home_proj = project_score_multi_factor(td, is_home=True, week=_wk)
+            away_proj = project_score_multi_factor(td, is_home=False, week=_wk)
             projections.append({
                 **td,
                 "home_projection": home_proj,
@@ -4068,6 +4144,7 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             home_injury_adj=home_injury_adj,
             away_injury_adj=away_injury_adj,
             wind_penalty=wind_penalty,
+            week=m.get("week"),
         )
         home_proj = h2h["home_proj"]
         away_proj = h2h["away_proj"]
@@ -5087,17 +5164,18 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
 
         # Projected scores. On a neutral site, zero out the HFA tilt so the
         # game is decided purely by strength (the model bakes in +2.5/-1.5).
+        _wk = live_week()
         if neutral:
-            h_proj = project_score_multi_factor(home_td, is_home=True)["projected_score"]
-            a_proj = project_score_multi_factor(away_td, is_home=False)["projected_score"]
+            h_proj = project_score_multi_factor(home_td, is_home=True, week=_wk)["projected_score"]
+            a_proj = project_score_multi_factor(away_td, is_home=False, week=_wk)["projected_score"]
             # Re-center: remove the HFA asymmetry by averaging both directions.
-            h_proj2 = project_score_multi_factor(home_td, is_home=False)["projected_score"]
-            a_proj2 = project_score_multi_factor(away_td, is_home=True)["projected_score"]
+            h_proj2 = project_score_multi_factor(home_td, is_home=False, week=_wk)["projected_score"]
+            a_proj2 = project_score_multi_factor(away_td, is_home=True, week=_wk)["projected_score"]
             home_score = (h_proj + h_proj2) / 2.0
             away_score = (a_proj + a_proj2) / 2.0
         else:
-            home_score = project_score_multi_factor(home_td, is_home=True)["projected_score"]
-            away_score = project_score_multi_factor(away_td, is_home=False)["projected_score"]
+            home_score = project_score_multi_factor(home_td, is_home=True, week=_wk)["projected_score"]
+            away_score = project_score_multi_factor(away_td, is_home=False, week=_wk)["projected_score"]
 
         p_home = _h2h_win_prob(home_score, away_score)
 
@@ -5213,7 +5291,7 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
             "name": name,
             "conf": td.get("conf") or "",
             "logo_url": td.get("logo_url"),
-            "composite": round(project_score_multi_factor(td)["composite"], 1),
+            "composite": round(project_score_multi_factor(td, week=live_week())["composite"], 1),
             "games": a["games"],
             "home_games": a["home"],
             "away_games": a["away"],
