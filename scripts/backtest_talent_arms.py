@@ -204,12 +204,20 @@ def load_season(season: int):
     return rows
 
 
-def score(rows, variant, slope=SLOPE, hfa=HFA, weights=None):
-    """Model margin per arm variant; returns MAE vs book, bias, mean|margin| and ATS record."""
+def score(rows, variant, slope=SLOPE, hfa=HFA, weights=None, decay=None, wk_filter=None):
+    """Model margin per arm variant; returns MAE vs book, bias, mean|margin| and ATS record.
+
+    decay = floor fraction for the talent weight: talent_w(w) = T0 * max(floor, 1-(w-1)/12),
+    and the freed weight moves to EFFICIENCY — i.e. as real offensive/defensive production
+    accumulates, a static roster prior should matter less. The fresh weight goes to efficiency
+    rather than SP+ because efficiency is the term that actually refreshes week to week."""
     import app
     Wt = weights or W
-    errs, signed, margins, ats = [], [], [], {"w": 0, "l": 0, "p": 0}
+    errs, signed, margins = [], [], []
+    ats = {t: {"w": 0, "l": 0, "p": 0} for t in (0.5, 3.5, 7.0)}   # all picks / 3.5pt / 7pt edges
     for r in rows:
+        if wk_filter and not wk_filter(r["week"]):
+            continue
         hp, ap = dict(r["hp"]), dict(r["ap"])
         if variant == "B":
             for side, pit in (("hp", hp), ("ap", ap)):
@@ -227,8 +235,16 @@ def score(rows, variant, slope=SLOPE, hfa=HFA, weights=None):
             th, ta = talent_blend(hp), talent_blend(ap)
         sh, eh, xh = r["h_see"]
         sa, ea, xa = r["a_see"]
-        ch = sh * Wt["sp_plus"] + eh * Wt["efficiency"] + xh * Wt["experience"] + th * Wt["talent"]
-        ca = sa * Wt["sp_plus"] + ea * Wt["efficiency"] + xa * Wt["experience"] + ta * Wt["talent"]
+        if decay is None:
+            w_sp, w_eff, w_exp, w_tal = Wt["sp_plus"], Wt["efficiency"], Wt["experience"], Wt["talent"]
+        else:
+            wk = r["week"] or 1
+            frac = max(float(decay), 1.0 - (wk - 1) / 12.0)
+            w_tal = Wt["talent"] * frac
+            w_eff = Wt["efficiency"] + (Wt["talent"] - w_tal)
+            w_sp, w_exp = Wt["sp_plus"], Wt["experience"]
+        ch = sh * w_sp + eh * w_eff + xh * w_exp + th * w_tal
+        ca = sa * w_sp + ea * w_eff + xa * w_exp + ta * w_tal
         gap = ch - ca
         m = (1 if gap >= 0 else -1) * abs(gap) ** POWER * slope + (0.0 if r["neutral"] else hfa)
         book = r["book_home_margin"]
@@ -236,31 +252,85 @@ def score(rows, variant, slope=SLOPE, hfa=HFA, weights=None):
         signed.append(m - book)
         margins.append(abs(m))
         edge = abs(m - book)
-        if edge >= 0.5:
-            pick_home = m > book
-            cover = r["actual_home_margin"] - book
+        pick_home = m > book
+        cover = r["actual_home_margin"] - book
+        for thr, d in ats.items():
+            if edge < thr:
+                continue
             if cover == 0:
-                ats["p"] += 1
+                d["p"] += 1
             elif (pick_home and cover > 0) or (not pick_home and cover < 0):
-                ats["w"] += 1
+                d["w"] += 1
             else:
-                ats["l"] += 1
+                d["l"] += 1
     n = len(errs)
-    dec = ats["w"] + ats["l"]
+    def pct(d):
+        dec = d["w"] + d["l"]
+        return (100.0 * d["w"] / dec) if dec else 0.0
     return {
         "n": n, "mae": sum(errs) / n if n else 0.0,
         "bias": sum(signed) / n if n else 0.0,
         "mean_abs_margin": sum(margins) / n if n else 0.0,
-        "ats_pct": (100.0 * ats["w"] / dec) if dec else 0.0,
-        "ats_decisions": dec, **{f"ats_{k}": v for k, v in ats.items()},
+        "ats_pct": pct(ats[0.5]), "ats_decisions": ats[0.5]["w"] + ats[0.5]["l"],
+        "ats_3p5_pct": pct(ats[3.5]), "ats_3p5_decisions": ats[3.5]["w"] + ats[3.5]["l"],
+        "ats_7p0_pct": pct(ats[7.0]), "ats_7p0_decisions": ats[7.0]["w"] + ats[7.0]["l"],
     }
+
+
+FLOORS = [0.0, 0.25, 0.5, 0.75, 1.0]
+
+
+def run_gate(seasons, hfa_values):
+    """Full stability gate for the week-decay arm.
+    Gate (per the add-on rule): interior optimum, non-flat MAE surface, no ATS degradation at
+    the MAE-optimal setting, and it must pass on BOTH base variants (HFA 3.50 and 4.157).
+    Leave-one-season-out is used because a single holdout is not enough for a flexible model."""
+    data = {s: load_season(s) for s in seasons}
+    all_rows = [r for s in seasons for r in data[s]]
+    print(f"loaded {len(all_rows)} FBS games across {seasons}")
+
+    for hfa in hfa_values:
+        print(f"\n=== BASE HFA {hfa:.3f} ===  (* floor fitted by MAE on the other seasons)")
+        print(f"{'holdout':<9}{'floor*':>7}{'base MAE':>10}{'arm MAE':>9}{'dMAE':>8}"
+              f"{'base ATS':>10}{'arm ATS':>9}{'dATS':>7}{'b3.5':>7}{'a3.5':>7}{'b7':>7}{'a7':>7}")
+        dmae, dats, wins = [], [], 0
+        for S in seasons:
+            fit = [r for s in seasons if s != S for r in data[s]]
+            hold = data[S]
+            curve = {f: score(fit, "A", hfa=hfa, decay=f)["mae"] for f in FLOORS}
+            best_f = min(curve, key=curve.get)
+            b = score(hold, "A", hfa=hfa)
+            a = score(hold, "A", hfa=hfa, decay=best_f)
+            dmae.append(a["mae"] - b["mae"])
+            dats.append(a["ats_pct"] - b["ats_pct"])
+            wins += 1 if a["mae"] < b["mae"] else 0
+            print(f"{S:<9}{best_f:>7.2f}{b['mae']:>10.3f}{a['mae']:>9.3f}{a['mae']-b['mae']:>+8.3f}"
+                  f"{b['ats_pct']:>9.1f}%{a['ats_pct']:>8.1f}%{a['ats_pct']-b['ats_pct']:>+6.1f}"
+                  f"{b['ats_3p5_pct']:>7.1f}{a['ats_3p5_pct']:>7.1f}"
+                  f"{b['ats_7p0_pct']:>7.1f}{a['ats_7p0_pct']:>7.1f}")
+        print(f"  mean dMAE {sum(dmae)/len(dmae):+.3f} | mean dATS {sum(dats)/len(dats):+.2f}pp | "
+              f"better on {wins}/{len(seasons)} folds")
+        print("  MAE surface across the floor grid (pooled fit): "
+              + "  ".join(f"{f}:{score(all_rows, 'A', hfa=hfa, decay=f)['mae']:.3f}"
+                          + ("*edge" if f in (0.0, 1.0) else "") for f in FLOORS))
+        pooled_a = score(all_rows, "A", hfa=hfa, decay=0.5)
+        pooled_b = score(all_rows, "A", hfa=hfa)
+        print(f"  POOLED all seasons @floor 0.50: base MAE {pooled_b['mae']:.3f} ATS {pooled_b['ats_pct']:.1f}%"
+              f" | arm MAE {pooled_a['mae']:.3f} ATS {pooled_a['ats_pct']:.1f}%"
+              f" (dMAE {pooled_a['mae']-pooled_b['mae']:+.3f}, dATS {pooled_a['ats_pct']-pooled_b['ats_pct']:+.1f}pp)")
+    return 0
 
 
 def main() -> int:
     ap_ = argparse.ArgumentParser()
     ap_.add_argument("--seasons", type=int, nargs="+", default=[2022, 2023, 2024])
     ap_.add_argument("--holdout", type=int, default=2025)
+    ap_.add_argument("--gate", action="store_true",
+                     help="run the stability gate: LOSO over all seasons x both HFA bases")
     args = ap_.parse_args()
+
+    if args.gate:
+        return run_gate([2021, 2022, 2023, 2024, 2025], [3.50, 4.157])
 
     seasons = list(args.seasons) + [args.holdout]
     data = {}
@@ -280,6 +350,11 @@ def main() -> int:
     # weight is redistributed across sp_plus/efficiency/experience in proportion to their
     # current shares, so the arm stays a single-variable change.
     variants += ["T:0.05", "T:0.10", "T:0.15", "T:0.20", "T:0.25"]
+    # W arms: talent weight DECAYS through the season (T0 x max(floor, 1-(w-1)/12)), the freed
+    # weight going to in-season efficiency. This is Jeff's proposal: a static roster prior should
+    # matter less as real offensive/defensive production accumulates.
+    variants += ["W:0.50", "W:0.25", "W:0.00"]
+    decay_sets = {v: float(v.split(":")[1]) for v in variants if v.startswith("W:")}
     weight_sets = {}
     for v in variants:
         if v.startswith("T:"):
@@ -294,8 +369,8 @@ def main() -> int:
     print(f"\n{'variant':<12}{'fit MAE':>9}{'fit bias':>10}{'|m|':>7}   {'hold MAE':>9}{'hold ATS':>10}{'n':>7}")
     results = {}
     for v in variants:
-        f = score(fit_rows, v, weights=weight_sets.get(v))
-        h = score(hold_rows, v, weights=weight_sets.get(v))
+        f = score(fit_rows, v, weights=weight_sets.get(v), decay=decay_sets.get(v))
+        h = score(hold_rows, v, weights=weight_sets.get(v), decay=decay_sets.get(v))
         results[v] = {"fit": f, "hold": h}
         print(f"{v:<12}{f['mae']:>9.3f}{f['bias']:>10.3f}{f['mean_abs_margin']:>7.2f}   "
               f"{h['mae']:>9.3f}{h['ats_pct']:>9.1f}%{h['n']:>7}")
@@ -308,6 +383,16 @@ def main() -> int:
         print(f"  {v:<12} fit MAE {r['fit']['mae'] - base['fit']['mae']:+.3f} | "
               f"hold MAE {r['hold']['mae'] - base['hold']['mae']:+.3f} | "
               f"hold ATS {r['hold']['ats_pct'] - base['hold']['ats_pct']:+.1f}pp")
+
+    print("\n--- EARLY (wk 1-4) vs LATE (wk 8+): a decay arm must earn its keep in the LATE weeks ---")
+    print(f"{'variant':<10}{'early MAE':>11}{'early ATS':>11}{'late MAE':>10}{'late ATS':>10}{'late n':>8}")
+    early = lambda w: (w or 1) <= 4
+    late = lambda w: (w or 1) >= 8
+    for v in ["A"] + [x for x in variants if x.startswith("W:")]:
+        fe = score(fit_rows, v, decay=decay_sets.get(v), wk_filter=early)
+        fl = score(fit_rows, v, decay=decay_sets.get(v), wk_filter=late)
+        print(f"{v:<10}{fe['mae']:>11.3f}{fe['ats_pct']:>10.1f}%{fl['mae']:>10.3f}"
+              f"{fl['ats_pct']:>9.1f}%{fl['n']:>8}")
 
     out = ROOT / "data" / "backtest_study" / "talent_arms.json"
     out.parent.mkdir(parents=True, exist_ok=True)
