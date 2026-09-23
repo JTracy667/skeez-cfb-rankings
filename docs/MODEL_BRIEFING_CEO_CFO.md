@@ -27,11 +27,13 @@ curl -s https://skeezcfb-rankings.com/api/record   # live graded record
 2. **The spread side is not marginal — it is decisively unprofitable.** Break-even at −110
    is **52.4%**; the model is at **39.5%**. The model's own "star" spread tier is *no
    better* (39.4%) — confidence carries no signal on spreads.
-3. **The model takes the underdog on 71% of spread picks and wins 38% of them.** A model
-   that mostly takes dogs and loses means its projected margins are systematically **too
-   tight** — it does not make favorites big enough favourites. This is the single most
-   actionable finding in the document, and it is consistent with every other margin
-   observation we have.
+3. **The model takes the underdog on 71% of spread picks and wins 38% of them** — but the
+   obvious explanation for that (margins too tight) was **tested and refuted** (Part 10).
+   In FBS-vs-FBS games the model's margins are *larger* than the market's (**+1.51 pts**)
+   and it takes the dog only 56% of the time. The dog-heavy behaviour comes from games
+   against FCS/D2/D3 opponents, where it takes the dog **94%** of the time. Spreads lose in
+   both classes (41.6% FBS, 36.9% non-FBS), but the *mechanism* is not the one it looked
+   like, and the fix is therefore not where it looked like either.
 4. **One composite input is a full season old.** SRS (12% of the composite) is served from
    the **2025** season because CFBD has not published 2026 SRS. It was invisible — the page
    displayed it as current. It is now labelled; the **weight is untouched**.
@@ -444,24 +446,28 @@ before comparing.
 
 # PART 9 — Diagnosis and decision agenda
 
-## 9.1 The central diagnosis (labelled as a hypothesis)
+## 9.1 The central diagnosis — TESTED, and it changed (see Part 10)
 
-The facts: margins too tight (71% of picks are underdogs), spreads at 39.5% across every
-line size and every conviction tier, totals profitable and replicating out-of-sample. The
-most consistent explanation is that **the margin curve systematically under-separates teams
-relative to the market** — i.e. `1.0 pt of margin per composite point` is too compressed at
-the top, and the composite itself may not separate elite teams enough.
+The first hypothesis was that the margin curve under-separates teams, so the model takes
+underdogs and loses. **That was tested and refuted.** In FBS-vs-FBS games the model's
+average absolute margin is **17.47 pts versus the market's 15.96** — it is *more* aggressive
+than the book, not less, and it takes the dog only 56% of the time.
 
-Two candidate contributors, both testable:
+What the data actually shows:
 
-- **the composite's top-end spread** — the efficiency bucket dominates (37%) and the
-  differences between elite teams may be compressed by the 0–100 clamping;
-- **the SRS input** — a full season stale, worth up to 12 points, plausibly pushing the
-  composite toward the mean for teams whose strength changed year over year.
+- **Spreads lose in BOTH classes** — 41.6% FBS-vs-FBS, 36.9% involving FCS/D2/D3. So this is
+  not purely an FCS problem.
+- **The dog-heavy behaviour is an FCS/D2/D3 phenomenon** — 94% of picks in those games are
+  underdogs (versus 56% in FBS games).
+- **The totals edge is FBS-vs-FBS only** — 59.0% there, 51.0% involving non-FBS opponents.
+- **Removing SRS does not fix spreads** (Part 10): it moves the FBS ATS rate from 48.3% to
+  45.9% on identical data. SRS is not the culprit, and removing it would make the model
+  *more* dog-heavy, not less.
 
-This is testable without changing anything: re-run the existing backtest with SRS zeroed
-(re-normalising weights) and compare ATS/totals rates. **Recommend this as the first
-analysis before any weight change is debated.**
+The honest conclusion: the spread projection has a genuine, structural problem that SRS
+does not explain; the strongest immediate wins are (a) scoping the totals product to
+FBS-vs-FBS games where the edge is real, and (b) treating spread picks as unproven until the
+margin model is re-fitted on graded results.
 
 ## 9.2 Decision list
 
@@ -506,6 +512,124 @@ The tiering logic itself deserves review on the spread side.
 5. Re-validate downstream curves — margin per composite point, total slope, win-prob
    logistic, win-total scale.
 6. Deploy with build-stamp + post-deploy smoke checks on every page.
+
+---
+
+# PART 10 — The SRS-zeroed experiment (and the opponent-class split)
+
+Run 2026-09-23, at Jeff's direction. Two questions: *is the stale SRS input causing the
+spread losses?* and *where does the model actually lose?*
+
+## 10.1 Method — the same games, two weightings
+
+The existing point-in-time harness was run twice over **identical reconstructed data**
+(409 games, **155 FBS matchups**; week 1 from the frozen preseason baseline, later weeks
+only from completed prior games; closing lines frozen at kickoff). Only the weights differed:
+
+| | sp_plus | fpi | srs | elo | talent | efficiency | hash |
+|---|---|---|---|---|---|---|---|
+| baseline | 0.18 | 0.15 | **0.12** | 0.08 | 0.10 | 0.37 | `ca2f071afda` |
+| zero-srs | 0.204545 | 0.170455 | **0.0** | 0.090909 | 0.113636 | 0.420455 | `c0229dfa0f4` |
+
+The 12% freed by removing SRS was **re-normalised proportionally** across the remaining
+inputs (so they still total 1.0 — anything else would be a miscalibration, not a fair test).
+No code change to the model: the harness already honours `COMPOSITE_WEIGHTS_JSON`, and the
+hash changes automatically, which is what makes the experiment auditable.
+
+## 10.2 Result — SRS is NOT the cause of the spread losses
+
+```
+SPREADS (ATS)                          baseline          zero-srs      delta
+  all FBS picks          69-74-4  48.3%   67-79-4  45.9%     -2.4
+  >= 2.0 pt              56-61-4  47.9%   51-58-4  46.8%     -1.1
+  >= 3.5 pt              39-46-3  45.9%   41-47-3  46.6%     +0.7
+  >= 7.0 pt              23-24-1  48.9%   23-22-1  51.1%     +2.2
+
+TOTALS (O/U)                           baseline          zero-srs      delta
+  all totals             86-54-0  61.4%   86-55-0  61.0%     -0.4
+  >= 4.0 pt              34-23-0  59.6%   33-22-0  60.0%     +0.4
+  >= 7.0 pt               5- 8-0  38.5%    8- 8-0  50.0%    +11.5  (16 games, noise)
+
+DIAGNOSTICS                            baseline          zero-srs
+  took the underdog       26-31  45.6%   (38% of picks)   33-41  44.6%   (49% of picks)
+  took the favourite      45-49  47.9%                   35-42  45.5%
+  mean |model margin|           17.47                     16.67
+  mean |book line|              15.96                     15.96
+  vs book: MAE / bias     5.58 / -0.20                5.68 / -1.02
+```
+
+**Conclusion: removing SRS does not help the spread side — it makes it slightly worse**
+(48.3% → 45.9%), and it is neutral on totals (61.4% → 61.0%). Two further things fall out:
+
+- **SRS is currently making the model more willing to back favourites.** Without it the
+  underdog share rises from 38% to 49% and the average margin shrinks by 0.8 pts. So the
+  season-old input is contributing separation, not diluting it.
+- **Removing SRS costs nothing on totals**, which is the one market that works. If the
+  weight is reduced for honesty reasons, the totals edge does not pay for it.
+
+## 10.3 The compression hypothesis, refuted
+
+The earlier explanation for the 71% underdog rate was that the model's margins were too
+tight. **Measured, that is false in FBS games**: model 17.47 pts average absolute margin
+versus the book's 15.96 — the model is *more* aggressive. (It is slightly tight-tailed: MAE
+5.58 pts, bias −0.20.)
+
+## 10.4 Where the losses actually live — live record split by opponent class
+
+Splitting the live 2026 record by opponent classification (CFBD `/teams`:
+138 FBS, 128 FCS, 170 D-II, 246 D-III):
+
+```
+                          FBS vs FBS        involves FCS/D2/D3
+spreads (ATS)         64-90  = 41.6%      38-65  = 36.9%
+totals (O/U)          92-64  = 59.0%      53-51  = 51.0%
+underdog share        56% of picks        94% of picks
+underdogs themselves  36-50  = 41.9%      34-63  = 35.1%
+                       (154 graded)       (103 graded)
+```
+
+Three conclusions:
+
+1. **The totals edge is an FBS-vs-FBS phenomenon** — 59.0% there, 51.0% against non-FBS
+   opponents. Non-FBS games dilute a real edge toward a coin flip. This is the single most
+   actionable finding in the document.
+2. **Spread losses are real in both classes** (41.6% / 36.9%), so this is not merely an FCS
+   problem — but non-FBS games are worse and far more dog-heavy.
+3. **The 71% underdog rate is driven by non-FBS games (94% dogs).** In FBS games the model
+   takes the dog 56% of the time, which is unremarkable.
+
+## 10.5 What this changes about the decision list
+
+- **Do not expect an SRS fix to repair spreads.** It was the leading hypothesis and it is
+  now a testable no. Any weight change should be justified on totals/FBS grounds instead.
+- **Scope the totals product to FBS-vs-FBS games.** That is where the demonstrated edge is.
+- **The spread problem is structural and still unexplained.** It needs a re-fit of the
+  margin model against graded results, not a weight tweak. The 1.0 pt-per-composite-point
+  slope is the prime suspect and is untested.
+- **Caveat, stated plainly:** the backtest arms are not a perfect proxy for the live pick
+  pipeline — the live path also applies injury adjustments, wind, the underdog floor and
+  live line overlays, and it runs on mid-season composites rather than a frozen preseason
+  baseline. That is why the backtest's FBS ATS rate (48.3%) is better than the live
+  FBS-vs-FBS record (41.6%). The A/B comparison between the two weightings is sound because
+  both arms share the same harness; the absolute levels should not be read as the live rate.
+
+## 10.6 Reproduce it
+
+```bash
+# baseline arm (weights default; hash ca2f071afda)
+python scripts/run_model_backtest.py --label baseline \
+    --out-summary out-bt-base.json --out-fixture out-bt-base-fix.json
+# zero-srs arm (weights honoured from the environment; hash becomes c0229dfa0f4)
+COMPOSITE_WEIGHTS_JSON='{"sp_plus":0.20454545,"fpi":0.17045455,"srs":0.0,"elo":0.09090909,"talent":0.11363636,"efficiency":0.42045455}' \
+python scripts/run_model_backtest.py --label zero-srs \
+    --out-summary out-bt-zero.json --out-fixture out-bt-zero-fix.json
+python scripts/compare_backtest_arms.py out-bt-base.json out-bt-base-fix.json \
+    out-bt-zero.json out-bt-zero-fix.json --labels baseline zero-srs
+```
+
+`--out-summary`/`--out-fixture` were added so an experiment can never overwrite the
+published `data/backtest_summary.json` / `data/backtest_fixture_2026.json` (verified
+byte-identical after both runs).
 
 ---
 

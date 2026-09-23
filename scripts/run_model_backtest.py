@@ -22,6 +22,7 @@ Outputs:
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -100,7 +101,7 @@ def reconstruct_pit_team_data(preseason_map: dict, weekly_stats: dict, team_name
 
     return base
 
-def run_backtest(year: int = 2026) -> dict:
+def run_backtest(year: int = 2026, summary_out=None, fixture_out=None) -> dict:
     client = app.httpx.Client(timeout=20)
     
     # 1. Load frozen pre-season baseline (including frozen 247 Team Talent Composite)
@@ -321,16 +322,36 @@ def run_backtest(year: int = 2026) -> dict:
             "5star_record": f"{w5}-{l5}-{p5} ({pct5}%)",
         }
 
-    with open(FIXTURE_FILE, "w", encoding="utf-8") as f:
+    _summary_out = Path(summary_out) if summary_out else SUMMARY_FILE
+    _fixture_out = Path(fixture_out) if fixture_out else FIXTURE_FILE
+    with open(_fixture_out, "w", encoding="utf-8") as f:
         json.dump(game_audit_log, f, indent=2)
         
-    with open(SUMMARY_FILE, "w", encoding="utf-8") as f:
+    with open(_summary_out, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
         
-    print(f"[Backtest complete] Saved {len(game_audit_log)} game audits to {FIXTURE_FILE}")
-    print(f"[Backtest complete] Summary wrote to {SUMMARY_FILE}")
+    print(f"[Backtest complete] Saved {len(game_audit_log)} game audits to {_fixture_out}")
+    print(f"[Backtest complete] Summary wrote to {_summary_out}")
     return summary
 
 if __name__ == "__main__":
-    s = run_backtest()
+    import argparse
+
+    ap = argparse.ArgumentParser(
+        description="Point-in-time walk-forward backtest. Weights honour "
+                    "COMPOSITE_WEIGHTS_JSON, so an alternative weighting can be "
+                    "measured without a code change.")
+    # Defaults keep the published artifacts as the destination; pass an explicit path
+    # when running an EXPERIMENT so the baseline files cannot be overwritten.
+    ap.add_argument("--out-summary", default=None,
+                    help=f"summary destination (default {SUMMARY_FILE.name})")
+    ap.add_argument("--out-fixture", default=None,
+                    help=f"game-audit destination (default {FIXTURE_FILE.name})")
+    ap.add_argument("--label", default="", help="printed with the result, e.g. 'zero-srs'")
+    args = ap.parse_args()
+
+    if args.label:
+        print(f"[Backtest] run label: {args.label}")
+    print(f"[Backtest] COMPOSITE_WEIGHTS_JSON: {os.environ.get('COMPOSITE_WEIGHTS_JSON') or '<defaults>'}")
+    s = run_backtest(summary_out=args.out_summary, fixture_out=args.out_fixture)
     print(json.dumps(s, indent=2))
