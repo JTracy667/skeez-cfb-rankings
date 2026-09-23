@@ -1,0 +1,79 @@
+[
+  {
+    "date": "2020-10-03",
+    "label": "2020 mid-season",
+    "status": 200,
+    "n_events": 29,
+    "quota": {
+      "x-requests-remaining": "19440",
+      "x-requests-last": "20",
+      "x-requests-used": "560"
+    }
+  },
+  {
+    "date": "2021-09-04",
+    "label": "2021 week 1",
+    "status": 200,
+    "n_events": 135,
+    "quota": {
+      "x-requests-remaining": "19420",
+      "x-requests-last": "20",
+      "x-requests-used": "580"
+    }
+  },
+  {
+    "date": "2021-10-02",
+    "label": "2021 mid-season",
+    "status": 200,
+    "n_events": 78,
+    "quota": {
+      "x-requests-remaining": "19400",
+      "x-requests-last": "20",
+      "x-requests-used": "600"
+    }
+  },
+  {
+    "date": "2022-10-01",
+    "label": "2022 mid-season",
+    "status": 200,
+    "n_events": 81,
+    "quota": {
+      "x-requests-remaining": "19380",
+      "x-requests-last": "20",
+      "x-requests-used": "620"
+    }
+  },
+  {
+    "date": "2023-10-07",
+    "label": "2023 mid-season",
+    "status": 200,
+    "n_events": 50,
+    "quota": {
+      "x-requests-remaining": "19360",
+      "x-requests-last": "20",
+      "x-requests-used": "640"
+    }
+  },
+  {
+    "date": "2024-10-05",
+    "label": "2024 mid-season",
+    "status": 200,
+    "n_events": 46,
+    "quota": {
+      "x-requests-remaining": "19340",
+      "x-requests-last": "20",
+      "x-requests-used": "660"
+    }
+  },
+  {
+    "date": "2025-10-04",
+    "label": "2025 mid-season",
+    "status": 200,
+    "n_events": 56,
+    "quota": {
+      "x-requests-remaining": "19320",
+      "x-requests-last": "20",
+      "x-requests-used": "680"
+    }
+  }
+]
