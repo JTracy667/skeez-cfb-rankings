@@ -1,0 +1,132 @@
+{
+  "year": 2026,
+  "checked_utc": "2026-09-22T23:59:12+00:00",
+  "inputs": [
+    {
+      "label": "SP+",
+      "endpoint": "ratings/sp",
+      "feeds": "sp_plus  (18% of the composite)",
+      "rows_current": 139,
+      "rows_previous": null,
+      "verdict": "CURRENT",
+      "etag": "W/\"11a4b-3f9PXxjbqnU0hZXbP0k2iKQCmcU\""
+    },
+    {
+      "label": "FPI",
+      "endpoint": "ratings/fpi",
+      "feeds": "fpi      (15%)",
+      "rows_current": 138,
+      "rows_previous": null,
+      "verdict": "CURRENT",
+      "etag": "W/\"a70b-6l93hFJf4atqrWX6XPvVgGfmNRU\""
+    },
+    {
+      "label": "SRS",
+      "endpoint": "ratings/srs",
+      "feeds": "srs      (12%)",
+      "rows_current": 0,
+      "rows_previous": 266,
+      "verdict": "STALE -> previous season",
+      "etag": "W/\"2-l9Fw4VUO7kr8CvBlt4zaMCqXZ0w\""
+    },
+    {
+      "label": "Elo",
+      "endpoint": "ratings/elo",
+      "feeds": "elo       (8%)",
+      "rows_current": 138,
+      "rows_previous": null,
+      "verdict": "CURRENT",
+      "etag": "W/\"2547-c4jMFAoiyAiBPb32LAM1Ts0lmwY\""
+    },
+    {
+      "label": "Talent (247)",
+      "endpoint": "talent",
+      "feeds": "talent   (10%)",
+      "rows_current": 138,
+      "rows_previous": null,
+      "verdict": "CURRENT",
+      "etag": "W/\"1ab0-X804w+Zoa8Bdz9l2zwnSFtHmlng\""
+    },
+    {
+      "label": "Recruiting",
+      "endpoint": "recruiting/teams",
+      "feeds": "talent  (30% of the talent prior)",
+      "rows_current": 221,
+      "rows_previous": null,
+      "verdict": "CURRENT",
+      "etag": "W/\"33e0-zLM0hU2ivu5AOWhBAh5PmmGKDTI\""
+    },
+    {
+      "label": "Season stats",
+      "endpoint": "stats/season",
+      "feeds": "efficiency (net success rate)",
+      "rows_current": 8487,
+      "rows_previous": null,
+      "verdict": "CURRENT",
+      "etag": "W/\"dac56-OHTql4D8XA4k9XVYL0RZM18X1Nc\""
+    },
+    {
+      "label": "Advanced stats",
+      "endpoint": "stats/season/advanced",
+      "feeds": "efficiency (trench: line yards/stuff)",
+      "rows_current": 138,
+      "rows_previous": null,
+      "verdict": "CURRENT",
+      "etag": "W/\"52620-eisbjoV/SrRSE4qglvVqduvOWKw\""
+    },
+    {
+      "label": "PPA/teams",
+      "endpoint": "ppa/teams",
+      "feeds": "efficiency (net EPA/PPA per play)",
+      "rows_current": 138,
+      "rows_previous": null,
+      "verdict": "CURRENT",
+      "etag": "W/\"d5a6-q+xjfnyv+GNCBUgotvJP5KVwDYw\""
+    },
+    {
+      "label": "Drives",
+      "endpoint": "drives",
+      "feeds": "efficiency (points per possession)",
+      "rows_current": 11109,
+      "rows_previous": null,
+      "verdict": "CURRENT",
+      "etag": "W/\"5d842f-mxKgD7sUj3mnJFIWqK//G2Nb64E\""
+    },
+    {
+      "label": "Player returning",
+      "endpoint": "player/returning",
+      "feeds": "talent   (returning production)",
+      "rows_current": 136,
+      "rows_previous": null,
+      "verdict": "CURRENT",
+      "etag": "W/\"ab74-H7aWMuoFctF6TLvJrHJJczp4GJk\""
+    },
+    {
+      "label": "Roster",
+      "endpoint": "roster",
+      "feeds": "talent   (experience)",
+      "rows_current": 31283,
+      "rows_previous": null,
+      "verdict": "CURRENT",
+      "etag": "W/\"8de647-Kkm+5pI9htlV8FL7Dnjm4xvZ/rc\""
+    },
+    {
+      "label": "Records",
+      "endpoint": "records",
+      "feeds": "W/L overlay",
+      "rows_current": 682,
+      "rows_previous": null,
+      "verdict": "CURRENT",
+      "etag": "W/\"57123-QzV5cPh8C4r/WKTmdNgBESAGFdE\""
+    },
+    {
+      "label": "Teams",
+      "endpoint": "teams",
+      "feeds": "name/ID mapping",
+      "rows_current": 682,
+      "rows_previous": null,
+      "verdict": "CURRENT",
+      "etag": "W/\"ea5ce-grLYf99O7JP2rdusCbQNbXDm3d8\""
+    }
+  ]
+}

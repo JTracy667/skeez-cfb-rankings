@@ -2873,8 +2873,11 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
     # strength score. See D1_COMPOSITE_PROPOSAL.md. Handing a rank to a composite
     # weight would INVERT the signal (rank 25 is weaker, not stronger), so this
     # slot stays deliberately inert. The composite is an FBS board; the correct
-    # lever for FCS opponents is the missing-data prior below (currently a flat
-    # 16.0 for every FCS team regardless of quality).
+    # lever for FCS opponents is the missing-data prior: see
+    # `fcs_composite_for()` — FCS_COMPOSITE_RANKED 33.0 / FCS_COMPOSITE_UNRANKED 15.0
+    # / FCS_COMPOSITE_FALLBACK 19.0 by Massey rank, fitted against 848 real games.
+    # (This used to read "a flat 16.0 for every FCS team" — that constant was
+    # replaced; the comment outlived it and was corrected 2026-09-22.)
     fcs_rank = team_data.get("fcs_rating")
     try:
         fcs_norm = (50.0 if fcs_rank is None
