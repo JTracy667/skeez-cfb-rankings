@@ -1,0 +1,219 @@
+{
+  "seasons": [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "holdout": 2025,
+  "arms": {
+    "v2-finetune": {
+      "pooled": {
+        "games": 4376,
+        "fbs_games": 3866,
+        "nonfbs_games": 510,
+        "ats": "2174-2123-79",
+        "ats_pct": 50.6,
+        "ats_fbs": "1929-1862",
+        "ats_fbs_pct": 50.9,
+        "ats_nonfbs": "245-261",
+        "ats_nonfbs_pct": 48.4,
+        "ou": "2196-2010",
+        "ou_pct": 52.2,
+        "su": "3037-1339",
+        "su_pct": 69.4,
+        "mean_model_margin": 5.88,
+        "mean_book_line": 12.38,
+        "mae_vs_book": 8.14,
+        "bias_vs_book": -3.82
+      },
+      "holdout_2025": {
+        "games": 941,
+        "fbs_games": 784,
+        "nonfbs_games": 157,
+        "ats": "462-466-13",
+        "ats_pct": 49.8,
+        "ats_fbs": "393-378",
+        "ats_fbs_pct": 51.0,
+        "ats_nonfbs": "69-88",
+        "ats_nonfbs_pct": 43.9,
+        "ou": "496-443",
+        "ou_pct": 52.8,
+        "su": "650-291",
+        "su_pct": 69.1,
+        "mean_model_margin": 5.45,
+        "mean_book_line": 13.06,
+        "mae_vs_book": 9.43,
+        "bias_vs_book": -5.35
+      },
+      "per_season": {
+        "2021": 49.5,
+        "2022": 53.9,
+        "2023": 49.9,
+        "2024": 50.3,
+        "2025": 51.0
+      },
+      "loso": {
+        "2021": 49.1,
+        "2022": 49.1,
+        "2023": 48.8,
+        "2024": 49.9,
+        "2025": 51.0
+      },
+      "params": {
+        "slope": 0.5,
+        "hfa": 1.5,
+        "havoc": 1.0,
+        "expl": 3.0,
+        "rest": 2.0
+      },
+      "grid_position": {
+        "slope": "edge",
+        "hfa": "edge",
+        "havoc": "edge",
+        "expl": "interior",
+        "rest": "interior"
+      },
+      "in_sample_ats_pct": null,
+      "band": 4.399999999999999
+    },
+    "v2-finetune-market": {
+      "pooled": {
+        "games": 4141,
+        "fbs_games": 3682,
+        "nonfbs_games": 459,
+        "ats": "2075-1988-78",
+        "ats_pct": 51.1,
+        "ats_fbs": "1861-1747",
+        "ats_fbs_pct": 51.6,
+        "ats_nonfbs": "214-241",
+        "ats_nonfbs_pct": 47.0,
+        "ou": "2080-1893",
+        "ou_pct": 52.4,
+        "su": "3051-1090",
+        "su_pct": 73.7,
+        "mean_model_margin": 12.62,
+        "mean_book_line": 12.42,
+        "mae_vs_book": 1.66,
+        "bias_vs_book": 0.13
+      },
+      "holdout_2025": {
+        "games": 811,
+        "fbs_games": 694,
+        "nonfbs_games": 117,
+        "ats": "408-390-13",
+        "ats_pct": 51.1,
+        "ats_fbs": "353-328",
+        "ats_fbs_pct": 51.8,
+        "ats_nonfbs": "55-62",
+        "ats_nonfbs_pct": 47.0,
+        "ou": "431-378",
+        "ou_pct": 53.3,
+        "su": "623-188",
+        "su_pct": 76.8,
+        "mean_model_margin": 13.16,
+        "mean_book_line": 13.13,
+        "mae_vs_book": 1.99,
+        "bias_vs_book": -0.05
+      },
+      "per_season": {
+        "2021": 51.2,
+        "2022": 52.6,
+        "2023": 52.7,
+        "2024": 49.3,
+        "2025": 51.8
+      },
+      "loso": {
+        "2021": 51.2,
+        "2022": 52.6,
+        "2023": 52.7,
+        "2024": 49.3,
+        "2025": 51.8
+      },
+      "params": {
+        "slope": 0.6,
+        "hfa": 2.5,
+        "havoc": 3.0,
+        "expl": 3.0,
+        "rest": 2.0,
+        "k": 0.05
+      },
+      "grid_position": {
+        "k": "interior"
+      },
+      "in_sample_ats_pct": null,
+      "band": 3.4000000000000057
+    },
+    "v2-noclamp": {
+      "pooled": {
+        "games": 4376,
+        "fbs_games": 3866,
+        "nonfbs_games": 510,
+        "ats": "2168-2129-79",
+        "ats_pct": 50.5,
+        "ats_fbs": "1919-1872",
+        "ats_fbs_pct": 50.6,
+        "ats_nonfbs": "249-257",
+        "ats_nonfbs_pct": 49.2,
+        "ou": "2193-2013",
+        "ou_pct": 52.1,
+        "su": "3044-1332",
+        "su_pct": 69.6,
+        "mean_model_margin": 8.15,
+        "mean_book_line": 12.38,
+        "mae_vs_book": 7.19,
+        "bias_vs_book": -1.34
+      },
+      "holdout_2025": {
+        "games": 941,
+        "fbs_games": 784,
+        "nonfbs_games": 157,
+        "ats": "453-475-13",
+        "ats_pct": 48.8,
+        "ats_fbs": "383-388",
+        "ats_fbs_pct": 49.7,
+        "ats_nonfbs": "70-87",
+        "ats_nonfbs_pct": 44.6,
+        "ou": "498-441",
+        "ou_pct": 53.0,
+        "su": "653-288",
+        "su_pct": 69.4,
+        "mean_model_margin": 7.67,
+        "mean_book_line": 13.06,
+        "mae_vs_book": 8.29,
+        "bias_vs_book": -2.75
+      },
+      "per_season": {
+        "2021": 50.1,
+        "2022": 50.9,
+        "2023": 51.1,
+        "2024": 51.3,
+        "2025": 49.7
+      },
+      "loso": {
+        "2021": 49.9,
+        "2022": 49.7,
+        "2023": 50.3,
+        "2024": 50.8,
+        "2025": 49.7
+      },
+      "params": {
+        "slope": 0.625,
+        "hfa": 3.75,
+        "havoc": 5.0,
+        "expl": 1.0,
+        "rest": 2.0
+      },
+      "grid_position": {
+        "slope": "interior",
+        "hfa": "interior",
+        "havoc": "edge",
+        "expl": "edge",
+        "rest": "interior"
+      },
+      "in_sample_ats_pct": null,
+      "band": 1.5999999999999943
+    }
+  }
+}
