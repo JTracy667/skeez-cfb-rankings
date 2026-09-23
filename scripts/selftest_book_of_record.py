@@ -72,13 +72,31 @@ check("spread_kind ours", m["spread_kind"], "book_of_record")
 check("total falls back to consensus", m["total"], 51.0)
 check("total_kind consensus", m["total_kind"], "best_line")
 
-print("\nCASE 4 — betmgm / williamhill_us are also book-of-record, and priority order holds")
+print("\nCASE 4 — record chain order is betonlineag > williamhill_us > betmgm (Jeff, 2026-09-24)")
 m = app._build_odds_map([game([("williamhill_us", "Caesars", -6.5, 50.5),
                                ("betmgm", "BetMGM", -7.0, 51.0)],
                               best_line(-7.5, 51.0))])[KEY]
-check("betmgm outranks williamhill_us", m["book"], "betmgm")
-check("line is betmgm's", m["spread"], -7.0)
+check("williamhill_us outranks betmgm", m["book"], "williamhill_us")
+check("line is williamhill_us's", m["spread"], -6.5)
 check("kind is book_of_record", m["spread_kind"], "book_of_record")
+
+print("\nCASE 4b — betonlineag missing: William Hill is used for everything it misses")
+m = app._build_odds_map([game([("betonlineag", "BetOnline.ag", None, None),
+                               ("williamhill_us", "Caesars", -6.5, 50.5),
+                               ("betmgm", "BetMGM", -7.0, 51.0)],
+                              best_line(-7.5, 51.0))])[KEY]
+check("spread falls to williamhill_us", m["spread"], -6.5)
+check("total falls to williamhill_us", m["total"], 50.5)
+check("book attributed to williamhill_us", m["book"], "williamhill_us")
+
+print("\nCASE 4c — per-market walk: betonlineag spread only, William Hill total")
+m = app._build_odds_map([game([("betonlineag", "BetOnline.ag", -7.0, None),
+                               ("williamhill_us", "Caesars", -6.0, 50.5)],
+                              best_line(-7.5, 51.0))])[KEY]
+check("spread stays betonlineag's", m["spread"], -7.0)
+check("total is William Hill's, not the consensus", m["total"], 50.5)
+check("total_kind", m["total_kind"], "book_of_record")
+check("total book attributed", m["total_book_title"], "Caesars")
 
 print("\nCASE 5 — non-Jeff book (draftkings) must NOT become book-of-record")
 m = app._build_odds_map([game([("draftkings", "DraftKings", -9.0, 51.0)],

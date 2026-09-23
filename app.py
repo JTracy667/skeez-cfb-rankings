@@ -2256,12 +2256,14 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
     # branded but prices off CAESARS lines, which is why the feed titles the key "Caesars".
     # Correct mapping, confirmed by Jeff 2026-09-23 - do not "fix" it to say William Hill.
     # pinnacle removed by request; it is also EU-region only in The Odds API.
-    _BOOK_PRIORITY = ["betonlineag", "betmgm", "williamhill_us",
+    _BOOK_PRIORITY = ["betonlineag", "williamhill_us", "betmgm",
                       "draftkings", "fanduel", "betrivers", "bovada"]
     # DECISION A (Jeff, 2026-09-23): lines from Jeff's own books are the SOURCE OF RECORD
     # and OUTRANK the cross-book consensus. The edge shown must be measured against a line
     # he can actually bet. Consensus only fills a market his book has not posted.
-    _BOOK_OF_RECORD = ("betonlineag", "betmgm", "williamhill_us")
+    # ORDER (Jeff, 2026-09-24): "use William Hill for everything betonlineag misses" —
+    # betonlineag first, then williamhill_us, then betmgm.
+    _BOOK_OF_RECORD = ("betonlineag", "williamhill_us", "betmgm")
     odds_map = {}
     for game in odds_data:
         home = _normalize_team_name(game.get("home_team", ""))
@@ -2316,23 +2318,37 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
             if spread is not None or total is not None:
                 per_book[bk] = {"title": title, "spread": spread, "total": total}
         # Pick the best book by priority, else the first available (bulk fallback)
-        chosen = None
-        for bk in _BOOK_PRIORITY:
-            if bk in per_book:
-                chosen = bk
+        # SOURCE OF RECORD, WALKED PER MARKET (Jeff, 2026-09-24: "use William Hill for
+        # everything betonlineag misses"). A book that holds the spread but not the total
+        # must not drag that market down to a consensus price he cannot bet, so the record
+        # chain is walked independently for each market.
+        bor_sp = bor_tt = None
+        for bk in _BOOK_OF_RECORD:
+            e = per_book.get(bk)
+            if e is None:
+                continue
+            if bor_sp is None and e.get("spread") is not None:
+                bor_sp = (bk, e)
+            if bor_tt is None and e.get("total") is not None:
+                bor_tt = (bk, e)
+            if bor_sp is not None and bor_tt is not None:
                 break
+        chosen = bor_sp[0] if bor_sp else (bor_tt[0] if bor_tt else None)
+        if chosen is None:
+            for bk in _BOOK_PRIORITY:
+                if bk in per_book:
+                    chosen = bk
+                    break
         if chosen is None and per_book:
             chosen = next(iter(per_book))
         b = per_book.get(chosen, {})
-        # SOURCE OF RECORD (decision A): our book's line wins; cross-book consensus only
-        # fills a market the book of record has not posted.
-        book_spread = b.get("spread")
-        book_total = b.get("total")
-        is_bor = chosen in _BOOK_OF_RECORD
-        if is_bor and book_spread is not None:
+        book_spread = bor_sp[1]["spread"] if bor_sp else None
+        book_total = bor_tt[1]["total"] if bor_tt else None
+        is_bor = bor_sp is not None or bor_tt is not None
+        if book_spread is not None:
             spread = book_spread
         else:
-            spread = bl_spread if bl_spread is not None else book_spread
+            spread = bl_spread if bl_spread is not None else b.get("spread")
         # FAVORITE-SIGN SANITY GUARD (Sep 8): the team-tagged bulk line is always
         # correct, so a negative (home-favorite) spread is only plausible when a
         # home-named line exists. A NEGATIVE spread with NO home-side quote
@@ -2348,13 +2364,15 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
                 print(f"[Odds] {home}|{away}: negative spread {spread} with no "
                       f"home-side line — dropping (away-favorite misattribution)")
                 spread = None
-        total = (book_total if (is_bor and book_total is not None)
-                 else (bl_total if bl_total is not None else book_total))
-        # Book attribution follows the line actually used (the book of record when its
-        # line was taken; best-line's attributed sportsbook otherwise).
+        total = (book_total if book_total is not None
+                 else (bl_total if bl_total is not None else b.get("total")))
+        # Book attribution follows the book that actually supplied THAT market (the record
+        # chain entry when it was used; best-line's attributed sportsbook otherwise).
         def _attr(mk):
-            if is_bor and b.get(mk) is not None:
-                return chosen, b.get("title", chosen)
+            entry = bor_sp if mk == "spread" else bor_tt
+            if entry is not None:
+                bk, e = entry
+                return bk, e.get("title", bk)
             src = bl.get(mk)
             if isinstance(src, dict) and src.get("point") is not None:
                 return src.get("book"), (src.get("book_title") or src.get("book"))
@@ -2371,9 +2389,14 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
             "spread_home_favorite": spread is not None and spread < 0,
             "book": sp_book or tt_book,
             "book_title": sp_title or tt_title,
-            "spread_kind": ("book_of_record" if (is_bor and book_spread is not None)
+            # Per-market attribution (Jeff, 2026-09-24): with the record chain walked per
+            # market, the spread and the total can legitimately come from different books.
+            # Top-level book/book_title keep their old meaning (the spread's book).
+            "spread_book": sp_book, "spread_book_title": sp_title,
+            "total_book": tt_book, "total_book_title": tt_title,
+            "spread_kind": ("book_of_record" if bor_sp is not None
                             else "best_line" if bl_spread is not None else "priority_book"),
-            "total_kind": ("book_of_record" if (is_bor and book_total is not None)
+            "total_kind": ("book_of_record" if bor_tt is not None
                            else "best_line" if bl_total is not None else "priority_book"),
         }
     return odds_map
