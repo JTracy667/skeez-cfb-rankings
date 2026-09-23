@@ -65,3 +65,9 @@ data/api_surface_map.json
 data/backtest_cache/
 data/backtest_runs/
 data/backtest_runs.jsonl
+
+# Local D1 snapshot export + runtime state files (churn; not source)
+data/d1_export.sqlite
+data/budget_ledger.json
+data/d1_rankings_last.json
+data/fcs_extras_progress.json
