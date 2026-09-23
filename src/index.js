@@ -4,7 +4,16 @@ import { env } from "cloudflare:workers";
 
 export class CFBPowerRankings extends Container {
 	defaultPort = 8003;
-	sleepAfter = "20m";
+	// 5m, down from 20m. The 20m value was the reason a deploy took ~21 minutes to
+	// become live: a warm instance keeps serving the PREVIOUS image until it idles
+	// out, and every request resets that timer. Shorter sleepAfter = faster image
+	// swap; the cost is a cold start on the first request after each idle, measured
+	// at ~2s (the background scheduler thread does NOT block readiness, even though
+	// it takes ~36s to finish its first tick — do not confuse the two).
+	// Getting this value wrong is a correctness issue, not just speed: cfb_deploy.sh
+	// must poll on an interval LONGER than this, or its own probe keeps the old
+	// instance awake and the report says "not live" forever.
+	sleepAfter = "5m";
 	envVars = {
 		CFBD_API_KEY: env.CFBD_API_KEY,
 		PROPLINE_API_KEY: env.PROPLINE_API_KEY,

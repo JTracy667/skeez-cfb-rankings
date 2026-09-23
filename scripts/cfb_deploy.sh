@@ -24,10 +24,15 @@ ROOT="$(pwd)"
 PUBLIC_URL="${CFB_PUBLIC_URL:-https://skeezcfb-rankings.com}"
 WRANGLER="npx --yes wrangler@latest"
 VERIFY_TIMEOUT="${CFB_VERIFY_TIMEOUT:-5400}"   # 90m: needs at least 2 full warm windows
-# CRITICAL: the probe interval MUST exceed the container's sleepAfter (20m).
+# CRITICAL: the probe interval MUST exceed the container's sleepAfter.
 # Probing more often than that keeps the instance ACTIVE, so it never sleeps,
 # never recycles, and the new image can never come live -> false rollback.
-VERIFY_INTERVAL="${CFB_VERIFY_INTERVAL:-1260}"  # 21m — just past sleepAfter
+# NOTE when you CHANGE sleepAfter: the interval that matters is the OUTGOING image's
+# value, because the instance that has to idle out is the one ALREADY RUNNING. So the
+# first deploy after shrinking sleepAfter still needs the OLD interval — pass it
+# explicitly (e.g. CFB_VERIFY_INTERVAL=1260 for one run), then lower the default.
+# sleepAfter is now 5m in src/index.js, so 360 is the steady-state value.
+VERIFY_INTERVAL="${CFB_VERIFY_INTERVAL:-1260}"  # 21m until the live image itself has 5m
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 
