@@ -38,20 +38,57 @@ PRESEASON_FILE = DATA_DIR / "cfbd_analytics_preseason.json"
 
 PROVIDER_PREFERENCE = ("DraftKings", "Draft Kings", "Bovada")
 
+CACHE_DIR = DATA_DIR / "backtest_cache"
+REFRESH = False   # set by --refresh on the CLI
+
+
+def _cached_json(name: str, fetch_fn):
+    """Fetch once, read many: the point-in-time inputs are frozen per (endpoint, year, week).
+
+    Two reasons this exists, and the first is the important one:
+
+      1. INTEGRITY — every arm of an experiment must be evaluated against the SAME bytes.
+         Re-fetching between arms would let a CFBD update land mid-experiment and
+         silently invalidate the comparison, and the difference between arms would no
+         longer be only the weights.
+      2. SPEED — a cached run makes no network calls, so experiments are fast and can be
+         re-run offline.
+
+    Pass --refresh to deliberately re-fetch.
+    """
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    path = CACHE_DIR / f"{name}.json"
+    if path.exists() and not REFRESH:
+        try:
+            with open(path, encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:  # noqa: BLE001
+            print(f"[Backtest] cache unreadable ({name}: {e}); re-fetching")
+    data = fetch_fn()
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+        print(f"[Backtest] cached {name} -> {path.name}")
+    except Exception as e:  # noqa: BLE001
+        print(f"[Backtest] cache write failed for {name}: {e}")
+    return data
+
+
 def build_weekly_stats_cache(client, weeks=(1, 2, 3)) -> dict:
-    """Pre-fetch weekly game-level advanced stats for past completed weeks."""
+    """Pre-fetch weekly game-level advanced stats for past completed weeks (cached)."""
     weekly_stats = {}
     for wk in weeks:
-        url = f"{app.CFBD_BASE}/stats/game/advanced?year=2026&week={wk}"
-        try:
-            resp = client.get(url, headers=app.CFBD_HEADERS)
-            if resp.status_code == 200:
-                weekly_stats[wk] = resp.json()
-            else:
-                weekly_stats[wk] = []
-        except Exception as e:
-            print(f"[Warning] Failed to fetch week {wk} game stats: {e}")
-            weekly_stats[wk] = []
+        def _fetch(wk=wk):
+            url = f"{app.CFBD_BASE}/stats/game/advanced?year=2026&week={wk}"
+            try:
+                resp = client.get(url, headers=app.CFBD_HEADERS)
+                if resp.status_code == 200:
+                    return resp.json()
+                print(f"[Warning] week {wk} stats: HTTP {resp.status_code}")
+            except Exception as e:  # noqa: BLE001
+                print(f"[Warning] Failed to fetch week {wk} game stats: {e}")
+            return []
+        weekly_stats[wk] = _cached_json(f"stats_game_advanced_2026_wk{wk}", _fetch)
     return weekly_stats
 
 def reconstruct_pit_team_data(preseason_map: dict, weekly_stats: dict, team_name: str, week: int) -> dict:
@@ -116,10 +153,19 @@ def run_backtest(year: int = 2026, summary_out=None, fixture_out=None) -> dict:
 
     print(f"[Backtest] Loading CFBD closing lines and game scores for {year}...")
     url = f"{app.CFBD_BASE}/lines?year={year}"
-    resp = client.get(url, headers=app.CFBD_HEADERS)
-    if resp.status_code != 200:
-        raise RuntimeError(f"Failed to fetch CFBD lines: HTTP {resp.status_code}")
-    games_raw = resp.json()
+
+    def _fetch_lines():
+        resp = client.get(url, headers=app.CFBD_HEADERS)
+        if resp.status_code != 200:
+            raise RuntimeError(f"Failed to fetch CFBD lines: HTTP {resp.status_code}")
+        return resp.json()
+
+    games_raw = _cached_json(f"lines_{year}", _fetch_lines)
+    if not games_raw:
+        # An empty payload would otherwise produce a confident-looking summary over zero
+        # games. Refuse instead — a silent 0-game "result" is worse than an error.
+        raise RuntimeError("no games loaded (empty lines payload/cache) — refusing to "
+                           "report a backtest over zero games")
 
     game_audit_log = []
     
@@ -348,7 +394,13 @@ if __name__ == "__main__":
     ap.add_argument("--out-fixture", default=None,
                     help=f"game-audit destination (default {FIXTURE_FILE.name})")
     ap.add_argument("--label", default="", help="printed with the result, e.g. 'zero-srs'")
+    ap.add_argument("--refresh", action="store_true",
+                    help="re-fetch the cached CFBD inputs instead of reusing them")
     args = ap.parse_args()
+
+    if args.refresh:
+        REFRESH = True
+        print("[Backtest] --refresh: re-fetching cached inputs")
 
     if args.label:
         print(f"[Backtest] run label: {args.label}")

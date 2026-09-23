@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "note": "Named composite weightings for the backtest rig (scripts/backtest_rig.py). An ARM is data, not a shell command — that is what makes an experiment repeatable and reviewable. Rules: (1) weights must total 1.0 across the enabled keys (sp_plus, fpi, srs, elo, talent, efficiency) or the arm is rejected BEFORE it runs — a miscalibrated arm produces confident garbage; (2) `weights: null` means the live defaults; (3) adding an arm here is a PROPOSAL, not a change. Nothing in this file affects production; a winning arm must still be applied to COMPOSITE_CONFIG with Jeff's sign-off (CFO doctrine), which changes model_version and breaks comparability with historic rows on purpose.",
+  "enabled_keys": ["sp_plus", "fpi", "srs", "elo", "talent", "efficiency"],
+  "arms": {
+    "baseline": {
+      "weights": null,
+      "note": "The live weights, model_version ca2f071afda. Always run this arm: a treatment without a control on the same cached data is not an experiment."
+    },
+    "zero-srs": {
+      "weights": {
+        "sp_plus": 0.20454545,
+        "fpi": 0.17045455,
+        "srs": 0.0,
+        "elo": 0.09090909,
+        "talent": 0.11363636,
+        "efficiency": 0.42045455,
+        "fcs_rating": 0.0,
+        "massey": 0.0
+      },
+      "note": "SRS removed (it is served from the previous season), its 12% re-normalised proportionally across the remaining inputs. model_version c0229dfa0f4. Measured 2026-09-23: FBS spreads 48.3% -> 45.9%, totals 61.4% -> 61.0%. SRS is therefore NOT the cause of the spread losses."
+    }
+  }
+}

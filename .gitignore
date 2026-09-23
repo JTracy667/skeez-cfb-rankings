@@ -58,3 +58,10 @@ data/ratings_etag_history.jsonl
 
 # CFBD API transport map (regenerate with scripts/probe_api_surface.py)
 data/api_surface_map.json
+
+# Backtest rig runtime artifacts: the frozen point-in-time inputs are bulky (2.4 MB) and
+# reproducible with --refresh; run outputs churn per experiment. The durable record of an
+# experiment is the D1 backtest_runs table, which is why these do not need tracking.
+data/backtest_cache/
+data/backtest_runs/
+data/backtest_runs.jsonl

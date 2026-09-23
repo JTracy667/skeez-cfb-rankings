@@ -191,3 +191,44 @@ CREATE TABLE IF NOT EXISTS app_state (
   value      TEXT,
   updated_at TEXT
 );
+
+-- ---------------------------------------------------------------------------
+-- backtest_runs — one row per ARM per experiment run.
+--
+-- Why this exists: the backtest harness could always produce a number, but there was
+-- nowhere for the number to LIVE. Every experiment was ephemeral — a JSON file written
+-- by hand, a chat message, a memory. That makes "did this weighting help?" unanswerable
+-- over time, because yesterday's result cannot be re-read in context.
+--
+-- model_version is the AUDIT KEY: it is the hash of the exact weight set used, so an arm
+-- can never be silently compared against a different one (same guarantee the
+-- rankings_daily / model_predictions rows rely on). Weights themselves are stored as
+-- JSON so the row is self-describing even if the arms file is later edited.
+--
+-- scope records WHICH games were evaluated (e.g. fbs_only_tiers_vs_all_games), because
+-- a win rate without its scope is not comparable to anything.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS backtest_runs (
+  run_id          TEXT NOT NULL,   -- experiment id (UTC timestamp), groups the arms
+  ts_utc          TEXT NOT NULL,
+  arm             TEXT NOT NULL,   -- 'baseline', 'zero-srs', ...
+  model_version   TEXT,            -- composite hash for that arm's weights
+  weights_json    TEXT,            -- the exact weights used, self-describing
+  season          INTEGER,
+  games           INTEGER,         -- total evaluated games
+  fbs_matchups    INTEGER,         -- games counted in the ATS/totals tiers
+  ats_all         REAL,            -- win pct, all FBS spread picks
+  ats_3star       REAL,
+  ats_5star       REAL,
+  totals_all      REAL,
+  totals_3star    REAL,
+  dog_share_pct   REAL,            -- how often the model took the underdog
+  mean_model_margin REAL,          -- mean |model spread| (compression check)
+  mean_book_line  REAL,
+  mae_vs_book     REAL,
+  bias_vs_book    REAL,
+  note            TEXT,
+  PRIMARY KEY (run_id, arm)
+);
+
+CREATE INDEX IF NOT EXISTS idx_backtest_runs_ts ON backtest_runs(ts_utc DESC);

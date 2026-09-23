@@ -631,6 +631,16 @@ python scripts/compare_backtest_arms.py out-bt-base.json out-bt-base-fix.json \
 published `data/backtest_summary.json` / `data/backtest_fixture_2026.json` (verified
 byte-identical after both runs).
 
+**Easier path — the standing rig:** this whole experiment is now one command, and it
+archives its results so the next person can read them instead of repeating them:
+
+```bash
+python scripts/backtest_rig.py --history      # every experiment run so far
+python scripts/backtest_rig.py                # re-run all arms, report + archive
+```
+
+See `docs/BACKTEST_RIG.md`.
+
 ---
 
 # Appendix A — Glossary

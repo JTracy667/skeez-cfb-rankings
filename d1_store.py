@@ -324,6 +324,21 @@ def append_freshness_events(rows: list[dict]) -> int:
                    rows, None, None)
 
 
+def append_backtest_runs(rows: list[dict]) -> int:
+    """Archive one row per ARM per backtest experiment (see d1/schema.sql).
+
+    Gives experiments a durable home so "did this weighting help?" can be answered by
+    querying history instead of re-running and hoping the old numbers were remembered.
+    Idempotent on (run_id, arm): re-archiving the same run updates rather than duplicates.
+    """
+    cols = ["run_id", "ts_utc", "arm", "model_version", "weights_json", "season",
+            "games", "fbs_matchups", "ats_all", "ats_3star", "ats_5star",
+            "totals_all", "totals_3star", "dog_share_pct", "mean_model_margin",
+            "mean_book_line", "mae_vs_book", "bias_vs_book", "note"]
+    update = [c for c in cols if c not in ("run_id", "arm")]
+    return _upsert("backtest_runs", cols, rows, ["run_id", "arm"], update)
+
+
 def append_served_snapshots(rows: list[dict]) -> int:
     """Append a daily served-state snapshot (see d1/schema.sql).
 
