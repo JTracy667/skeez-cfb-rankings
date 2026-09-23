@@ -1112,10 +1112,19 @@ def api_health():
     still answering" — a warm container can keep serving the previous image for
     up to sleepAfter (20m), so a successful `wrangler deploy` alone does NOT
     mean the change is live.
+
+    `model_version` is the ACTIVE composite-config hash (composite_version()).
+    It is a CODE-level marker: unlike `build`, it is computed from the running
+    code, not from an env var the Worker hands the (possibly stale) instance.
+    A deploy that changes composite weights/decay must show the new hash here —
+    that is the proof the new code is live, not merely that the tag changed.
+    The same hash is stored as `model_version` on D1 rankings_daily /
+    model_predictions rows, so a health read and a D1 row can be cross-checked.
     """
     out = {
         "status": "ok",
         "build": os.environ.get("BUILD_TAG", "dev"),
+        "model_version": composite_version(),
         "teams": len(load_local()),
         "cache_ttl": CACHE_TTL,
     }
