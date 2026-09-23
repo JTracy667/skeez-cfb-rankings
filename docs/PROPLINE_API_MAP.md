@@ -61,8 +61,15 @@ endpoint **requires auth**. The row is withdrawn.
 ### Payload-size trap
 
 `markets=spreads,totals` returns **43.7 MB** for 233 events, against **1.7 MB** for the same
-endpoint without `markets`. That is a ~25× difference. Anything that pulls this in a request path
-(or into memory on a small container) should be aware of the size before it becomes a timeout.
+endpoint without `markets` — a ~25× difference. **This is the call production makes**, so the ~44 MB
+body is pulled on every odds refresh.
+
+**Corrected container context (verified 2026-09-23):** the live container is Cloudflare
+`instance_type: "basic"` = **1 GiB**, not Render's 512 MB (Render is decommissioned). So this is a
+**bandwidth and parse-cost** problem, not an OOM problem: ~44 MB on the wire per refresh, and
+parsing it expands transiently well beyond the body size. It remains the single largest payload in
+the system, and the honest fix if it ever bites is to narrow the request (per-event or
+market-specific) rather than to raise memory.
 
 ## 3. Markets — the key is `h2h`, not `moneyline`
 

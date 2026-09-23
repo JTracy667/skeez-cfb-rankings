@@ -1988,7 +1988,9 @@ def _propline_fetch() -> list[dict]:
         if not _propline_best_line_allowed():
             print(f"[Odds] {_propline_quota_str()} — below 20%: bulk-only this cycle (no best-line)")
             return events
-        # Per-event best-line, concurrency 4 (memory-safe on Render's 512MB box).
+        # Per-event best-line, concurrency 4. (Comment historically read "memory-safe on
+        # Render's 512MB box" — Render is decommissioned; the live container is Cloudflare
+        # instance_type "basic" = 1 GiB, verified 2026-09-23. The cap itself is unchanged.)
         def _fetch_best_line(ev):
             eid = ev.get("id") or ev.get("event_id")
             if not eid:
