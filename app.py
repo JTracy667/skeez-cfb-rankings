@@ -2252,8 +2252,9 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
     # Line source of record = Jeff's actual books (2026-09-23). betonlineag is his primary
     # sharp read and the book he can actually bet into, so the edge shown must be measured
     # against ITS line, not a book he cannot use. betmgm + williamhill_us follow.
-    # NOTE: the PropLine book key is `williamhill_us` but its feed TITLE is "Caesars" — that
-    # key is not William Hill. There is no William Hill key in the feed at all.
+    # NOTE: `williamhill_us` is Jeff's William Hill Nevada book. The app is William Hill
+    # branded but prices off CAESARS lines, which is why the feed titles the key "Caesars".
+    # Correct mapping, confirmed by Jeff 2026-09-23 - do not "fix" it to say William Hill.
     # pinnacle removed by request; it is also EU-region only in The Odds API.
     _BOOK_PRIORITY = ["betonlineag", "betmgm", "williamhill_us",
                       "draftkings", "fanduel", "betrivers", "bovada"]

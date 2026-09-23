@@ -50,10 +50,10 @@ SEASONS = [2021, 2022, 2023, 2024, 2025]
 # Jeff's actual books. VERIFIED against the live feed's own titles (2026-09-23):
 #   betonlineag  -> "BetOnline.ag"  (his primary sharp read)
 #   betmgm       -> "BetMGM"
-#   williamhill_us -> titled "Caesars"  ** NOT William Hill **  The key is a legacy name; the feed
-#                     sells Caesars lines under it. There is no William Hill key in ANY region.
+#   williamhill_us -> titled "Caesars" = Jeff's William Hill NEVADA book. WH-branded app that
+#                     prices off Caesars lines, which is why the feed titles it Caesars.
+#                     Correct mapping (confirmed 2026-09-23) - do not rename it.
 #   circa        -> NOT CARRIED by this API (no `circa` key across us/eu/uk)
-# Do not describe williamhill_us as "William Hill" in any output - it is Caesars.
 # pinnacle was dropped by request — and it is EU-region only, so removing it also keeps this
 # harvest US-only and at half the credit cost.
 WRITE_BOOKS = ("betonlineag", "betmgm", "williamhill_us",
