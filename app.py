@@ -2875,7 +2875,11 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
     # slot stays deliberately inert. The composite is an FBS board; the correct
     # lever for FCS opponents is the missing-data prior: see
     # `fcs_composite_for()` — FCS_COMPOSITE_RANKED 33.0 / FCS_COMPOSITE_UNRANKED 15.0
-    # / FCS_COMPOSITE_FALLBACK 19.0 by Massey rank, fitted against 848 real games.
+    # / FCS_COMPOSITE_FALLBACK 19.0 by Massey rank. Targets measured from 848 real
+    # FBS-vs-FCS games (FBS wins by 31.9 vs unranked, 14.2 vs ranked); mean absolute
+    # error measured on 103 completed games: 21.5 -> 13.6 pts.
+    # NOTE: 848 = the games the target margins came from; 103 = the games the error
+    # was measured on. They are different datasets — do not conflate them.
     # (This used to read "a flat 16.0 for every FCS team" — that constant was
     # replaced; the comment outlived it and was corrected 2026-09-22.)
     fcs_rank = team_data.get("fcs_rating")
