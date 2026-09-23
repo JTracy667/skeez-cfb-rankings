@@ -3075,14 +3075,15 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
         "projected_score": projected_score,
         "composite": round(composite, 1),
         "win_probability": win_prob,
-        "sp_contribution": round(sp_norm * 0.18, 1),
-        "fpi_contribution": round(fpi_norm * 0.15, 1),
-        "srs_contribution": round(srs_norm * 0.12, 1),
-        "cpi_contribution": round(srs_norm * 0.12, 1),  # backwards compatibility alias
-        "elo_contribution": round(elo_norm * 0.08, 1),
-        "rec_contribution": round(talent_norm * 0.10, 1),
-        "epa_contribution": round(eff_norm * 0.37, 1),  # backwards compatibility alias
-        "efficiency_contribution": round(eff_norm * 0.37, 1),
+        "sp_contribution": round(sp_norm * cfg["sp_plus"], 1),
+        "fpi_contribution": round(fpi_norm * cfg["fpi"], 1),
+        "srs_contribution": round(srs_norm * cfg["srs"], 1),
+        "cpi_contribution": round(srs_norm * cfg["srs"], 1),  # backwards compatibility alias
+        "elo_contribution": round(elo_norm * cfg["elo"], 1),
+        "rec_contribution": round(talent_norm * cfg["talent"], 1),
+        "epa_contribution": round(eff_norm * cfg["efficiency"], 1),  # backwards compatibility alias
+        "efficiency_contribution": round(eff_norm * cfg["efficiency"], 1),
+        "experience_contribution": round(exp_norm * cfg["experience"], 1),
         "sr_norm": round(sr_norm, 1),
         "trench_norm": round(trench_norm, 1),
         "ppo_norm": round(ppo_norm, 1),

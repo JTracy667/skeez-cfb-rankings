@@ -42,8 +42,12 @@ for ep in api/health api/rankings api/schedule; do
   sleep 20
 done
 for p in "" analytics schedule win-totals; do
+  # NOTE: take only the first 3 chars. `curl -w` prints the code and THEN can still exit
+  # non-zero (e.g. a write error), so `|| echo 000` appends to a printed "200" and the
+  # status file reads "200000" — which looks like a failure when the page was fine.
   code=$(curl -s -m 45 -A 'Mozilla/5.0' -o /dev/null -w '%{http_code}' \
-           "https://skeezcfb-rankings.com/$p" || echo 000)
+           "https://skeezcfb-rankings.com/$p" 2>/dev/null)
+  code=${code:0:3}
   echo "/$p -> $code" >> "$OUT/status.txt"
   [ "$code" = "200" ] || rc=1
 done
