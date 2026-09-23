@@ -3920,7 +3920,7 @@ def api_schedule_update(matchups: list[dict]):
 _PRED_LOCK = {"ts": 0.0}
 
 
-def _maybe_write_predictions(games: list[dict]) -> int:
+def _maybe_write_predictions(games: list[dict], week: int | None = None) -> int:
     """Write model_predictions for un-started games — at most once per hour.
 
     Risk register D2: predictions must exist BEFORE kickoff, never post-hoc. The
@@ -3965,7 +3965,7 @@ def _maybe_write_predictions(games: list[dict]) -> int:
         inj_rows.append({
             "game_id": m.get("game_id"),
             "season": m.get("season") or CFBD_YEAR,
-            "week": m.get("week"),
+            "week": m.get("week") or week,
             "home": m.get("home"),
             "away": m.get("away"),
             "kickoff": m.get("date"),
@@ -4151,7 +4151,7 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
     # so a page load can't become a write storm; the writer itself refuses any
     # game whose kickoff has already passed.
     try:
-        _maybe_write_predictions(enriched)
+        _maybe_write_predictions(enriched, week)
     except Exception as e:  # noqa: BLE001 — never break the schedule page
         print(f"[Schedule] D1 predictions failed: {e}")
     _payload = {"week": week, "season": year, "updated": datetime.now().isoformat(),
