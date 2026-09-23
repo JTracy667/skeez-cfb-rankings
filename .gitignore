@@ -76,3 +76,7 @@ data/fcs_extras_progress.json
 out-*.json
 data/backtest_study/*.json
 !data/backtest_study/study_final.json
+
+# Phase-1/ARM-2 harvest caches (regenerable: scripts/harvest_odds_history.py, scripts/harvest_plays.py)
+data/odds_history/
+data/playbyplay_*.json
