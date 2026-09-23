@@ -31,6 +31,7 @@ import argparse
 import glob
 import json
 import math
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -39,6 +40,12 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT))
 
+# Importing app runs _start_scheduler() (app.py:5163), which fires a LIVE refresh_all()
+# ~10s later — so a backtest silently spent Odds API / PropLine credits and rewrote live
+# caches. REFRESH_INTERVAL_SECONDS<=0 makes the scheduler return immediately, which is the
+# supported switch for it. Set BEFORE app is imported.
+os.environ.setdefault("REFRESH_INTERVAL_SECONDS", "0")
+
 from backtest_study import build_records, evaluate, fmt  # noqa: E402
 
 CACHE = ROOT / "data" / "backtest_cache"
@@ -46,6 +53,15 @@ HIST = ROOT / "data" / "odds_history"
 OUT = ROOT / "data" / "backtest_study"
 
 BOOK = "betonlineag"
+
+# Kickoff agreement window for the odds-history join. Snapshots are weekly, so one game's
+# nearest observation can be days away — but a MISMATCHED game is a different game entirely.
+# 36h covers a reschedule without ever crossing into another week's slate.
+KICKOFF_TOL_H = 36.0
+
+# Our book's close vs the CFBD close may differ by a point or two (different book, different
+# snapshot) — but a >7-pt gap is not a pricing difference, it is the WRONG GAME's line.
+DIVERGENCE_PTS = 7.0
 
 POWER_GRID = [round(0.8 + 0.1 * i, 2) for i in range(14)]      # 0.8 .. 2.1
 SLOPE_GRID = [round(0.01 * (1.13 ** i), 4) for i in range(48)]  # 0.01 .. ~3.0 log-spaced
@@ -84,8 +100,11 @@ def load_book_lines(book: str = BOOK) -> dict:
                     "commence": ev["commence_time"], "home": ev["home_team"],
                     "away": ev["away_team"], "obs": []})
                 b = (ev.get("bookmakers") or {}).get(book) or {}
-                spr = next((o.get("point") for o in b.get("spreads") or []
-                            if o.get("point") is not None), None)
+                # BOTH outcomes are kept with their team names. The feed does NOT guarantee
+                # home-first ordering (observed: [{away +9.5}, {home -9.5}]), so taking
+                # spreads[0] silently flips the sign for those games. Resolve by name later.
+                spr = [(o.get("name"), o.get("point")) for o in b.get("spreads") or []
+                       if o.get("point") is not None]
                 tot = next((o.get("point") for o in b.get("totals") or []
                             if o.get("point") is not None), None)
                 g["obs"].append((ts, spr, tot))
@@ -127,8 +146,40 @@ def _strip_mascot(name: str, names: dict) -> str | None:
     return best[1] if best else None
 
 
+def _home_spread(outcomes, names: dict, home: str, away: str):
+    """Home-perspective spread (favourite negative) from the feed's (name, point) pairs.
+
+    Resolves by TEAM NAME, never by list order: the feed interleaves home/away ordering, so
+    positional access silently negates the line for those games.
+    """
+    home_pt = away_pt = None
+    for nm, pt in outcomes or []:
+        t = _strip_mascot(nm or "", names)
+        if t is None:
+            continue
+        if t == home and home_pt is None:
+            home_pt = pt
+        elif t == away and away_pt is None:
+            away_pt = pt
+    if home_pt is not None:
+        return home_pt
+    if away_pt is not None:
+        return -away_pt          # away-quoted -> home-relative
+    return None
+
+
 def join_lines(recs: list[dict], seasons: list[int], book: str = BOOK, prefix: str = "bo") -> dict:
-    """Attach this book's open/close lines to the CFBD records. Returns a join report."""
+    """Attach this book's open/close lines to the CFBD records. Returns a join report.
+
+    MATCHING RULES (learned the hard way — a team-pair-only join silently attached OTHER
+    GAMES' lines: measured |his close - CFBD close| p90 was 40 pts with a 109-pt maximum,
+    which made the model appear to score 64.6% ATS against a line that was not its game's):
+      1. season must agree (derived from the odds event's kickoff, Aug-Dec = that year,
+         Jan = the previous season),
+      2. both team names must resolve to the same CFBD teams,
+      3. kickoff must agree within KICKOFF_TOL_H hours,
+      4. ties (same pairing twice) resolve to the nearest kickoff.
+    """
     names = _cfbd_name_index(seasons)
     book_games = load_book_lines(book)
     by_pair: dict[tuple, list] = {}
@@ -136,28 +187,43 @@ def join_lines(recs: list[dict], seasons: list[int], book: str = BOOK, prefix: s
         h = _strip_mascot(g["home"], names)
         a = _strip_mascot(g["away"], names)
         if h and a:
-            by_pair.setdefault((h, a), []).append((gid, g))
+            ct = _dt(g["commence"])
+            szn = ct.year if ct.month >= 8 else ct.year - 1
+            by_pair.setdefault((szn, h, a), []).append((gid, g))
 
     matched = 0
+    unmatched_kick = 0
+    diverged = 0
     for r in recs:
-        cands = by_pair.get((r["home"], r["away"]), [])
+        cands = by_pair.get((r["season"], r["home"], r["away"]), [])
         hit = None
         if cands:
-            if len(cands) == 1:
-                hit = cands[0]
-            else:  # same pairing in two weeks (rare) -> nearest kickoff
-                hit = min(cands, key=lambda c: abs((_dt(c[1]["commence"]) - _dt(r["start_iso"])).total_seconds()))
-        r[f"{prefix}_open"] = hit[1]["open"] if hit else None
-        r[f"{prefix}_close"] = hit[1]["close"] if hit else None
+            hit = min(cands, key=lambda c: abs(
+                (_dt(c[1]["commence"]) - _dt(r["start_iso"])).total_seconds()))
+            delta_h = abs((_dt(hit[1]["commence"]) - _dt(r["start_iso"])).total_seconds()) / 3600.0
+            if delta_h > KICKOFF_TOL_H:
+                unmatched_kick += 1
+                hit = None
+        ho = _home_spread(hit[1]["open"], names, r["home"], r["away"]) if hit else None
+        hc = _home_spread(hit[1]["close"], names, r["home"], r["away"]) if hit else None
+        r[f"{prefix}_open"], r[f"{prefix}_close"] = ho, hc
         r[f"{prefix}_total_open"] = hit[1]["total_open"] if hit else None
         r[f"{prefix}_total_close"] = hit[1]["total_close"] if hit else None
         r[f"{prefix}_obs"] = hit[1]["n_obs"] if hit else 0
         if hit:
             matched += 1
+        # SANITY: our book's close vs the CFBD close must be the SAME GAME's line. A large
+        # gap means the join attached the wrong game (or the sign flipped) — count it loudly
+        # rather than letting it silently manufacture a fake edge.
+        if hc is not None and r.get("spread_close") is not None:
+            if abs(hc - r["spread_close"]) > DIVERGENCE_PTS:
+                diverged += 1
     n_bo_open = sum(1 for r in recs if r[f"{prefix}_open"] is not None)
     n_bo_both = sum(1 for r in recs if r[f"{prefix}_open"] is not None and r[f"{prefix}_close"] is not None)
     n_bo_tot = sum(1 for r in recs if r[f"{prefix}_total_close"] is not None)
     return {"book": book, "recs": len(recs), "matched_pair": matched,
+            "rejected_kickoff_mismatch": unmatched_kick,
+            "close_diverges_from_cfbd": diverged,
             "with_bo_open": n_bo_open, "with_bo_open_and_close": n_bo_both,
             "with_bo_total_close": n_bo_tot}
 
