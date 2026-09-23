@@ -2258,6 +2258,10 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
     # pinnacle removed by request; it is also EU-region only in The Odds API.
     _BOOK_PRIORITY = ["betonlineag", "betmgm", "williamhill_us",
                       "draftkings", "fanduel", "betrivers", "bovada"]
+    # DECISION A (Jeff, 2026-09-23): lines from Jeff's own books are the SOURCE OF RECORD
+    # and OUTRANK the cross-book consensus. The edge shown must be measured against a line
+    # he can actually bet. Consensus only fills a market his book has not posted.
+    _BOOK_OF_RECORD = ("betonlineag", "betmgm", "williamhill_us")
     odds_map = {}
     for game in odds_data:
         home = _normalize_team_name(game.get("home_team", ""))
@@ -2320,8 +2324,15 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
         if chosen is None and per_book:
             chosen = next(iter(per_book))
         b = per_book.get(chosen, {})
-        # Merge: best-line consensus wins per market; bulk priority book fills gaps.
-        spread = bl_spread if bl_spread is not None else b.get("spread")
+        # SOURCE OF RECORD (decision A): our book's line wins; cross-book consensus only
+        # fills a market the book of record has not posted.
+        book_spread = b.get("spread")
+        book_total = b.get("total")
+        is_bor = chosen in _BOOK_OF_RECORD
+        if is_bor and book_spread is not None:
+            spread = book_spread
+        else:
+            spread = bl_spread if bl_spread is not None else book_spread
         # FAVORITE-SIGN SANITY GUARD (Sep 8): the team-tagged bulk line is always
         # correct, so a negative (home-favorite) spread is only plausible when a
         # home-named line exists. A NEGATIVE spread with NO home-side quote
@@ -2337,10 +2348,13 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
                 print(f"[Odds] {home}|{away}: negative spread {spread} with no "
                       f"home-side line — dropping (away-favorite misattribution)")
                 spread = None
-        total = bl_total if bl_total is not None else b.get("total")
-        # Book attribution follows the line actually used (best-line's attributed
-        # sportsbook when that market came from best-line, priority book otherwise).
+        total = (book_total if (is_bor and book_total is not None)
+                 else (bl_total if bl_total is not None else book_total))
+        # Book attribution follows the line actually used (the book of record when its
+        # line was taken; best-line's attributed sportsbook otherwise).
         def _attr(mk):
+            if is_bor and b.get(mk) is not None:
+                return chosen, b.get("title", chosen)
             src = bl.get(mk)
             if isinstance(src, dict) and src.get("point") is not None:
                 return src.get("book"), (src.get("book_title") or src.get("book"))
@@ -2357,8 +2371,10 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
             "spread_home_favorite": spread is not None and spread < 0,
             "book": sp_book or tt_book,
             "book_title": sp_title or tt_title,
-            "spread_kind": "best_line" if bl_spread is not None else "priority_book",
-            "total_kind": "best_line" if bl_total is not None else "priority_book",
+            "spread_kind": ("book_of_record" if (is_bor and book_spread is not None)
+                            else "best_line" if bl_spread is not None else "priority_book"),
+            "total_kind": ("book_of_record" if (is_bor and book_total is not None)
+                           else "best_line" if bl_total is not None else "priority_book"),
         }
     return odds_map
 
@@ -2527,10 +2543,16 @@ def _fetch_odds_live() -> dict:
                         pl_v[mkt] = v[mkt]
                 # Consensus guard on the merged entry (same logic as exact-key case).
                 for mkt, pl_kind in (("spread", pl_v.get("spread_kind")), ("total", pl_v.get("total_kind"))):
-                    if pl_kind == "best_line":
-                        continue  # already cross-book consensus — never override
                     pl_val = pl_v.get(mkt)
                     toa_val = v.get(mkt)
+                    if pl_kind in ("best_line", "book_of_record"):
+                        if (pl_kind == "book_of_record" and pl_val is not None
+                                and toa_val is not None
+                                and abs(pl_val - toa_val) > CONSENSUS_GUARD_PTS):
+                            print(f"[Odds] {found[0]}|{found[1]} {mkt}: book-of-record {pl_val} "
+                                  f"vs consensus {toa_val} (gap > {CONSENSUS_GUARD_PTS}) — "
+                                  f"keeping book-of-record (decision A)")
+                        continue  # cross-book consensus, or authoritative book-of-record
                     if (pl_val is not None and toa_val is not None
                             and abs(pl_val - toa_val) > CONSENSUS_GUARD_PTS):
                         print(f"[Odds] {found[0]}|{found[1]} {mkt}: PropLine {pl_val} vs "
@@ -2543,12 +2565,22 @@ def _fetch_odds_live() -> dict:
                 # Consensus guard: PropLine SINGLE-BOOK line vs multi-book line.
                 # A gap > 6 pts means one feed is wrong (glitch or live artifact
                 # that slipped the kickoff filter) — trust the multi-book line.
-                # Lines already sourced from /best-line are cross-book consensus,
-                # so they're never overridden here.
+                # Lines already sourced from /best-line are cross-book consensus, so
+                # they're never overridden here. Neither is a book-of-record line:
+                # decision A makes Jeff's book authoritative, so we LOG the divergence
+                # instead of silently swapping his line for the consensus.
                 for mkt in ("spread", "total"):
                     pl_v, toa_v = odds_map[k].get(mkt), v.get(mkt)
-                    if (pl_v is not None and toa_v is not None and abs(pl_v - toa_v) > CONSENSUS_GUARD_PTS
-                            and odds_map[k].get(f"{mkt}_kind") != "best_line"):
+                    kind = odds_map[k].get(f"{mkt}_kind")
+                    if kind in ("best_line", "book_of_record"):
+                        if (kind == "book_of_record" and pl_v is not None and toa_v is not None
+                                and abs(pl_v - toa_v) > CONSENSUS_GUARD_PTS):
+                            print(f"[Odds] {k[0]}|{k[1]} {mkt}: book-of-record {pl_v} vs "
+                                  f"consensus {toa_v} (gap > {CONSENSUS_GUARD_PTS}) — "
+                                  f"keeping book-of-record (decision A)")
+                        continue
+                    if (pl_v is not None and toa_v is not None
+                            and abs(pl_v - toa_v) > CONSENSUS_GUARD_PTS):
                         print(f"[Odds] {k[0]}|{k[1]} {mkt}: PropLine {pl_v} vs "
                               f"consensus {toa_v} — using consensus")
                         odds_map[k][mkt] = toa_v
