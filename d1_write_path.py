@@ -200,6 +200,39 @@ def daily_rankings(fetch_teams, season: int | None = None, week: int | None = No
         return 0
 
 
+def _wx(g: dict) -> dict:
+    """Weather block on a game row, under either name the callers use."""
+    wx = g.get("weather") or g.get("wx") or {}
+    return wx if isinstance(wx, dict) else {}
+
+
+def _wx_num(g: dict, key: str):
+    v = _wx(g).get(key)
+    try:
+        return None if v is None else float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def _pre_kickoff(g: dict):
+    """Return the parsed kickoff when the game is provably still upcoming, else None.
+
+    Shared by every pre-kickoff write so the D2 no-hindsight rule is enforced in ONE
+    place. Unparsable or absent kickoff => None (refuse), because "we cannot prove this
+    is pre-game" and "this is pre-game" are not the same claim.
+    """
+    kick = g.get("kickoff") or g.get("date") or g.get("kickoff_ts")
+    if not kick:
+        return None
+    try:
+        when = datetime.fromisoformat(str(kick).replace("Z", "+00:00"))
+    except Exception:  # noqa: BLE001
+        return None
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=timezone.utc)
+    return when if when > datetime.now(timezone.utc) else None
+
+
 @_guard
 def snapshot_predictions(games: list[dict], model_version: str = "composite") -> int:
     """model_predictions — MUST be written before kickoff (risk register D2).
@@ -240,13 +273,95 @@ def snapshot_predictions(games: list[dict], model_version: str = "composite") ->
         rows.append({"game_id": gid, "model_version": model_version,
                      "predicted_margin_home": margin,
                      "predicted_total": total,
-                     "win_prob_home": wp})
+                     "win_prob_home": wp,
+                     # Part 4: persist the weather the model actually consumed. CFBD
+                     # /games/weather is a live lookup with no history, so this row is
+                     # the only place this game's wind/temp/condition will ever exist.
+                     "wind_mph": _wx_num(g, "wind"),
+                     "temp_f": _wx_num(g, "temp"),
+                     "condition": (_wx(g).get("condition") or None),
+                     "indoor": (1 if _wx(g).get("indoor") else 0) if _wx(g) else None,
+                     "wind_penalty": g.get("wind_penalty")})
     if rejected:
         print(f"[d1_write_path] predictions: {rejected} row(s) REFUSED (kickoff already passed "
               f"or unknown — D2 no-hindsight guard)")
     if not rows:
         return 0
     return d1_store.insert_model_predictions(rows)
+
+
+@_guard
+def snapshot_injuries(games: list[dict], model_version: str = "composite") -> int:
+    """injury_snapshots — ONE ROW PER TEAM PER GAME, written before kickoff (Part 2).
+
+    Why this exists: CFBD has no point-in-time injury feed. /games/teams gives injuries
+    as of NOW, so once a season is over there is no way to reconstruct what was known
+    before any given kickoff — which means the star-player adjustment can never be
+    backtested. Recording it live is the only way that test ever becomes possible.
+
+    Same D2 no-hindsight guard as model_predictions, and for the same reason: a row
+    written after the result would silently look like a prediction and corrupt the very
+    dataset it is meant to create. Rows carry NULL actual_*/residual_* — a later
+    reconciliation pass fills those once the game is final.
+
+    `games` carry the enriched serve-time dicts: game_id, kickoff/date, season, week,
+    home/away (+ home_proj/away_proj or predicted_margin_home), the *_injury_adj values
+    and the injury lists.
+    """
+    rows = []
+    rejected = 0
+    for g in games:
+        gid = g.get("game_id") or g.get("id")
+        if not gid:
+            continue
+        if _pre_kickoff(g) is None:
+            rejected += 1
+            continue
+        kick = g.get("kickoff") or g.get("date") or g.get("kickoff_ts")
+        total = g.get("predicted_total", g.get("total"))
+        home = g.get("home") or g.get("home_team")
+        away = g.get("away") or g.get("away_team")
+        hm = g.get("predicted_margin_home")
+        if hm is None:
+            hp, ap = g.get("home_proj"), g.get("away_proj")
+            hm = (hp - ap) if (hp is not None and ap is not None) else None
+        for team, opp, adj, lst, sign in (
+            (home, away, g.get("home_injury_adj"), g.get("home_injuries"), 1.0),
+            (away, home, g.get("away_injury_adj"), g.get("away_injuries"), -1.0),
+        ):
+            if not team:
+                continue
+            rows.append({
+                "game_id": gid,
+                "season": g.get("season"),
+                "week": g.get("week"),
+                "team": team,
+                "opponent": opp,
+                "kickoff_ts": str(kick),
+                "injury_list": lst or [],
+                "injury_adj_applied": adj,
+                # Margin from THIS team's point of view, so the sign is self-describing.
+                "predicted_margin": (hm * sign) if hm is not None else None,
+                "predicted_total": total,
+                "model_version": model_version,
+            })
+    if rejected:
+        print(f"[d1_write_path] injuries: {rejected} game(s) REFUSED (kickoff already "
+              f"passed or unknown — D2 no-hindsight guard)")
+    if not rows:
+        return 0
+    return d1_store.insert_injuries(rows)
+
+
+@_guard
+def snapshot_raw_payload(endpoint: str, payload) -> int:
+    """Archive a verbatim upstream response (raw_payloads) — Part 3.
+
+    `endpoint` doubles as the idempotency key, so callers pass a dated key
+    (e.g. 'propline/odds_full/2026-09-23') and a re-run inside the same day replaces
+    rather than duplicates.
+    """
+    return d1_store.append_raw_payloads([{"endpoint": endpoint, "payload": payload}])
 
 
 @_guard

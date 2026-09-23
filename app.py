@@ -1938,6 +1938,44 @@ def _propline_event_needed(ev: dict, now) -> bool:
     except Exception:
         return True  # unknown kickoff -> keep the line rather than drop it
 
+_PROPLINE_SNAP = {"day": None}
+
+
+def _maybe_snapshot_propline(bulk) -> None:
+    """Part 3: keep the FULL multi-book PropLine response, once per day.
+
+    Two destinations on purpose:
+      * the file  — what the work order asked for, and useful on a dev box;
+      * the D1 row — what actually ACCUMULATES. Cloudflare Containers have an ephemeral
+        filesystem, so a data/ file written at runtime dies at the next instance recycle.
+        A file-only snapshot would look wired-up and archive nothing.
+    PropLine publishes no history endpoint, so nothing else can reconstruct this later.
+    """
+    day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if _PROPLINE_SNAP["day"] == day:      # one attempt per day per instance
+        return
+    _PROPLINE_SNAP["day"] = day
+    try:
+        out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "data", "odds_snapshots")
+        os.makedirs(out_dir, exist_ok=True)
+        path = os.path.join(out_dir, f"{day}.json")
+        if not os.path.exists(path):
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump({"date": day,
+                           "fetched_at": datetime.now(timezone.utc).isoformat(),
+                           "events": bulk}, fh)
+            print(f"[Odds] PropLine daily snapshot -> {path}")
+    except Exception as e:  # noqa: BLE001 — never break the odds path
+        print(f"[Odds] PropLine snapshot file failed: {e}")
+    try:
+        n = d1_write_path.snapshot_raw_payload(f"propline/odds_full/{day}", bulk)
+        if n:
+            print(f"[Odds] PropLine full response archived to D1 ({n} row)")
+    except Exception as e:  # noqa: BLE001
+        print(f"[Odds] PropLine D1 archive failed: {e}")
+
+
 def _propline_fetch() -> list[dict]:
     """Fetch NCAAF spreads & totals from PropLine.
 
@@ -1971,6 +2009,9 @@ def _propline_fetch() -> list[dict]:
             return []
         _propline_quota_update(hdrs)
         _budget_note("propline", hdrs)
+        # Part 3: archive the full multi-book response before anything downstream can
+        # mutate or trim it — this is the raw payload the archive is for.
+        _maybe_snapshot_propline(bulk)
         events = bulk if isinstance(bulk, list) else bulk.get("events", [])
         now = datetime.now(timezone.utc)
         ts_map = _load_best_line_ts()
@@ -3905,10 +3946,38 @@ def _maybe_write_predictions(games: list[dict]) -> int:
             "predicted_margin_home": m.get("differential"),
             "predicted_total": round(float(home_proj) + float(away_proj), 1),
             "win_prob_home": m.get("home_win_prob"),
+            # Part 4: the weather the model consumed, persisted with the prediction.
+            "weather": m.get("weather") or {},
+            "wind_penalty": m.get("wind_penalty"),
         })
     n = d1_write_path.snapshot_predictions(rows, model_version=composite_version())
     if n:
         print(f"[Schedule] D1 model_predictions: {n} rows written pre-kickoff")
+
+    # Part 2: the injury snapshot, written from the same pre-kickoff pass. ONE row per
+    # team per game, including a clean (empty) list — a game where nothing was reported
+    # is a real observation and is the control group a future star-QB backtest needs.
+    inj_rows = []
+    for m in games:
+        if m.get("home_proj") is None or m.get("away_proj") is None or not m.get("date"):
+            continue
+        inj_rows.append({
+            "game_id": m.get("game_id"),
+            "season": m.get("season") or CFBD_YEAR,
+            "week": m.get("week"),
+            "home": m.get("home"),
+            "away": m.get("away"),
+            "kickoff": m.get("date"),
+            "predicted_margin_home": m.get("differential"),
+            "predicted_total": round(float(m["home_proj"]) + float(m["away_proj"]), 1),
+            "home_injury_adj": m.get("home_injury_adj", 0.0),
+            "away_injury_adj": m.get("away_injury_adj", 0.0),
+            "home_injuries": m.get("home_injuries") or [],
+            "away_injuries": m.get("away_injuries") or [],
+        })
+    n_inj = d1_write_path.snapshot_injuries(inj_rows, model_version=composite_version())
+    if n_inj:
+        print(f"[Schedule] D1 injury_snapshots: {n_inj} rows written pre-kickoff")
     return n
 
 

@@ -97,8 +97,54 @@ CREATE TABLE IF NOT EXISTS model_predictions (
   predicted_margin_home REAL,
   predicted_total       REAL,
   win_prob_home         REAL,
-  created_at            TEXT       -- written BEFORE kickoff (no hindsight)
+  created_at            TEXT,      -- written BEFORE kickoff (no hindsight)
+  -- Weather at write time (Part 4 of the 2026-09-22 work order). CFBD /games/weather
+  -- is fetched per-request and is NOT a historical feed, so if these rows do not carry
+  -- it, that game's weather is gone forever. Populated from the same pre-kickoff write
+  -- that creates the row, so the value is what the model actually saw.
+  wind_mph              REAL,
+  temp_f                REAL,
+  condition             TEXT,
+  indoor                INTEGER,
+  wind_penalty          REAL
 );
+
+-- ------------------------------------------------------- Injury snapshots (Part 2)
+-- Our OWN historical injury feed. No external source publishes a point-in-time CFB
+-- injury list, so a backtest of the star-QB rule can only ever exist if we start
+-- recording what we knew BEFORE each kickoff. This table is that record.
+--
+-- ONE ROW PER TEAM PER GAME, written pre-kickoff (same no-hindsight rule as
+-- model_predictions — a row whose kickoff has passed is refused at the write path).
+-- `injury_list` is the JSON the model actually consumed (player, position, severity,
+-- star_level); `injury_adj_applied` is the points value it applied. `actual_*` and
+-- `residual_*` are NULL at write time BY DESIGN and are filled by a later
+-- reconciliation pass once the game is final — that is what makes the row a
+-- self-contained experiment instead of a note.
+CREATE TABLE IF NOT EXISTS injury_snapshots (
+  id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+  game_id            INTEGER,
+  season             INTEGER,
+  week               INTEGER,
+  team               TEXT,
+  opponent           TEXT,
+  kickoff_ts         TEXT,
+  injury_list        TEXT,     -- JSON array: [{player, position, severity, star_level}]
+  injury_adj_applied REAL,     -- points applied to the margin (negative = worse)
+  predicted_margin   REAL,     -- model margin for THIS team (positive = this team favored)
+  predicted_total    REAL,
+  actual_margin      REAL,     -- NULL pre-kickoff
+  actual_total       REAL,     -- NULL pre-kickoff
+  residual_margin    REAL,     -- actual - predicted, filled post-game
+  residual_total     REAL,
+  model_version      TEXT,
+  created_at         TEXT,
+  settled_at         TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_injury_snap_team_game
+  ON injury_snapshots(game_id, team, model_version);
+CREATE INDEX IF NOT EXISTS ix_injury_snap_season ON injury_snapshots(season, week);
+CREATE INDEX IF NOT EXISTS ix_injury_snap_game   ON injury_snapshots(game_id);
 
 CREATE TABLE IF NOT EXISTS raw_payloads (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,

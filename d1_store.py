@@ -427,7 +427,82 @@ def insert_model_predictions(rows: list[dict]) -> int:
         r.setdefault("created_at", now)
     return _replace_by("model_predictions", ["game_id", "model_version"],
                        ["game_id", "model_version", "predicted_margin_home",
-                        "predicted_total", "win_prob_home", "created_at"], rows)
+                        "predicted_total", "win_prob_home", "created_at",
+                        # Part 4: weather the model actually saw at write time.
+                        "wind_mph", "temp_f", "condition", "indoor", "wind_penalty"],
+                       rows)
+
+
+def insert_injuries(rows: list[dict]) -> int:
+    """Part 2: one row per team per game, written pre-kickoff.
+
+    The unique index ux_injury_snap_team_game lets us INSERT OR REPLACE — a re-serve of
+    the same game upserts rather than duplicating, and the FIRST write of the day wins
+    the timestamp because a later one is only allowed while the game is still upcoming.
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    for r in rows:
+        r.setdefault("created_at", now)
+        if not isinstance(r.get("injury_list"), str):
+            r["injury_list"] = json.dumps(r.get("injury_list") or [])
+    cols = ["game_id", "season", "week", "team", "opponent", "kickoff_ts",
+            "injury_list", "injury_adj_applied", "predicted_margin", "predicted_total",
+            "model_version", "created_at"]
+    n = 0
+    step = max(1, 100 // len(cols))
+    for part in _chunks(rows, step):
+        assert_headroom(len(part))
+        ph = ",".join("(" + ",".join("?" * len(cols)) + ")" for _ in part)
+        sql = (f"INSERT OR REPLACE INTO injury_snapshots ({','.join(cols)}) "
+               f"VALUES {ph}")
+        _, meta = query_full(sql, [v for r in part for v in (r.get(c) for c in cols)])
+        confirmed = confirmed_writes(meta)
+        if confirmed <= 0:
+            raise ConfirmedWriteError(
+                f"injury_snapshots: D1 confirmed 0 rows for a {len(part)}-row insert")
+        commit_writes(confirmed)
+        n += confirmed
+    return n
+
+
+def append_raw_payloads(rows: list[dict]) -> int:
+    """raw_payloads — the full upstream response, kept verbatim (Part 3).
+
+    The 2026-09-23 lesson: this filing cabinet is why a payload archive can exist at all.
+    Cloudflare Containers run on an EPHEMERAL filesystem — anything written to data/ at
+    runtime is gone on the next instance recycle, so a file-only "daily snapshot" silently
+    accumulates nothing while looking perfectly healthy. The row is the archive; the file
+    is a convenience copy for local dev.
+
+    Payloads are gzipped and base64'd into payload_gz. Stored as text rather than a D1
+    blob because the HTTP API has no unambiguous blob parameter form; SQLite is typeless,
+    so the column accepts it and a reader just b64-decodes then gunzips.
+
+    Replaces on `endpoint`, so writing the same day twice keeps the latest — one row per
+    day, matching the order's "one file write per day".
+    """
+    import base64  # noqa: PLC0415
+    import gzip  # noqa: PLC0415
+
+    now = datetime.now(timezone.utc).isoformat()
+    out = []
+    for r in rows:
+        payload = r.get("payload")
+        if payload is None:
+            continue
+        if isinstance(payload, str):
+            payload = payload.encode("utf-8")
+        elif not isinstance(payload, (bytes, bytearray)):
+            payload = json.dumps(payload).encode("utf-8")
+        out.append({
+            "endpoint": r["endpoint"],
+            "fetched_at": r.get("fetched_at", now),
+            "payload_gz": base64.b64encode(gzip.compress(bytes(payload))).decode("ascii"),
+        })
+    if not out:
+        return 0
+    return _replace_by("raw_payloads", ["endpoint"],
+                       ["endpoint", "fetched_at", "payload_gz"], out)
 
 
 def health() -> dict:
