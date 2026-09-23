@@ -238,8 +238,15 @@ def score(rows, variant, slope=SLOPE, hfa=HFA, weights=None, decay=None, wk_filt
         if decay is None:
             w_sp, w_eff, w_exp, w_tal = Wt["sp_plus"], Wt["efficiency"], Wt["experience"], Wt["talent"]
         else:
+            # decay is (floor, start_week): the prior is held INTACT through start_week and only
+            # then walks down to `floor` by week 13. Starting the walk at week 1 charges early
+            # weeks for a decay they cannot earn — there is no production to hand the weight to.
+            floor, start, end = (decay if isinstance(decay, tuple) and len(decay) == 3
+                                 else (float(decay), 1, 13) if not isinstance(decay, tuple)
+                                 else (decay[0], decay[1], 13))
             wk = r["week"] or 1
-            frac = max(float(decay), 1.0 - (wk - 1) / 12.0)
+            frac = 1.0 if wk <= start else max(float(floor),
+                                              1.0 - (wk - start) / max(1.0, end - start))
             w_tal = Wt["talent"] * frac
             w_eff = Wt["efficiency"] + (Wt["talent"] - w_tal)
             w_sp, w_exp = Wt["sp_plus"], Wt["experience"]
@@ -277,7 +284,11 @@ def score(rows, variant, slope=SLOPE, hfa=HFA, weights=None, decay=None, wk_filt
     }
 
 
-FLOORS = [0.0, 0.25, 0.5, 0.75, 1.0]
+FLOORS = [(1.0, 1, 13), (0.5, 4, 9), (0.5, 1, 8), (0.55, 1, 8), (0.65, 1, 8), (0.75, 1, 8)]
+# (1.0, 1, 13) == no decay at all, i.e. the base — so the fit is free to REJECT decay entirely.
+# FIXED is Jeff's preferred shape (start wk1, bottom wk8, higher floor), evaluated on EVERY fold
+# rather than only when the in-sample fit happens to choose it.
+FIXED = (0.65, 1, 8)
 
 
 def run_gate(seasons, hfa_values):
@@ -294,6 +305,7 @@ def run_gate(seasons, hfa_values):
         print(f"{'holdout':<9}{'floor*':>7}{'base MAE':>10}{'arm MAE':>9}{'dMAE':>8}"
               f"{'base ATS':>10}{'arm ATS':>9}{'dATS':>7}{'b3.5':>7}{'a3.5':>7}{'b7':>7}{'a7':>7}")
         dmae, dats, wins = [], [], 0
+        fdmae, fdats, fwins = [], [], 0
         for S in seasons:
             fit = [r for s in seasons if s != S for r in data[s]]
             hold = data[S]
@@ -301,15 +313,22 @@ def run_gate(seasons, hfa_values):
             best_f = min(curve, key=curve.get)
             b = score(hold, "A", hfa=hfa)
             a = score(hold, "A", hfa=hfa, decay=best_f)
+            fx = score(hold, "A", hfa=hfa, decay=FIXED)
             dmae.append(a["mae"] - b["mae"])
             dats.append(a["ats_pct"] - b["ats_pct"])
+            fdmae.append(fx["mae"] - b["mae"])
+            fdats.append(fx["ats_pct"] - b["ats_pct"])
             wins += 1 if a["mae"] < b["mae"] else 0
-            print(f"{S:<9}{best_f:>7.2f}{b['mae']:>10.3f}{a['mae']:>9.3f}{a['mae']-b['mae']:>+8.3f}"
+            fwins += 1 if fx["mae"] < b["mae"] else 0
+            print(f"{S:<9}{str(best_f):>13}{b['mae']:>10.3f}{a['mae']:>9.3f}{a['mae']-b['mae']:>+8.3f}"
                   f"{b['ats_pct']:>9.1f}%{a['ats_pct']:>8.1f}%{a['ats_pct']-b['ats_pct']:>+6.1f}"
                   f"{b['ats_3p5_pct']:>7.1f}{a['ats_3p5_pct']:>7.1f}"
-                  f"{b['ats_7p0_pct']:>7.1f}{a['ats_7p0_pct']:>7.1f}")
-        print(f"  mean dMAE {sum(dmae)/len(dmae):+.3f} | mean dATS {sum(dats)/len(dats):+.2f}pp | "
+                  f"{b['ats_7p0_pct']:>7.1f}{a['ats_7p0_pct']:>7.1f}"
+                  f"   | FIXED {FIXED}: dMAE {fx['mae']-b['mae']:+.3f} dATS {fx['ats_pct']-b['ats_pct']:+.1f}pp")
+        print(f"  MAE-fitted arm: mean dMAE {sum(dmae)/len(dmae):+.3f} | mean dATS {sum(dats)/len(dats):+.2f}pp | "
               f"better on {wins}/{len(seasons)} folds")
+        print(f"  FIXED {FIXED}:   mean dMAE {sum(fdmae)/len(fdmae):+.3f} | mean dATS {sum(fdats)/len(fdats):+.2f}pp | "
+              f"better on {fwins}/{len(seasons)} folds")
         print("  MAE surface across the floor grid (pooled fit): "
               + "  ".join(f"{f}:{score(all_rows, 'A', hfa=hfa, decay=f)['mae']:.3f}"
                           + ("*edge" if f in (0.0, 1.0) else "") for f in FLOORS))
@@ -354,7 +373,19 @@ def main() -> int:
     # weight going to in-season efficiency. This is Jeff's proposal: a static roster prior should
     # matter less as real offensive/defensive production accumulates.
     variants += ["W:0.50", "W:0.25", "W:0.00"]
-    decay_sets = {v: float(v.split(":")[1]) for v in variants if v.startswith("W:")}
+    # S arms: DELAYED decay — hold the prior intact through week `start`, then walk to the floor
+    # by week 13. Tested because starting the walk at week 1 charges weeks 1-4 for a decay they
+    # cannot earn (no production exists yet to receive the weight).
+    variants += ["S:0.50:4:13", "S:0.50:4:9", "S:0.55:1:8", "S:0.65:1:8", "S:0.75:1:8",
+                 "S:0.50:1:8", "S:0.25:4:9", "S:0.10:5:9"]
+    decay_sets = {}
+    for v in variants:
+        if v.startswith("W:"):
+            decay_sets[v] = float(v.split(":")[1])
+        elif v.startswith("S:"):
+            parts = v.split(":")
+            decay_sets[v] = (float(parts[1]), int(parts[2]),
+                             int(parts[3]) if len(parts) > 3 else 13)
     weight_sets = {}
     for v in variants:
         if v.startswith("T:"):
@@ -388,7 +419,7 @@ def main() -> int:
     print(f"{'variant':<10}{'early MAE':>11}{'early ATS':>11}{'late MAE':>10}{'late ATS':>10}{'late n':>8}")
     early = lambda w: (w or 1) <= 4
     late = lambda w: (w or 1) >= 8
-    for v in ["A"] + [x for x in variants if x.startswith("W:")]:
+    for v in ["A"] + [x for x in variants if x.startswith(("W:", "S:"))]:
         fe = score(fit_rows, v, decay=decay_sets.get(v), wk_filter=early)
         fl = score(fit_rows, v, decay=decay_sets.get(v), wk_filter=late)
         print(f"{v:<10}{fe['mae']:>11.3f}{fe['ats_pct']:>10.1f}%{fl['mae']:>10.3f}"
