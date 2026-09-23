@@ -74,3 +74,5 @@ data/fcs_extras_progress.json
 
 # Ad-hoc backtest outputs written by hand (the rig archives properly)
 out-*.json
+data/backtest_study/*.json
+!data/backtest_study/study_final.json
