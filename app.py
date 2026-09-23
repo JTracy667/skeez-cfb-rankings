@@ -2655,16 +2655,34 @@ def _fetch_odds_live() -> dict:
 # checklist's own instruction it needs JEFF'S APPROVAL on the weights — the
 # proposal is in D1_COMPOSITE_PROPOSAL.md. Do not move these without it.
 COMPOSITE_CONFIG_DEFAULT = {
-    "sp_plus": 0.18,       # anchors (45%)
-    "fpi": 0.15,
-    "srs": 0.12,
-    "elo": 0.08,           # priors / trajectory (18%)
-    "talent": 0.10,
-    "efficiency": 0.37,    # real on-field efficiency
+    # ── V6.1 (deployed 2026-09-22) ──────────────────────────────────────────────
+    # Weights are the V5 regression's standardized shares over the FOUR inputs that
+    # survived testing, renormalized by 1/0.97 (the given shares summed to 0.97; the
+    # missing 0.03 was the dead Level 2 block: havoc .017 / explosiveness .006 /
+    # rest .006). Regression fit on 2021-24, 4,376 games, R^2 0.326.
+    #   fitted shares: sp .179 eff .296 tal .314 exp .182   -> /0.97 as below
+    # FPI / SRS / Elo are dropped (0.00), not deleted: the env override path and the
+    # `composite + HFA - actual_margin` FCS identification both reference these keys,
+    # and a named zero keeps the change reversible in one line.
+    "sp_plus": 0.185567,
+    "fpi": 0.00,           # dropped in V6.1 (inert/redundant)
+    "srs": 0.00,           # dropped in V6.1 — also served from the PRIOR season
+    "elo": 0.00,           # dropped in V6.1
+    "talent": 0.319588,
+    "efficiency": 0.309278,
+    "experience": 0.185567,   # NEW in V6.1 — was absent from the live composite entirely
+    # NOTE: the 3dp forms (0.186/0.309/0.320/0.186) sum to 1.0010 and trip
+    # _assert_weights_sum on every call. These are the exact /0.97 values (sum 1.000000).
     "fcs_rating": 0.00,    # NOT ENABLED — awaits Jeff
     "massey": 0.00,        # NOT ENABLED — awaits Jeff
 }
-_ENABLED_KEYS = ("sp_plus", "fpi", "srs", "elo", "talent", "efficiency")
+_ENABLED_KEYS = ("sp_plus", "efficiency", "talent", "experience")
+
+# V6.1 margin calibration (fitted inside this formula family by MAE vs the book line,
+# 2021-24 fit / 2025 held out — see docs/BACKTEST_V7.md, docs/BACKTEST_V6.md).
+MARGIN_POWER = 1.1
+MARGIN_SLOPE = 0.65
+HFA_POINTS = 3.5
 
 
 def composite_config() -> dict:
@@ -2953,6 +2971,18 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
                     else max(0.0, min(100.0, (26.0 - float(fcs_rank)) / 25.0 * 100.0)))
     except (TypeError, ValueError):
         fcs_norm = 50.0
+
+    # Experience (V6.1): returning-production-weighted roster depth from CFBD
+    # /player/returning, already normalized 0-100 by _cfbd_roster_experience().
+    # Absent for lower-division teams -> neutral 50, the same imputation the V5
+    # regression used on its training set. Not to be confused with `pct_ppa_returning`,
+    # which is one of the two components already inside talent_norm.
+    exp_raw = team_data.get("experience_score")
+    try:
+        exp_norm = 50.0 if exp_raw is None else max(0.0, min(100.0, float(exp_raw)))
+    except (TypeError, ValueError):
+        exp_norm = 50.0
+
     composite = (
         sp_norm * cfg["sp_plus"] +
         fpi_norm * cfg["fpi"] +
@@ -2960,6 +2990,7 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
         elo_norm * cfg["elo"] +
         talent_norm * cfg["talent"] +
         eff_norm * cfg["efficiency"] +
+        exp_norm * cfg["experience"] +
         fcs_norm * cfg["fcs_rating"] +
         50.0 * cfg["massey"]
     )
@@ -3051,9 +3082,11 @@ def project_head_to_head(
     Persistent injury adjustments modify the game margin and total directly.
 
     total  = 51 + (avg_composite - 50) * 0.10   # elite games trend slightly higher
-    margin = 1.0 * (comp_home - comp_away) + HFA (2.5 home / 0 neutral)
-             — 1.0 pts margin per composite point: comp gap 40 -> ~38.5 pt margin
-               (matches real 40+ spreads: OSU -51 vs Ball State etc.)
+    margin = sign(comp_home - comp_away) * |comp_home - comp_away|^1.1 * 0.65
+             + HFA (3.5 home / 0 neutral)        # V6.1
+             — fitted by MAE vs the book line on 2021-24; NOTE this is NOT the 1:1 map
+               the FCS composites below were identified under (see fcs_composite_for),
+               so FBS-vs-FCS margins shift slightly even with an unchanged FCS prior.
     home_score = (total + margin) / 2, away_score = (total - margin) / 2, floor 3.
 
     NOTE for anyone auditing a projected margin from the API: `differential` is NOT
@@ -3088,12 +3121,15 @@ def project_head_to_head(
             boost = +FCS_BLOWOUT_BOOST   # home (FBS) gains
     avg = (hc + ac) / 2.0
     total = 51.0 + (avg - 50.0) * 0.10 + boost
-    # Calibrated margin curve: 1.0 pt of margin per 1.0 pt of composite gap
-    # Replaces the legacy 0.45 compression that artificially suppressed favorites
+    # Calibrated margin curve (V6.1, deployed 2026-09-22)
+    #   margin = sign(gap) * |gap|^1.1 * 0.65     (+ HFA 3.5 when not neutral)
+    # Fitted inside this formula family by MAE vs the book line over 2021-24 (4,376
+    # games), held out 2025. Replaces the legacy 1:1 map (`gap * 1.0 + 2.5`) which was
+    # a flat, hand-set compression — see docs/BACKTEST_V6.md, docs/BACKTEST_V7.md.
     gap_ = hc - ac
-    margin = gap_ * 1.0
+    margin = math.copysign(abs(gap_) ** MARGIN_POWER, gap_) * MARGIN_SLOPE
     if not neutral_site:
-        margin += 2.5  # HFA
+        margin += HFA_POINTS  # V6.1: 2.5 -> 3.5
     margin += boost  # boost widens the margin in the FBS side's favor
 
     # Persistent injury adjustment (Jeff Tracy rule: Star QB out = -10.0 pts):
