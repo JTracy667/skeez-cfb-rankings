@@ -3362,7 +3362,7 @@ def fetch_live_analytics():
                 "elo": round(elo_rating, 1),
                 "recruiting_rank": rec_rank,
                 "recruiting_pts": round(rec_points, 2),
-                "talent_score": round(talent_score, 1) if talent_score else None,
+                "talent_score": round(talent_score, 1) if talent_score is not None else None,
                 "recruiting_commits": 0,
                 "recruiting_5star": 0,
                 "recruiting_4star": 0,
@@ -3402,10 +3402,13 @@ def fetch_live_analytics():
                 "def_power_success": def_power,
                 "off_explosiveness": off_explosiveness,
                 "def_explosiveness": def_explosiveness,
-                "returning_ppa": round(returning_ppa, 1) if returning_ppa else None,
-                "pct_ppa_returning": round(pct_ppa_returning * 100, 1) if pct_ppa_returning else None,
-                "pct_pass_ppa": round(pct_pass_ppa * 100, 1) if pct_pass_ppa else None,
-                "pct_rush_ppa": round(pct_rush_ppa * 100, 1) if pct_rush_ppa else None,
+                "returning_ppa": round(returning_ppa, 1) if returning_ppa is not None else None,
+                # is-not-None, not truthiness: 0.0 is a REAL value here (Oklahoma State
+                # returns none of its production) and must not be laundered into None,
+                # which the composite would then impute as a neutral 50.
+                "pct_ppa_returning": round(pct_ppa_returning * 100, 1) if pct_ppa_returning is not None else None,
+                "pct_pass_ppa": round(pct_pass_ppa * 100, 1) if pct_pass_ppa is not None else None,
+                "pct_rush_ppa": round(pct_rush_ppa * 100, 1) if pct_rush_ppa is not None else None,
                 "roster_count": roster_count,
                 "avg_year": avg_year,
                 "experience_score": experience_score,
@@ -3721,19 +3724,34 @@ def _build_team_map() -> dict:
                     # Merge CFBD metrics into existing local team.
                     # CFBD is the source of truth for analytics: prefer non-zero CFBD values
                     # over anything stale already present.
-                    for key in ["sp_plus", "sp_offense", "sp_defense", "sp_rank",
-                               "fpi", "fpi_rank", "fpi_win_prob", "cpi", "srs", "elo",
-                               "recruiting_rank", "recruiting_pts", "coach_win_pct",
-                               "off_ppg", "off_ypp", "off_3rd", "def_ppg", "def_ypp",
-                               "def_3rd", "turnover_margin",
-                               "epa_play", "epa_pass", "epa_rush",
-                               "pts_per_poss", "td_rate", "fg_rate", "turnover_rate",
-                               "def_epa_play", "def_epa_pass", "def_epa_rush",
-                               "def_pts_per_poss", "def_td_rate", "def_fg_rate", "def_turnover_created",
-                    "returning_ppa", "pct_ppa_returning", "pct_pass_ppa", "pct_rush_ppa",
-                    "roster_count", "avg_year", "experience_score"]:
-                        if key in t and t[key] not in (None, 0, ""):
-                            team_map[name][key] = t[key]
+                    #
+                    # MERGE ALL CFBD FIELDS, minus identity/derived keys the local record owns.
+                    # This used to be a hand-maintained whitelist, and it silently dropped
+                    # talent_score + off/def_success_rate + off/def_ppo + off/def_line_yards +
+                    # off/def_stuff_rate — nine inputs the composite READS. The cost was invisible:
+                    # project_score_multi_factor imputes a neutral 50 for a missing input, so
+                    # sr_norm/ppo_norm/trench_norm were flat 50 and the 247 talent composite never
+                    # loaded, with nothing in the output looking wrong. A whitelist guarantees this
+                    # recurs the next time someone adds an input; a denylist of identity fields does
+                    # not. Keep EXCLUDED_FROM_MERGE limited to fields the local record owns.
+                    EXCLUDED_FROM_MERGE = {
+                        "name", "rank", "points", "conf", "mascot", "emoji",
+                        "movement", "streak", "wins", "losses", "logo_url",
+                    }
+                    # The analytics file pads teams CFBD knows nothing about with a
+                    # rank-0/zero-rating placeholder. Merging one would overwrite a known
+                    # local value with fabricated zeros, so skip them wholesale.
+                    if not (t.get("sp_plus") or t.get("elo") or t.get("fpi")):
+                        continue
+                    for key, val in t.items():
+                        if key in EXCLUDED_FROM_MERGE:
+                            continue
+                        # `None` means "source has no value" and must NOT clobber; a real 0
+                        # DOES (e.g. Oklahoma State's percentPPA returning, a true 0). The old
+                        # falsy test conflated the two and silently replaced true zeros with the
+                        # neutral imputation.
+                        if val is not None and val != "":
+                            team_map[name][key] = val
     except Exception as e:
         print(f"[TEAM_MAP ERROR] {e}")
         pass  # Fall back to local-only
