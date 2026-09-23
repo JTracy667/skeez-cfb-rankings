@@ -148,9 +148,7 @@ def run_backtest(year: int = 2026, summary_out=None, fixture_out=None) -> dict:
         preseason_list = json.load(f)
     preseason_map = {t["name"]: t for t in preseason_list}
 
-    # 2. Cache prior-week game stats for point-in-time reconstruction
-    weekly_game_stats = build_weekly_stats_cache(client, weeks=(1, 2, 3))
-
+    # 2. Load CFBD closing lines and game scores (cached — see _cached_json)
     print(f"[Backtest] Loading CFBD closing lines and game scores for {year}...")
     url = f"{app.CFBD_BASE}/lines?year={year}"
 
@@ -166,6 +164,23 @@ def run_backtest(year: int = 2026, summary_out=None, fixture_out=None) -> dict:
         # games. Refuse instead — a silent 0-game "result" is worse than an error.
         raise RuntimeError("no games loaded (empty lines payload/cache) — refusing to "
                            "report a backtest over zero games")
+
+    # 3. Cache prior-week game stats for point-in-time reconstruction.
+    #    The week range must GROW with the season. It was hardcoded (1, 2, 3), which is
+    #    exactly right while week 4 is the newest completed week — but from week 5 onward it
+    #    would silently deny every reconstruction the in-season stats it is entitled to
+    #    (prior weeks only), making the model look progressively staler as the season ran on
+    #    while the harness reported nothing wrong. Derive it from the completed games.
+    completed_weeks = sorted({int(g.get("week") or 0) for g in games_raw
+                              if g.get("homeScore") is not None
+                              and g.get("awayScore") is not None})
+    past_weeks = tuple(range(1, max(completed_weeks))) if completed_weeks else ()
+    if past_weeks:
+        print(f"[Backtest] point-in-time stats: weeks {past_weeks[0]}-{past_weeks[-1]} "
+              f"(latest completed week is {max(completed_weeks)})")
+    else:
+        print("[Backtest] no completed weeks yet — week 1 uses the frozen preseason baseline")
+    weekly_game_stats = build_weekly_stats_cache(client, weeks=past_weeks)
 
     game_audit_log = []
     
@@ -320,6 +335,7 @@ def run_backtest(year: int = 2026, summary_out=None, fixture_out=None) -> dict:
         "season": year,
         "closing_line_provenance": "Explicit provider hierarchy (DraftKings primary, Bovada secondary) with kickoff closing timestamp.",
         "point_in_time_isolation": "Strict prior-week reconstruction: week 1 uses frozen preseason baseline; weeks > 1 only ingest stats from completed games (past_wk < week), with zero future leakage.",
+        "pit_stat_weeks": list(past_weeks),
         "fcs_exclusion_applied": True,
         "total_evaluated_games": len(game_audit_log),
         "fbs_matchups_evaluated": sum(1 for g in game_audit_log if g["is_fbs_matchup"]),
