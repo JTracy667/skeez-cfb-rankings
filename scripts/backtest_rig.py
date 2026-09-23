@@ -269,7 +269,7 @@ def main() -> int:
             "mean_book_line": round(st["book_mag"], 3),
             "mae_vs_book": round(st["mae"], 3),
             "bias_vs_book": round(st["bias"], 3),
-            "note": (f"pit_stat_weeks={s.get('pit_stat_weeks')} | "
+            "note": (f"harness=v{s.get('harness_version')} pit_stat_weeks={s.get('pit_stat_weeks')} | "
                      + (args.note or arms[name].get("note") or ""))[:400],
         })
 

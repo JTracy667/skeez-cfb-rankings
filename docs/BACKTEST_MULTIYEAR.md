@@ -97,7 +97,7 @@ prior seasons need either an alternative source or an honest neutral-50.
 
 ---
 
-## 4. Fidelity findings — the backtest has been running with ~half the efficiency signal
+## 4. Fidelity findings — **FIXED 2026-09-23** (before/after in §4.6)
 
 Verified empirically (live `/api/analytics` vs the backtest's `data/cfbd_analytics_preseason.json`,
 and the reconstruction function itself), not read off the source:
@@ -147,6 +147,50 @@ Until then, **the backtest is a valid A/B comparator between weightings but not 
 model of the live pick pipeline** — and the divergence in §4.4 should be quoted whenever its
 absolute numbers are used.
 
+## 4.6 Resolution — what was changed and what it moved
+
+Jeff approved fixing this before any weight experiment ("get it all squared away before we
+backtest"). Applied:
+
+1. **`scripts/build_season_baselines.py` (new)** — builds a per-season week-1 prior that
+   mirrors the live field mapping exactly, so a baseline value and a live value mean the same
+   thing. Verified by scale comparison against live `/api/analytics`: every efficiency key
+   lands in the same range, and the two offseason facts (`pct_ppa_returning`, `talent_score`)
+   match live **exactly**, which is the mapping confirming itself.
+2. **All five efficiency sub-metrics now refresh in-season** from accumulated weekly stats
+   (four of them; points/possession is drive-derived and stays a prior).
+3. **Week 1 keeps the prior instead of being blanked to neutral.**
+4. **`is_fbs_matchup` is type-guarded.** `None != 0` is `True` in Python, so absent ratings
+   were being counted as FBS. This was introduced by the new baseline (which omits keys rather
+   than writing zeros) and caught immediately: it inflated the FBS set from 155 to 280 games
+   and dragged the error metrics with it. Fixed to require a real rating.
+5. **`HARNESS_VERSION` (now 2)** is recorded in every summary and archived row, so runs made
+   under different harness behaviour can never be silently compared even at the same
+   `model_version`.
+
+Before/after, same season, same cached data (409 games, ~152 FBS matchups):
+
+| | harness v1 (defective) | harness v2 (fixed) |
+|---|---|---|
+| spreads (ATS) | 69-74-4 · 48.3% | **71-74-3 · 49.0%** |
+| totals (O/U) | 86-54 · 61.4% | **87-57 · 60.4%** |
+| underdog share | 38% | 35% |
+| mean \|model margin\| | 17.47 | **20.82** |
+| mean \|book line\| | 15.96 | 16.09 |
+| MAE vs closing line | 5.58 | **9.47** |
+
+**The honest reading:** the totals edge survives the correction (60.4%), the spread side is
+still ~a coin flip (49.0%), and **the model's margins moved further from the market, not
+closer** — MAE rose 5.58 → 9.47 while it separates teams *more* than the book (20.82 vs
+16.09). Two candidate explanations, and they are Jeff/CFO's to weigh, not mine:
+
+- the efficiency sub-metrics now carry real values, but from the **prior season**, and
+  prior-season efficiency may be a noisy prior that inflates separation; or
+- it is genuine signal the market under-weights.
+
+Either way, do not read the v2 numbers as strictly better or worse than v1 — they are the
+first numbers produced by a backtest that populates the same inputs production does.
+
 ---
 
 ## 5. Leak rules the builder must enforce
@@ -162,14 +206,20 @@ absolute numbers are used.
 
 ## 6. What remains to build
 
-1. `scripts/build_season_baselines.py` — assemble `data/backtest_cache/preseason_{Y}.json`
-   per §1/§3, with provenance and the §5 leak assertions. *Not yet written.*
-2. Season parameterisation of `scripts/run_model_backtest.py` (preseason file, lines, and
-   the PIT week range all per season; the week range already derives from completed games).
+1. ~~`scripts/build_season_baselines.py`~~ — **DONE.** Builds `data/backtest_cache/preseason_{Y}.json`
+   per §1/§3 with a `.provenance.json` sidecar recording which season each field came from.
+   Verified for 2026; run it for 2021–2025 next.
+2. **Partially done.** `run_model_backtest.py` now takes `--season`, resolves its week-1 prior
+   per season (`preseason_{Y}.json`, with a loud warning + fallback if missing), and scopes
+   its weekly-stats cache and PIT week range per season. Still to do: nothing structural —
+   the multi-year *run* just needs the remaining baselines built.
 3. Rig support for arms × seasons, archiving one row per (run, arm, season). Note the
    `backtest_runs` primary key is `(run_id, arm)`; a season suffix on `run_id` keeps it
    unique **without a destructive table rebuild**.
 4. A 2-season proof run (2024 + 2025) before extending to the full range.
+
+**Status:** the fidelity work that had to land first (§4.6) is done; the multi-year run itself
+is the remaining step.
 
 Cost is negligible: ~20 CFBD calls per season (~100 for five seasons) against a 20k/month
 budget.

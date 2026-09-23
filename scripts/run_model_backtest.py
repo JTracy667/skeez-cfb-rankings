@@ -39,6 +39,12 @@ PRESEASON_FILE = DATA_DIR / "cfbd_analytics_preseason.json"
 PROVIDER_PREFERENCE = ("DraftKings", "Draft Kings", "Bovada")
 
 CACHE_DIR = DATA_DIR / "backtest_cache"
+
+# Bumped whenever a change alters WHICH games are evaluated or HOW inputs are built — i.e.
+# whenever a run stops being comparable with earlier runs at the same model_version.
+#   1: original (efficiency bucket half-populated; None sp_plus counted as FBS)
+#   2: all five efficiency sub-metrics populated + week-1 prior stands; FBS needs a real rating
+HARNESS_VERSION = 2
 REFRESH = False   # set by --refresh on the CLI
 
 
@@ -74,12 +80,12 @@ def _cached_json(name: str, fetch_fn):
     return data
 
 
-def build_weekly_stats_cache(client, weeks=(1, 2, 3)) -> dict:
+def build_weekly_stats_cache(client, weeks=(1, 2, 3), year: int = 2026) -> dict:
     """Pre-fetch weekly game-level advanced stats for past completed weeks (cached)."""
     weekly_stats = {}
     for wk in weeks:
-        def _fetch(wk=wk):
-            url = f"{app.CFBD_BASE}/stats/game/advanced?year=2026&week={wk}"
+        def _fetch(wk=wk, year=year):
+            url = f"{app.CFBD_BASE}/stats/game/advanced?year={year}&week={wk}"
             try:
                 resp = client.get(url, headers=app.CFBD_HEADERS)
                 if resp.status_code == 200:
@@ -88,7 +94,7 @@ def build_weekly_stats_cache(client, weeks=(1, 2, 3)) -> dict:
             except Exception as e:  # noqa: BLE001
                 print(f"[Warning] Failed to fetch week {wk} game stats: {e}")
             return []
-        weekly_stats[wk] = _cached_json(f"stats_game_advanced_2026_wk{wk}", _fetch)
+        weekly_stats[wk] = _cached_json(f"stats_game_advanced_{year}_wk{wk}", _fetch)
     return weekly_stats
 
 def reconstruct_pit_team_data(preseason_map: dict, weekly_stats: dict, team_name: str, week: int) -> dict:
@@ -101,52 +107,81 @@ def reconstruct_pit_team_data(preseason_map: dict, weekly_stats: dict, team_name
     if not base:
         return {}
         
+    # Week 1 has no completed prior games, so the baseline values STAND — which for a
+    # multi-year run means the prior-season prior. This used to blank success rate and EPA
+    # to neutral here, throwing away real prior values the baseline holds and making week 1
+    # the LEAST-informed week rather than a leak-free prior. Efficiency carries 37% of the
+    # composite, so that was not a small loss.
     if week == 1:
-        base["off_success_rate"] = None
-        base["def_success_rate"] = None
-        base["epa_play"] = 0.0
-        base["def_epa_play"] = 0.0
         return base
 
-    off_sr_list = []
-    def_sr_list = []
-    epa_list = []
-    def_epa_list = []
+    # All five efficiency sub-metrics are refreshed from prior weeks. Only success rate and
+    # EPA used to be — the other three (finishing drives, trench dominance, and the
+    # points/possession pair sourced from /drives) silently stayed frozen at the baseline for
+    # an entire season, so ~0.32 of the 0.37 efficiency weight carried no in-season signal.
+    # Field names are CFBD's; the composite's key names are the values.
+    metrics = (
+        ("successRate", "off_success_rate", "def_success_rate"),
+        ("ppa", "epa_play", "def_epa_play"),
+        ("pointsPerOpportunity", "off_ppo", "def_ppo"),
+        ("lineYards", "off_line_yards", "def_line_yards"),
+        ("stuffRate", "off_stuff_rate", "def_stuff_rate"),
+    )
+    samples: dict[str, list] = {}
+    for _src, ok, dk in metrics:
+        samples.setdefault(ok, [])
+        samples.setdefault(dk, [])
 
     for past_wk in range(1, week):
         for entry in weekly_stats.get(past_wk, []):
-            if entry.get("team") == team_name:
-                off = entry.get("offense", {})
-                df = entry.get("defense", {})
-                if off.get("successRate") is not None:
-                    off_sr_list.append(off["successRate"])
-                if df.get("successRate") is not None:
-                    def_sr_list.append(df["successRate"])
-                if off.get("ppa") is not None:
-                    epa_list.append(off["ppa"])
-                if df.get("ppa") is not None:
-                    def_epa_list.append(df["ppa"])
+            if entry.get("team") != team_name:
+                continue
+            off = entry.get("offense") or {}
+            df = entry.get("defense") or {}
+            for src, ok, dk in metrics:
+                if off.get(src) is not None:
+                    samples[ok].append(off[src])
+                if df.get(src) is not None:
+                    samples[dk].append(df[src])
 
-    if off_sr_list:
-        base["off_success_rate"] = sum(off_sr_list) / len(off_sr_list)
-    if def_sr_list:
-        base["def_success_rate"] = sum(def_sr_list) / len(def_sr_list)
-    if epa_list:
-        base["epa_play"] = sum(epa_list) / len(epa_list)
-    if def_epa_list:
-        base["def_epa_play"] = sum(def_epa_list) / len(def_epa_list)
+    for key, vals in samples.items():
+        if vals:
+            base[key] = sum(vals) / len(vals)
 
     return base
 
-def run_backtest(year: int = 2026, summary_out=None, fixture_out=None) -> dict:
+def run_backtest(year: int = 2026, summary_out=None, fixture_out=None,
+                 preseason_file=None) -> dict:
     client = app.httpx.Client(timeout=20)
     
-    # 1. Load frozen pre-season baseline (including frozen 247 Team Talent Composite)
-    if not PRESEASON_FILE.exists():
-        raise RuntimeError("Missing data/cfbd_analytics_preseason.json")
-    with open(PRESEASON_FILE, "r", encoding="utf-8") as f:
+    # 1. Load the season's week-1 prior. Built by scripts/build_season_baselines.py as a
+    #    LEAK-FREE prior: season Y-1 finals + season Y offseason facts, never season Y games.
+    #    The legacy frozen 2026 file is only a fallback — it is missing the efficiency keys
+    #    the composite actually reads (finishing drives, trench dominance), which is why it
+    #    is no longer the default. See docs/BACKTEST_MULTIYEAR.md §4.
+    baseline_file = (Path(preseason_file) if preseason_file
+                     else CACHE_DIR / f"preseason_{year}.json")
+    if not baseline_file.exists():
+        if PRESEASON_FILE.exists():
+            print(f"[Backtest] WARNING: no per-season baseline '{baseline_file.name}'; falling "
+                  f"back to {PRESEASON_FILE.name}, which LACKS the efficiency keys "
+                  f"(finishing drives + trench dominance) and under-weights efficiency. "
+                  f"Build one: python scripts/build_season_baselines.py --seasons {year}")
+            baseline_file = PRESEASON_FILE
+        else:
+            raise RuntimeError(
+                f"no week-1 prior for {year}: build it with "
+                f"`python scripts/build_season_baselines.py --seasons {year}`")
+    with open(baseline_file, "r", encoding="utf-8") as f:
         preseason_list = json.load(f)
-    preseason_map = {t["name"]: t for t in preseason_list}
+    preseason_map = (preseason_list if isinstance(preseason_list, dict)
+                     else {t["name"]: t for t in preseason_list})
+    _eff_keys = ("off_ppo", "def_ppo", "off_line_yards", "def_line_yards",
+                 "off_stuff_rate", "def_stuff_rate")
+    _eff_cov = sum(1 for t in preseason_map.values()
+                   if all(t.get(k) is not None for k in _eff_keys))
+    print(f"[Backtest] week-1 prior: {baseline_file.name} — {len(preseason_map)} teams, "
+          f"{_eff_cov} with the full efficiency set")
 
     # 2. Load CFBD closing lines and game scores (cached — see _cached_json)
     print(f"[Backtest] Loading CFBD closing lines and game scores for {year}...")
@@ -180,7 +215,7 @@ def run_backtest(year: int = 2026, summary_out=None, fixture_out=None) -> dict:
               f"(latest completed week is {max(completed_weeks)})")
     else:
         print("[Backtest] no completed weeks yet — week 1 uses the frozen preseason baseline")
-    weekly_game_stats = build_weekly_stats_cache(client, weeks=past_weeks)
+    weekly_game_stats = build_weekly_stats_cache(client, weeks=past_weeks, year=year)
 
     game_audit_log = []
     
@@ -216,7 +251,13 @@ def run_backtest(year: int = 2026, summary_out=None, fixture_out=None) -> dict:
         if not home_pit or not away_pit:
             continue
             
-        is_fbs_matchup = (home_pit.get("sp_plus", 0) != 0 and away_pit.get("sp_plus", 0) != 0)
+        # A team counts as FBS only if it ACTUALLY carries a rating. `None != 0` is True in
+        # Python, so an absent sp_plus was silently treated as FBS — which is how a baseline
+        # missing a team's ratings inflated the FBS set with non-FBS games (280 "FBS" matchups
+        # vs the true 155) and dragged the error metrics with it. Guard the type, not just zero.
+        is_fbs_matchup = all(
+            p.get("sp_plus") is not None and p.get("sp_plus") != 0
+            for p in (home_pit, away_pit))
 
         # 1. Closing-line selection rule with strict timestamp and provider provenance
         line_chosen = None
@@ -336,6 +377,7 @@ def run_backtest(year: int = 2026, summary_out=None, fixture_out=None) -> dict:
         "closing_line_provenance": "Explicit provider hierarchy (DraftKings primary, Bovada secondary) with kickoff closing timestamp.",
         "point_in_time_isolation": "Strict prior-week reconstruction: week 1 uses frozen preseason baseline; weeks > 1 only ingest stats from completed games (past_wk < week), with zero future leakage.",
         "pit_stat_weeks": list(past_weeks),
+        "harness_version": HARNESS_VERSION,
         "fcs_exclusion_applied": True,
         "total_evaluated_games": len(game_audit_log),
         "fbs_matchups_evaluated": sum(1 for g in game_audit_log if g["is_fbs_matchup"]),
@@ -412,6 +454,10 @@ if __name__ == "__main__":
     ap.add_argument("--label", default="", help="printed with the result, e.g. 'zero-srs'")
     ap.add_argument("--refresh", action="store_true",
                     help="re-fetch the cached CFBD inputs instead of reusing them")
+    ap.add_argument("--season", type=int, default=2026,
+                    help="season to evaluate (resolves its own week-1 prior and PIT weeks)")
+    ap.add_argument("--preseason", default=None,
+                    help="override the week-1 prior file (default backtest_cache/preseason_<season>.json)")
     args = ap.parse_args()
 
     if args.refresh:
@@ -421,5 +467,6 @@ if __name__ == "__main__":
     if args.label:
         print(f"[Backtest] run label: {args.label}")
     print(f"[Backtest] COMPOSITE_WEIGHTS_JSON: {os.environ.get('COMPOSITE_WEIGHTS_JSON') or '<defaults>'}")
-    s = run_backtest(summary_out=args.out_summary, fixture_out=args.out_fixture)
+    s = run_backtest(year=args.season, summary_out=args.out_summary,
+                     fixture_out=args.out_fixture, preseason_file=args.preseason)
     print(json.dumps(s, indent=2))
