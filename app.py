@@ -981,16 +981,13 @@ def get_rankings() -> RankingsResponse:
     # Durable board. Without this a container that just woke up (i.e. every container,
     # after 5 minutes idle) rebuilds the entire composite list for its first visitor,
     # even though the four inputs it is built from do not change between Sun-Wed.
-    _stored = _board_from_store(BOARD_RANKINGS, CFBD_YEAR)
-    if _stored:
-        _data = _public_board(_stored)
-        if _data.get("teams"):
-            _cache_set(_rankings_cache, _data)
-            if _stored.get("_store_fp") != _board_fingerprint(BOARD_RANKINGS, CFBD_YEAR):
-                # Inputs moved: serve the known-good copy now, rebuild behind the request
-                # rather than making a visitor wait for the composite.
-                _kick_board_rebuild(BOARD_RANKINGS, CFBD_YEAR)
-            return RankingsResponse(**_data)
+    _data = _board_served(BOARD_RANKINGS, CFBD_YEAR)
+    if _data and _data.get("teams"):
+        _cache_set(_rankings_cache, _data)
+        # Serve and return. The freshness decision belongs to the refresh cycle, NOT the
+        # request path: comparing fingerprints here costs a CFBD round trip on a cold
+        # container (see api_win_totals) and buys nothing a visitor can see.
+        return RankingsResponse(**_data)
 
     # Primary source: the CFBD analytics file (identical to the composite tab).
     teams = _load_cfbd_analytics_file()
@@ -1132,7 +1129,7 @@ def api_refresh():
     else:
         return {"status": "fallback", "source": "local", "note": "ESPN fetch failed, using local data"}
 
-CODE_MARKER = "v43-derived-boards"   # bump when a release must be provably live
+CODE_MARKER = "v44-boards-cold-path"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -4448,6 +4445,7 @@ def _store_board(kind: str, payload, year: int, week: int = 0,
                                       json.dumps(payload, separators=(",", ":")), kind=kind)
         if n:
             print(f"[board] stored {kind} {year}/wk{week} (fp {fp[:8]})")
+            _BOARD_SERVE_CACHE.pop((kind, int(year), int(week)), None)  # new board is live
         return n
     except Exception as e:  # noqa: BLE001 — never break a page over bookkeeping
         print(f"[board] store {kind} failed: {e}")
@@ -4475,6 +4473,27 @@ def _board_from_store(kind: str, year: int, week: int = 0) -> dict | None:
 def _public_board(payload: dict) -> dict:
     """Strip the store's private keys before a payload is served."""
     return {k: v for k, v in payload.items() if not k.startswith("_store_")}
+
+
+# Short in-memory layer in FRONT of D1: the store read is a network round trip (~1s for
+# the 57KB win-totals board), and a page reload should not pay it twice. TTL is short and
+# every successful rebuild drops the entry, so a new board appears promptly.
+_BOARD_SERVE_CACHE: dict[tuple, tuple[float, dict]] = {}
+_BOARD_SERVE_TTL = 300
+
+
+def _board_served(kind: str, year: int, week: int = 0) -> dict | None:
+    """Serve a derived board: memory -> D1. Returns the public payload, or None."""
+    key = (kind, year, week)
+    hit = _BOARD_SERVE_CACHE.get(key)
+    if hit and time.time() - hit[0] < _BOARD_SERVE_TTL:
+        return hit[1]
+    raw = _board_from_store(kind, year, week)
+    if not raw:
+        return None
+    pub = _public_board(raw)
+    _BOARD_SERVE_CACHE[key] = (time.time(), pub)
+    return pub
 
 
 _SLATE_REBUILD_LOCK = threading.Lock()
@@ -4530,11 +4549,6 @@ def _refresh_slate_if_stale() -> str:
         _SLATE_FORCE.discard(key)
 
 
-_BOARD_REBUILD_LOCK = threading.Lock()
-_BOARD_REBUILD_LAST: dict[str, float] = {}
-_BOARD_REBUILD_COOLDOWN = 300
-
-
 def _refresh_boards_if_stale(kinds: tuple[str, ...] = (BOARD_RANKINGS, BOARD_WIN_TOTALS)) -> dict:
     """Rebuild a stored board when its change detector has moved.
 
@@ -4576,28 +4590,6 @@ def _refresh_boards_if_stale(kinds: tuple[str, ...] = (BOARD_RANKINGS, BOARD_WIN
             print(f"[board] refresh {kind} failed: {e}")
             out[kind] = f"error: {e}"
     return out
-
-
-def _kick_board_rebuild(kind: str, year: int) -> bool:
-    """Rebuild one board in the background; the caller keeps serving the stale copy.
-
-    Rate-limited, so page traffic cannot queue a rebuild storm: a request that finds a
-    stale fingerprint serves the last known-good board and moves on.
-    """
-    now = time.time()
-    with _BOARD_REBUILD_LOCK:
-        if now - _BOARD_REBUILD_LAST.get(kind, 0.0) < _BOARD_REBUILD_COOLDOWN:
-            return False
-        _BOARD_REBUILD_LAST[kind] = now
-
-    def _work():
-        try:
-            _refresh_boards_if_stale(kinds=(kind,))
-        except Exception as e:  # noqa: BLE001
-            print(f"[board] background rebuild {kind} failed: {e}")
-
-    threading.Thread(target=_work, name=f"board-{kind}", daemon=True).start()
-    return True
 
 
 @app.post("/api/schedule/fetch")
@@ -5897,14 +5889,15 @@ def api_win_totals(year: int | None = None):
     """Projected total season wins per FBS team (over/under reference)."""
     yr = year or CFBD_YEAR
     try:
-        stored = _board_from_store(BOARD_WIN_TOTALS, yr)
-        if stored and stored.get("teams"):
-            if stored.get("_store_fp") != _board_fingerprint(BOARD_WIN_TOTALS, yr):
-                # Inputs or results moved. Serve the last known-good board now and rebuild
-                # behind the request — every game going final would otherwise make a
-                # visitor pay for the reprojection.
-                _kick_board_rebuild(BOARD_WIN_TOTALS, yr)
-            return _public_board(stored)
+        served = _board_served(BOARD_WIN_TOTALS, yr)
+        if served and served.get("teams"):
+            # Serve and return -- do NOT fingerprint here. The win-totals fingerprint
+            # hashes completed games, so computing it needs the CFBD season game list,
+            # and on a cold container that is a ~16s network fetch landing on a real
+            # visitor's request. The refresh cycle owns freshness and flips the stored
+            # board within one cycle; a board whose inputs move Sun-Wed does not need to
+            # be re-validated per page load.
+            return served
         data = compute_win_totals(yr)
         _store_board(BOARD_WIN_TOTALS, data, yr)
         return data
