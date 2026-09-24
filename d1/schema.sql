@@ -153,6 +153,24 @@ CREATE TABLE IF NOT EXISTS raw_payloads (
   payload_gz BLOB                  -- zlib-compressed JSON
 );
 
+-- slate_cache — the finished Schedule payload for a (season, week), so the page is a
+-- READ instead of a recompute. Rebuilt when the composite inputs actually change
+-- (change-triggered, not per-request): the inputs only move Sun-Wed, so Thursday-
+-- Saturday every request was re-deriving a number that could not have changed.
+-- `fingerprint` is a hash of the enabled composite inputs; identical inputs leave the
+-- stored row alone. payload_gz is gzip+b64 (same convention as raw_payloads).
+CREATE TABLE IF NOT EXISTS slate_cache (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  season        INTEGER,
+  week          INTEGER,
+  built_at      TEXT,
+  fingerprint   TEXT,
+  model_version TEXT,
+  payload_gz    BLOB
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_slate_cache_season_week
+  ON slate_cache (season, week);
+
 -- weather_snapshots — our OWN weather history, one row per game per poll.
 --
 -- CFBD's /games/weather is a live lookup with NO historical endpoint, so a game's

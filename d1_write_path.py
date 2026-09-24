@@ -290,6 +290,32 @@ def snapshot_predictions(games: list[dict], model_version: str = "composite") ->
     return d1_store.insert_model_predictions(rows)
 
 
+def store_slate(season: int, week: int, fingerprint: str, model_version: str,
+                payload_json: str) -> int:
+    """Persist the finished Schedule payload so a cold container can serve it.
+
+    Not @_guard-wrapped: the caller wants the row count and a failure is already
+    contained (it returns 0 and the page falls back to computing).
+    """
+    try:
+        return d1_store.save_slate(int(season), int(week), fingerprint,
+                                   model_version, payload_json)
+    except Exception as e:  # noqa: BLE001
+        print(f"[d1_write_path] slate store failed: {e}")
+        return 0
+
+
+def load_slate(season: int, week: int) -> dict | None:
+    """Read the stored Schedule payload. None when absent, disabled, or unreadable."""
+    if not enabled():
+        return None
+    try:
+        return d1_store.load_slate(int(season), int(week))
+    except Exception as e:  # noqa: BLE001
+        print(f"[d1_write_path] slate load failed: {e}")
+        return None
+
+
 @_guard
 def snapshot_weather(games: list[dict], season: int | None = None,
                      week: int | None = None) -> int:

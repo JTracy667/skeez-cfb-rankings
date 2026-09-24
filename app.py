@@ -596,6 +596,12 @@ def refresh_all() -> dict:
     except Exception as e:
         print(f"[refresh] weather snapshot failed: {e}")
     try:
+        # Change-triggered slate rebuild: the Sun-Wed publications land at unpredictable
+        # times, so the stored slate follows the input fingerprint rather than a clock.
+        result["slate"] = _refresh_slate_if_stale()
+    except Exception as e:
+        print(f"[refresh] slate rebuild failed: {e}")
+    try:
         # FCS ratings (Massey) on the same hourly cadence, so the FCS prior is
         # never stale by more than one cycle. Self-contained and non-fatal.
         result["fcs_ratings"] = refresh_fcs_ratings()
@@ -1110,7 +1116,7 @@ def api_refresh():
     else:
         return {"status": "fallback", "source": "local", "note": "ESPN fetch failed, using local data"}
 
-CODE_MARKER = "v40-boot-warm"   # bump when a release must be provably live
+CODE_MARKER = "v41-stored-slate"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -4285,6 +4291,126 @@ def _maybe_write_predictions(games: list[dict], week: int | None = None,
     return n
 
 
+# ── Stored slate (serve the Schedule page from a saved payload) ───────────────
+# The composite inputs only move Sun-Wed, so recomputing all ~71 games on every
+# request was re-deriving numbers that could not have changed Thursday-Saturday. The
+# finished payload is stored per (season, week) and rebuilt when the INPUTS change
+# (fingerprint), not on a clock. Measured before this: first load after a container
+# sleep 9.0s, repeats 0.29-0.52s; the first visitor is the normal case on a
+# low-traffic site that recycles on 5m idle.
+SLATE_STORE_REVALIDATE_S = int(os.environ.get("SLATE_STORE_REVALIDATE_S", "1800"))
+_SLATE_FORCE: set = set()          # (week, year) keys a rebuild thread wants recomputed
+
+
+def _slate_fingerprint() -> str:
+    """Hash the composite inputs the projections actually consume.
+
+    This is the change detector Jeff asked for: CFBD publishes SP+/efficiency/
+    returning production at unpredictable times Sun-Wed, so the rebuild follows the
+    VALUES, not the clock. Same inputs -> the stored slate is still correct and must
+    not be rewritten (no API burn, no churn, and the served number cannot drift).
+    """
+    try:
+        tm = _build_team_map() or {}
+        parts = []
+        for name in sorted(tm):
+            t = tm[name] or {}
+            parts.append("|".join([str(name), f"{t.get('sp_plus')}",
+                                   f"{t.get('efficiency')}", f"{t.get('talent')}",
+                                   f"{t.get('experience')}"]))
+        blob = "\n".join(parts) + "||" + composite_version()
+        return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+    except Exception as e:  # noqa: BLE001
+        print(f"[slate] fingerprint failed: {e}")
+        return ""
+
+
+def _store_slate(week, year, payload, fingerprint: str | None = None) -> int:
+    """Persist the finished payload so a cold container can serve it instead of rebuilding."""
+    if not d1_write_path.enabled():
+        return 0
+    try:
+        fp = fingerprint or _slate_fingerprint()
+        n = d1_write_path.store_slate(int(year), int(week), fp, composite_version(),
+                                  json.dumps(payload, separators=(",", ":")))
+        if n:
+            print(f"[slate] stored wk{week} {year} ({n} bytes written, fp {fp[:8]})")
+        return n
+    except Exception as e:  # noqa: BLE001 — never break the page
+        print(f"[slate] store failed: {e}")
+        return 0
+
+
+def _slate_from_store(week, year) -> dict | None:
+    """Read the stored slate. Returns the payload with private _store_* keys, or None."""
+    if not d1_write_path.enabled():
+        return None
+    try:
+        row = d1_write_path.load_slate(int(year), int(week))
+        if not row:
+            return None
+        payload = json.loads(row["payload"])
+        payload["_store_ts"] = row.get("ts") or 0
+        payload["_store_fp"] = row.get("fingerprint")
+        return payload
+    except Exception as e:  # noqa: BLE001
+        print(f"[slate] store read failed: {e}")
+        return None
+
+
+_SLATE_REBUILD_LOCK = threading.Lock()
+_SLATE_REBUILD_LAST = {"ts": 0.0}
+
+
+def _kick_slate_rebuild(week, year) -> bool:
+    """Rebuild the slate on a daemon thread — the user gets the stored copy, not a wait."""
+    now = time.time()
+    with _SLATE_REBUILD_LOCK:
+        if now - _SLATE_REBUILD_LAST["ts"] < 300:   # at most one rebuild per 5 min
+            return False
+        _SLATE_REBUILD_LAST["ts"] = now
+    key = (int(week), int(year))
+
+    def _work():
+        _SLATE_FORCE.add(key)
+        try:
+            api_schedule_fetch(key[0], key[1])
+        except Exception as e:  # noqa: BLE001
+            print(f"[slate] background rebuild failed: {e}")
+        finally:
+            _SLATE_FORCE.discard(key)
+
+    threading.Thread(target=_work, daemon=True).start()
+    return True
+
+
+def _refresh_slate_if_stale() -> str:
+    """Rebuild the live week's stored slate when the composite inputs have changed.
+
+    The change-triggered half: called from the hourly refresh, which already polls for
+    the Sun-Wed publications. 'unchanged' means the at-bats produced identical values
+    and nothing was rewritten.
+    """
+    wk = live_week()
+    if not wk or not d1_write_path.enabled():
+        return "skip"
+    wk = int(wk)
+    fp = _slate_fingerprint()
+    try:
+        row = d1_write_path.load_slate(CFBD_YEAR, wk)
+    except Exception:  # noqa: BLE001
+        row = None
+    if row and fp and row.get("fingerprint") == fp:
+        return "unchanged"
+    key = (wk, CFBD_YEAR)
+    _SLATE_FORCE.add(key)
+    try:
+        api_schedule_fetch(wk, CFBD_YEAR)
+        return "rebuilt"
+    finally:
+        _SLATE_FORCE.discard(key)
+
+
 @app.post("/api/schedule/fetch")
 def api_schedule_fetch(week: int = 1, year: int = 2026):
     """Fetch the full FBS slate for a week from CFBD and project scores.
@@ -4296,12 +4422,29 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
     token-gated: a repeat call for the same week inside SCHEDULE_FETCH_TTL
     reuses the cached payload instead of re-hitting CFBD + the odds feeds."""
     _key = (week, year)
+    # A background rebuild (inputs changed, or the stored copy aged out) sets this so it
+    # recomputes past both caches. Public callers never reach it.
+    _force = _key in _SLATE_FORCE
+    if _force:
+        _SLATE_FORCE.discard(_key)
     _hit = _SCHEDULE_FETCH_CACHE.get(_key)
-    if _hit and time.time() - _hit["ts"] < SCHEDULE_FETCH_TTL:
+    if not _force and _hit and time.time() - _hit["ts"] < SCHEDULE_FETCH_TTL:
         _cached = dict(_hit["data"])
         _cached["cached"] = True
         _cached["note"] = ((_cached.get("note") or "") + " (reused from cache)").strip()
         return _cached
+    # Durable store: no CFBD calls, no model work. This is what makes the first load
+    # after a container sleep cheap instead of a ~9s rebuild.
+    if not _force:
+        _stored = _slate_from_store(week, year)
+        if _stored:
+            _age = time.time() - (_stored.pop("_store_ts", 0) or 0)
+            _stored.pop("_store_fp", None)
+            _stored["cached"] = True
+            _SCHEDULE_FETCH_CACHE[_key] = {"ts": time.time(), "data": _stored}
+            if _age > SLATE_STORE_REVALIDATE_S:
+                _kick_slate_rebuild(week, year)   # refresh behind the user, not in front
+            return _stored
     matchups = fetch_cfbd_schedule(week, year)
     if matchups is None:
         raise HTTPException(502, "CFBD schedule fetch failed")
@@ -4465,6 +4608,8 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
     _payload = {"week": week, "season": year, "updated": datetime.now().isoformat(),
                 "matchups": enriched, "has_odds": len(odds_map) > 0, "note": note}
     _SCHEDULE_FETCH_CACHE[_key] = {"ts": time.time(), "data": _payload}
+    # Persist so the next cold container serves this instead of rebuilding it.
+    _store_slate(week, year, _payload)
     return _payload
 
 

@@ -520,6 +520,59 @@ def append_raw_payloads(rows: list[dict]) -> int:
                        ["endpoint", "fetched_at", "payload_gz"], out)
 
 
+def save_slate(season: int, week: int, fingerprint: str, model_version: str,
+               payload_json: str) -> int:
+    """Store the finished Schedule payload for (season, week) — one row per week.
+
+    Payloads are gzipped and base64'd into payload_gz, matching insert_raw_payloads:
+    the D1 HTTP API has no unambiguous blob parameter form, and SQLite is typeless.
+
+    Replaces on (season, week) so readers never see two candidate slates and the table
+    cannot grow per poll. The 80KB JSON compresses to ~8KB.
+    """
+    import base64  # noqa: PLC0415
+    import gzip  # noqa: PLC0415
+
+    now = datetime.now(timezone.utc).isoformat()
+    blob = base64.b64encode(gzip.compress(payload_json.encode("utf-8"))).decode("ascii")
+    return _replace_by("slate_cache", ["season", "week"],
+                       ["season", "week", "built_at", "fingerprint",
+                        "model_version", "payload_gz"],
+                       [{"season": season, "week": week, "built_at": now,
+                         "fingerprint": fingerprint, "model_version": model_version,
+                         "payload_gz": blob}])
+
+
+def load_slate(season: int, week: int) -> dict | None:
+    """Read the stored slate. Returns {payload, fingerprint, model_version, ts} or None.
+
+    `ts` is epoch seconds so the caller can decide staleness without re-parsing ISO.
+    """
+    import base64  # noqa: PLC0415
+    import gzip  # noqa: PLC0415
+
+    rows = query("SELECT payload_gz, fingerprint, model_version, built_at "
+                 "FROM slate_cache WHERE season = ? AND week = ?", [season, week])
+    if not rows:
+        return None
+    r = rows[0]
+    blob = r.get("payload_gz")
+    if not blob:
+        return None
+    try:
+        text = gzip.decompress(base64.b64decode(blob)).decode("utf-8")
+    except Exception as e:  # noqa: BLE001
+        print(f"[slate_store] decode failed: {e}")
+        return None
+    ts = 0.0
+    try:
+        ts = datetime.fromisoformat(str(r.get("built_at"))).timestamp()
+    except Exception:  # noqa: BLE001
+        pass
+    return {"payload": text, "fingerprint": r.get("fingerprint"),
+            "model_version": r.get("model_version"), "ts": ts}
+
+
 def health() -> dict:
     """Cheap read used by the degraded-mode path (B4)."""
     try:
