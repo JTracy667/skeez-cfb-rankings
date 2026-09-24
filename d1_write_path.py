@@ -290,6 +290,28 @@ def snapshot_predictions(games: list[dict], model_version: str = "composite") ->
     return d1_store.insert_model_predictions(rows)
 
 
+def load_state(key: str) -> str | None:
+    """Read a durable app_state value from D1. None when disabled/absent/unreadable."""
+    if not enabled():
+        return None
+    try:
+        return d1_store.get_app_state(key)
+    except Exception as e:  # noqa: BLE001
+        print(f"[d1_write_path] state load failed for {key}: {e}")
+        return None
+
+
+def save_state(key: str, value: str) -> int:
+    """Write a durable app_state value. Returns rows written (0 on any failure)."""
+    if not enabled():
+        return 0
+    try:
+        return d1_store.set_app_state(key, value)
+    except Exception as e:  # noqa: BLE001
+        print(f"[d1_write_path] state save failed for {key}: {e}")
+        return 0
+
+
 def store_slate(season: int, week: int, fingerprint: str, model_version: str,
                 payload_json: str) -> int:
     """Persist the finished Schedule payload so a cold container can serve it.

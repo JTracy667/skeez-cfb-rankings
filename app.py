@@ -1116,7 +1116,7 @@ def api_refresh():
     else:
         return {"status": "fallback", "source": "local", "note": "ESPN fetch failed, using local data"}
 
-CODE_MARKER = "v41-stored-slate"   # bump when a release must be provably live
+CODE_MARKER = "v42-durable-best-line"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -1926,8 +1926,34 @@ BEST_LINE_TS_FILE = BASE_DIR / "data" / "best_line_ts.json"
 # due for a fresh call, so every game keeps its consensus line (not just the ones
 # fetched this cycle).
 BEST_LINE_STORE_FILE = BASE_DIR / "data" / "best_line_store.json"
+# Durable copies of the two best-line caches (D1 app_state). Both files are baked into
+# the image, so a fresh container started with stale best-line state and re-bought the
+# whole slate every boot. See _load_best_line_ts for the full account.
+BEST_LINE_TS_KEY = "propline_best_line_ts"
+BEST_LINE_STORE_KEY = "propline_best_line_store"
 
 def _load_best_line_ts() -> dict:
+    """Per-event last-fetch timestamps — DURABLE FIRST (D1 app_state), file as fallback.
+
+    WHY THIS IS DURABLE (2026-09-24): BEST_LINE_TS_FILE is swept into the image by
+    `COPY data/ ./data/`. A fresh container therefore woke holding a STALE copy,
+    judged every game due, and re-ran the whole per-event best-line sweep — about 71
+    PropLine calls — on EVERY boot. Containers recycle on 5m idle, so that repeated
+    dozens of times a day: 4,069 calls on 09-24 vs 1,835 on 09-23, the entire increase
+    coming from extra container restarts (deploys + tests).
+
+    These timestamps are what stop us re-buying data we already paid for, so they
+    cannot live only in the image. FILE FALLBACK IS DELIBERATELY SECOND: a stale file
+    on a fresh container is exactly the failure being fixed.
+    """
+    raw = d1_write_path.load_state(BEST_LINE_TS_KEY)
+    if raw:
+        try:
+            data = json.loads(raw)
+            if isinstance(data, dict) and data:
+                return {str(k): float(v) for k, v in data.items()}
+        except Exception as e:  # noqa: BLE001
+            print(f"[Odds] durable best-line ts unreadable ({e}) — falling back to file")
     try:
         if BEST_LINE_TS_FILE.exists():
             return json.loads(BEST_LINE_TS_FILE.read_text(encoding="utf-8"))
@@ -1935,16 +1961,35 @@ def _load_best_line_ts() -> dict:
         pass
     return {}
 
+
 def _save_best_line_ts(ts_map: dict):
+    # Keep only the last 3 days of entries so neither copy can grow unbounded.
+    cutoff = time.time() - 3 * 86400
+    trimmed = {k: v for k, v in ts_map.items() if v >= cutoff}
     try:
-        # Keep only the last 3 days of entries so the file can't grow unbounded.
-        cutoff = time.time() - 3 * 86400
-        BEST_LINE_TS_FILE.write_text(
-            json.dumps({k: v for k, v in ts_map.items() if v >= cutoff}), encoding="utf-8")
+        BEST_LINE_TS_FILE.write_text(json.dumps(trimmed), encoding="utf-8")
     except Exception as e:
         print(f"[Odds] best-line ts write failed: {e}")
+    try:
+        d1_write_path.save_state(BEST_LINE_TS_KEY, json.dumps(trimmed))
+    except Exception as e:  # noqa: BLE001
+        print(f"[Odds] durable best-line ts write failed: {e}")
 
 def _load_best_line_store() -> dict:
+    """Already-bought best-lines — DURABLE FIRST, for the same reason as the ts map.
+
+    The file is image-baked, so a fresh container lost every line it had already paid
+    for and could not reuse one for an event that was not due. Durable state means a
+    restart keeps both the timestamps (call gating) and the values (what we already own).
+    """
+    raw = d1_write_path.load_state(BEST_LINE_STORE_KEY)
+    if raw:
+        try:
+            data = json.loads(raw)
+            if isinstance(data, dict) and data:
+                return data
+        except Exception as e:  # noqa: BLE001
+            print(f"[Odds] durable best-line store unreadable ({e}) — falling back to file")
     try:
         if BEST_LINE_STORE_FILE.exists():
             return json.loads(BEST_LINE_STORE_FILE.read_text(encoding="utf-8"))
@@ -1953,13 +1998,16 @@ def _load_best_line_store() -> dict:
     return {}
 
 def _save_best_line_store(store: dict):
+    cutoff = time.time() - 3 * 86400
+    trimmed = {k: v for k, v in store.items() if (v or {}).get("_ts", 0) >= cutoff}
     try:
-        cutoff = time.time() - 3 * 86400
-        BEST_LINE_STORE_FILE.write_text(
-            json.dumps({k: v for k, v in store.items() if v.get("_ts", 0) >= cutoff}),
-            encoding="utf-8")
+        BEST_LINE_STORE_FILE.write_text(json.dumps(trimmed), encoding="utf-8")
     except Exception as e:
         print(f"[Odds] best-line store write failed: {e}")
+    try:
+        d1_write_path.save_state(BEST_LINE_STORE_KEY, json.dumps(trimmed))
+    except Exception as e:  # noqa: BLE001
+        print(f"[Odds] durable best-line store write failed: {e}")
 
 def _best_line_due(ev: dict, now, ts_map: dict) -> bool:
     """Should this event get a /best-line call THIS cycle?"""
