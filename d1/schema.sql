@@ -153,6 +153,32 @@ CREATE TABLE IF NOT EXISTS raw_payloads (
   payload_gz BLOB                  -- zlib-compressed JSON
 );
 
+-- weather_snapshots — our OWN weather history, one row per game per poll.
+--
+-- CFBD's /games/weather is a live lookup with NO historical endpoint, so a game's
+-- conditions are unrecoverable the moment the season ends. Capturing them as a
+-- side effect of model_predictions covered only the games that got a prediction
+-- row (~213 of a ~1,656-game slate); this stream covers the whole slate.
+-- Written pre-kickoff only (same D2 no-hindsight rule as the other streams): a
+-- post-game reading is not a forecast and must not masquerade as one.
+-- Starts empty by design; CFBD offers no backfill for it.
+CREATE TABLE IF NOT EXISTS weather_snapshots (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  game_id     INTEGER,
+  season      INTEGER,
+  week        INTEGER,
+  kickoff_utc TEXT,
+  poll_ts     TEXT,                -- all rows in one poll share it
+  wind_mph    REAL,
+  temp_f      REAL,
+  condition   TEXT,
+  indoor      INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_weather_snap_game_poll
+  ON weather_snapshots (game_id, poll_ts);
+CREATE INDEX IF NOT EXISTS idx_weather_snap_season_week
+  ON weather_snapshots (season, week);
+
 -- ---------------------------------------------------------------- Phase 3.5
 -- Standing budget meters (D1_CHECKLIST Phase 3.5). Ledger of RECORD for API
 -- burn: the container filesystem is ephemeral, so a file-only ledger resets on

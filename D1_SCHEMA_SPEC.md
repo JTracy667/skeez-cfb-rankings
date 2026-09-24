@@ -148,6 +148,39 @@ re-pulling. Lowest-priority table; prunable by age if storage ever matters.
 | fetched_at | TEXT | |
 | payload_gz | BLOB | |
 
+### `weather_snapshots`
+Our OWN weather history: one row per game per poll, written hourly, pre-kickoff only.
+
+CFBD's `/games/weather` is a live lookup with **no historical endpoint** — a game's
+conditions are unrecoverable the moment the season ends. Before this table, weather
+existed only as a by-product of `model_predictions`, so coverage was the games that
+happened to get a prediction row (~213 rows against a slate of ~1,656 games). This
+stream covers every game CFBD returns a reading for (measured: 237 rows for week 4
+on the first poll).
+
+It starts **empty by design** and only accumulates; there is nothing to backfill from
+CFBD. Values come from the same parser the model consumes (`_cfbd_weather` via
+`d1_write_path._wx`), so this table can never disagree with what the model saw.
+Hourly to match the odds poll, so a weather reading and a line reading carry the same
+`poll_ts` and can be joined for "what did we know at decision time".
+
+| column | type | notes |
+|---|---|---|
+| id | INTEGER PK | |
+| game_id | INTEGER | CFBD game id |
+| season | INTEGER | |
+| week | INTEGER | |
+| kickoff_utc | TEXT | from the game's startDate |
+| poll_ts | TEXT | all rows in one poll share it |
+| wind_mph | REAL | |
+| temp_f | REAL | |
+| condition | TEXT | |
+| indoor | INTEGER | 0/1 |
+
+Keyed `(game_id, poll_ts)`: a retry inside the same poll replaces rather than
+duplicates; the next poll's rows are new rows on purpose — the series is the point.
+Backtest access pattern: `idx_weather_snap_season_week`.
+
 ---
 
 ## 4. Backfill plan (5 seasons: 2021–2025, plus current 2026 live)

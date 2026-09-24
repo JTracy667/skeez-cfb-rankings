@@ -291,6 +291,59 @@ def snapshot_predictions(games: list[dict], model_version: str = "composite") ->
 
 
 @_guard
+def snapshot_weather(games: list[dict], season: int | None = None,
+                     week: int | None = None) -> int:
+    """weather_snapshots — one row per game per poll, PRE-KICKOFF ONLY.
+
+    Why this exists: `/games/weather` is a live lookup with no historical endpoint, so
+    a game's conditions are gone once the season ends. model_predictions carries
+    wind/temp/condition, but only for games that happened to get a prediction row —
+    the rest of the slate was never recorded. This is the dedicated time series the
+    backtest grows on: every game, every poll, from here forward.
+
+    Same D2 no-hindsight rule as the other streams: a reading taken after kickoff is
+    not a forecast, and letting it in would poison the dataset while looking healthy.
+
+    Values come from the SAME parser the model consumes (`_wx` / `_wx_num` read
+    whatever `_cfbd_weather` produced) — this table cannot disagree with the model.
+
+    `games` carry: game_id (or id), kickoff/date (ISO UTC), season, week, and the
+    weather block under 'weather' (or 'wx'). A game with no weather block is simply
+    not written: absence of a reading is not a reading.
+    """
+    poll_ts = datetime.now(timezone.utc).isoformat()
+    rows = []
+    skipped_started = 0
+    for g in games:
+        gid = g.get("game_id") or g.get("id")
+        if not gid:
+            continue
+        if _pre_kickoff(g) is None:
+            skipped_started += 1
+            continue
+        wx = _wx(g)
+        if not wx:
+            continue
+        rows.append({
+            "game_id": gid,
+            "season": g.get("season", season),
+            "week": g.get("week", week),
+            "kickoff_utc": str(g.get("kickoff") or g.get("date") or "") or None,
+            "poll_ts": poll_ts,
+            "wind_mph": _wx_num(g, "wind"),
+            "temp_f": _wx_num(g, "temp"),
+            "condition": (wx.get("condition") or None),
+            "indoor": (1 if wx.get("indoor") else 0),
+        })
+    if skipped_started:
+        print(f"[d1_write_path] weather: {skipped_started} game(s) skipped "
+              f"(kickoff already passed — D2 no-hindsight guard)")
+    if not rows:
+        return 0
+    return d1_store.insert_weather_snapshots(rows)
+
+
+@_guard
 def snapshot_injuries(games: list[dict], model_version: str = "composite") -> int:
     """injury_snapshots — ONE ROW PER TEAM PER GAME, written before kickoff (Part 2).
 

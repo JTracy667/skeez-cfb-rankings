@@ -590,6 +590,12 @@ def refresh_all() -> dict:
     except Exception as e:
         print(f"[refresh] D1 write-path failed: {e}")
     try:
+        # Weather history (our own, not CFBD's): the whole live week's slate once an
+        # hour. Runs on the scheduler so the series grows even with no page traffic.
+        result["d1_weather_rows"] = _maybe_write_weather(live_week())
+    except Exception as e:
+        print(f"[refresh] weather snapshot failed: {e}")
+    try:
         # FCS ratings (Massey) on the same hourly cadence, so the FCS prior is
         # never stale by more than one cycle. Self-contained and non-fatal.
         result["fcs_ratings"] = refresh_fcs_ratings()
@@ -4071,6 +4077,53 @@ def api_schedule_update(matchups: list[dict]):
     return {"status": "updated", "count": len(clean)}
 
 _PRED_LOCK = {"ts": 0.0}
+_WX_LOCK = {"ts": 0.0}
+
+
+def _maybe_write_weather(week: int | None, year: int = CFBD_YEAR) -> int:
+    """Write weather_snapshots for the WHOLE week's slate — at most once per hour.
+
+    Captured from the raw sources (season game list + the /games/weather map), NOT
+    from a rendered page: coverage is every game in the week, not just the ones a
+    visitor happened to load. That is the difference between the 213 rows weather had
+    as a by-product of model_predictions and a real time series.
+
+    Hourly to match the odds poll, so a weather reading and a line reading carry the
+    same poll clock and can be joined for "what did we know at decision time".
+
+    Pre-kickoff only (d1_write_path.snapshot_weather enforces D2) — a reading taken
+    after kickoff is not a forecast.
+    """
+    now = time.time()
+    if now - _WX_LOCK["ts"] < 3600:        # throttle: one attempt per hour
+        return 0
+    _WX_LOCK["ts"] = now
+    if not week or not d1_write_path.enabled():
+        return 0
+    try:
+        wk = int(week)
+        wx = _cfbd_weather(wk, year)
+        if not wx:
+            print(f"[refresh] weather snapshot skipped: /games/weather empty for wk{wk}")
+            return 0
+        games = []
+        for g in _cfbd_season_games(year):
+            if (g.get("week") or 0) != wk:
+                continue
+            games.append({
+                "game_id": g.get("id"),
+                "kickoff": g.get("startDate"),      # _pre_kickoff reads 'kickoff'/'date'
+                "season": g.get("season") or year,
+                "week": g.get("week"),
+                "weather": wx.get((g.get("homeTeam"), g.get("awayTeam"))) or {},
+            })
+        n = d1_write_path.snapshot_weather(games, season=year, week=wk)
+        if n:
+            print(f"[refresh] weather_snapshots wk{wk}: {n} row(s)")
+        return n
+    except Exception as e:
+        print(f"[refresh] weather snapshot failed: {e}")
+        return 0
 
 
 def _maybe_write_predictions(games: list[dict], week: int | None = None) -> int:
@@ -4307,6 +4360,8 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
     # game whose kickoff has already passed.
     try:
         _maybe_write_predictions(enriched, week)
+        # Same poll clock: any visit also tops up the weather series for the whole week.
+        _maybe_write_weather(week)
     except Exception as e:  # noqa: BLE001 — never break the schedule page
         print(f"[Schedule] D1 predictions failed: {e}")
     _payload = {"week": week, "season": year, "updated": datetime.now().isoformat(),

@@ -433,6 +433,21 @@ def insert_model_predictions(rows: list[dict]) -> int:
                        rows)
 
 
+def insert_weather_snapshots(rows: list[dict]) -> int:
+    """weather_snapshots — one row per game per poll (our own weather history).
+
+    Natural key (game_id, poll_ts): a retry inside the same poll replaces rather
+    than duplicates, while the next poll's rows are new rows on purpose — the
+    series over time is the point. Values come from the SAME parser the model
+    consumes (_cfbd_weather via d1_write_path._wx), so this table can never
+    disagree with what the model saw.
+    """
+    return _replace_by("weather_snapshots", ["game_id", "poll_ts"],
+                       ["game_id", "season", "week", "kickoff_utc", "poll_ts",
+                        "wind_mph", "temp_f", "condition", "indoor"],
+                       rows)
+
+
 def insert_injuries(rows: list[dict]) -> int:
     """Part 2: one row per team per game, written pre-kickoff.
 
