@@ -153,14 +153,18 @@ CREATE TABLE IF NOT EXISTS raw_payloads (
   payload_gz BLOB                  -- zlib-compressed JSON
 );
 
--- slate_cache — the finished Schedule payload for a (season, week), so the page is a
--- READ instead of a recompute. Rebuilt when the composite inputs actually change
--- (change-triggered, not per-request): the inputs only move Sun-Wed, so Thursday-
--- Saturday every request was re-deriving a number that could not have changed.
--- `fingerprint` is a hash of the enabled composite inputs; identical inputs leave the
--- stored row alone. payload_gz is gzip+b64 (same convention as raw_payloads).
+-- slate_cache — the DERIVED-BOARD store: one row per served board (gzipped).
+-- Not an observation stream: these are artifacts the site serves, rebuilt only when a
+-- board's inputs actually move (see D1_SCHEMA_SPEC.md §4). A container sleeps after 5m
+-- idle, so without this every cold start rebuilt a board for its first visitor, and the
+-- inputs only move Sun-Wed — Thursday to Saturday nothing served could have changed.
+-- kind: schedule | rankings | win_totals. Season-level boards use week = 0.
+-- `fingerprint` is that board's change detector; identical value leaves the row alone
+-- (win totals additionally hash completed games, since results move it on game days).
+-- payload_gz is gzip+b64 (same convention as raw_payloads).
 CREATE TABLE IF NOT EXISTS slate_cache (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  kind          TEXT DEFAULT 'schedule',
   season        INTEGER,
   week          INTEGER,
   built_at      TEXT,
@@ -168,8 +172,8 @@ CREATE TABLE IF NOT EXISTS slate_cache (
   model_version TEXT,
   payload_gz    BLOB
 );
-CREATE UNIQUE INDEX IF NOT EXISTS ux_slate_cache_season_week
-  ON slate_cache (season, week);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_slate_cache_kind_season_week
+  ON slate_cache (kind, season, week);
 
 -- weather_snapshots — our OWN weather history, one row per game per poll.
 --

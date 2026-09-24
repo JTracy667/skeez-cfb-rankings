@@ -183,7 +183,46 @@ Backtest access pattern: `idx_weather_snap_season_week`.
 
 ---
 
-## 4. Backfill plan (5 seasons: 2021–2025, plus current 2026 live)
+## 4. Derived boards — `slate_cache` (compute on change, serve from store)
+
+### `slate_cache`
+
+Not an observation table: the **served artifact** of the site. Each row is one board,
+gzipped, rebuilt only when its inputs actually move. Containers sleep after 5 minutes
+idle, so without this every cold start rebuilt a board for its first visitor.
+
+| column | meaning |
+|---|---|
+| `kind` | `schedule` \| `rankings` \| `win_totals` |
+| `season`, `week` | key. Season-level boards use `week = 0`; the slate uses its week |
+| `fingerprint` | the change detector for that board (see below) |
+| `model_version` | composite config hash, so a weight change invalidates visibly |
+| `built_at` | when the stored copy was computed |
+| `payload_gz` | the board JSON, gzipped + base64'd (same convention as `raw_payloads`) |
+
+Unique on `(kind, season, week)`: a rebuild REPLACES, so there is never a second
+candidate and the table does not grow per poll. Rows are ~8KB for the slate.
+
+**Fingerprints** — the whole point is that "same fingerprint" means "the stored board is
+still correct", so no timer and no recompute:
+
+- `schedule`, `rankings` — hash over the composite inputs (`_slate_fingerprint()`). Those
+  publish Sun–Wed only, and talent decays purely by week number, so nothing they are
+  built from moves between Thursday and Saturday.
+- `win_totals` — the above **plus a hash of completed games** (`_results_signature()`).
+  Win totals depend on results too: every game that goes final changes every remaining
+  expectation. Inputs-only would freeze the board after the first Saturday kickoff and
+  keep serving pre-game numbers until Sunday — stale while looking healthy.
+
+A request that finds a stale board serves the last known-good copy immediately and kicks
+a background rebuild (5-minute cooldown). The hourly refresh rebuilds on fingerprint
+change and reports `unchanged` when nothing moved.
+
+**Rebuild cost, and why this is only about the inputs:** rankings and win totals are
+CPU + cached-CFBD work, not per-request API spend. The API side is capped separately and
+tracked in `api_usage` — see the quota rules in the ops notes.
+
+## 5. Backfill plan (5 seasons: 2021–2025, plus current 2026 live)
 
 | Source | Tables filled | Est. rows | API requests (paced) |
 |---|---|---|---|
