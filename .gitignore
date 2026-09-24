@@ -80,3 +80,8 @@ data/backtest_study/*.json
 # Phase-1/ARM-2 harvest caches (regenerable: scripts/harvest_odds_history.py, scripts/harvest_plays.py)
 data/odds_history/
 data/playbyplay_*.json
+
+# D1 odds mirror snapshots — the app writes one ~50MB file per day
+# (app.py: _snapshot path under data/odds_snapshots). Runtime data, never source;
+# unprotected it is one `git add -A` away from entering the repo.
+data/odds_snapshots/

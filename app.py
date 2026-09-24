@@ -3195,6 +3195,36 @@ def _load_active_injuries() -> dict[str, dict]:
     return {}
 
 
+def matchup_conditions(home_name: str, away_name: str, injuries_map: dict | None = None,
+                       weather_map: dict | None = None) -> dict:
+    """Per-matchup overlay terms AND the raw records, from ONE lookup.
+
+    Keys: home_injury_adj, away_injury_adj, wind_penalty, home_injuries,
+    away_injuries, weather.
+
+    ONE implementation for every caller (Jeff, 2026-09-23: the projection must be
+    the same everywhere, or the pages disagree about the same game). Injuries are
+    "active now" facts and weather exists only for the immediate week, so a caller
+    projecting OTHER weeks passes no maps and gets zero overlays — which is what
+    the Schedule page effectively does for weeks with no published weather.
+    """
+    hm = (injuries_map or {}).get(home_name, {})
+    am = (injuries_map or {}).get(away_name, {})
+    home_inj = float(hm.get("net_injury_points", 0.0) or 0.0)
+    away_inj = float(am.get("net_injury_points", 0.0) or 0.0)
+    wx = (weather_map or {}).get((home_name, away_name), {})
+    wind = float(wx.get("wind", 0.0) or 0.0)
+    wind_penalty = 0.0 if wx.get("indoor") else min(5.0, max(0.0, (wind - 14.0) * 0.35))
+    return {
+        "home_injury_adj": home_inj,
+        "away_injury_adj": away_inj,
+        "wind_penalty": wind_penalty,
+        "home_injuries": hm.get("injuries", []),
+        "away_injuries": am.get("injuries", []),
+        "weather": wx,
+    }
+
+
 def project_head_to_head(
     home_data: dict,
     away_data: dict,
@@ -3941,8 +3971,8 @@ def api_schedule(week: int | None = None):
             "away_conf": away.get("conf", ""),
             "home_injury_adj": home_injury_adj,
             "away_injury_adj": away_injury_adj,
-            "home_injuries": home_inj_data.get("injuries", []),
-            "away_injuries": away_inj_data.get("injuries", []),
+            "home_injuries": _cond["home_injuries"],
+            "away_injuries": _cond["away_injuries"],
             "home_logo_url": home.get("logo_url"),
             "away_logo_url": away.get("logo_url"),
             # Live betting line (negative = home favorite, positive = underdog)
@@ -4154,15 +4184,12 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             home["fcs_composite"] = fcs_composite_for(m["home"])
         if (away.get("classification") or "").upper() == "FCS" and not (away.get("sp_plus") or away.get("elo")):
             away["fcs_composite"] = fcs_composite_for(m["away"])
-        # Active injury adjustment lookup (Jeff Tracy rule: Star QB out = -10.0 pts)
-        home_inj_data = injuries_map.get(m["home"], {})
-        away_inj_data = injuries_map.get(m["away"], {})
-        home_injury_adj = home_inj_data.get("net_injury_points", 0.0)
-        away_injury_adj = away_inj_data.get("net_injury_points", 0.0)
-        # Weather overlay (wind, temp, dome)
-        wx = weather_map.get((m["home"], m["away"]), {})
-        wind = wx.get("wind", 0.0)
-        wind_penalty = min(5.0, max(0.0, (wind - 14.0) * 0.35)) if not wx.get("indoor") else 0.0
+        # Active injury adjustment (Jeff Tracy rule: Star QB out = -10.0 pts) and the
+        # weather overlay — shared with Win Totals via matchup_conditions().
+        _cond = matchup_conditions(m["home"], m["away"], injuries_map, weather_map)
+        home_injury_adj = _cond["home_injury_adj"]
+        away_injury_adj = _cond["away_injury_adj"]
+        wind_penalty = _cond["wind_penalty"]
         # Head-to-head projection (Aug 30 recalibration): total from combined
         # strength, margin from composite gap. Handles neutral site, elite
         # totals (~52-58), and FCS blowouts (52-0 class finals) in one model.
@@ -4240,12 +4267,12 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             "away_record": f"{away.get('wins',0)}-{away.get('losses',0)}",
             "home_conf": home_conf,
             "away_conf": away_conf,
-            "weather": wx,
+            "weather": _cond["weather"],
             "wind_penalty": round(wind_penalty, 1),
             "home_injury_adj": home_injury_adj,
             "away_injury_adj": away_injury_adj,
-            "home_injuries": home_inj_data.get("injuries", []),
-            "away_injuries": away_inj_data.get("injuries", []),
+            "home_injuries": _cond["home_injuries"],
+            "away_injuries": _cond["away_injuries"],
             "home_logo_url": _LOGO_MAP.get(m["home"].lower()),
             "away_logo_url": _LOGO_MAP.get(m["away"].lower()),
         })
@@ -5159,6 +5186,11 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
     games = _cfbd_season_games(year)
     team_map = _build_team_map()          # name -> full analytics dict
     known = set(team_map.keys())
+    # Same condition inputs the Schedule page uses, so the two pages agree on the
+    # same game instead of each inventing its own number.
+    injuries_map = _load_active_injuries()
+    _live_wk = live_week()
+    weather_map = _cfbd_weather(_live_wk, year) if _live_wk else {}
 
     # FBS-only: this is a betting tool, so report the 138 FBS teams. CFBD tags
     # each side's classification on every game; union them to get the FBS set.
@@ -5211,11 +5243,20 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
             home_td["fcs_composite"] = fcs_composite_for(home_name)
         if (away_td["classification"] or "").upper() == "FCS" and not (away_td.get("sp_plus") or away_td.get("elo")):
             away_td["fcs_composite"] = fcs_composite_for(away_name)
-        _wk = live_week()
-        # NOTE: no injury/weather overlays here on purpose. They are PER-WEEK facts
-        # the Schedule page applies to the upcoming slate; a season-long projection
-        # cannot carry today's injury report into November.
-        h2h = project_head_to_head(home_td, away_td, week=_wk, neutral_site=neutral)
+        # Each game is projected in ITS OWN week (that is what drives the talent
+        # decay), exactly as the Schedule page does for the week it shows.
+        _game_wk = g.get("week") or live_week()
+        # Injury/weather exist only for the immediate week ("active now" injuries,
+        # published weather), so they are applied to the live week's games only —
+        # carrying today's injury report into November would be wrong.
+        if _game_wk == live_week():
+            _c = matchup_conditions(home_name, away_name, injuries_map, weather_map)
+            _h_inj, _a_inj, _wind = _c["home_injury_adj"], _c["away_injury_adj"], _c["wind_penalty"]
+        else:
+            _h_inj = _a_inj = _wind = 0.0
+        h2h = project_head_to_head(home_td, away_td, week=_game_wk, neutral_site=neutral,
+                                   home_injury_adj=_h_inj, away_injury_adj=_a_inj,
+                                   wind_penalty=_wind)
         home_score = h2h["home_proj"]
         away_score = h2h["away_proj"]
 
