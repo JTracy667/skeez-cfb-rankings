@@ -5195,23 +5195,29 @@ def compute_win_totals(year: int = CFBD_YEAR) -> dict:
         games_analyzed += 1
 
         neutral = bool(g.get("neutralSite"))
-        home_td = team_map[home_name]
-        away_td = team_map[away_name]
+        home_td = dict(team_map[home_name])
+        away_td = dict(team_map[away_name])
 
-        # Projected scores. On a neutral site, zero out the HFA tilt so the
-        # game is decided purely by strength (the model bakes in +2.5/-1.5).
+        # SAME MODEL AS THE SCHEDULE PAGE (Jeff, 2026-09-23): one head-to-head
+        # projection per game, so a team's projected score depends on WHO it plays
+        # instead of being its own average repeated against every opponent. This
+        # page used single-pass per-team scores, which is why Rutgers showed 27.0
+        # against every team on the schedule. `project_head_to_head` is the same
+        # function the Schedule page calls: total from combined strength, margin
+        # from the composite gap with the opponent-suppression pass.
+        home_td["classification"] = g.get("homeClassification") or home_td.get("classification") or ""
+        away_td["classification"] = g.get("awayClassification") or away_td.get("classification") or ""
+        if (home_td["classification"] or "").upper() == "FCS" and not (home_td.get("sp_plus") or home_td.get("elo")):
+            home_td["fcs_composite"] = fcs_composite_for(home_name)
+        if (away_td["classification"] or "").upper() == "FCS" and not (away_td.get("sp_plus") or away_td.get("elo")):
+            away_td["fcs_composite"] = fcs_composite_for(away_name)
         _wk = live_week()
-        if neutral:
-            h_proj = project_score_multi_factor(home_td, is_home=True, week=_wk)["projected_score"]
-            a_proj = project_score_multi_factor(away_td, is_home=False, week=_wk)["projected_score"]
-            # Re-center: remove the HFA asymmetry by averaging both directions.
-            h_proj2 = project_score_multi_factor(home_td, is_home=False, week=_wk)["projected_score"]
-            a_proj2 = project_score_multi_factor(away_td, is_home=True, week=_wk)["projected_score"]
-            home_score = (h_proj + h_proj2) / 2.0
-            away_score = (a_proj + a_proj2) / 2.0
-        else:
-            home_score = project_score_multi_factor(home_td, is_home=True, week=_wk)["projected_score"]
-            away_score = project_score_multi_factor(away_td, is_home=False, week=_wk)["projected_score"]
+        # NOTE: no injury/weather overlays here on purpose. They are PER-WEEK facts
+        # the Schedule page applies to the upcoming slate; a season-long projection
+        # cannot carry today's injury report into November.
+        h2h = project_head_to_head(home_td, away_td, week=_wk, neutral_site=neutral)
+        home_score = h2h["home_proj"]
+        away_score = h2h["away_proj"]
 
         p_home = _h2h_win_prob(home_score, away_score)
 

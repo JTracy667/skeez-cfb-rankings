@@ -10,7 +10,8 @@
 #      imports. The image booted nowhere; prod was down until it was rolled back.
 #      -> the PREFLIGHT boot gate now runs the exact image locally first.
 #   2. "wrangler deploy succeeded" does NOT mean the change is live: a warm
-#      container keeps serving the PREVIOUS image for up to sleepAfter (20m).
+#      container keeps serving the PREVIOUS image for up to sleepAfter (5m since the
+#      sleepAfter shrink; it was 20m when that incident was written).
 #      -> the VERIFY step polls /api/health until `build` equals the new tag,
 #         and auto-rolls back to the previous tag on a 500 or a timeout.
 #
@@ -32,7 +33,7 @@ VERIFY_TIMEOUT="${CFB_VERIFY_TIMEOUT:-5400}"   # 90m: needs at least 2 full warm
 # first deploy after shrinking sleepAfter still needs the OLD interval — pass it
 # explicitly (e.g. CFB_VERIFY_INTERVAL=1260 for one run), then lower the default.
 # sleepAfter is now 5m in src/index.js, so 360 is the steady-state value.
-VERIFY_INTERVAL="${CFB_VERIFY_INTERVAL:-1260}"  # 21m until the live image itself has 5m
+VERIFY_INTERVAL="${CFB_VERIFY_INTERVAL:-360}"   # 6m: exceeds the live image's 5m sleepAfter
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 
@@ -116,7 +117,7 @@ fi
 
 # 6. VERIFY live — the new image only answers once the warm instance recycles.
 echo "=== verifying live build ==="
-echo "    a warm container can serve $PREV for up to ~20m; polling up to $((VERIFY_TIMEOUT/60))m"
+echo "    a warm container can serve $PREV for up to ~5m; polling every $((VERIFY_INTERVAL/60))m, up to $((VERIFY_TIMEOUT/60))m"
 deadline=$(( $(date +%s) + VERIFY_TIMEOUT ))
 while :; do
   body=$(curl -s -m 30 -A 'Mozilla/5.0' "$PUBLIC_URL/api/health" || true)
