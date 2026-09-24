@@ -599,6 +599,7 @@ def refresh_all() -> dict:
         # Change-triggered slate rebuild: the Sun-Wed publications land at unpredictable
         # times, so the stored slate follows the input fingerprint rather than a clock.
         result["slate"] = _refresh_slate_if_stale()
+        result["boards"] = _refresh_boards_if_stale()
     except Exception as e:
         print(f"[refresh] slate rebuild failed: {e}")
     try:
@@ -977,6 +978,20 @@ def get_rankings() -> RankingsResponse:
     if cached:
         return RankingsResponse(**cached)
 
+    # Durable board. Without this a container that just woke up (i.e. every container,
+    # after 5 minutes idle) rebuilds the entire composite list for its first visitor,
+    # even though the four inputs it is built from do not change between Sun-Wed.
+    _stored = _board_from_store(BOARD_RANKINGS, CFBD_YEAR)
+    if _stored:
+        _data = _public_board(_stored)
+        if _data.get("teams"):
+            _cache_set(_rankings_cache, _data)
+            if _stored.get("_store_fp") != _board_fingerprint(BOARD_RANKINGS, CFBD_YEAR):
+                # Inputs moved: serve the known-good copy now, rebuild behind the request
+                # rather than making a visitor wait for the composite.
+                _kick_board_rebuild(BOARD_RANKINGS, CFBD_YEAR)
+            return RankingsResponse(**_data)
+
     # Primary source: the CFBD analytics file (identical to the composite tab).
     teams = _load_cfbd_analytics_file()
     if not teams:
@@ -1046,6 +1061,7 @@ def get_rankings() -> RankingsResponse:
         "input_vintages": _rating_vintages(teams),
     }
     _cache_set(_rankings_cache, result)
+    _store_board(BOARD_RANKINGS, result, CFBD_YEAR)
     return RankingsResponse(**result)
 
 # ── API Routes ──
@@ -1116,7 +1132,7 @@ def api_refresh():
     else:
         return {"status": "fallback", "source": "local", "note": "ESPN fetch failed, using local data"}
 
-CODE_MARKER = "v42-durable-best-line"   # bump when a release must be provably live
+CODE_MARKER = "v43-derived-boards"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -4374,36 +4390,91 @@ def _slate_fingerprint() -> str:
 
 
 def _store_slate(week, year, payload, fingerprint: str | None = None) -> int:
-    """Persist the finished payload so a cold container can serve it instead of rebuilding."""
-    if not d1_write_path.enabled():
-        return 0
-    try:
-        fp = fingerprint or _slate_fingerprint()
-        n = d1_write_path.store_slate(int(year), int(week), fp, composite_version(),
-                                  json.dumps(payload, separators=(",", ":")))
-        if n:
-            print(f"[slate] stored wk{week} {year} ({n} bytes written, fp {fp[:8]})")
-        return n
-    except Exception as e:  # noqa: BLE001 — never break the page
-        print(f"[slate] store failed: {e}")
-        return 0
+    """The Schedule slate — the original derived board; see _store_board."""
+    return _store_board(BOARD_SCHEDULE, payload, year, week, fingerprint)
 
 
 def _slate_from_store(week, year) -> dict | None:
-    """Read the stored slate. Returns the payload with private _store_* keys, or None."""
+    """Read the stored Schedule slate (see _board_from_store)."""
+    return _board_from_store(BOARD_SCHEDULE, year, week)
+
+
+BOARD_SCHEDULE = "schedule"
+BOARD_RANKINGS = "rankings"
+BOARD_WIN_TOTALS = "win_totals"
+
+
+def _results_signature(year: int) -> str:
+    """Hash of COMPLETED games (id + score) — the second axis win totals depend on.
+
+    Win totals are a function of the composite inputs AND the results so far: every game
+    that goes final changes every remaining expectation. Keying the stored board on the
+    inputs alone would freeze it after the first Saturday kickoff and it would keep
+    serving pre-game numbers until Sunday's publication — stale while looking healthy.
+    Including results makes the rebuild change-triggered on both axes: inputs move
+    Sun-Wed, results move on game days, and neither moving means no work at all.
+
+    Costs nothing extra: _cfbd_season_games() is already cached and fetched by the win
+    totals computation itself.
+    """
+    try:
+        parts = []
+        for g in _cfbd_season_games(year):
+            if g.get("completed"):
+                parts.append(f"{g.get('id')}:{g.get('homePoints')}-{g.get('awayPoints')}")
+        parts.sort()
+        return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()[:32]
+    except Exception as e:  # noqa: BLE001
+        print(f"[board] results signature failed: {e}")
+        return ""
+
+
+def _board_fingerprint(kind: str, year: int) -> str:
+    """Change detector per board. Same value == the stored board is still correct."""
+    base = _slate_fingerprint()
+    if kind == BOARD_WIN_TOTALS:
+        return f"{base}+{_results_signature(year)}"
+    return base
+
+
+def _store_board(kind: str, payload, year: int, week: int = 0,
+                 fingerprint: str | None = None) -> int:
+    """Persist a derived board so a cold container serves it instead of rebuilding."""
+    if not d1_write_path.enabled():
+        return 0
+    try:
+        fp = fingerprint or _board_fingerprint(kind, year)
+        n = d1_write_path.store_slate(int(year), int(week), fp, composite_version(),
+                                      json.dumps(payload, separators=(",", ":")), kind=kind)
+        if n:
+            print(f"[board] stored {kind} {year}/wk{week} (fp {fp[:8]})")
+        return n
+    except Exception as e:  # noqa: BLE001 — never break a page over bookkeeping
+        print(f"[board] store {kind} failed: {e}")
+        return 0
+
+
+def _board_from_store(kind: str, year: int, week: int = 0) -> dict | None:
+    """Read a stored board, with private _store_* keys the caller must strip."""
     if not d1_write_path.enabled():
         return None
     try:
-        row = d1_write_path.load_slate(int(year), int(week))
+        row = d1_write_path.load_slate(int(year), int(week), kind=kind)
         if not row:
             return None
         payload = json.loads(row["payload"])
-        payload["_store_ts"] = row.get("ts") or 0
-        payload["_store_fp"] = row.get("fingerprint")
+        if isinstance(payload, dict):
+            payload["_store_ts"] = row.get("ts") or 0
+            payload["_store_fp"] = row.get("fingerprint")
         return payload
     except Exception as e:  # noqa: BLE001
-        print(f"[slate] store read failed: {e}")
+        print(f"[board] load {kind} failed: {e}")
         return None
+
+
+def _public_board(payload: dict) -> dict:
+    """Strip the store's private keys before a payload is served."""
+    return {k: v for k, v in payload.items() if not k.startswith("_store_")}
 
 
 _SLATE_REBUILD_LOCK = threading.Lock()
@@ -4457,6 +4528,76 @@ def _refresh_slate_if_stale() -> str:
         return "rebuilt"
     finally:
         _SLATE_FORCE.discard(key)
+
+
+_BOARD_REBUILD_LOCK = threading.Lock()
+_BOARD_REBUILD_LAST: dict[str, float] = {}
+_BOARD_REBUILD_COOLDOWN = 300
+
+
+def _refresh_boards_if_stale(kinds: tuple[str, ...] = (BOARD_RANKINGS, BOARD_WIN_TOTALS)) -> dict:
+    """Rebuild a stored board when its change detector has moved.
+
+    Everything heavy on the site is now computed on change rather than on a timer:
+    the composite inputs only move Sun-Wed, and results only move when games finish.
+    When neither has moved there is nothing to recompute, which is the whole point.
+
+    Returns {kind: 'unchanged'|'rebuilt'|'error: ...'} for the refresh log.
+    """
+    out: dict[str, str] = {}
+    if not d1_write_path.enabled():
+        return out
+
+    for kind in kinds:
+        try:
+            fp = _board_fingerprint(kind, CFBD_YEAR)
+            if not fp:
+                out[kind] = "skip"
+                continue
+            row = d1_write_path.load_slate(CFBD_YEAR, 0, kind=kind)
+            if row and row.get("fingerprint") == fp:
+                out[kind] = "unchanged"
+                continue
+
+            if kind == BOARD_RANKINGS:
+                # Drop the in-memory copy so get_rankings() recomputes, then take the
+                # dict it stored rather than rebuilding the composite a second time.
+                try:
+                    _rankings_cache.clear()
+                except Exception:  # noqa: BLE001
+                    pass
+                data = get_rankings().model_dump()
+            else:
+                data = compute_win_totals(CFBD_YEAR, force=True)
+
+            _store_board(kind, data, CFBD_YEAR, fingerprint=fp)
+            out[kind] = "rebuilt"
+        except Exception as e:  # noqa: BLE001 — one board must not break the refresh
+            print(f"[board] refresh {kind} failed: {e}")
+            out[kind] = f"error: {e}"
+    return out
+
+
+def _kick_board_rebuild(kind: str, year: int) -> bool:
+    """Rebuild one board in the background; the caller keeps serving the stale copy.
+
+    Rate-limited, so page traffic cannot queue a rebuild storm: a request that finds a
+    stale fingerprint serves the last known-good board and moves on.
+    """
+    now = time.time()
+    with _BOARD_REBUILD_LOCK:
+        if now - _BOARD_REBUILD_LAST.get(kind, 0.0) < _BOARD_REBUILD_COOLDOWN:
+            return False
+        _BOARD_REBUILD_LAST[kind] = now
+
+    def _work():
+        try:
+            _refresh_boards_if_stale(kinds=(kind,))
+        except Exception as e:  # noqa: BLE001
+            print(f"[board] background rebuild {kind} failed: {e}")
+
+    threading.Thread(target=_work, name=f"board-{kind}", daemon=True).start()
+    return True
 
 
 @app.post("/api/schedule/fetch")
@@ -5519,14 +5660,15 @@ def _cfbd_season_games(year: int) -> list[dict]:
     return games
 
 
-def compute_win_totals(year: int = CFBD_YEAR) -> dict:
+def compute_win_totals(year: int = CFBD_YEAR, force: bool = False) -> dict:
     """Project each FBS team's total season wins from its full schedule.
 
     Returns {"year":..., "teams":[{name, conf, games, exp_wins, proj_record,
     home_games, away_games, neutral_games, ...}], "generated":...}.
-    Cached in memory for WIN_TOTALS_TTL seconds."""
+    Cached in memory for WIN_TOTALS_TTL seconds. force=True bypasses that memory cache
+    for the change-triggered rebuild (the stored board's fingerprint moved)."""
     cached = _WIN_TOTALS_CACHE.get(year)
-    if cached and time.time() - cached["ts"] < WIN_TOTALS_TTL:
+    if not force and cached and time.time() - cached["ts"] < WIN_TOTALS_TTL:
         return cached
 
     games = _cfbd_season_games(year)
@@ -5755,7 +5897,16 @@ def api_win_totals(year: int | None = None):
     """Projected total season wins per FBS team (over/under reference)."""
     yr = year or CFBD_YEAR
     try:
+        stored = _board_from_store(BOARD_WIN_TOTALS, yr)
+        if stored and stored.get("teams"):
+            if stored.get("_store_fp") != _board_fingerprint(BOARD_WIN_TOTALS, yr):
+                # Inputs or results moved. Serve the last known-good board now and rebuild
+                # behind the request — every game going final would otherwise make a
+                # visitor pay for the reprojection.
+                _kick_board_rebuild(BOARD_WIN_TOTALS, yr)
+            return _public_board(stored)
         data = compute_win_totals(yr)
+        _store_board(BOARD_WIN_TOTALS, data, yr)
         return data
     except Exception as e:
         print(f"[GET /api/win-totals ERROR] {e}")

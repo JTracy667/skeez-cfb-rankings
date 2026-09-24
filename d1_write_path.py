@@ -313,28 +313,28 @@ def save_state(key: str, value: str) -> int:
 
 
 def store_slate(season: int, week: int, fingerprint: str, model_version: str,
-                payload_json: str) -> int:
-    """Persist the finished Schedule payload so a cold container can serve it.
+                payload_json: str, kind: str = "schedule") -> int:
+    """Persist a derived board (schedule slate | rankings | win_totals).
 
     Not @_guard-wrapped: the caller wants the row count and a failure is already
     contained (it returns 0 and the page falls back to computing).
     """
     try:
         return d1_store.save_slate(int(season), int(week), fingerprint,
-                                   model_version, payload_json)
+                                   model_version, payload_json, kind=kind)
     except Exception as e:  # noqa: BLE001
-        print(f"[d1_write_path] slate store failed: {e}")
+        print(f"[d1_write_path] board store failed ({kind}): {e}")
         return 0
 
 
-def load_slate(season: int, week: int) -> dict | None:
-    """Read the stored Schedule payload. None when absent, disabled, or unreadable."""
+def load_slate(season: int, week: int, kind: str = "schedule") -> dict | None:
+    """Read a stored board. None when absent, disabled, or unreadable."""
     if not enabled():
         return None
     try:
-        return d1_store.load_slate(int(season), int(week))
+        return d1_store.load_slate(int(season), int(week), kind=kind)
     except Exception as e:  # noqa: BLE001
-        print(f"[d1_write_path] slate load failed: {e}")
+        print(f"[d1_write_path] board load failed ({kind}): {e}")
         return None
 
 

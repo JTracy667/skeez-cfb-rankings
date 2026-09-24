@@ -521,30 +521,30 @@ def append_raw_payloads(rows: list[dict]) -> int:
 
 
 def save_slate(season: int, week: int, fingerprint: str, model_version: str,
-               payload_json: str) -> int:
-    """Store the finished Schedule payload for (season, week) — one row per week.
+               payload_json: str, kind: str = "schedule") -> int:
+    """Store a derived board (schedule slate | rankings | win_totals) — one row per key.
 
     Payloads are gzipped and base64'd into payload_gz, matching insert_raw_payloads:
     the D1 HTTP API has no unambiguous blob parameter form, and SQLite is typeless.
 
-    Replaces on (season, week) so readers never see two candidate slates and the table
-    cannot grow per poll. The 80KB JSON compresses to ~8KB.
+    Replaces on (kind, season, week) so readers never see two candidates for a board.
+    Season-level boards (rankings, win totals) pass week=0.
     """
     import base64  # noqa: PLC0415
     import gzip  # noqa: PLC0415
 
     now = datetime.now(timezone.utc).isoformat()
     blob = base64.b64encode(gzip.compress(payload_json.encode("utf-8"))).decode("ascii")
-    return _replace_by("slate_cache", ["season", "week"],
-                       ["season", "week", "built_at", "fingerprint",
+    return _replace_by("slate_cache", ["kind", "season", "week"],
+                       ["kind", "season", "week", "built_at", "fingerprint",
                         "model_version", "payload_gz"],
-                       [{"season": season, "week": week, "built_at": now,
+                       [{"kind": kind, "season": season, "week": week, "built_at": now,
                          "fingerprint": fingerprint, "model_version": model_version,
                          "payload_gz": blob}])
 
 
-def load_slate(season: int, week: int) -> dict | None:
-    """Read the stored slate. Returns {payload, fingerprint, model_version, ts} or None.
+def load_slate(season: int, week: int, kind: str = "schedule") -> dict | None:
+    """Read a stored board. Returns {payload, fingerprint, model_version, ts} or None.
 
     `ts` is epoch seconds so the caller can decide staleness without re-parsing ISO.
     """
@@ -552,7 +552,8 @@ def load_slate(season: int, week: int) -> dict | None:
     import gzip  # noqa: PLC0415
 
     rows = query("SELECT payload_gz, fingerprint, model_version, built_at "
-                 "FROM slate_cache WHERE season = ? AND week = ?", [season, week])
+                 "FROM slate_cache WHERE kind = ? AND season = ? AND week = ?",
+                 [kind, season, week])
     if not rows:
         return None
     r = rows[0]
