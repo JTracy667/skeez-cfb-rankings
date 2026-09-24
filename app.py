@@ -1110,7 +1110,7 @@ def api_refresh():
     else:
         return {"status": "fallback", "source": "local", "note": "ESPN fetch failed, using local data"}
 
-CODE_MARKER = "v38-weather-snapshots"   # bump when a release must be provably live
+CODE_MARKER = "v39-schedule-no-inline-odds"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -2480,8 +2480,42 @@ def _build_odds_map(odds_data: list[dict]) -> dict:
     return odds_map
 
 
-def _fetch_odds_map() -> dict:
+_ODDS_LIVE_LOCK = threading.Lock()
+_ODDS_LIVE_LAST = {"ts": 0.0}
+
+
+def _kick_odds_refresh() -> bool:
+    """Refresh odds on a daemon thread so no page waits on the feed.
+
+    The hourly scheduler still owns the real pull (refresh_all -> _fetch_odds_live,
+    which persists memory+disk). This is only the cold-cache path: a page that finds
+    stale lines serves them and asks for a refresh instead of blocking.
+    """
+    now = time.time()
+    with _ODDS_LIVE_LOCK:
+        if now - _ODDS_LIVE_LAST["ts"] < 120:      # don't stampede on a burst of loads
+            return False
+        _ODDS_LIVE_LAST["ts"] = now
+
+    def _work():
+        try:
+            m = _fetch_odds_live()
+            if m:
+                _cache_set(_odds_cache, m)
+                _odds_disk_cache_set(m)
+        except Exception as e:  # noqa: BLE001 — background, must never raise into a page
+            print(f"[Odds] background refresh failed: {e}")
+
+    threading.Thread(target=_work, daemon=True).start()
+    return True
+
+
+def _fetch_odds_map(allow_live: bool = False) -> dict:
     """Build a merged odds map from all sources, PropLine primary.
+
+    READ-ONLY BY DEFAULT: the request path must never block on the odds feed. When
+    memory and disk are both cold/stale this serves the stale disk copy and refreshes
+    on a background thread. `allow_live=True` is for non-request callers only.
 
     Precedence:
       1. PropLine (Bovada lines) — primary, covers FCS/blowout games The Odds API misses
@@ -2501,17 +2535,20 @@ def _fetch_odds_map() -> dict:
     if disk:
         _cache_set(_odds_cache, disk)
         return disk
-    # 3) Live fetch from all sources, then persist to memory + disk.
-    # If the live fetch comes back empty (all sources failed), fall back to the
-    # STALE disk cache so the site never goes dark — with a loud warning.
-    odds_map = _fetch_odds_live()
-    if not odds_map:
-        stale = _odds_disk_cache_any_age()
-        if stale:
-            print("[Odds] live fetch empty — serving STALE disk cache as fallback")
-            _cache_set(_odds_cache, stale)
-            return stale
-    return odds_map
+    # 3) Cold or stale. The REQUEST PATH DOES NOT FETCH HERE: a live multi-source pull
+    #    at this point cost ~7s on the first Schedule load after a container recycle
+    #    (measured on prod: 7,355ms cold vs 298ms warm). Serve the stale disk copy,
+    #    warn, and refresh in the background — the user gets lines, not a loading bar.
+    stale = _odds_disk_cache_any_age()
+    if stale:
+        print("[Odds] cache stale — serving stale lines, refreshing in background")
+        _cache_set(_odds_cache, stale)
+        _kick_odds_refresh()
+        return stale
+    if allow_live:
+        return _fetch_odds_live()
+    _kick_odds_refresh()
+    return {}
 
 
 def _odds_disk_cache_any_age() -> dict | None:
@@ -4140,6 +4177,28 @@ def _maybe_write_weather(week: int | None, year: int = CFBD_YEAR,
 _WX_KICK_LOCK = threading.Lock()
 
 
+_PRED_KICK_LOCK = threading.Lock()
+
+
+def _kick_prediction_snapshot(games: list[dict], week: int | None = None) -> bool:
+    """Write model_predictions on a daemon thread, claiming the hour first.
+
+    Same reasoning as _kick_weather_snapshot: on the first Schedule load after a
+    container recycle the hourly throttle is fresh, so the page used to pay for a
+    ~71-row D1 write before it could render. The claim is synchronous (a lock, no
+    network) so a burst of loads produces exactly one write.
+    """
+    if not games or not d1_write_path.enabled():
+        return False
+    with _PRED_KICK_LOCK:
+        if time.time() - _PRED_LOCK["ts"] < 3600:
+            return False
+        _PRED_LOCK["ts"] = time.time()          # claim the hour before returning
+    threading.Thread(target=_maybe_write_predictions, args=(games, week),
+                     kwargs={"force": True}, daemon=True).start()
+    return True
+
+
 def _kick_weather_snapshot(week: int | None) -> bool:
     """Start a weather capture on a daemon thread — never block the request.
 
@@ -4163,7 +4222,8 @@ def _kick_weather_snapshot(week: int | None) -> bool:
     return True
 
 
-def _maybe_write_predictions(games: list[dict], week: int | None = None) -> int:
+def _maybe_write_predictions(games: list[dict], week: int | None = None,
+                             force: bool = False) -> int:
     """Write model_predictions for un-started games — at most once per hour.
 
     Risk register D2: predictions must exist BEFORE kickoff, never post-hoc. The
@@ -4174,7 +4234,7 @@ def _maybe_write_predictions(games: list[dict], week: int | None = None) -> int:
     Idempotent: insert_model_predictions replaces on (game_id, model_version).
     """
     now = time.time()
-    if now - _PRED_LOCK["ts"] < 3600:      # throttle: one attempt per hour
+    if not force and now - _PRED_LOCK["ts"] < 3600:      # throttle: one attempt per hour
         return 0
     _PRED_LOCK["ts"] = now
     if not d1_write_path.enabled():
@@ -4396,7 +4456,7 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
     # so a page load can't become a write storm; the writer itself refuses any
     # game whose kickoff has already passed.
     try:
-        _maybe_write_predictions(enriched, week)
+        _kick_prediction_snapshot(enriched, week)
         # Same poll clock: any visit tops up the weather series for the whole week — off the
         # request path, so the page never waits on the fetch or the D1 write.
         _kick_weather_snapshot(week)
