@@ -14,6 +14,10 @@
 #      sleepAfter shrink; it was 20m when that incident was written).
 #      -> the VERIFY step polls /api/health until `build` equals the new tag,
 #         and auto-rolls back to the previous tag on a 500 or a timeout.
+#      -> `build` ALONE IS WEAK: it is an env var the Worker injects, so a warm
+#         instance running the old image reports the new tag too. Pass the release's
+#         code marker as the 3rd arg to make verification check the running CODE
+#         (app.CODE_MARKER, surfaced as /api/health `code.marker`).
 #
 # Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID in the environment
 # (never commit them). Reads nothing else; the D1 token lives in .env and in
@@ -77,8 +81,15 @@ if [ "${1:-}" = "--rollback" ]; then
   exit 0
 fi
 
-NEW="${1:?usage: cfb_deploy.sh vN [--no-verify]}"
+NEW="${1:?usage: cfb_deploy.sh vN [--no-verify] [code-marker]}"
 NO_VERIFY="${2:-}"
+# Optional 3rd arg: the CODE MARKER the new image must report at /api/health
+# (`code.marker`). WHY: `build` is an env var the Worker INJECTS into whatever instance
+# answers, so a warm container still running the PREVIOUS image happily reports the new
+# tag — a deploy can "verify" against code that never shipped. Passing the marker makes
+# the verify loop wait for the running CODE, not for the tag.
+EXPECT_CODE="${3:-}"
+[ -n "$EXPECT_CODE" ] || echo "note: no code marker given — 'build' alone cannot prove the new image is live"
 PREV="$(current_tag)"
 [ "$NEW" != "$PREV" ] || echo "note: tag already $NEW (rebuilding the same tag)"
 
@@ -127,12 +138,14 @@ while :; do
     exit 1
   fi
   build=$(printf '%s' "$body" | python -c "import sys,json;print((json.load(sys.stdin) or {}).get('build',''))" 2>/dev/null)
-  if [ "$build" = "$NEW" ]; then
+  code_marker=$(printf '%s' "$body" | python -c "import sys,json;d=json.load(sys.stdin) or {};print(((d.get('code') or {}).get('marker')) or '')" 2>/dev/null)
+  if [ "$build" = "$NEW" ] && { [ -z "$EXPECT_CODE" ] || [ "$code_marker" = "$EXPECT_CODE" ]; }; then
     echo "    live build == $NEW at $(date '+%H:%M:%S')"
+    [ -n "$EXPECT_CODE" ] && echo "    live code == $code_marker (running CODE proven live, not just the tag)"
     break
   fi
   if [ "$(date +%s)" -ge "$deadline" ]; then
-    rollback "$PREV" "new image never came live within $((VERIFY_TIMEOUT/60))m (last build='$build')"
+    rollback "$PREV" "new image never came live within $((VERIFY_TIMEOUT/60))m (last build='$build' code='$code_marker', wanted code='$EXPECT_CODE')"
     exit 1
   fi
   sleep "$VERIFY_INTERVAL"

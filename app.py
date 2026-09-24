@@ -1110,6 +1110,9 @@ def api_refresh():
     else:
         return {"status": "fallback", "source": "local", "note": "ESPN fetch failed, using local data"}
 
+CODE_MARKER = "v38-weather-snapshots"   # bump when a release must be provably live
+
+
 @app.get("/api/health")
 def api_health():
     """Health check.
@@ -1132,6 +1135,13 @@ def api_health():
     out = {
         "status": "ok",
         "build": os.environ.get("BUILD_TAG", "dev"),
+        # CODE-level markers, computed from THIS running image. `build` is only an env
+        # var the Worker injects, so a warm instance still running the PREVIOUS image
+        # reports the new tag too — build alone cannot prove a deploy came live.
+        "code": {
+            "marker": CODE_MARKER,
+            "weather_stream": callable(globals().get("_maybe_write_weather")),
+        },
         "model_version": composite_version(),
         "teams": len(load_local()),
         "cache_ttl": CACHE_TTL,
@@ -4080,7 +4090,8 @@ _PRED_LOCK = {"ts": 0.0}
 _WX_LOCK = {"ts": 0.0}
 
 
-def _maybe_write_weather(week: int | None, year: int = CFBD_YEAR) -> int:
+def _maybe_write_weather(week: int | None, year: int = CFBD_YEAR,
+                         force: bool = False) -> int:
     """Write weather_snapshots for the WHOLE week's slate — at most once per hour.
 
     Captured from the raw sources (season game list + the /games/weather map), NOT
@@ -4095,7 +4106,7 @@ def _maybe_write_weather(week: int | None, year: int = CFBD_YEAR) -> int:
     after kickoff is not a forecast.
     """
     now = time.time()
-    if now - _WX_LOCK["ts"] < 3600:        # throttle: one attempt per hour
+    if not force and now - _WX_LOCK["ts"] < 3600:   # throttle: one attempt per hour
         return 0
     _WX_LOCK["ts"] = now
     if not week or not d1_write_path.enabled():
@@ -4124,6 +4135,32 @@ def _maybe_write_weather(week: int | None, year: int = CFBD_YEAR) -> int:
     except Exception as e:
         print(f"[refresh] weather snapshot failed: {e}")
         return 0
+
+
+_WX_KICK_LOCK = threading.Lock()
+
+
+def _kick_weather_snapshot(week: int | None) -> bool:
+    """Start a weather capture on a daemon thread — never block the request.
+
+    The Schedule page must not wait on a CFBD /games/weather call plus a 237-row D1
+    write. The hour is claimed synchronously under a lock so two simultaneous visits
+    cannot both start a poll; whoever claims it does the work in the background.
+
+    This is the RELIABLE capture path: sleepAfter is 5m, so a lightly-trafficked
+    container rarely accumulates the full hour the daemon loop sleeps before its first
+    refresh. Traffic is what keeps the series growing, which is why this backstop
+    exists rather than relying on refresh_all alone.
+    """
+    if not week or not d1_write_path.enabled():
+        return False
+    with _WX_KICK_LOCK:
+        if time.time() - _WX_LOCK["ts"] < 3600:
+            return False
+        _WX_LOCK["ts"] = time.time()          # claim the hour before returning
+    threading.Thread(target=_maybe_write_weather, args=(week,),
+                     kwargs={"force": True}, daemon=True).start()
+    return True
 
 
 def _maybe_write_predictions(games: list[dict], week: int | None = None) -> int:
@@ -4360,8 +4397,9 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
     # game whose kickoff has already passed.
     try:
         _maybe_write_predictions(enriched, week)
-        # Same poll clock: any visit also tops up the weather series for the whole week.
-        _maybe_write_weather(week)
+        # Same poll clock: any visit tops up the weather series for the whole week — off the
+        # request path, so the page never waits on the fetch or the D1 write.
+        _kick_weather_snapshot(week)
     except Exception as e:  # noqa: BLE001 — never break the schedule page
         print(f"[Schedule] D1 predictions failed: {e}")
     _payload = {"week": week, "season": year, "updated": datetime.now().isoformat(),
