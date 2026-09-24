@@ -7,7 +7,7 @@
     {
       "max_instances": 1,
       "class_name": "CFBPowerRankings",
-      "image": "registry.cloudflare.com/90c2c31beec12cb7de1c249ade1eb773/cfb-power-rankings:v41",
+      "image": "registry.cloudflare.com/90c2c31beec12cb7de1c249ade1eb773/cfb-power-rankings:v42",
       "instance_type": "basic"
     }
   ],
