@@ -179,8 +179,12 @@ Edge cases worth a probe each: `/api/rankings/999` (out of range), `/api/ranking
   `/api/rankings`: `elo_nulls` and `sp_zero` must both be **0**. The old bug rebuilt the board from
   an ESPN poll stub and cached a 25-field payload for 300s.
 - **FCS composite.** FCS opponents carry fitted composites (33.0 ranked / 15.0 unranked / 19.0
-  fallback), never a flat constant. If every FCS opponent shows the identical number, that is the
-  old bug back.
+  fallback) driven by a live Massey FCS rank map, NOT a flat constant. **How to read this
+  correctly:** the map covers ~128 FCS teams and the tiers are coarse, so several unranked FCS
+  opponents legitimately share the value **15.0** in one week — that is the designed "unranked
+  FCS" tier, not the old bug. Ranked teams must differ: South Dakota State (rank 14) → 33.0 while
+  Howard (rank 98) → 15.0. File a finding only if a KNOWN TOP-25 FCS team (SDSU / NDSU / Montana
+  State class) shows 15.0, or if values are flat because the rank map failed to load.
 
 ---
 

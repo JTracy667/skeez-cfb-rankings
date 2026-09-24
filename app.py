@@ -1098,7 +1098,9 @@ def refresh_rankings_from_espn() -> bool:
 def api_refresh():
     """Force-refresh the ESPN data feed, computing composites."""
     if refresh_rankings_from_espn():
-        return {"status": "refreshed", "source": "espn", "teams": 25}
+        return {"status": "refreshed", "source": "cfbd+poll", "teams": 25,
+                "note": "board rebuilt from the CFBD seed; AP/Coaches poll ranks "
+                        "refreshed from the poll feed"}
     else:
         return {"status": "fallback", "source": "local", "note": "ESPN fetch failed, using local data"}
 
@@ -1189,6 +1191,11 @@ def _enrich_with_composite(teams: list[dict], week: int | None = None) -> list[d
         team["rec_contribution"] = proj["rec_contribution"]
         team["epa_contribution"] = proj["epa_contribution"]
         team["efficiency_contribution"] = proj.get("efficiency_contribution", 0)
+        # The breakdown omitted experience — the fourth enabled input and
+        # 0.1856 of the composite — so a reader could not reconcile the parts
+        # with the published composite. It is computed in
+        # project_score_multi_factor; it simply was not copied onto the row.
+        team["experience_contribution"] = proj.get("experience_contribution", 0)
     return teams
 
 @app.get("/api/analytics")
@@ -3856,8 +3863,17 @@ def _build_team_map() -> dict:
     return _TEAM_MAP_CACHE
 
 @app.get("/api/schedule")
-def api_schedule():
-    """Get weekly schedule with projected differentials + live betting lines."""
+def api_schedule(week: int | None = None):
+    """Get weekly schedule with projected differentials + live betting lines.
+
+    Defaults to the LIVE week through the same path the Schedule page uses.
+    This used to read the persisted week_schedule.json, which goes stale as the
+    season advances: it served `week: 0, matchups: []` while the page was
+    showing a full week-4 slate.
+    """
+    _live = week or current_season_week(CFBD_YEAR)
+    if _live:
+        return api_schedule_fetch(week=int(_live), year=CFBD_YEAR)
     sched = load_schedule()
     team_map = _build_team_map()
     injuries_map = _load_active_injuries()
@@ -3911,8 +3927,12 @@ def api_schedule():
             "ats_pick": ats_pick,
             "home_composite": home_proj_data["composite"],
             "away_composite": away_proj_data["composite"],
-            "home_win_prob": home_proj_data["win_probability"],
-            "away_win_prob": away_proj_data["win_probability"],
+            # GAME win probability from the projected margin (same logistic Win
+            # Totals uses). These fields used to carry each side's OWN composite
+            # logit, which is not a matchup quantity: a 48.7-composite host vs a
+            # 15.0 opponent read 47.5% / 5.7% while the market had it -43.5.
+            "home_win_prob": round(_h2h_win_prob(home_proj, away_proj) * 100, 1),
+            "away_win_prob": round((1.0 - _h2h_win_prob(home_proj, away_proj)) * 100, 1),
             "home_sp": home.get("sp_plus", 0),
             "away_sp": away.get("sp_plus", 0),
             "home_record": f"{home.get('wins',0)}-{home.get('losses',0)}",
@@ -4192,8 +4212,12 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
             "ats_pick": _ats_side(diff, market_odds.get("spread")),
             "home_composite": home_proj_data["composite"],
             "away_composite": away_proj_data["composite"],
-            "home_win_prob": home_proj_data["win_probability"],
-            "away_win_prob": away_proj_data["win_probability"],
+            # GAME win probability from the projected margin (same logistic Win
+            # Totals uses). These fields used to carry each side's OWN composite
+            # logit, which is not a matchup quantity: a 48.7-composite host vs a
+            # 15.0 opponent read 47.5% / 5.7% while the market had it -43.5.
+            "home_win_prob": round(_h2h_win_prob(home_proj, away_proj) * 100, 1),
+            "away_win_prob": round((1.0 - _h2h_win_prob(home_proj, away_proj)) * 100, 1),
             "home_sp": home.get("sp_plus", 0),
             "away_sp": away.get("sp_plus", 0),
             "market_spread": market_odds.get("spread"),
@@ -5001,8 +5025,11 @@ def api_best_bets():
     stars) based on how far the line diverges from the model.
     """
     try:
-        # Reuse the full fetch endpoint's enrichment logic
-        sched = api_schedule_fetch(week=1)
+        # Reuse the full fetch endpoint's enrichment logic for the LIVE week.
+        # (A hardcoded week=1 returned an empty board from week 2 onward — the
+        # page showed zero value plays for the rest of the season.)
+        _week = current_season_week(CFBD_YEAR) or 1
+        sched = api_schedule_fetch(week=_week)
         matchups = sched.get("matchups", [])
         team_map = _build_team_map()
         # FBS-only filter: drop matchups where a team has no SP+ data
@@ -5051,7 +5078,7 @@ def api_best_bets():
         ranked.sort(key=lambda p: max(p["spread_edge"] or 0, p["total_edge"] or 0), reverse=True)
         top = ranked[:10]
         # Lock the top plays into the best-bets tracker (idempotent)
-        _lock_best_bets(top, sched.get("week", 1))
+        _lock_best_bets(top, sched.get("week") or _week)
         return {"best_bets": top, "count": len(ranked)}
     except Exception as e:
         print(f"[GET /api/best-bets ERROR] {e}")

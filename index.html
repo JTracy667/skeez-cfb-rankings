@@ -346,10 +346,19 @@ async function fetchRankings() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     teams = data.teams;
-    metaInfo = { week: data.week, season: data.season, updated: data.updated };
+    metaInfo = { week: data.week, season: data.season, updated: data.updated,
+                 vintages: data.input_vintages || {} };
     document.querySelector('.week-badge').textContent = `${data.week} · ${data.season} Season`;
+    // Input provenance: SRS is served from the PRIOR season, so say so on the
+    // page instead of leaving the reader to guess which vintage fed the board.
+    const _v = data.input_vintages || {};
+    const _prior = Object.keys(_v).filter(k => _v[k] && String(_v[k]) !== String(data.season));
+    const _prov = _prior.length
+      ? ` · Inputs: ${Object.keys(_v).filter(k => !_prior.includes(k)).map(k => `${k} ${_v[k]}`).join(', ')}`
+        + ` · ${_prior.map(k => `${k} ${_v[k]} (prior season)`).join(', ')}`
+      : '';
     document.querySelector('.footer').textContent =
-      `Skeez CFB Rankings · Last updated ${new Date(data.updated).toLocaleString()} · Built with ❤️`;
+      `Skeez CFB Rankings · Last updated ${new Date(data.updated).toLocaleString()}${_prov} · Built with ❤️`;
   } catch (err) {
     console.error('Failed to fetch rankings:', err);
     document.getElementById('rankingsBody').innerHTML =
