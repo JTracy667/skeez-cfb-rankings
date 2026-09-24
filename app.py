@@ -1110,7 +1110,7 @@ def api_refresh():
     else:
         return {"status": "fallback", "source": "local", "note": "ESPN fetch failed, using local data"}
 
-CODE_MARKER = "v39-schedule-no-inline-odds"   # bump when a release must be provably live
+CODE_MARKER = "v40-boot-warm"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -5599,6 +5599,47 @@ def win_totals_page():
 # via `python app.py` or `uvicorn app:app` (both import this module once).
 # The daemon thread sleeps first, so it never blocks startup/readiness.
 _start_scheduler()
+
+
+def _boot_warm() -> None:
+    """Warm the Schedule path after boot so the FIRST visitor doesn't pay for it.
+
+    Containers recycle after 5m idle, so "first request after a recycle" is the normal
+    case, not the rare one. Measured on prod: 12.6s on the first Schedule load after a
+    deploy vs 0.29-0.52s once warm — and a never-before-computed week also came back in
+    0.52s, so the cost is cold caches, not the projection itself.
+
+    Deliberately narrow: the network calls the Schedule path needs (injuries, weather,
+    plus the season game list, which is disk-cached and cheap). Rankings and analytics
+    are left to their own anchors plus the traffic-driven staleness guard, so this never
+    becomes a hidden API hammer on a container that recycles often.
+
+    Safe for readiness: daemon thread, sleeps first, never raises. Health checks are
+    answered the whole time it warms.
+    """
+    try:
+        time.sleep(float(os.environ.get("BOOT_WARM_DELAY_S", "8")))
+        year = CFBD_YEAR
+        wk = live_week()
+        steps = [
+            ("season games", lambda: _cfbd_season_games(year)),
+            ("injuries", lambda: _load_active_injuries()),
+            ("odds map", lambda: _fetch_odds_map()),
+        ]
+        if wk:
+            steps.append((f"weather wk{wk}", lambda: _cfbd_weather(int(wk), year)))
+        for name, fn in steps:
+            try:
+                t0 = time.time()
+                fn()
+                print(f"[bootwarm] {name}: {time.time() - t0:.2f}s")
+            except Exception as e:  # noqa: BLE001 — a warm miss must never be fatal
+                print(f"[bootwarm] {name} failed: {e}")
+    except Exception as e:  # noqa: BLE001
+        print(f"[bootwarm] aborted: {e}")
+
+
+threading.Thread(target=_boot_warm, daemon=True, name="bootwarm").start()
 
 
 # ── Main ──
