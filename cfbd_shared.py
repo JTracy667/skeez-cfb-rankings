@@ -23,6 +23,31 @@ CFBD_YEAR_FALLBACK = 2025
 
 _CLIENT = httpx.Client(timeout=15, limits=httpx.Limits(max_connections=20))
 
+# ── /teams is a STATIC list; never re-fetch it per lookup ────────────────────
+# team_aliases() used to call cfbd_get("teams") on EVERY invocation. compute_win_totals()
+# resolves one FCS opponent per game (127 of them in 2026), so a single Win Totals rebuild
+# issued 128 live CFBD round-trips and spent ~48s in socket reads alone — the real reason
+# that endpoint could blow past a 60s timeout, and ~3,000 wasted CFBD calls/day.
+# The list changes at most yearly, so a process-local TTL cache is safe: identical data,
+# just not re-downloaded. (KEEP the TTL modest: CFBD adds FCS schools as the season starts.)
+_TEAMS_CACHE: dict[int, dict] = {}
+TEAMS_TTL = 6 * 3600
+
+
+def _teams_cached(year: int) -> list[dict]:
+    """CFBD /teams for `year`, cached in-process for TEAMS_TTL seconds."""
+    hit = _TEAMS_CACHE.get(year)
+    if hit and time.time() - hit["ts"] < TEAMS_TTL:
+        return hit["teams"]
+    if hit and not hit["teams"]:
+        return hit["teams"]                       # a failed fetch: don't hammer the API
+    data = cfbd_get("teams", year=year) or []
+    if data:
+        _TEAMS_CACHE[year] = {"ts": time.time(), "teams": data}
+    else:
+        _TEAMS_CACHE.setdefault(year, {"ts": time.time(), "teams": []})
+    return data
+
 
 def _key() -> str:
     """CFBD key from env, falling back to the repo .env. Self-sufficient so callers
@@ -106,9 +131,9 @@ def cfbd_get(endpoint: str, year: int = CFBD_YEAR, retries: int = 3,
 def teams_by_name(year: int = CFBD_YEAR) -> dict:
     """All teams keyed by school name -> team dict (has 'id'). Same matcher the
     live site uses, so name->ID is identical in the app and the archive."""
-    data = cfbd_get("teams", year=year)
+    data = _teams_cached(year)
     if not data:
-        data = cfbd_get("teams", year=CFBD_YEAR_FALLBACK)
+        data = _teams_cached(CFBD_YEAR_FALLBACK)
     return {t["school"]: t for t in data if t.get("school")}
 
 
@@ -124,7 +149,7 @@ def team_aliases(year: int = CFBD_YEAR) -> dict:
     exactly as the live app expects (adding alias keys there would duplicate teams
     for any caller that iterates its values)."""
     out: dict[str, int] = {}
-    data = cfbd_get("teams", year=year) or cfbd_get("teams", year=CFBD_YEAR_FALLBACK) or []
+    data = _teams_cached(year) or _teams_cached(CFBD_YEAR_FALLBACK) or []
     for t in data:
         if not t.get("id"):
             continue
