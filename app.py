@@ -6,6 +6,7 @@ import hmac
 import hashlib
 import re
 import time
+import unicodedata
 import math
 import random
 import threading
@@ -1129,7 +1130,7 @@ def api_refresh():
     else:
         return {"status": "fallback", "source": "local", "note": "ESPN fetch failed, using local data"}
 
-CODE_MARKER = "v44-boards-cold-path"   # bump when a release must be provably live
+CODE_MARKER = "v45-fbs-line-scope"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -2022,6 +2023,112 @@ def _save_best_line_store(store: dict):
     except Exception as e:  # noqa: BLE001
         print(f"[Odds] durable best-line store write failed: {e}")
 
+def _norm_team_name(s: str | None) -> str:
+    """Aggressive normalization for matching feed names against CFBD team names.
+
+    The odds feed and CFBD spell the same school differently: the feed says "Ohio St.",
+    "Pittsburgh Panthers", "San Jose State"; CFBD says "Ohio State", "Pittsburgh",
+    "San Jos\u00e9 State". Folding accents, punctuation and a few noise words is what makes
+    those line up. Do NOT loosen this into fuzzy matching -- a wrong match here would
+    silently exclude a real FBS game from its own line data.
+    """
+    if not s:
+        return ""
+    s = unicodedata.normalize("NFKD", s)
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    s = s.lower().replace("&", " and ")
+    s = re.sub(r"[^a-z0-9 ]", " ", s)
+    parts = [p for p in s.split() if p and p not in ("university", "univ", "college", "the")]
+    return "".join(parts)
+
+
+def _name_variants(name: str | None) -> set[str]:
+    """Normalized spellings a feed might plausibly use for one team name."""
+    n = _norm_team_name(name)
+    if not n:
+        return set()
+    out = {n}
+    if "state" in n:                      # "Ohio State" -> "ohiost"
+        out.add(n.replace("state", "st"))
+    return {x for x in out if x}
+
+
+_FBS_MATCH: tuple[set, set] | None = None
+
+
+def _fbs_match_set() -> tuple[set, set]:
+    """(FBS name variants, ALL known-team name variants). Built once, then cached.
+
+    FBS membership comes from CFBD's own classification field, so this is the same
+    universe the site models -- no hand-kept team list to drift.
+    """
+    global _FBS_MATCH
+    if _FBS_MATCH is None:
+        fbs: set = set()
+        known: set = set()
+        try:
+            teams = list((cfbd_shared.teams_by_name() or {}).values())
+            fbs_ids = {t.get("id") for t in teams
+                       if str(t.get("classification", "")).lower() == "fbs"}
+            for t in teams:
+                names = [t.get("school")] + list(t.get("alternateNames") or [])
+                vars_ = set()
+                for nm in names:
+                    vars_ |= _name_variants(nm)
+                known |= vars_
+                if t.get("id") in fbs_ids:
+                    fbs |= vars_
+            # Aliases resolve some feed spellings that `school`/alternateNames do not
+            # ("Southeastern Louisiana" vs "SE Louisiana").
+            try:
+                for alias, tid in (cfbd_shared.team_aliases() or {}).items():
+                    vars_ = _name_variants(alias)
+                    known |= vars_
+                    if tid in fbs_ids:
+                        fbs |= vars_
+            except Exception:  # noqa: BLE001
+                pass
+        except Exception as e:  # noqa: BLE001
+            print(f"[Odds] FBS name set unavailable ({e}) -- not filtering events")
+        _FBS_MATCH = (fbs, known)
+    return _FBS_MATCH
+
+
+def _fbs_due_only(due: list) -> list:
+    """Keep only events that can affect an FBS board, i.e. calls worth paying for.
+
+    WHY: the PropLine feed is `football_ncaaf` -- FBS AND FCS -- and every event in the
+    near-kickoff tier was getting a per-event /best-line call every cycle. On 2026-09-25
+    the 48h tier held 121 events of which 56 could not touch an FBS board (33 of them
+    FCS-vs-FCS). That was roughly half the near-term spend, on games the model does not
+    rate. FCS teams PLAYING an FBS team are kept -- that is an FBS game.
+
+    Applied to the CALL LIST only: the bulk response is still returned and archived in
+    full (raw_payloads + odds_snapshots), so nothing is lost from the dataset.
+
+    Deliberately conservative: an event is dropped only when BOTH sides resolve to known
+    teams AND neither is FBS. An unrecognized name keeps its event, because a name we
+    failed to match is exactly the case where dropping would lose a real game's line.
+    """
+    fbs, known = _fbs_match_set()
+    if not fbs:
+        return due
+    kept, dropped = [], []
+    for ev in due:
+        h = _norm_team_name(ev.get("home_team"))
+        a = _norm_team_name(ev.get("away_team"))
+        if h in fbs or a in fbs:
+            kept.append(ev)
+        elif h in known and a in known:
+            dropped.append(f"{ev.get('away_team')} @ {ev.get('home_team')}")
+        else:
+            kept.append(ev)
+    if dropped:
+        print(f"[Odds] PropLine: skipped {len(dropped)} non-FBS event(s) with no FBS side "
+              f"e.g. {', '.join(dropped[:3])}")
+    return kept
+
+
 def _best_line_due(ev: dict, now, ts_map: dict) -> bool:
     """Should this event get a /best-line call THIS cycle?"""
     ct = ev.get("commence_time") or ""
@@ -2127,6 +2234,9 @@ def _propline_fetch() -> list[dict]:
                 ev["best_line"] = store[eid]
         window = [ev for ev in events if _propline_event_needed(ev, now)]
         due = [ev for ev in window if _best_line_due(ev, now, ts_map)]
+        # Scope the PAID per-event calls to events that can affect an FBS board: the feed
+        # is all of NCAAF (FBS + FCS) and the FCS-vs-FCS half was pure burn.
+        due = _fbs_due_only(due)
         # Measure: how many per-event calls does the window+freshness cap save?
         print(f"[Odds] PropLine: {len(events)} events | window({PROPLINE_BEST_LINE_WINDOW_DAYS}d) "
               f"{len(window)} | due this cycle {len(due)}")
