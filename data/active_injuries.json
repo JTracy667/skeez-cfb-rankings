@@ -1,32 +1,88 @@
 {
-  "updated": "2026-09-19T17:47:44.526463",
-  "total_teams_with_injuries": 32,
-  "total_tracked_injuries": 41,
-  "key_qb_injuries": 6,
+  "updated": "2026-09-26T08:00:46.750512",
+  "total_teams_with_injuries": 45,
+  "total_tracked_injuries": 56,
+  "key_qb_injuries": 3,
   "teams": {
-    "Baylor": {
-      "team": "Baylor",
-      "net_injury_points": -8.0,
+    "Akron": {
+      "team": "Akron",
+      "net_injury_points": -2.2,
       "injuries": [
         {
-          "player": "D. Lagway",
+          "player": "C. Broughton",
           "pos": "QB",
-          "status": "Out - Ankle ( Sat, Sep 19)",
-          "tier": "p4_starter_qb",
-          "deduction": -7.0,
-          "updated": "2026-09-19"
-        },
+          "status": "Questionable - Knee ( Sat, Sep 26)",
+          "tier": "g5_starter_qb",
+          "deduction": -2.2,
+          "updated": "2026-09-26"
+        }
+      ],
+      "manual_overrides": [],
+      "updated_at": "2026-09-26T08:00:46.742890"
+    },
+    "Arizona": {
+      "team": "Arizona",
+      "net_injury_points": -1.0,
+      "injuries": [
+        {
+          "player": "D. Austin",
+          "pos": "S",
+          "status": "Out - Undisclosed ( Fri, Sep 25)",
+          "tier": "defensive_key",
+          "deduction": -1.0,
+          "updated": "2026-09-26"
+        }
+      ],
+      "manual_overrides": [],
+      "updated_at": "2026-09-26T08:00:46.743038"
+    },
+    "Arkansas State": {
+      "team": "Arkansas State",
+      "net_injury_points": -0.8,
+      "injuries": [
+        {
+          "player": "K. Clay",
+          "pos": "RB",
+          "status": "Questionable - Ankle ( Tue, Sep 22)",
+          "tier": "key_skill_producer",
+          "deduction": -0.8,
+          "updated": "2026-09-26"
+        }
+      ],
+      "manual_overrides": [],
+      "updated_at": "2026-09-26T08:00:46.743187"
+    },
+    "Baylor": {
+      "team": "Baylor",
+      "net_injury_points": -1.0,
+      "injuries": [
         {
           "player": "C. Redding",
           "pos": "S",
           "status": "Out - Knee ( Sat, Sep 5)",
           "tier": "defensive_key",
           "deduction": -1.0,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.520797"
+      "updated_at": "2026-09-26T08:00:46.743463"
+    },
+    "Boise State": {
+      "team": "Boise State",
+      "net_injury_points": -0.8,
+      "injuries": [
+        {
+          "player": "S. Gaines",
+          "pos": "RB",
+          "status": "Questionable - Upper Body ( Fri, Sep 25)",
+          "tier": "key_skill_producer",
+          "deduction": -0.8,
+          "updated": "2026-09-26"
+        }
+      ],
+      "manual_overrides": [],
+      "updated_at": "2026-09-26T08:00:46.743489"
     },
     "Buffalo": {
       "team": "Buffalo",
@@ -38,11 +94,11 @@
           "status": "Out - Knee ( Sat, Sep 19)",
           "tier": "g5_starter_qb",
           "deduction": -4.5,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.520797"
+      "updated_at": "2026-09-26T08:00:46.743725"
     },
     "BYU": {
       "team": "BYU",
@@ -54,27 +110,75 @@
           "status": "Out - Lower Body ( Mon, Sep 7)",
           "tier": "defensive_key",
           "deduction": -1.0,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.520797"
+      "updated_at": "2026-09-26T08:00:46.743802"
     },
-    "California": {
-      "team": "California",
-      "net_injury_points": -0.5,
+    "Clemson": {
+      "team": "Clemson",
+      "net_injury_points": -1.0,
       "injuries": [
         {
-          "player": "J. Beadles",
-          "pos": "LB",
-          "status": "Questionable - Undisclosed ( Thu, Sep 10)",
+          "player": "C. Gipson",
+          "pos": "CB",
+          "status": "Out - Undisclosed ( Fri, Sep 25)",
           "tier": "defensive_key",
-          "deduction": -0.5,
-          "updated": "2026-09-19"
+          "deduction": -1.0,
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.520797"
+      "updated_at": "2026-09-26T08:00:46.744126"
+    },
+    "Colorado State": {
+      "team": "Colorado State",
+      "net_injury_points": -2.2,
+      "injuries": [
+        {
+          "player": "H. Hejny",
+          "pos": "QB",
+          "status": "Questionable - Hamstring ( Mon, Sep 21)",
+          "tier": "g5_starter_qb",
+          "deduction": -2.2,
+          "updated": "2026-09-26"
+        }
+      ],
+      "manual_overrides": [],
+      "updated_at": "2026-09-26T08:00:46.744241"
+    },
+    "Eastern Michigan": {
+      "team": "Eastern Michigan",
+      "net_injury_points": -1.5,
+      "injuries": [
+        {
+          "player": "N. Devereaux",
+          "pos": "WR",
+          "status": "Out - Undisclosed ( Mon, Sep 21)",
+          "tier": "key_skill_producer",
+          "deduction": -1.5,
+          "updated": "2026-09-26"
+        }
+      ],
+      "manual_overrides": [],
+      "updated_at": "2026-09-26T08:00:46.744645"
+    },
+    "Florida State": {
+      "team": "Florida State",
+      "net_injury_points": -1.5,
+      "injuries": [
+        {
+          "player": "S. Singleton Jr.",
+          "pos": "RB",
+          "status": "Out - Lower Body ( Mon, Sep 21)",
+          "tier": "key_skill_producer",
+          "deduction": -1.5,
+          "updated": "2026-09-26"
+        }
+      ],
+      "manual_overrides": [],
+      "updated_at": "2026-09-26T08:00:46.744848"
     },
     "Georgia": {
       "team": "Georgia",
@@ -86,11 +190,27 @@
           "status": "Questionable - Undisclosed ( Sat, Sep 19)",
           "tier": "key_skill_producer",
           "deduction": -0.8,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.521664"
+      "updated_at": "2026-09-26T08:00:46.744921"
+    },
+    "Georgia Tech": {
+      "team": "Georgia Tech",
+      "net_injury_points": -1.0,
+      "injuries": [
+        {
+          "player": "S. Riley",
+          "pos": "S",
+          "status": "Out - Undisclosed ( Thu, Sep 24)",
+          "tier": "defensive_key",
+          "deduction": -1.0,
+          "updated": "2026-09-26"
+        }
+      ],
+      "manual_overrides": [],
+      "updated_at": "2026-09-26T08:00:46.745113"
     },
     "Hawai'i": {
       "team": "Hawai'i",
@@ -102,11 +222,11 @@
           "status": "Questionable - Arm ( Sun, Sep 13)",
           "tier": "g5_starter_qb",
           "deduction": -2.2,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.521664"
+      "updated_at": "2026-09-26T08:00:46.745259"
     },
     "Illinois": {
       "team": "Illinois",
@@ -118,71 +238,71 @@
           "status": "Questionable - Undisclosed ( Sat, Sep 12)",
           "tier": "defensive_key",
           "deduction": -0.5,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.522300"
+      "updated_at": "2026-09-26T08:00:46.745519"
     },
-    "Iowa": {
-      "team": "Iowa",
-      "net_injury_points": -0.8,
+    "Iowa State": {
+      "team": "Iowa State",
+      "net_injury_points": -1.0,
       "injuries": [
         {
-          "player": "K. Moulton",
-          "pos": "RB",
-          "status": "Questionable - Undisclosed ( Sat, Sep 19)",
-          "tier": "key_skill_producer",
-          "deduction": -0.8,
-          "updated": "2026-09-19"
+          "player": "J. Singletary",
+          "pos": "CB",
+          "status": "Out - Undisclosed ( Fri, Sep 25)",
+          "tier": "defensive_key",
+          "deduction": -1.0,
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.522300"
+      "updated_at": "2026-09-26T08:00:46.745677"
     },
-    "Louisiana Tech": {
-      "team": "Louisiana Tech",
-      "net_injury_points": -4.5,
+    "Louisville": {
+      "team": "Louisville",
+      "net_injury_points": -1.0,
       "injuries": [
         {
-          "player": "B. Baker",
-          "pos": "QB",
-          "status": "Out - Hand ( Mon, Sep 14)",
-          "tier": "g5_starter_qb",
-          "deduction": -4.5,
-          "updated": "2026-09-19"
+          "player": "A. Watts",
+          "pos": "CB",
+          "status": "Out - Knee ( Fri, Sep 25)",
+          "tier": "defensive_key",
+          "deduction": -1.0,
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.522300"
+      "updated_at": "2026-09-26T08:00:46.746339"
     },
     "LSU": {
       "team": "LSU",
-      "net_injury_points": -5.5,
+      "net_injury_points": -1.5,
       "injuries": [
         {
-          "player": "S. Leavitt",
-          "pos": "QB",
-          "status": "Questionable - Shoulder ( Thu, Sep 17)",
-          "tier": "star_qb",
-          "deduction": -5.0,
-          "updated": "2026-09-19"
+          "player": "D. Spears",
+          "pos": "S",
+          "status": "Out - Knee ( Mon, Sep 21)",
+          "tier": "defensive_key",
+          "deduction": -1.0,
+          "updated": "2026-09-26"
         },
         {
           "player": "T. Dottery",
           "pos": "LB",
-          "status": "Questionable - Undisclosed ( Thu, Sep 17)",
+          "status": "Questionable - Undisclosed ( Sun, Sep 20)",
           "tier": "defensive_key",
           "deduction": -0.5,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.522300"
+      "updated_at": "2026-09-26T08:00:46.746408"
     },
     "Maryland": {
       "team": "Maryland",
-      "net_injury_points": -2.3,
+      "net_injury_points": -2.5,
       "injuries": [
         {
           "player": "D. Williams",
@@ -190,59 +310,43 @@
           "status": "Out - Undisclosed ( Fri, Sep 18)",
           "tier": "key_skill_producer",
           "deduction": -1.5,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         },
         {
-          "player": "I. Howard",
-          "pos": "RB",
-          "status": "Questionable - Undisclosed ( Sun, Sep 13)",
-          "tier": "key_skill_producer",
-          "deduction": -0.8,
-          "updated": "2026-09-19"
+          "player": "Z. Mathis",
+          "pos": "LB",
+          "status": "Out - Leg ( Thu, Aug 13)",
+          "tier": "defensive_key",
+          "deduction": -1.0,
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.522300"
+      "updated_at": "2026-09-26T08:00:46.746477"
     },
     "Miami": {
       "team": "Miami",
-      "net_injury_points": -1.6,
+      "net_injury_points": -2.3,
       "injuries": [
         {
-          "player": "M. Fletcher Jr.",
-          "pos": "RB",
-          "status": "Questionable - Upper Body ( Fri, Sep 18)",
+          "player": "M. Toney",
+          "pos": "WR",
+          "status": "Questionable - Undisclosed ( Mon, Sep 21)",
           "tier": "key_skill_producer",
           "deduction": -0.8,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         },
         {
-          "player": "C. Brown",
-          "pos": "RB",
-          "status": "Questionable - Lower Body ( Fri, Sep 18)",
+          "player": "J. Moore",
+          "pos": "WR",
+          "status": "Out - Upper Body ( Mon, Sep 21)",
           "tier": "key_skill_producer",
-          "deduction": -0.8,
-          "updated": "2026-09-19"
+          "deduction": -1.5,
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.522300"
-    },
-    "Michigan State": {
-      "team": "Michigan State",
-      "net_injury_points": -0.5,
-      "injuries": [
-        {
-          "player": "J. Hall",
-          "pos": "LB",
-          "status": "Questionable - Elbow ( Sat, Sep 12)",
-          "tier": "defensive_key",
-          "deduction": -0.5,
-          "updated": "2026-09-19"
-        }
-      ],
-      "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.522300"
+      "updated_at": "2026-09-26T08:00:46.746568"
     },
     "Minnesota": {
       "team": "Minnesota",
@@ -254,71 +358,103 @@
           "status": "Out - Undisclosed ( Sat, Sep 19)",
           "tier": "key_skill_producer",
           "deduction": -1.5,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.522300"
+      "updated_at": "2026-09-26T08:00:46.746671"
+    },
+    "Ole Miss": {
+      "team": "Ole Miss",
+      "net_injury_points": -0.8,
+      "injuries": [
+        {
+          "player": "K. Lacy",
+          "pos": "RB",
+          "status": "Questionable - Shoulder ( Fri, Sep 25)",
+          "tier": "key_skill_producer",
+          "deduction": -0.8,
+          "updated": "2026-09-26"
+        }
+      ],
+      "manual_overrides": [],
+      "updated_at": "2026-09-26T08:00:46.746707"
     },
     "Mississippi State": {
       "team": "Mississippi State",
-      "net_injury_points": -1.0,
+      "net_injury_points": -0.5,
       "injuries": [
         {
           "player": "Z. Tillman",
           "pos": "LB",
-          "status": "Out - Undisclosed ( Fri, Sep 18)",
+          "status": "Questionable - Undisclosed ( Sun, Sep 20)",
           "tier": "defensive_key",
-          "deduction": -1.0,
-          "updated": "2026-09-19"
+          "deduction": -0.5,
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.523448"
+      "updated_at": "2026-09-26T08:00:46.746863"
     },
-    "Navy": {
-      "team": "Navy",
-      "net_injury_points": -4.5,
+    "Northwestern": {
+      "team": "Northwestern",
+      "net_injury_points": -1.0,
       "injuries": [
         {
-          "player": "B. Woodson",
-          "pos": "QB",
-          "status": "Out - Ankle ( Tue, Sep 15)",
-          "tier": "g5_starter_qb",
-          "deduction": -4.5,
-          "updated": "2026-09-19"
+          "player": "B. Turner",
+          "pos": "CB",
+          "status": "Out - Undisclosed ( Fri, Sep 25)",
+          "tier": "defensive_key",
+          "deduction": -1.0,
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.523448"
+      "updated_at": "2026-09-26T08:00:46.747407"
     },
     "Ohio": {
       "team": "Ohio",
-      "net_injury_points": -4.5,
+      "net_injury_points": -2.2,
       "injuries": [
         {
           "player": "N. Poulos",
           "pos": "QB",
-          "status": "Out - Undisclosed ( Sat, Sep 19)",
+          "status": "Questionable - Undisclosed ( Sun, Sep 20)",
           "tier": "g5_starter_qb",
-          "deduction": -4.5,
-          "updated": "2026-09-19"
+          "deduction": -2.2,
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.523951"
+      "updated_at": "2026-09-26T08:00:46.747493"
+    },
+    "Ohio State": {
+      "team": "Ohio State",
+      "net_injury_points": -0.8,
+      "injuries": [
+        {
+          "player": "B. Jackson",
+          "pos": "RB",
+          "status": "Questionable - Shoulder ( Sun, Sep 20)",
+          "tier": "key_skill_producer",
+          "deduction": -0.8,
+          "updated": "2026-09-26"
+        }
+      ],
+      "manual_overrides": [],
+      "updated_at": "2026-09-26T08:00:46.747572"
     },
     "Oklahoma": {
       "team": "Oklahoma",
-      "net_injury_points": -2.5,
+      "net_injury_points": -2.0,
       "injuries": [
         {
           "player": "K. Lewis",
           "pos": "LB",
-          "status": "Out - Knee ( Fri, Sep 18)",
+          "status": "Questionable - Knee ( Sun, Sep 20)",
           "tier": "defensive_key",
-          "deduction": -1.0,
-          "updated": "2026-09-19"
+          "deduction": -0.5,
+          "updated": "2026-09-26"
         },
         {
           "player": "T. Harris",
@@ -326,43 +462,43 @@
           "status": "Out - Back ( Tue, Sep 15)",
           "tier": "key_skill_producer",
           "deduction": -1.5,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.523951"
+      "updated_at": "2026-09-26T08:00:46.747629"
     },
     "Oregon": {
       "team": "Oregon",
-      "net_injury_points": -0.8,
+      "net_injury_points": -1.5,
       "injuries": [
         {
           "player": "J. McClellan",
           "pos": "WR",
-          "status": "Questionable - Leg ( Sat, Sep 19)",
+          "status": "Out - Foot ( Mon, Sep 21)",
           "tier": "key_skill_producer",
-          "deduction": -0.8,
-          "updated": "2026-09-19"
+          "deduction": -1.5,
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.523951"
+      "updated_at": "2026-09-26T08:00:46.747835"
     },
-    "Purdue": {
-      "team": "Purdue",
-      "net_injury_points": -0.5,
+    "Penn State": {
+      "team": "Penn State",
+      "net_injury_points": -1.5,
       "injuries": [
         {
-          "player": "M. Clark",
-          "pos": "CB",
-          "status": "Questionable - Undisclosed ( Sat, Sep 12)",
-          "tier": "defensive_key",
-          "deduction": -0.5,
-          "updated": "2026-09-19"
+          "player": "K. Howard",
+          "pos": "WR",
+          "status": "Out - Undisclosed ( Wed, Sep 23)",
+          "tier": "key_skill_producer",
+          "deduction": -1.5,
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.524453"
+      "updated_at": "2026-09-26T08:00:46.747949"
     },
     "Rutgers": {
       "team": "Rutgers",
@@ -374,11 +510,27 @@
           "status": "Out - Undisclosed ( Thu, Sep 17)",
           "tier": "defensive_key",
           "deduction": -1.0,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.524453"
+      "updated_at": "2026-09-26T08:00:46.748158"
+    },
+    "Southern Mississippi": {
+      "team": "Southern Mississippi",
+      "net_injury_points": -4.5,
+      "injuries": [
+        {
+          "player": "E. Hampton",
+          "pos": "QB",
+          "status": "Out - Hand ( Fri, Sep 25)",
+          "tier": "g5_starter_qb",
+          "deduction": -4.5,
+          "updated": "2026-09-26"
+        }
+      ],
+      "manual_overrides": [],
+      "updated_at": "2026-09-26T08:00:46.748523"
     },
     "Stanford": {
       "team": "Stanford",
@@ -390,11 +542,11 @@
           "status": "Out - Undisclosed ( Sat, Sep 19)",
           "tier": "defensive_key",
           "deduction": -1.0,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.524956"
+      "updated_at": "2026-09-26T08:00:46.748619"
     },
     "Syracuse": {
       "team": "Syracuse",
@@ -406,43 +558,51 @@
           "status": "Questionable - Undisclosed ( Sat, Sep 12)",
           "tier": "key_skill_producer",
           "deduction": -0.8,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.524956"
+      "updated_at": "2026-09-26T08:00:46.748688"
     },
     "Tennessee": {
       "team": "Tennessee",
-      "net_injury_points": -1.0,
+      "net_injury_points": -1.8,
       "injuries": [
+        {
+          "player": "D. Bishop",
+          "pos": "RB",
+          "status": "Questionable - Undisclosed ( Mon, Sep 21)",
+          "tier": "key_skill_producer",
+          "deduction": -0.8,
+          "updated": "2026-09-26"
+        },
         {
           "player": "J. Harmon",
           "pos": "LB",
           "status": "Out - Knee ( Mon, Sep 7)",
           "tier": "defensive_key",
           "deduction": -1.0,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.524956"
+      "updated_at": "2026-09-26T08:00:46.748855"
     },
     "Texas A&M": {
       "team": "Texas A&M",
-      "net_injury_points": -0.8,
+      "net_injury_points": -1.5,
       "injuries": [
         {
           "player": "T. Bussey",
           "pos": "WR",
-          "status": "Questionable - Undisclosed ( Sat, Sep 19)",
+          "status": "Out - Undisclosed ( Mon, Sep 21)",
           "tier": "key_skill_producer",
-          "deduction": -0.8,
-          "updated": "2026-09-19"
+          "deduction": -1.5,
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.524956"
+      "updated_at": "2026-09-26T08:00:46.749058"
     },
     "Texas State": {
       "team": "Texas State",
@@ -454,7 +614,7 @@
           "status": "Questionable - Shoulder ( Sat, Sep 19)",
           "tier": "key_skill_producer",
           "deduction": -0.8,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         },
         {
           "player": "J. Sample",
@@ -462,11 +622,11 @@
           "status": "Questionable - Undisclosed ( Sun, Sep 13)",
           "tier": "defensive_key",
           "deduction": -0.5,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.524956"
+      "updated_at": "2026-09-26T08:00:46.749128"
     },
     "Texas Tech": {
       "team": "Texas Tech",
@@ -478,7 +638,7 @@
           "status": "Questionable - Undisclosed ( Wed, Sep 16)",
           "tier": "key_skill_producer",
           "deduction": -0.8,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         },
         {
           "player": "A. Boyd",
@@ -486,7 +646,7 @@
           "status": "Out - Undisclosed ( Wed, Sep 16)",
           "tier": "defensive_key",
           "deduction": -1.0,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         },
         {
           "player": "T. White",
@@ -494,51 +654,91 @@
           "status": "Questionable - Knee ( Sun, Sep 13)",
           "tier": "defensive_key",
           "deduction": -0.5,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.524956"
+      "updated_at": "2026-09-26T08:00:46.749213"
+    },
+    "Troy": {
+      "team": "Troy",
+      "net_injury_points": -0.5,
+      "injuries": [
+        {
+          "player": "J. Lott",
+          "pos": "S",
+          "status": "Questionable - Undisclosed ( Sun, Sep 20)",
+          "tier": "defensive_key",
+          "deduction": -0.5,
+          "updated": "2026-09-26"
+        }
+      ],
+      "manual_overrides": [],
+      "updated_at": "2026-09-26T08:00:46.749298"
     },
     "Tulsa": {
       "team": "Tulsa",
-      "net_injury_points": -2.2,
+      "net_injury_points": -4.5,
       "injuries": [
         {
           "player": "B. Hayes",
           "pos": "QB",
-          "status": "Questionable - Knee ( Sun, Sep 13)",
+          "status": "Out - Knee ( Mon, Sep 21)",
           "tier": "g5_starter_qb",
-          "deduction": -2.2,
-          "updated": "2026-09-19"
+          "deduction": -4.5,
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.524956"
+      "updated_at": "2026-09-26T08:00:46.749352"
+    },
+    "UCF": {
+      "team": "UCF",
+      "net_injury_points": -4.5,
+      "injuries": [
+        {
+          "player": "L. Carter",
+          "pos": "LB",
+          "status": "Out - Undisclosed ( Thu, Sep 24)",
+          "tier": "defensive_key",
+          "deduction": -1.0,
+          "updated": "2026-09-26"
+        },
+        {
+          "player": "A. Barnett III",
+          "pos": "QB",
+          "status": "Questionable - Hamstring ( Mon, Sep 21)",
+          "tier": "p4_starter_qb",
+          "deduction": -3.5,
+          "updated": "2026-09-26"
+        }
+      ],
+      "manual_overrides": [],
+      "updated_at": "2026-09-26T08:00:46.749426"
     },
     "UCLA": {
       "team": "UCLA",
-      "net_injury_points": -2.0,
+      "net_injury_points": -1.0,
       "injuries": [
-        {
-          "player": "J. Johnson",
-          "pos": "CB",
-          "status": "Out - Undisclosed ( Thu, Sep 17)",
-          "tier": "defensive_key",
-          "deduction": -1.0,
-          "updated": "2026-09-19"
-        },
         {
           "player": "T. Johnson",
           "pos": "CB",
-          "status": "Out - Undisclosed ( Thu, Sep 17)",
+          "status": "Questionable - Undisclosed ( Sun, Sep 20)",
           "tier": "defensive_key",
-          "deduction": -1.0,
-          "updated": "2026-09-19"
+          "deduction": -0.5,
+          "updated": "2026-09-26"
+        },
+        {
+          "player": "J. Johnson",
+          "pos": "CB",
+          "status": "Questionable - Undisclosed ( Sun, Sep 20)",
+          "tier": "defensive_key",
+          "deduction": -0.5,
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.524956"
+      "updated_at": "2026-09-26T08:00:46.749556"
     },
     "Connecticut": {
       "team": "Connecticut",
@@ -550,27 +750,51 @@
           "status": "Questionable - Undisclosed ( Sat, Sep 12)",
           "tier": "g5_starter_qb",
           "deduction": -2.2,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.524956"
+      "updated_at": "2026-09-26T08:00:46.749579"
     },
     "USC": {
       "team": "USC",
-      "net_injury_points": -1.5,
+      "net_injury_points": -2.0,
       "injuries": [
         {
-          "player": "T. Mosley",
+          "player": "C. Simms",
           "pos": "WR",
-          "status": "Out - Knee ( Thu, Sep 17)",
+          "status": "Out - Undisclosed ( Thu, Sep 24)",
           "tier": "key_skill_producer",
           "deduction": -1.5,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
+        },
+        {
+          "player": "K. Reddick",
+          "pos": "S",
+          "status": "Questionable - Undisclosed ( Sun, Sep 20)",
+          "tier": "defensive_key",
+          "deduction": -0.5,
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.525960"
+      "updated_at": "2026-09-26T08:00:46.749785"
+    },
+    "Virginia Tech": {
+      "team": "Virginia Tech",
+      "net_injury_points": -0.8,
+      "injuries": [
+        {
+          "player": "A. Greene",
+          "pos": "WR",
+          "status": "Questionable - Undisclosed ( Mon, Sep 21)",
+          "tier": "key_skill_producer",
+          "deduction": -0.8,
+          "updated": "2026-09-26"
+        }
+      ],
+      "manual_overrides": [],
+      "updated_at": "2026-09-26T08:00:46.750033"
     },
     "Wake Forest": {
       "team": "Wake Forest",
@@ -579,20 +803,14 @@
         {
           "player": "G. Lopez",
           "pos": "QB",
-          "status": "Questionable - Undisclosed ( Tue, Sep 15)",
+          "status": "Questionable - Undisclosed ( Fri, Sep 25)",
           "tier": "p4_starter_qb",
           "deduction": -3.5,
-          "updated": "2026-09-19"
+          "updated": "2026-09-26"
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-09-19T17:47:44.525960"
-    },
-    "TestState": {
-      "team": "TestState",
-      "net_injury_points": 0,
-      "injuries": [],
-      "manual_overrides": []
+      "updated_at": "2026-09-26T08:00:46.750070"
     }
   }
 }
