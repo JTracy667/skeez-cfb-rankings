@@ -82,12 +82,14 @@ Extract special teams:
 * `sp_special_teams`: `rec.get("specialTeams", {}).get("rating")`
 
 ### 2.3 Phase 1 CTO Checklist
-- [ ] Inspect `_cfbd_advanced_stats()` in `app.py` and verify all dictionary keys handle `None` gracefully without throwing `TypeError`.
-- [ ] Add division-by-zero guards for `off_eckel_rate` and `def_eckel_rate` when `drives == 0`.
-- [ ] Update `_cfbd_fpi()` to store `fpi_sor`, `fpi_sos`, and `fpi_eff_special_teams`.
-- [ ] Update `_cfbd_ratings_sp()` to store `sp_special_teams`.
-- [ ] Verify `data/cfbd_analytics.json` is updated and maintains valid JSON schema.
-- [ ] Run `python -m pytest tests/` to confirm zero regression on existing composite and data pipelines.
+- [x] Inspect `_cfbd_advanced_stats()` in `app.py` and verify all dictionary keys handle `None` gracefully without throwing `TypeError`. — extraction split into `_advanced_matchup_fields()`; every sub-dict read is `or {}` guarded and every value goes through the None-safe `_adv_num()`. Tested against deliberately-broken records.
+- [x] Add division-by-zero guards for `off_eckel_rate` and `def_eckel_rate` when `drives == 0`. — `drives` falsy/missing → `None`, never raises; `eckel_ratio` guarded on a zero denominator too.
+- [x] Update `_cfbd_fpi()` to store `fpi_sor`, `fpi_sos`, and `fpi_eff_special_teams`. — plus `fpi_game_control` (same `resumeRanks` dict, no extra cost).
+- [x] Update `_cfbd_sp()` to store `sp_special_teams`. — note: the function is named `_cfbd_sp()`, not `_cfbd_ratings_sp()`.
+- [x] Verify `data/cfbd_analytics.json` is updated and maintains valid JSON schema. — verified OFFLINE via `scripts/verify_advanced_ingest.py`: rebuilt record is a strict superset of the live file (41 added, 0 lost), all 36 `ADV_MATCHUP_FIELDS` present, JSON round-trip OK. The on-disk file itself refreshes on the next live CFBD pull, i.e. after the Phase 2 deploy — the new fields cannot appear until a fetch runs on the new code.
+- [x] Run `python -m pytest tests/` to confirm zero regression on existing composite and data pipelines. — `30 passed`. Baseline was not green when Phase 1 started: `tests/test_d1_counter.py` aborted collection entirely (INTERNALERROR) and `test_fcs_no_data_prior` failed on a stale 16.0 assertion. Both fixed as test-infra work in commit `b6017ea`; model behaviour untouched.
+
+**Phase 1 status: COMPLETE (commit `b6017ea`, pushed).** Zero additional CFBD calls, asserted by test.
 
 ---
 
