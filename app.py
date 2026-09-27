@@ -1130,7 +1130,7 @@ def api_refresh():
     else:
         return {"status": "fallback", "source": "local", "note": "ESPN fetch failed, using local data"}
 
-CODE_MARKER = "v45-fbs-line-scope"   # bump when a release must be provably live
+CODE_MARKER = "v46-advanced-matchup"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -1670,6 +1670,14 @@ ADV_MATCHUP_FIELDS = (
     "off_field_pos_avg", "def_field_pos_avg", "net_field_pos",
 )
 
+# Non-advanced-payload fields the matchup engine also ranks (resume / special
+# teams). Same single-source-of-truth role as ADV_MATCHUP_FIELDS -- and the reason
+# the engine's test can prove it never references a field the record cannot carry.
+ADV_MATCHUP_RESUME_FIELDS = (
+    "fpi_sor", "fpi_sos", "fpi_game_control", "fpi_eff_special_teams",
+    "sp_special_teams",
+)
+
 
 def _adv_num(v, ndigits: int = 4):
     """round(v, ndigits), but None-safe: anything non-numeric in -> None out.
@@ -1753,7 +1761,12 @@ def _advanced_matchup_fields(off: dict, defn: dict) -> dict:
 
     off_fp_avg = off_fp.get("averageStart")
     def_fp_avg = def_fp.get("averageStart")
-    net_fp = (round(off_fp_avg - def_fp_avg, 2)
+    # CFBD's averageStart is DISTANCE TO THE GOAL (71.8 = own 28-yard line), so a
+    # HIGHER offensive value is WORSE field position while a HIGHER defensive value
+    # is BETTER (the defense is pushing opponents back). The plan wrote
+    # `off - def`, which therefore reads inverted; Jeff confirmed the flip
+    # (2026-09-27) so that POSITIVE = this team has the field-position advantage.
+    net_fp = (round(def_fp_avg - off_fp_avg, 2)
               if isinstance(off_fp_avg, (int, float)) and isinstance(def_fp_avg, (int, float))
               else None)
 
@@ -3903,11 +3916,8 @@ def fetch_live_analytics():
                 # Advanced matchup metrics + resume/special-teams (Phase 1). Keyed by
                 # the names the plan specifies so /api/matchup can rank them directly.
                 **adv_matchup,
-                "fpi_sor": fpi.get("fpi_sor"),
-                "fpi_sos": fpi.get("fpi_sos"),
-                "fpi_game_control": fpi.get("fpi_game_control"),
-                "fpi_eff_special_teams": fpi.get("fpi_eff_special_teams"),
-                "sp_special_teams": sp.get("sp_special_teams"),
+                **{k: (sp if k == "sp_special_teams" else fpi).get(k)
+                   for k in ADV_MATCHUP_RESUME_FIELDS},
                 "returning_ppa": round(returning_ppa, 1) if returning_ppa is not None else None,
                 # is-not-None, not truthiness: 0.0 is a REAL value here (Oklahoma State
                 # returns none of its production) and must not be laundered into None,
@@ -6241,7 +6251,247 @@ def _boot_warm() -> None:
         print(f"[bootwarm] aborted: {e}")
 
 
-threading.Thread(target=_boot_warm, daemon=True, name="bootwarm").start()
+if os.environ.get("CFB_SKIP_BOOTWARM") == "1":
+    # Opt-out used by the test suite (see tests/conftest.py). Importing app must not
+    # fire live CFBD/PropLine calls: a test run would otherwise spend the same quota
+    # the site serves from, and inflate a ~10s suite to ~2 minutes.
+    print("[bootwarm] skipped (CFB_SKIP_BOOTWARM=1)")
+else:
+    threading.Thread(target=_boot_warm, daemon=True, name="bootwarm").start()
+
+
+# ── Advanced Matchup engine (Phase 2 of docs/ADVANCED_STATS_IMPLEMENTATION_PLAN.md) ──
+#
+# Jeff's direction (2026-09-27): these metrics are a PERSONAL analysis tool first,
+# not a public site feature. So the engine lives here, /api/matchup stays
+# ADMIN-GATED (nothing public calls it, so it can hold the secret like the other ops
+# routes), and scripts/matchup_report.py renders the answer on demand. If the
+# schedule-drawer UI is ever green-lit, this same engine feeds it and the gate is a
+# one-line change -- the ranking logic is written once, on purpose.
+#
+# POLARITY is the load-bearing field: +1 = higher is better, -1 = lower is better.
+# It drives BOTH the national rank direction AND the colour-coding, so one wrong
+# sign silently inverts an entire row. Every entry below was confirmed by Jeff
+# before the engine was built rather than inferred from the metric name.
+MATCHUP_SECTIONS = (
+    ("trench", "TRENCH & HAVOC"),
+    ("drives", "QUALITY DRIVES & FINISHING"),
+    ("situational", "SITUATIONAL DOWNS"),
+    ("field", "FIELD POSITION & SPECIAL TEAMS"),
+)
+
+# key, label, section, polarity, decimals
+MATCHUP_METRICS = (
+    ("off_success_rate", "OFF SUCCESS RATE", "trench", +1, 4),
+    ("off_explosiveness", "OFF EXPLOSIVENESS", "trench", +1, 3),
+    ("off_line_yards", "OFF LINE YARDS", "trench", +1, 2),
+    ("off_stuff_rate", "OFF STUFF RATE", "trench", -1, 3),
+    ("off_rush_success", "OFF RUSH SUCCESS", "trench", +1, 4),
+    ("off_pass_success", "OFF PASS SUCCESS", "trench", +1, 4),
+    ("def_havoc_total", "DEF HAVOC RATE", "trench", +1, 4),
+    ("def_havoc_front_seven", "DEF HAVOC FRONT-7", "trench", +1, 4),
+    ("def_havoc_db", "DEF HAVOC DB", "trench", +1, 4),
+    ("def_stuff_rate", "DEF STUFF RATE", "trench", +1, 3),
+    ("def_line_yards", "DEF LINE YARDS ALWD", "trench", -1, 2),
+    ("def_rush_success", "DEF RUSH SR ALWD", "trench", -1, 4),
+    ("def_pass_success", "DEF PASS SR ALWD", "trench", -1, 4),
+    ("off_eckel_rate", "ECKEL RATE", "drives", +1, 4),
+    ("eckel_ratio", "ECKEL RATIO", "drives", +1, 4),
+    ("off_ppo", "OFF PTS/OPP", "drives", +1, 2),
+    ("def_ppo", "DEF PTS/OPP ALWD", "drives", -1, 2),
+    ("pts_per_poss", "OFF PTS/DRIVE", "drives", +1, 2),
+    ("def_pts_per_poss", "DEF PTS/DRIVE ALWD", "drives", -1, 2),
+    ("off_standard_down_success", "OFF STD DOWN SR", "situational", +1, 4),
+    ("off_passing_down_success", "OFF PASS DOWN SR", "situational", +1, 4),
+    ("def_standard_down_success", "DEF STD DOWN SR ALWD", "situational", -1, 4),
+    ("def_passing_down_success", "DEF PASS DOWN SR ALWD", "situational", -1, 4),
+    ("net_field_pos", "NET FIELD POSITION", "field", +1, 2),
+    ("sp_special_teams", "SP+ SPECIAL TEAMS", "field", +1, 1),
+    ("fpi_eff_special_teams", "FPI SPECIAL TEAMS", "field", +1, 1),
+    ("fpi_sor", "STRENGTH OF RECORD", "field", -1, 0),
+    ("fpi_sos", "STRENGTH OF SCHEDULE", "field", -1, 0),
+)
+
+# Genuine offense-vs-defense edges -- the actual point of a matchup card. Each row
+# pits one side's offense against the other side's defense, so the two sides use
+# DIFFERENT keys; the polarity belongs to the offensive key.
+# label, offense_key, defense_key, polarity, decimals
+MATCHUP_EDGES = (
+    ("PASS OFFENSE vs PASS DEFENSE", "off_pass_success", "def_pass_success", +1, 4),
+    ("RUSH OFFENSE vs RUSH DEFENSE", "off_rush_success", "def_rush_success", +1, 4),
+    ("O-LINE YARDS vs D-LINE YARDS ALWD", "off_line_yards", "def_line_yards", +1, 2),
+    ("EXPLOSIVENESS vs HAVOC ALLOWED", "off_explosiveness", "def_havoc_total", +1, 3),
+    ("PTS/OPP vs PTS/OPP ALWD", "off_ppo", "def_ppo", +1, 2),
+)
+
+
+def resolve_team(query: str, teams: list):
+    """Resolve a user-typed team to one analytics record.
+
+    Returns (record, None) or (None, reason). Order: exact name, mascot, then a
+    unique substring ('Oregon' matches 'Oregon'; 'Miami' is ambiguous and says so
+    rather than silently picking one).
+    """
+    q = (query or "").strip().lower()
+    if not q:
+        return None, "no team given"
+    for t in teams:
+        if (t.get("name") or "").lower() == q:
+            return t, None
+    for t in teams:
+        if (t.get("mascot") or "").lower() == q:
+            return t, None
+    hits = [t for t in teams if q in (t.get("name") or "").lower()]
+    if len(hits) == 1:
+        return hits[0], None
+    if len(hits) > 1:
+        return None, "ambiguous %r: %s" % (query, ", ".join(sorted(t["name"] for t in hits)[:8]))
+    return None, "no FBS team matches %r" % query
+
+
+def _matchup_rank_pool(teams: list) -> list:
+    """FBS-only ranking pool.
+
+    The analytics payload carries ~685 records (FBS + FCS), but the plan specifies
+    national ranks across FBS (1-138). Ranking the whole payload produced nonsense
+    like '#187 of 685' on a defensive rate, which reads as a real rank and is not.
+    Membership comes from the site's canonical FBS matcher (CFBD's own
+    classification field) so there is no second team list to drift.
+    """
+    try:
+        fbs, _known = _fbs_match_set()
+    except Exception:  # noqa: BLE001
+        return teams
+    pool = [t for t in teams if _name_variants(t.get("name")) & fbs]
+    # Defensive: a matcher hiccup must not silently empty every rank badge.
+    if len(pool) < 100:
+        return teams
+    return pool
+
+
+def build_matchup_rankings(teams: list) -> dict:
+    """National rank map per metric, best = 1, direction set by polarity.
+
+    Ranks are computed over the FBS pool (see _matchup_rank_pool). Built once per
+    request and shared by every row so a matchup costs one pass per metric rather
+    than one pass per row.
+    """
+    pool = _matchup_rank_pool(teams)
+    ctx = {}
+    for key, _label, _section, polarity, _dec in MATCHUP_METRICS:
+        vals = [(t.get("name"), float(v))
+                for t in pool
+                for v in (t.get(key),)
+                if isinstance(v, (int, float)) and not isinstance(v, bool)]
+        vals.sort(key=lambda nv: nv[1], reverse=(polarity > 0))
+        ctx[key] = {"rank": {n: i + 1 for i, (n, _) in enumerate(vals)}, "n": len(vals)}
+    return ctx
+
+
+def _side_stat(rec: dict, key: str, ctx: dict, polarity: int) -> dict:
+    v = rec.get(key)
+    if not isinstance(v, (int, float)) or isinstance(v, bool):
+        return {"value": None, "rank": None, "pct": None}
+    r = (ctx.get(key) or {}).get("rank", {}).get(rec.get("name"))
+    n = (ctx.get(key) or {}).get("n") or 0
+    pct = round((1 - (r - 1) / n) * 100) if (r and n) else None
+    return {"value": v, "rank": r, "pct": pct}
+
+
+def _leader(home_val, away_val, polarity: int):
+    """Which side holds the edge on a metric. Positive-adjusted away minus home."""
+    if home_val is None or away_val is None:
+        return None, None
+    edge = round((away_val - home_val) * polarity, 4)
+    return edge, ("away" if edge > 0 else ("home" if edge < 0 else "even"))
+
+
+def matchup_breakdown(home_query: str, away_query: str, teams: list = None, ctx: dict = None) -> dict:
+    """Full advanced-stat comparison for one game. Pure function -- no I/O."""
+    teams = teams if teams is not None else _matchup_teams()
+    if not teams:
+        return {"error": "analytics data unavailable"}
+    ctx = ctx if ctx is not None else build_matchup_rankings(teams)
+    home, err_h = resolve_team(home_query, teams)
+    away, err_a = resolve_team(away_query, teams)
+    if err_h:
+        return {"error": "home: %s" % err_h}
+    if err_a:
+        return {"error": "away: %s" % err_a}
+
+    sections = []
+    for sec_key, sec_label in MATCHUP_SECTIONS:
+        rows = []
+        for key, label, section, polarity, dec in MATCHUP_METRICS:
+            if section != sec_key:
+                continue
+            h = _side_stat(home, key, ctx, polarity)
+            a = _side_stat(away, key, ctx, polarity)
+            edge, leader = _leader(h["value"], a["value"], polarity)
+            rows.append({"key": key, "label": label, "polarity": polarity, "decimals": dec,
+                         "home": h, "away": a, "edge": edge, "leader": leader})
+        wins = {"home": sum(1 for r in rows if r["leader"] == "home"),
+                "away": sum(1 for r in rows if r["leader"] == "away")}
+        sections.append({"key": sec_key, "label": sec_label, "rows": rows, "wins": wins})
+
+    # cross-side edges, both directions
+    edges = []
+    for label, off_key, def_key, polarity, dec in MATCHUP_EDGES:
+        for off_rec, def_rec, direction in ((away, home, "away_o_vs_home_d"),
+                                            (home, away, "home_o_vs_away_d")):
+            o = _side_stat(off_rec, off_key, ctx, polarity)
+            d = _side_stat(def_rec, def_key, ctx, polarity)
+            if direction == "away_o_vs_home_d":
+                h_side, a_side = d, o          # home's defense vs away's offense
+            else:
+                h_side, a_side = o, d          # home's offense vs away's defense
+            edge, leader = _leader(h_side["value"], a_side["value"], polarity)
+            edges.append({"direction": direction, "label": label, "polarity": polarity,
+                          "decimals": dec, "offense_key": off_key, "defense_key": def_key,
+                          "home": h_side, "away": a_side, "edge": edge, "leader": leader})
+
+    return {
+        "home": {"name": home.get("name"), "mascot": home.get("mascot"),
+                 "conf": home.get("conf"), "composite": home.get("composite")},
+        "away": {"name": away.get("name"), "mascot": away.get("mascot"),
+                 "conf": away.get("conf"), "composite": away.get("composite")},
+        "sections": sections,
+        "edges": edges,
+        "field_size": len(_matchup_rank_pool(teams)),
+    }
+
+
+def _matchup_teams() -> list:
+    """Teams from the SAME cached payload /api/analytics serves -- never a CFBD call.
+
+    The advanced metrics are stored data (CFBD publishes the composite inputs once
+    a week), so answering a matchup question must not spend quota.
+    """
+    cached = _cache_get(_analytics_cache, ANALYTICS_TTL)
+    if cached and cached.get("teams"):
+        return cached["teams"]
+    teams = _load_cfbd_analytics_file()
+    return [dict(t) for t in (teams or [])]
+
+
+@app.get("/api/matchup", dependencies=_ADMIN)
+def api_matchup(home: str, away: str):
+    """Advanced-stat matchup breakdown for one game (Phase 2).
+
+    ADMIN-GATED deliberately: this is a personal analysis tool, not a site feature,
+    and no public page calls it -- so it can hold the secret the way the other ops
+    routes do (a public page cannot). Reads STORED analytics, so it costs no CFBD
+    quota; the metrics themselves refresh on the normal weekly anchor.
+    """
+    teams = _matchup_teams()
+    if not teams:
+        raise HTTPException(502, "analytics data unavailable")
+    out = matchup_breakdown(home, away, teams)
+    if out.get("error"):
+        raise HTTPException(404, out["error"])
+    out["source"] = "stored-analytics"
+    out["as_of"] = datetime.now().isoformat()
+    return out
 
 
 # ── Main ──

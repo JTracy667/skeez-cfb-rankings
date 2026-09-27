@@ -115,7 +115,9 @@ class TestAdvancedIngestFields(unittest.TestCase):
         self.assertEqual(produced["off_passing_down_success"], round(0.32323232323232326, 4))
         self.assertEqual(produced["off_field_pos_avg"], 71.8)
         self.assertEqual(produced["def_field_pos_avg"], 71.5)
-        self.assertEqual(produced["net_field_pos"], 0.3)
+        # def - off: positive = this team has the field-position advantage
+        # (averageStart is distance-to-goal, so a HIGHER defensive value is better).
+        self.assertEqual(produced["net_field_pos"], -0.3)
 
     def test_every_team_in_the_real_payload_is_fully_populated(self):
         """No team may end up with a missing value when CFBD sent one."""
