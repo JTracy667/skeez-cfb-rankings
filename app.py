@@ -967,29 +967,35 @@ def _save_rating_vintages() -> None:
         pass  # never let bookkeeping break a pull
 
 
-def get_rankings() -> RankingsResponse:
+def get_rankings(force: bool = False) -> RankingsResponse:
     """Return the Skeez CFB Rankings — the composite list.
 
     Single source of truth: the SAME CFBD analytics dataset the Analytics
     composite tab uses, enriched with the SAME composite formula
     (project_score_multi_factor) and sorted by composite descending.
-    This guarantees the main page and the composite tab always agree —
-    same teams, same order, same scores.
-    """
-    cached = _cache_get(_rankings_cache, CACHE_TTL)
-    if cached:
-        return RankingsResponse(**cached)
+    This guarantees the main page and the composite tab always agree — same
+    teams, same order, same scores.
 
-    # Durable board. Without this a container that just woke up (i.e. every container,
-    # after 5 minutes idle) rebuilds the entire composite list for its first visitor,
-    # even though the four inputs it is built from do not change between Sun-Wed.
-    _data = _board_served(BOARD_RANKINGS, CFBD_YEAR)
-    if _data and _data.get("teams"):
-        _cache_set(_rankings_cache, _data)
-        # Serve and return. The freshness decision belongs to the refresh cycle, NOT the
-        # request path: comparing fingerprints here costs a CFBD round trip on a cold
-        # container (see api_win_totals) and buys nothing a visitor can see.
-        return RankingsResponse(**_data)
+    `force=True` skips the memory cache AND the durable board and recomputes from the
+    analytics file. The board REBUILD path must pass it: without it the rebuild reads the
+    stored payload it is meant to replace and re-stores it under the NEW fingerprint, so
+    the board reports "rebuilt" while serving last Wednesday's numbers forever.
+    """
+    if not force:
+        cached = _cache_get(_rankings_cache, CACHE_TTL)
+        if cached:
+            return RankingsResponse(**cached)
+
+        # Durable board. Without this a container that just woke up (i.e. every container,
+        # after 5 minutes idle) rebuilds the entire composite list for its first visitor,
+        # even though the four inputs it is built from do not change between Sun-Wed.
+        _data = _board_served(BOARD_RANKINGS, CFBD_YEAR)
+        if _data and _data.get("teams"):
+            _cache_set(_rankings_cache, _data)
+            # Serve and return. The freshness decision belongs to the refresh cycle, NOT the
+            # request path: comparing fingerprints here costs a CFBD round trip on a cold
+            # container (see api_win_totals) and buys nothing a visitor can see.
+            return RankingsResponse(**_data)
 
     # Primary source: the CFBD analytics file (identical to the composite tab).
     teams = _load_cfbd_analytics_file()
@@ -1113,8 +1119,9 @@ def refresh_rankings_from_espn() -> bool:
     source of truth); the live ESPN poll still feeds the AP/Coaches columns via
     get_rankings()."""
     _rankings_cache.clear()
+    _BOARD_SERVE_CACHE.pop((BOARD_RANKINGS, CFBD_YEAR, 0), None)
     try:
-        get_rankings()
+        get_rankings(force=True)
         return True
     except Exception as e:
         print(f"[rankings refresh] {e}")
@@ -1131,7 +1138,46 @@ def api_refresh():
     else:
         return {"status": "fallback", "source": "local", "note": "ESPN fetch failed, using local data"}
 
-CODE_MARKER = "v48-analytics-archive"   # bump when a release must be provably live
+@app.get("/api/boards/status", dependencies=_ADMIN)
+def api_boards_status():
+    """Why a stored board did or did not rebuild — the invisible made visible.
+
+    A board that reports "unchanged" while serving stale numbers is the exact failure this
+    exists to catch, and the status alone is not enough to explain it: the fingerprint is
+    built from components that can come back EMPTY (a CFBD hiccup, an ESPN poll outage), and
+    an empty component collapses the new fingerprint back onto the old one — restoring the
+    old behaviour silently. So this returns the fingerprints AND the components' sizes.
+    """
+    out = {}
+    for kind in (BOARD_RANKINGS, BOARD_WIN_TOTALS):
+        try:
+            stored = d1_write_path.load_slate(CFBD_YEAR, 0, kind=kind) or {}
+            computed = _board_fingerprint(kind, CFBD_YEAR)
+            payload = None
+            try:
+                payload = json.loads(stored.get("payload") or "null")
+            except Exception:  # noqa: BLE001
+                payload = None
+            games = _cfbd_season_games(CFBD_YEAR)
+            out[kind] = {
+                "stored_fingerprint": stored.get("fingerprint"),
+                "computed_fingerprint": computed,
+                "match": bool(stored.get("fingerprint")) and stored.get("fingerprint") == computed,
+                "stored_ts": stored.get("ts"),
+                "payload_updated": (payload or {}).get("updated"),
+                "results_signature": (_results_signature(CFBD_YEAR) or "")[:12],
+                "poll_signature": (_poll_signature() or "")[:12],
+                "completed_games": sum(1 for g in games if g.get("completed")),
+                "games_in_feed": len(games),
+                "ap_entries": len(_ap_rank_map() or {}),
+                "coaches_entries": len(_coaches_rank_map() or {}),
+            }
+        except Exception as e:  # noqa: BLE001
+            out[kind] = {"error": str(e)}
+    return out
+
+
+CODE_MARKER = "v49-board-rebuild-fix"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -4907,13 +4953,16 @@ def _refresh_boards_if_stale(kinds: tuple[str, ...] = (BOARD_RANKINGS, BOARD_WIN
                 continue
 
             if kind == BOARD_RANKINGS:
-                # Drop the in-memory copy so get_rankings() recomputes, then take the
-                # dict it stored rather than rebuilding the composite a second time.
+                # Both caches must be dropped AND the stored board bypassed. get_rankings()
+                # otherwise serves the durable payload it is supposed to REPLACE, and the
+                # "rebuild" re-stores the old board under the new fingerprint — after which
+                # every later check says "unchanged" and the board is frozen for good.
                 try:
                     _rankings_cache.clear()
                 except Exception:  # noqa: BLE001
                     pass
-                data = get_rankings().model_dump()
+                _BOARD_SERVE_CACHE.pop((BOARD_RANKINGS, CFBD_YEAR, 0), None)
+                data = get_rankings(force=True).model_dump()
             else:
                 data = compute_win_totals(CFBD_YEAR, force=True)
 
