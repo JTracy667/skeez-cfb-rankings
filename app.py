@@ -1130,7 +1130,7 @@ def api_refresh():
     else:
         return {"status": "fallback", "source": "local", "note": "ESPN fetch failed, using local data"}
 
-CODE_MARKER = "v46-advanced-matchup"   # bump when a release must be provably live
+CODE_MARKER = "v47-rankings-board-axes"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -4701,11 +4701,40 @@ def _results_signature(year: int) -> str:
         return ""
 
 
+def _poll_signature() -> str:
+    """Hash of the AP / Coaches poll ranks — the reference columns on the rankings page.
+
+    Polls are reference-only and never sortable, so they are NOT composite inputs and the
+    slate fingerprint cannot see them. Post-Saturday results have the same shape. The
+    rankings board carries ap_rank/coaches_rank/wins/losses INSIDE its payload, so both
+    axes need their own detector or the board is frozen from Wednesday until the next
+    publication while reporting itself healthy. Returns "" when no poll is available at
+    all — an ESPN outage must not churn the board (the previous fingerprint stands).
+    """
+    try:
+        ap = _ap_rank_map() or {}
+        co = _coaches_rank_map() or {}
+        if not ap and not co:
+            return ""
+        blob = json.dumps([[k, ap.get(k), co.get(k)] for k in sorted(set(ap) | set(co))])
+        return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:32]
+    except Exception as e:  # noqa: BLE001
+        print(f"[board] poll signature failed: {e}")
+        return ""
+
+
 def _board_fingerprint(kind: str, year: int) -> str:
     """Change detector per board. Same value == the stored board is still correct."""
     base = _slate_fingerprint()
     if kind == BOARD_WIN_TOTALS:
         return f"{base}+{_results_signature(year)}"
+    if kind == BOARD_RANKINGS:
+        # The rankings board is not just the composite list: it also carries the poll
+        # ranks and W/L, neither of which is a composite input. Without their own axes
+        # the board is "unchanged" on the Sunday a poll drops and after every Saturday,
+        # so it serves last week's AP/Coaches columns and stale records until Wed.
+        parts = [base, _results_signature(year), _poll_signature()]
+        return "+".join(p for p in parts if p)
     return base
 
 
