@@ -4,9 +4,14 @@
 Design rules
   * SILENT when healthy — empty stdout means the cron delivers nothing. Only
     failures, throttled repeats, and recoveries print.
-  * Exercises cold starts on purpose: at a 30-minute cadence the container's
-    20-minute sleepAfter elapses between checks, so each run is usually a cold
-    start — exactly the failure mode (bad cold start / OOM) we must detect.
+  * Exercises the container lifecycle on purpose: the container's sleepAfter is
+    5m (src/index.js), and the cadence is 30m, so each check usually lands on an
+    instance that has been idle — exactly the failure mode (bad start / OOM) we
+    must detect. NOTE: the instance currently stays warm across checks in
+    practice (observed 2026-09-27: first request after 6m idle answered in 448ms),
+    so do not assume every check is a cold start.
+  * Tolerates transport blips: a single dropped connection is retried once and
+    NEVER pages anyone (see _probe). Only an answer that fails twice is a fault.
   * Guards the regression classes we have actually hit:
       - degraded rankings after a refresh (Elo null / SP+ 0.0)
       - rankings not sorted by composite
@@ -65,6 +70,37 @@ def post_json(url, timeout=60):
         return None, f"{type(e).__name__}: {e}".encode(), (time.time() - t0) * 1000
 
 
+# --- transport-blip tolerance ------------------------------------------------
+# A *single dropped connection* is not a site outage. Observed 2026-09-27: one
+# run reported "/api/rankings -> unreachable" while the other TEN requests in the
+# same run returned 200, and the container instance had been up for 15h. That
+# internal contradiction is the tell: the blip lasts less than the ~300ms gap
+# between consecutive probes, so exactly one endpoint catches it.
+#
+# Retry TRANSPORT failures only (st is None: reset/timeout/DNS/SSL). An HTTP
+# status code is a real answer and must never be retried -- a 500 is not fixed
+# by asking again. A genuine outage fails BOTH attempts and still alerts, ~2s
+# later. Blips self-heal and are logged to a file instead of paging anyone.
+RETRIES = int(os.environ.get("CFB_PROBE_RETRIES", "1"))
+RETRY_DELAY = float(os.environ.get("CFB_PROBE_RETRY_DELAY", "2"))
+TRANSIENTS = []
+
+
+def _probe(url, post=False, timeout=60):
+    call = post_json if post else get
+    st, body, ms = call(url, timeout)
+    attempt = 1
+    while st is None and attempt <= RETRIES:
+        time.sleep(RETRY_DELAY)
+        st2, body2, ms2 = call(url, timeout)
+        attempt += 1
+        if st2 is not None:
+            TRANSIENTS.append("%s transport blip, healed on retry %d"
+                              % (url[len(SITE):] or "/", attempt))
+        st, body, ms = st2, body2, ms2
+    return st, body, ms
+
+
 def load_state():
     try:
         with open(STATE) as f:
@@ -85,13 +121,13 @@ def save_state(s):
 fails, details, slow = [], [], []
 
 for p in PAGES:
-    st, body, ms = get(SITE + p)
+    st, body, ms = _probe(SITE + p)
     if st != 200:
         fails.append(f"{p} -> {st if st else 'unreachable'}")
     elif ms > SLOW_MS:
         slow.append(f"{p} {ms/1000:.1f}s")
 
-st, body, ms = get(SITE + "/api/health")
+st, body, ms = _probe(SITE + "/api/health")
 health_ok = False
 build_stamp = None
 if st == 200:
@@ -127,7 +163,7 @@ except Exception:
     pass
 
 # rankings: count, sort order, and the degraded-refresh signature
-st, body, ms = get(SITE + "/api/rankings")
+st, body, ms = _probe(SITE + "/api/rankings")
 if st == 200:
     try:
         teams = json.loads(body)["teams"]
@@ -144,7 +180,7 @@ if st == 200:
 else:
     fails.append(f"/api/rankings -> {st if st else 'unreachable'}")
 
-st, body, _ = get(SITE + "/api/win-totals")
+st, body, _ = _probe(SITE + "/api/win-totals")
 if st == 200:
     try:
         n = len(json.loads(body).get("teams", []))
@@ -155,7 +191,7 @@ if st == 200:
 else:
     fails.append(f"/api/win-totals -> {st if st else 'unreachable'}")
 
-st, body, _ = get(SITE + "/api/schedule/current-week")
+st, body, _ = _probe(SITE + "/api/schedule/current-week")
 if st == 200:
     try:
         wk = json.loads(body).get("week")
@@ -169,12 +205,12 @@ else:
 # Invariant: ops endpoints must stay closed to anonymous callers. A gate that
 # silently disappears is invisible in normal use, so assert it every run. The
 # POST is rejected before any work happens, so it costs no API quota.
-st, _, _ = post_json(SITE + "/api/analytics/fetch")
+st, _, _ = _probe(SITE + "/api/analytics/fetch", post=True)
 if st != 401:
     fails.append(f"/api/analytics/fetch answered {st} without a token (expected 401) — ops gate may be down")
 
 # freshness: a scheduled 9pm PT anchor that never produced a pull is a fault
-st, body, _ = get(SITE + "/api/analytics/pull-status")
+st, body, _ = _probe(SITE + "/api/analytics/pull-status")
 if st == 200:
     try:
         d = json.loads(body)
@@ -228,7 +264,8 @@ else:
 # — that would train the reader to ignore real outages. Separate list, separate
 # state key, alerts on level CHANGES so it can't spam every 30 minutes.
 warns = []
-st, body, _ = get(SITE + "/api/budget")
+sig_parts = []          # LEVEL only — see the signature note below
+st, body, _ = _probe(SITE + "/api/budget")
 if st == 200:
     try:
         b = json.loads(body)
@@ -237,13 +274,17 @@ if st == 200:
             if lvl == "pause":
                 warns.append(f"{src} PAUSED at {v['pct']}% of {v['period']} cap "
                              f"({v['used']}/{v['limit']}) — calls stopped, serving stale data")
+                sig_parts.append(f"{src}:pause")
             elif lvl == "alert":
                 warns.append(f"{src} at {v['pct']}% of {v['period']} cap "
                              f"({v['used']}/{v['limit']}) — tier-upgrade decision due (Jeff policy)")
+                sig_parts.append(f"{src}:alert")
     except Exception as e:
         warns.append(f"/api/budget unparsable: {e}")
+        sig_parts.append("budget:unparsable")
 elif st and st >= 500:
     warns.append(f"/api/budget -> {st}")
+    sig_parts.append("budget:http-error")
 # 404 == image predates the meters; not a fault, stay quiet.
 
 now = datetime.now(timezone.utc)
@@ -279,20 +320,50 @@ else:
         state["slow_reported"] = now.strftime("%Y-%m-%d")
 
 # ---- budget warnings: alert on level CHANGE only (no 30-min spam) ----------
-_sig = "|".join(sorted(warns))
-if warns and _sig != state.get("budget_warn_sig"):
+# The signature is the LEVEL per source, NEVER the counts. It used to be built from
+# the message text, which embeds "4070/5000" — so every single new call produced a new
+# signature and a static 81% re-alerted on every run, all day, until the reset. That is
+# how an alert becomes noise the reader learns to ignore.
+BUDGET_REMIND_S = 12 * 3600      # sustained condition gets ONE reminder a day, no more
+_sig = "|".join(sorted(sig_parts))
+_last_alert = state.get("budget_warn_last_utc") or ""
+_remind = False
+if _last_alert:
+    try:
+        _remind = (now - datetime.fromisoformat(_last_alert)).total_seconds() > BUDGET_REMIND_S
+    except Exception:  # noqa: BLE001
+        _remind = False
+if warns and (_sig != state.get("budget_warn_sig") or _remind):
     print("⚠️ CFB BUDGET — API quota warning (site is serving; this is a CAP issue, not an outage)")
     for w in warns[:8]:
         print(f"  • {w}")
     print("  • policy (Jeff): approaching 80% = tier-upgrade decision, not throttling; "
           "95% = calls stopped automatically and data served stale-but-honest")
+    state["budget_warn_last_utc"] = now.isoformat()
 elif not warns and state.get("budget_warn_sig"):
     print("✅ CFB BUDGET — all API quotas back under the 80% alert line")
+    state.pop("budget_warn_last_utc", None)
 state["budget_warn_sig"] = _sig
 
 state["consecutive_fail"] = consec
 state["last_check_utc"] = now.isoformat()
 state["last_result"] = "fail" if fails else "ok"
+
+# Transport blips that healed on retry stay SILENT (no_agent contract: empty
+# stdout == nothing delivered) but are recorded, so "did the site wobble?" has
+# an answer without ever paging anyone.
+if TRANSIENTS:
+    state["last_transients"] = TRANSIENTS[-3:]
+    try:
+        _tdir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cache")
+        os.makedirs(_tdir, exist_ok=True)
+        with open(os.path.join(_tdir, "cfb_watchdog_transients.log"), "a", encoding="utf-8") as f:
+            for t in TRANSIENTS:
+                f.write("%s %s (absorbed by retry, NO alert sent)\n"
+                        % (time.strftime("%Y-%m-%d %H:%M:%S"), t))
+    except Exception:
+        pass
+
 save_state(state)
 
 if "--status" in sys.argv:
