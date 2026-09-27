@@ -21,10 +21,17 @@ class TestCFBCompositeModel(unittest.TestCase):
         cls.team_map = {t["name"]: t for t in cls.teams}
 
     def test_fcs_no_data_prior(self):
-        """Teams with no ratings and FCS classification must receive composite 16.0."""
+        """A team with no ratings and FCS classification gets the FCS no-data prior.
+
+        NOT a flat 16.0 any more: commit 0ad9e08 replaced the flat constant with a
+        rating-driven composite that falls back to FCS_COMPOSITE_FALLBACK (19.0,
+        documented in docs/MODEL_WEIGHTS_REVIEW.md). Assert the documented contract
+        rather than a magic number, so a deliberate recalibration of the constant
+        does not silently read as a regression.
+        """
         fcs_dummy = {"name": "Test FCS Squad", "classification": "FCS"}
         proj = app.project_score_multi_factor(fcs_dummy, is_home=False)
-        self.assertEqual(proj["composite"], 16.0)
+        self.assertEqual(proj["composite"], app.FCS_COMPOSITE_FALLBACK)
         self.assertEqual(proj["data_flag"], "fcs_no_data")
         self.assertGreater(proj["projected_score"], 0.0)
 

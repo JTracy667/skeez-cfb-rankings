@@ -1347,6 +1347,16 @@ def _cfbd_fpi() -> dict:
     # Build rank from sorted list
     for i, t in enumerate(sorted(data, key=lambda x: x["fpi"], reverse=True)):
         t["ranking"] = i + 1
+        # Resume ranks + special-teams efficiency ride in the SAME payload we
+        # already pay for (query cost unchanged). Key names verified against
+        # data/backtest_cache/raw_ratings_fpi_year2025.json, and each is
+        # individually null-able (e.g. remainingStrengthOfSchedule is null in
+        # September) so every read is `or {}` guarded.
+        rr = t.get("resumeRanks") or {}
+        t["fpi_sor"] = rr.get("strengthOfRecord")
+        t["fpi_sos"] = rr.get("strengthOfSchedule")
+        t["fpi_game_control"] = rr.get("gameControl")
+        t["fpi_eff_special_teams"] = (t.get("efficiencies") or {}).get("specialTeams")
     return {t["team"]: t for t in data}
 
 def _cfbd_sp() -> dict:
@@ -1357,6 +1367,8 @@ def _cfbd_sp() -> dict:
     # SP+ uses 'team' key
     for i, t in enumerate(sorted(data, key=lambda x: x["rating"], reverse=True)):
         t["ranking"] = i + 1
+        # Special teams rating is in the same payload (no extra call).
+        t["sp_special_teams"] = (t.get("specialTeams") or {}).get("rating")
     return {t["team"]: t for t in data}
 
 def _cfbd_recruiting() -> dict:
@@ -1626,6 +1638,52 @@ def _cfbd_ppa() -> dict:
     return out
 
 
+# Fields extracted from /stats/season/advanced (offense+defense) for the Advanced
+# Matchup view. Named here as the single source of truth so the ingest parser and
+# the payload test cannot drift apart.
+#
+# Every key was verified against the REAL payload in
+# data/backtest_cache/raw_stats_season_advanced_year2025.json -- including CFBD's
+# own spelling `totalOpportunies` (sic, missing the second 't' in
+# "Opportunities"). That typo is not ours to fix: correcting it here would
+# silently yield None for every team, which is exactly the failure mode this
+# constant exists to prevent.
+ADV_MATCHUP_FIELDS = (
+    # Havoc (trench play): front-seven vs DB split
+    "off_havoc_total", "off_havoc_front_seven", "off_havoc_db",
+    "def_havoc_total", "def_havoc_front_seven", "def_havoc_db",
+    # Quality drives (Eckel) + finishing
+    "off_drives", "off_total_opportunities", "off_eckel_rate",
+    "def_drives", "def_total_opportunities", "def_eckel_rate",
+    "eckel_ratio",
+    # Play-type splits
+    "off_rush_success", "off_rush_explosiveness", "off_rush_rate",
+    "def_rush_success", "def_rush_explosiveness", "def_rush_rate",
+    "off_pass_success", "off_pass_explosiveness", "off_pass_rate",
+    "def_pass_success", "def_pass_explosiveness", "def_pass_rate",
+    # Down-and-distance splits
+    "off_standard_down_success", "off_standard_down_explosiveness",
+    "def_standard_down_success", "def_standard_down_explosiveness",
+    "off_passing_down_success", "off_passing_down_explosiveness",
+    "def_passing_down_success", "def_passing_down_explosiveness",
+    # Field position
+    "off_field_pos_avg", "def_field_pos_avg", "net_field_pos",
+)
+
+
+def _adv_num(v, ndigits: int = 4):
+    """round(v, ndigits), but None-safe: anything non-numeric in -> None out.
+
+    The advanced payload nests everything in sub-dicts and any of them can be
+    absent, null, or (for the count fields) zero. A missing metric must stay None
+    so downstream code can tell "no data" from a real 0.0 -- and so the ingest
+    cannot raise TypeError on a partial payload.
+    """
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        return None
+    return round(v, ndigits)
+
+
 def _cfbd_advanced_stats() -> dict:
     """Fetch advanced season stats (success rate, points per opportunity, line yards, stuff rate)
     from CFBD /stats/season/advanced.
@@ -1652,8 +1710,91 @@ def _cfbd_advanced_stats() -> dict:
             "def_power_success": round(defn.get("powerSuccess", 0), 3) if defn.get("powerSuccess") is not None else None,
             "off_explosiveness": round(off.get("explosiveness", 0), 3) if off.get("explosiveness") is not None else None,
             "def_explosiveness": round(defn.get("explosiveness", 0), 3) if defn.get("explosiveness") is not None else None,
+            **_advanced_matchup_fields(off, defn),
         }
     return out
+
+
+def _advanced_matchup_fields(off: dict, defn: dict) -> dict:
+    """Extract the Advanced-Matchup metrics from one advanced-stats record.
+
+    Split out of _cfbd_advanced_stats() so it can be unit-tested directly against a
+    real payload and against deliberately-broken ones (missing sub-dicts, drives=0).
+    """
+    off_hv = off.get("havoc") or {}
+    def_hv = defn.get("havoc") or {}
+    off_rush = off.get("rushingPlays") or {}
+    def_rush = defn.get("rushingPlays") or {}
+    off_pass = off.get("passingPlays") or {}
+    def_pass = defn.get("passingPlays") or {}
+    off_std = off.get("standardDowns") or {}
+    def_std = defn.get("standardDowns") or {}
+    off_pd = off.get("passingDowns") or {}
+    def_pd = defn.get("passingDowns") or {}
+    off_fp = off.get("fieldPosition") or {}
+    def_fp = defn.get("fieldPosition") or {}
+
+    off_drives = off.get("drives")
+    def_drives = defn.get("drives")
+    # CFBD spells it "totalOpportunies" (sic). Do not "fix" the spelling.
+    off_opps = off.get("totalOpportunies")
+    def_opps = defn.get("totalOpportunies")
+
+    # Eckel rate = scoring opportunities per drive. drives == 0 (or missing) must
+    # yield None, not ZeroDivisionError.
+    off_eckel = (round(off_opps / off_drives, 4)
+                 if isinstance(off_drives, (int, float)) and off_drives
+                 and isinstance(off_opps, (int, float)) else None)
+    def_eckel = (round(def_opps / def_drives, 4)
+                 if isinstance(def_drives, (int, float)) and def_drives
+                 and isinstance(def_opps, (int, float)) else None)
+    eckel_denom = None if off_eckel is None or def_eckel is None else off_eckel + def_eckel
+    eckel_ratio = round(off_eckel / eckel_denom, 4) if eckel_denom else None
+
+    off_fp_avg = off_fp.get("averageStart")
+    def_fp_avg = def_fp.get("averageStart")
+    net_fp = (round(off_fp_avg - def_fp_avg, 2)
+              if isinstance(off_fp_avg, (int, float)) and isinstance(def_fp_avg, (int, float))
+              else None)
+
+    return {
+        "off_havoc_total": _adv_num(off_hv.get("total")),
+        "off_havoc_front_seven": _adv_num(off_hv.get("frontSeven")),
+        "off_havoc_db": _adv_num(off_hv.get("db")),
+        "def_havoc_total": _adv_num(def_hv.get("total")),
+        "def_havoc_front_seven": _adv_num(def_hv.get("frontSeven")),
+        "def_havoc_db": _adv_num(def_hv.get("db")),
+        "off_drives": off_drives if isinstance(off_drives, int) else None,
+        "off_total_opportunities": off_opps if isinstance(off_opps, int) else None,
+        "off_eckel_rate": off_eckel,
+        "def_drives": def_drives if isinstance(def_drives, int) else None,
+        "def_total_opportunities": def_opps if isinstance(def_opps, int) else None,
+        "def_eckel_rate": def_eckel,
+        "eckel_ratio": eckel_ratio,
+        "off_rush_success": _adv_num(off_rush.get("successRate")),
+        "off_rush_explosiveness": _adv_num(off_rush.get("explosiveness")),
+        "off_rush_rate": _adv_num(off_rush.get("rate")),
+        "def_rush_success": _adv_num(def_rush.get("successRate")),
+        "def_rush_explosiveness": _adv_num(def_rush.get("explosiveness")),
+        "def_rush_rate": _adv_num(def_rush.get("rate")),
+        "off_pass_success": _adv_num(off_pass.get("successRate")),
+        "off_pass_explosiveness": _adv_num(off_pass.get("explosiveness")),
+        "off_pass_rate": _adv_num(off_pass.get("rate")),
+        "def_pass_success": _adv_num(def_pass.get("successRate")),
+        "def_pass_explosiveness": _adv_num(def_pass.get("explosiveness")),
+        "def_pass_rate": _adv_num(def_pass.get("rate")),
+        "off_standard_down_success": _adv_num(off_std.get("successRate")),
+        "off_standard_down_explosiveness": _adv_num(off_std.get("explosiveness")),
+        "def_standard_down_success": _adv_num(def_std.get("successRate")),
+        "def_standard_down_explosiveness": _adv_num(def_std.get("explosiveness")),
+        "off_passing_down_success": _adv_num(off_pd.get("successRate")),
+        "off_passing_down_explosiveness": _adv_num(off_pd.get("explosiveness")),
+        "def_passing_down_success": _adv_num(def_pd.get("successRate")),
+        "def_passing_down_explosiveness": _adv_num(def_pd.get("explosiveness")),
+        "off_field_pos_avg": _adv_num(off_fp_avg, 2),
+        "def_field_pos_avg": _adv_num(def_fp_avg, 2),
+        "net_field_pos": net_fp,
+    }
 
 
 def _cfbd_drives_for_teams(team_names: list[str]) -> dict:
@@ -3667,6 +3808,12 @@ def fetch_live_analytics():
             def_power = adv.get("def_power_success")
             off_explosiveness = adv.get("off_explosiveness")
             def_explosiveness = adv.get("def_explosiveness")
+            # Advanced matchup metrics (Phase 1 of docs/ADVANCED_STATS_IMPLEMENTATION_PLAN.md):
+            # havoc, Eckel quality-drives, play-type + down-and-distance splits, field
+            # position. All of these live in the payloads ALREADY fetched above, so they
+            # cost zero additional CFBD calls. Field list is one constant so the parser
+            # and its test cannot drift.
+            adv_matchup = {k: adv.get(k) for k in ADV_MATCHUP_FIELDS}
             pts_per_poss = ds.get("pts_per_poss")
             td_rate = ds.get("td_rate")
             fg_rate = ds.get("fg_rate")
@@ -3753,6 +3900,14 @@ def fetch_live_analytics():
                 "def_power_success": def_power,
                 "off_explosiveness": off_explosiveness,
                 "def_explosiveness": def_explosiveness,
+                # Advanced matchup metrics + resume/special-teams (Phase 1). Keyed by
+                # the names the plan specifies so /api/matchup can rank them directly.
+                **adv_matchup,
+                "fpi_sor": fpi.get("fpi_sor"),
+                "fpi_sos": fpi.get("fpi_sos"),
+                "fpi_game_control": fpi.get("fpi_game_control"),
+                "fpi_eff_special_teams": fpi.get("fpi_eff_special_teams"),
+                "sp_special_teams": sp.get("sp_special_teams"),
                 "returning_ppa": round(returning_ppa, 1) if returning_ppa is not None else None,
                 # is-not-None, not truthiness: 0.0 is a REAL value here (Oklahoma State
                 # returns none of its production) and must not be laundered into None,

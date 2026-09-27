@@ -10,8 +10,13 @@ Proves the counter of record is the D1 API RESPONSE, not a local guess:
  4. a chunk whose source returned nothing is recorded as no_data and does not
     fail the run (and is still not marked done).
 
-Run:  python tests/test_d1_counter.py
+Run:  python tests/d1_counter_selftest.py
 Requires the D1 token (read from Desktop/Cloudflare.txt) and live D1 access.
+
+NOT a pytest test: named *_selftest.py so pytest does not collect it. It used to
+be tests/test_d1_counter.py and ran its body (and sys.exit) at import time, which
+aborted the whole pytest session with INTERNALERROR and hid every other test in
+tests/ -- it writes probe rows to LIVE D1, so it must stay a manual runner.
 """
 import json
 import os
