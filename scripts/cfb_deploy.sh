@@ -89,6 +89,12 @@ NO_VERIFY="${2:-}"
 # tag — a deploy can "verify" against code that never shipped. Passing the marker makes
 # the verify loop wait for the running CODE, not for the tag.
 EXPECT_CODE="${3:-}"
+# A non-flag in the documented FLAG slot is the code marker: `cfb_deploy.sh v47 v47-marker`
+# is the natural 2-arg form, and treating it as the (unrecognised) flag silently dropped
+# the marker and verified on the tag alone.
+if [ -n "$NO_VERIFY" ] && [ "${NO_VERIFY#-}" = "$NO_VERIFY" ]; then
+  EXPECT_CODE="$NO_VERIFY"; NO_VERIFY=""
+fi
 [ -n "$EXPECT_CODE" ] || echo "note: no code marker given — 'build' alone cannot prove the new image is live"
 PREV="$(current_tag)"
 [ "$NEW" != "$PREV" ] || echo "note: tag already $NEW (rebuilding the same tag)"
