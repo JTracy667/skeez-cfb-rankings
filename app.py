@@ -527,6 +527,7 @@ def run_weekly_analytics_pull() -> dict:
         with open(_CFBD_ANALYTICS_FILE, "w") as f:
             json.dump(analytics, f, indent=2)
         _enrich_with_composite(analytics)
+        _store_team_analytics(analytics)
         _cache_set(_analytics_cache, {
             "week": datetime.now().strftime("%B %d, %Y"),
             "season": CFBD_YEAR,
@@ -1130,7 +1131,7 @@ def api_refresh():
     else:
         return {"status": "fallback", "source": "local", "note": "ESPN fetch failed, using local data"}
 
-CODE_MARKER = "v47-rankings-board-axes"   # bump when a release must be provably live
+CODE_MARKER = "v48-analytics-archive"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -3965,6 +3966,7 @@ def api_analytics_fetch():
             except Exception as e:
                 print(f"[!] Could not persist analytics to disk: {e}")
             _enrich_with_composite(analytics)
+            _store_team_analytics(analytics)
             result = {
                 "week": datetime.now().strftime("%B %d, %Y"),
                 "season": CFBD_YEAR,
@@ -4218,6 +4220,33 @@ def _load_cfbd_analytics_file():
             return json.load(f)
     except Exception:
         return []
+
+
+# One analytics pull archives EVERY numeric metric on each team's record — no key list.
+# A fixed list silently dropped fields twice in this codebase (a hand-maintained merge
+# whitelist, and the 41 advanced metrics the parser never kept), and the composite's
+# "efficiency" input is COMPUTED inside the projection rather than stored, so even a
+# carefully written list would archive nothing for it. Deriving the keys from the record
+# means a metric can never be added to the site without being archived.
+def _store_team_analytics(teams: list[dict]) -> int:
+    """Archive a fresh analytics pull into D1 — the durable copy of the served dataset.
+
+    WHY: the dataset served to the site is data/cfbd_analytics.json, a file COMMITTED to
+    git and COPY'd into every image, overwritten in place by a pull. So a deploy reverted
+    the analytics (the 41 advanced metrics included) to the build-time copy, and nothing
+    but the running container's disk ever held them. D1 gives analytics the durability
+    games/ratings/weather/boards already have.
+    Never raises: the site must not care whether the archive succeeded.
+    """
+    try:
+        week = current_season_week(CFBD_YEAR)
+        n = d1_write_path.snapshot_team_analytics(teams, None, CFBD_YEAR, week)
+        if n:
+            print(f"[analytics] archived {n} stat_observations rows to D1 (wk{week})")
+        return n
+    except Exception as e:  # noqa: BLE001
+        print(f"[analytics] D1 archive failed (site unaffected): {e}")
+        return 0
 
 def _build_team_map() -> dict:
     """Build team map from local data + pre-fetched CFBD analytics + CFBD team logos.

@@ -142,6 +142,126 @@ def snapshot_rankings(teams, season: int | None = None, week: int | None = None,
     return d1_store.upsert_rankings_daily(rows)
 
 
+# ── Analytics archive (stat_observations) ─────────────────────────────────────
+# The served dataset is data/cfbd_analytics.json — COMMITTED to git and COPY'd into every
+# image, then overwritten in place by a live pull. So a deploy silently reverted the
+# analytics dataset (the 41 advanced metrics included) to whatever was committed at build
+# time, and nothing but the running container's disk ever held it.
+#
+# stat_observations is the archive the backtest harness already reads, and its unique index
+# (subject, season, week, key) makes the write idempotent AND gives backtests the
+# point-in-time per-week rows they need. A single JSON blob per pull would hold the same
+# numbers but cannot be queried leak-free by week.
+
+# Identity/derived keys that are numeric but are not season metrics.
+_ARCHIVE_SKIP_KEYS = frozenset({"team_id", "id", "rank"})
+
+
+def team_analytics_rows(teams, keys=None, season: int = 0, week: int | None = None,
+                        name2id: dict | None = None,
+                        source: str = "cfbd") -> list[dict]:
+    """Build the stat_observations rows for one analytics pull.
+
+    Pure — the only D1 access is the optional name map — so it is unit-testable without a
+    database.
+
+    `keys=None` archives EVERY numeric metric on the record. That is the default on
+    purpose: a fixed key list has silently dropped fields twice in this codebase (a
+    hand-maintained merge whitelist, and the 41 advanced metrics the parser never kept), so
+    the archive must not be able to fall behind the record. Absent and non-numeric values
+    are SKIPPED, never written as 0.0 — a missing metric has to stay missing or a backtest
+    reads a real zero. `keys` is still accepted for targeted reads/tests.
+    """
+    if not teams:
+        return []
+    if name2id is None:
+        name2id = team_name_to_id()
+    rows: list[dict] = []
+    for t in teams:
+        tid = (_get(t, "team_id") or name2id.get(_get(t, "name"))
+               or name2id.get(_get(t, "location")))
+        if tid is None:
+            continue
+        if keys is None:
+            items = t.items() if isinstance(t, dict) else []
+            ks = [k for k, v in items
+                  if k not in _ARCHIVE_SKIP_KEYS and not isinstance(v, bool)
+                  and isinstance(v, (int, float))]
+        else:
+            ks = keys
+        for k in ks:
+            v = _get(t, k)
+            if isinstance(v, bool) or not isinstance(v, (int, float)):
+                continue
+            rows.append({"subject_type": "team", "subject_id": tid,
+                         "season": int(season), "week": int(week or 0),
+                         "stat_key": k, "value": float(v), "source": source})
+    return rows
+
+
+@_guard
+def snapshot_team_analytics(teams, keys=None, season: int = 0, week: int | None = None,
+                            source: str = "cfbd") -> int:
+    """Archive per-team season analytics into stat_observations. Returns rows written."""
+    rows = team_analytics_rows(teams, keys, season, week, source=source)
+    if not rows:
+        return 0
+    return d1_store.upsert_stat_observations_bulk(rows)
+
+
+def archived_analytics_weeks(season: int) -> list[int]:
+    """Weeks holding archived team analytics for a season (newest first)."""
+    if not enabled():
+        return []
+    try:
+        rows = d1_store.query(
+            "SELECT week, COUNT(*) AS n FROM stat_observations "
+            "WHERE season = ? AND subject_type = 'team' GROUP BY week ORDER BY week DESC",
+            [int(season)])
+        return [int(r["week"]) for r in (rows or []) if int(r.get("n") or 0) > 0]
+    except Exception as e:  # noqa: BLE001
+        print(f"[d1_write_path] archived_analytics_weeks failed: {e}")
+        return []
+
+
+def load_team_analytics(season: int, week: int | None = None,
+                        keys: list | tuple | None = None) -> list[dict]:
+    """Rebuild team analytics records from D1 (latest archived week when week is None).
+
+    The inverse of snapshot_team_analytics: one dict per team keyed by metric name, for
+    report tooling and backtests. Identity is joined from `teams`. Numeric metrics only —
+    the served file also carries mascot/conf/emoji/streak strings, which stat_observations
+    cannot hold, so this is NOT a drop-in file replacement. Returns [] when nothing is
+    archived so callers keep their own fallback.
+    """
+    if not enabled():
+        return []
+    try:
+        if week is None:
+            weeks = archived_analytics_weeks(season)
+            if not weeks:
+                return []
+            week = weeks[0]
+        want = set(keys) if keys else None
+        rows = d1_store.query(
+            "SELECT o.subject_id AS tid, o.stat_key AS k, o.value AS v, t.name AS name "
+            "FROM stat_observations o LEFT JOIN teams t ON t.team_id = o.subject_id "
+            "WHERE o.season = ? AND o.week = ? AND o.subject_type = 'team'",
+            [int(season), int(week)])
+        by_tid: dict = {}
+        for r in rows or []:
+            k = r.get("k")
+            if want is not None and k not in want:
+                continue
+            rec = by_tid.setdefault(r.get("tid"), {"team_id": r.get("tid"),
+                                                   "name": r.get("name")})
+            rec[k] = r.get("v")
+        return list(by_tid.values())
+    except Exception as e:  # noqa: BLE001
+        print(f"[d1_write_path] load_team_analytics failed: {e}")
+        return []
+
+
 def daily_rankings(fetch_teams, season: int | None = None, week: int | None = None,
                    model_version: str = "composite") -> int:
     """Write rankings_daily at most ONCE per UTC day. `fetch_teams` is only called on

@@ -291,6 +291,104 @@ def upsert_stat_observations(rows: list[dict]) -> int:
                    ["value", "source", "recorded_at"])
 
 
+# ── Bulk stat_observations upsert ────────────────────────────────────────────
+# D1 caps BOUND PARAMETERS at 100 per query, so the path above writes 12 rows per HTTP
+# round trip. One analytics pull is ~22k rows -> ~1,800 statements, which is minutes of
+# wall clock inside a container that recycles after 5 minutes idle. Every value written
+# here is a code-controlled literal (fixed subject_type/source, numeric values, stat keys
+# that come from the record's own field names), never user input, so the values can be
+# inlined and one statement can carry hundreds of rows.
+_STAT_OBS_COLS = ["subject_type", "subject_id", "season", "week", "stat_key",
+                  "value", "source", "recorded_at"]
+_STAT_OBS_CONFLICT = ["subject_type", "subject_id", "season", "stat_key", "week"]
+_STAT_OBS_UPDATE = ["value", "source", "recorded_at"]
+# Cap the SQL text well under D1's statement limit; a 22k-row archive becomes ~60 statements.
+SAFE_SQL_CHARS = 55_000
+
+
+def _sql_lit(v) -> str:
+    """Render a Python value as a SQL literal. Only code-controlled values are passed."""
+    if v is None:
+        return "NULL"
+    if isinstance(v, bool):
+        return "1" if v else "0"
+    if isinstance(v, int):
+        return str(v)
+    if isinstance(v, float):
+        return repr(v)
+    return "'" + str(v).replace("'", "''") + "'"
+
+
+def stat_observation_chunks(rows: list[dict],
+                            max_rows_per_statement: int = 400) -> list[list[dict]]:
+    """Split rows into statements' worth, bounded by row count AND SQL text size.
+
+    Pure, so the sizing can be tested without a database. The text bound matters because
+    a single stat_key is short but there are ~60 of them per team.
+    """
+    if not rows:
+        return []
+    head_len = len(f"INSERT INTO stat_observations ({','.join(_STAT_OBS_COLS)}) VALUES ")
+    tail_len = len(" ON CONFLICT(" + ",".join(_STAT_OBS_CONFLICT) + ") DO UPDATE SET "
+                   + ",".join(f"{c}=excluded.{c}" for c in _STAT_OBS_UPDATE))
+    out: list[list[dict]] = []
+    cur: list[dict] = []
+    size = head_len + tail_len
+    for r in rows:
+        piece_len = len(_stat_obs_piece(r)) + 1
+        if cur and (len(cur) >= max_rows_per_statement or size + piece_len > SAFE_SQL_CHARS):
+            out.append(cur)
+            cur, size = [], head_len + tail_len
+        cur.append(r)
+        size += piece_len
+    if cur:
+        out.append(cur)
+    return out
+
+
+def _stat_obs_piece(r: dict) -> str:
+    return "(" + ",".join(_sql_lit(r.get(c)) for c in _STAT_OBS_COLS) + ")"
+
+
+def stat_observation_insert_sql(chunk: list[dict]) -> str:
+    """One idempotent multi-row INSERT for a chunk (values inlined — see note above)."""
+    head = f"INSERT INTO stat_observations ({','.join(_STAT_OBS_COLS)}) VALUES "
+    tail = (" ON CONFLICT(" + ",".join(_STAT_OBS_CONFLICT) + ") DO UPDATE SET "
+            + ",".join(f"{c}=excluded.{c}" for c in _STAT_OBS_UPDATE))
+    return head + ",".join(_stat_obs_piece(r) for r in chunk) + tail
+
+
+def stat_observation_insert_sqls(rows: list[dict],
+                                 max_rows_per_statement: int = 400) -> list[str]:
+    """The statements a bulk upsert would issue for `rows` (pure)."""
+    return [stat_observation_insert_sql(c)
+            for c in stat_observation_chunks(rows, max_rows_per_statement)]
+
+
+def upsert_stat_observations_bulk(rows: list[dict]) -> int:
+    """Idempotent stat_observations upsert with inlined literals (see the note above)."""
+    if not rows:
+        return 0
+    now = datetime.now(timezone.utc).isoformat()
+    for r in rows:
+        r.setdefault("subject_type", "team")
+        r.setdefault("source", "cfbd")
+        r.setdefault("week", 0)
+        r.setdefault("recorded_at", now)
+    n = 0
+    for chunk in stat_observation_chunks(rows):
+        assert_headroom(len(chunk))
+        _, meta = query_full(stat_observation_insert_sql(chunk), [])
+        confirmed = confirmed_writes(meta)
+        if confirmed <= 0:
+            raise ConfirmedWriteError(
+                f"stat_observations(bulk): D1 confirmed 0 rows written for a "
+                f"{len(chunk)}-row statement (meta={meta})")
+        commit_writes(confirmed)
+        n += confirmed
+    return n
+
+
 def upsert_games(rows: list[dict]) -> int:
     return _upsert("games",
                    ["game_id", "season", "week", "home_id", "away_id", "kickoff",
