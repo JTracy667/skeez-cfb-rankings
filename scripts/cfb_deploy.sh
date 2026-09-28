@@ -132,30 +132,24 @@ if [ "$NO_VERIFY" = "--no-verify" ]; then
   exit 0
 fi
 
-# 6. VERIFY live — the new image only answers once the warm instance recycles.
+# 6. VERIFY live — the new image only answers once the warm instance retires.
+#
+# DO NOT REPLACE THIS WITH A SITE-POLLING LOOP. The previous loop curled /api/health every
+# 6m against a 5m sleepAfter: the verification competed with the recycle it was waiting for.
+# Any extra request inside that window -- a person checking the site, a monitor, or an agent
+# asking "is it live yet" -- reset the idle timer and stalled the deploy indefinitely, while
+# the loop happily burned its full budget. It also asserted `build`, which the Worker reports
+# from its OWN config: a warm old instance answers `build: v53` while running v52 code.
+# scripts/verify_container_swap.py watches the CONTAINERS API for the old instance to retire
+# and then makes exactly ONE site request, asserting the CODE marker.
 echo "=== verifying live build ==="
-echo "    a warm container can serve $PREV for up to ~5m; polling every $((VERIFY_INTERVAL/60))m, up to $((VERIFY_TIMEOUT/60))m"
-deadline=$(( $(date +%s) + VERIFY_TIMEOUT ))
-while :; do
-  body=$(curl -s -m 30 -A 'Mozilla/5.0' "$PUBLIC_URL/api/health" || true)
-  code=$(curl -s -m 30 -o /dev/null -w '%{http_code}' -A 'Mozilla/5.0' "$PUBLIC_URL/api/health" || true)
-  if [ "$code" != "200" ]; then
-    rollback "$PREV" "prod returned HTTP $code during verification"
-    exit 1
-  fi
-  build=$(printf '%s' "$body" | python -c "import sys,json;print((json.load(sys.stdin) or {}).get('build',''))" 2>/dev/null)
-  code_marker=$(printf '%s' "$body" | python -c "import sys,json;d=json.load(sys.stdin) or {};print(((d.get('code') or {}).get('marker')) or '')" 2>/dev/null)
-  if [ "$build" = "$NEW" ] && { [ -z "$EXPECT_CODE" ] || [ "$code_marker" = "$EXPECT_CODE" ]; }; then
-    echo "    live build == $NEW at $(date '+%H:%M:%S')"
-    [ -n "$EXPECT_CODE" ] && echo "    live code == $code_marker (running CODE proven live, not just the tag)"
-    break
-  fi
-  if [ "$(date +%s)" -ge "$deadline" ]; then
-    rollback "$PREV" "new image never came live within $((VERIFY_TIMEOUT/60))m (last build='$build' code='$code_marker', wanted code='$EXPECT_CODE')"
-    exit 1
-  fi
-  sleep "$VERIFY_INTERVAL"
-done
+echo "    API-driven: waits for the instance to retire, then ONE request. DO NOT curl the site."
+if ! python "$(dirname "$0")/verify_container_swap.py" \
+      --tag "$NEW" --marker "${EXPECT_CODE:-$NEW}" \
+      --attempts 3 --window "${CFB_VERIFY_WINDOW:-420}"; then
+  rollback "$PREV" "container never came up on $NEW / ${EXPECT_CODE:-?} within the verification window"
+  exit 1
+fi
 
 echo "=== final page check on $NEW ==="
 fail=0

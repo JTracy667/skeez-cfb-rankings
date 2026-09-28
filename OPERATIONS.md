@@ -24,11 +24,13 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v52** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v52-results-in-d1` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v52` |
-| Rollback tag | **v51** — `scripts/cfb_deploy.sh --rollback v51` (v50 also in the registry) |
-| Last verified | 2026-09-28 (CTO) — `build v52`, marker `v52-results-in-d1`; all 6 pages 200; `/api/record` serves 889 picks / 332 results (from D1 `app_state.su_ats_record`); D1 `games` newest scored week 4 |
+| Live build | **v53** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v53-schedule-in-d1` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v53` |
+| Rollback tag | **v52** — `scripts/cfb_deploy.sh --rollback v52` (v51, v50 also in the registry) |
+| Last verified | 2026-09-28 12:01 PT (CTO) — `VERIFIED LIVE: v53 / v53-schedule-in-d1` (code marker, not `build`); all 8 public endpoints 200; `/api/rankings` 25-row board, ranks ascending (composite); D1 `games` newest scored week 4 |
+| Container app image | must read `...:v53` via the Containers API — **`build` in `/api/health` does NOT prove this** (see the v52→v53 note) |
+| Deploy verifier | `python scripts/verify_container_swap.py --tag vN --marker <CODE_MARKER>` — API-driven, touches the site **once** |
 | Enforcement gate | `python scripts/run_enforcement_tests.py` — **blocking** before any deploy (needs `CF_D1_TOKEN`; refuses to run without it) |
 | Known-stale docs | `docs/SESSION_HANDOFF.md` (state as of Sep 23 — do NOT trust its state), `CLOUDFLARE_DEPLOY.md` (says `sleepAfter 20m`) |
 | Data map | **`docs/DATA_FLOW.md`** — read it before touching any producer or reader |
@@ -41,6 +43,45 @@ curl -s https://skeezcfb-rankings.com/api/health   # status ok + build + code.ma
 ---
 
 ## RECENT CHANGES & OPEN WORK
+
+### v52 → v53 (2026-09-28, CTO) — Phase 3 (F2) + the deploy path fixed for real
+
+**Shipped:** Phase 3 of `docs/DATA_PERSISTENCE_PLAN.md`. `load_schedule()` is D1-first (D1
+`app_state` key `week_schedule`); the admin `POST /api/schedule/update` override used to be a
+read-modify-write on `data/week_schedule.json` on the **ephemeral** container disk, so a
+manual override silently evaporated on the next recycle. Verified live: `VERIFIED LIVE: v53 /
+v53-schedule-in-d1`, all 8 public endpoints 200.
+
+**This deploy took ~90 minutes and the delay was a real defect, not slowness.** Three distinct
+traps, in the order they bit:
+
+1. **`wrangler deploy` reported SUCCESS without applying the container image.**
+   `wrangler.jsonc` said `v53` and the Worker's env moved (so `/api/health` reported
+   `build: v53`), but the **container APPLICATION** still had
+   `configuration.image: ...:v52` (`version: 48`) for a full hour. The app config is what
+   decides which image runs. A second `wrangler deploy` applied it (`version: 49`,
+   `SUCCESS Modified application`). **`build` is the Worker's tag and it lies.** The gate is
+   now: read the app config image from the Containers API and require it to equal the target
+   tag before verifying anything else.
+
+2. **The verify loop competed with the recycle it was waiting for.** It curled
+   `/api/health` (twice per iteration) every 6m against a 5m `sleepAfter`, so it reset the
+   idle timer and the instance never retired — burning its whole budget while never seeing
+   new code. **Anything else touching the site inside that window makes it worse**, including
+   a person or an agent checking "is it live yet". Fixed: the verifier watches the
+   **Containers API** for the instance to retire and then makes exactly **ONE** site request.
+
+3. **The app config is EVENTUALLY CONSISTENT.** A read immediately after the deploy can
+   still show the old image; it flipped between two reads ~1 minute apart. Poll it; do not
+   judge on one read.
+
+**Do not** verify with a site-polling loop, and **do not** trust `build`. Use:
+```bash
+python scripts/verify_container_swap.py --tag v53 --marker v53-schedule-in-d1
+# phase 0: container app image == v53   (API)
+# phase 1: instance retired, ONE request, code marker == v53-schedule-in-d1
+```
+`scripts/cfb_deploy.sh` now calls this instead of its old curl loop.
 
 ### v51 → v52 (2026-09-28, CTO) — results + record durable in D1 (finding F1)
 
