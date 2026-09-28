@@ -1255,7 +1255,7 @@ def api_boards_status():
     return out
 
 
-CODE_MARKER = "v59-best-bets-d1"   # bump when a release must be provably live
+CODE_MARKER = "v60-teams-live-writer"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -4451,6 +4451,20 @@ def _served_analytics():
                 base[k] = v
         out.append(base)
     out.extend(by_name.values())              # disk teams D1 did not cover (identity only)
+    # F3: D1 `teams` IDENTITY rows are serveable too. A team the identity table knows but the
+    # analytics never covered would otherwise exist in D1 and be unrenderable -- exactly the
+    # drift the parity test exists to catch. IDENTITY ONLY: no numeric field is invented here,
+    # so nothing downstream can read a fabricated value.
+    try:
+        seen = {r.get("name") for r in out if r.get("name")}
+        for row in d1_write_path.team_identity_rows():
+            nm = row.get("name")
+            if nm and nm not in seen:
+                out.append({"name": nm, "mascot": "", "conf": row.get("conference") or "",
+                            "emoji": "\U0001F3C8"})
+                seen.add(nm)
+    except Exception as e:  # noqa: BLE001
+        print(f"[analytics] D1 team-identity seed failed (serving without it): {e}")
     print(f"[analytics] served from D1: {len(rows)} teams ({added} not in the disk file)")
     return out
 
@@ -4476,10 +4490,43 @@ def _store_team_analytics(teams: list[dict]) -> int:
         n = d1_write_path.snapshot_team_analytics(teams, None, CFBD_YEAR, week)
         if n:
             print(f"[analytics] archived {n} stat_observations rows to D1 (wk{week})")
+        # F3: the IDENTITY list rides the same live pull. `teams` used to be written only by a
+        # manual backfill script, so it drifted from the served universe silently.
+        _store_team_identity()
         return n
     except Exception as e:  # noqa: BLE001
         print(f"[analytics] D1 archive failed (site unaffected): {e}")
         return 0
+
+def _store_team_identity() -> int:
+    """Live writer for D1 `teams` (F3). Called on every analytics archive.
+
+    Uses cfbd_shared.teams_by_name() -- the SAME canonical name->id source the site and the
+    archive both use -- so this can never write an alias over a canonical name. Shapes the
+    rows here so d1_write_path stays free of CFBD coupling.
+
+    Never raises: the site must not care whether the archive succeeded.
+    """
+    try:
+        canonical = cfbd_shared.teams_by_name(CFBD_YEAR) or {}
+        rows = []
+        for school, t in canonical.items():
+            tid = (t or {}).get("id")
+            if not tid or not school:
+                continue
+            rows.append({"team_id": tid, "name": school,
+                         "abbr": (t or {}).get("abbreviation") or (t or {}).get("abbr") or "",
+                         "conference": (t or {}).get("conference") or ""})
+        if not rows:
+            return 0
+        n = d1_write_path.snapshot_team_identity(rows)
+        if n:
+            print(f"[teams] identity list refreshed in D1: {n} teams")
+        return n
+    except Exception as e:  # noqa: BLE001
+        print(f"[teams] D1 identity write failed (site unaffected): {e}")
+        return 0
+
 
 def _build_team_map() -> dict:
     """Build team map from local data + pre-fetched CFBD analytics + CFBD team logos.

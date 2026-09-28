@@ -108,6 +108,35 @@ def team_name_to_id() -> dict:
     return {r["name"]: r["team_id"] for r in d1_store.query("SELECT team_id, name FROM teams")}
 
 
+def team_identity_rows() -> list[dict]:
+    """Every team D1 `teams` knows: {name, conference}. READ-ONLY.
+
+    Used to make the served universe cover D1's identity list (F3) -- a team D1 knows but the
+    site cannot render is drift the parity test is supposed to catch, so the site must be able
+    to render all of them.
+    """
+    return d1_store.query("SELECT name, conference FROM teams")
+
+
+@_guard
+def snapshot_team_identity(rows: list[dict]) -> int:
+    """The LIVE WRITER for `teams` (F3).
+
+    WHY: `teams` was READ by the live path but written ONLY by scripts/backfill_d1.py, so a new
+    team, a rename or a conference move required a manual backfill and D1's identity list
+    silently drifted from the served universe (measured 2026-09-28: D1 684 vs served 685, with
+    Anna Maria College and Defiance College unrenderable). Called from the same place the
+    analytics archive happens, so identity tracks every live pull instead of a manual run.
+
+    Rows must carry CANONICAL names (cfbd_shared.teams_by_name() -> `school`). Writing an alias
+    here would rename a team to a name the rest of the system does not recognise, and
+    cfbd_shared.team_aliases() documents that canonical names must always win.
+    """
+    if not rows:
+        return 0
+    return d1_store.upsert_teams(rows)
+
+
 def game_ids_by_pair(season: int | None = None, normalizer=None) -> dict:
     """{(home_name, away_name): game_id} from D1 games joined to team names.
     When a normalizer is supplied both raw and normalized keys are registered, so

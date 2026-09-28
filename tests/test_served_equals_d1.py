@@ -128,20 +128,53 @@ def test_rankings_board_is_sorted_by_composite_rank(served):
         "drive the sort (Jeff corrected this twice)")
 
 
-@pytest.mark.xfail(strict=True,
-                   reason="F3: D1 `teams` != the served universe (Phase 6). Measured "
-                          "2026-09-28: Anna Maria College, Defiance College")
-def test_served_universe_covers_d1_teams(served):
-    """Every team D1 knows must be servable. A team D1 has but the site cannot render is
-    exactly how a dataset drifts out of sync unnoticed (F3)."""
-    d1_ids = {r["name"] for r in _d1().query("SELECT name FROM teams")}
+def test_served_universe_and_d1_teams_agree_both_ways(served):
+    """F3, CLOSED 2026-09-28 -- and closed in BOTH directions, because only one of them is
+    satisfied by construction.
+
+    (a) D1 knows a team the site cannot render -> the site is behind D1 (the original finding:
+        Anna Maria College and Defiance College sat in `teams` unrenderable).
+    (b) The site renders a team D1 cannot identify -> the archive cannot file that team's
+        metrics at all. THIS is the dangerous direction (v49/v50-class) and it is NOT fixed by
+        building the served list from D1, so the pair is not a tautology.
+
+    Names are compared through the app's OWN matcher. CFBD's ratings endpoints use aliases the
+    `/teams` `school` field does not carry -- cfbd_shared.team_aliases() names these three
+    cases verbatim: 'Albany' vs 'UAlbany', 'Southeastern Louisiana' vs 'SE Louisiana', 'UTRGV'
+    vs 'UT Rio Grande Valley'. Comparing raw `name` columns reports them as drift when the
+    system resolves them perfectly, so a raw comparison here would cry wolf forever.
+    """
+    import cfbd_shared  # noqa: PLC0415
+
+    rows = _d1().query("SELECT team_id, name FROM teams")
+    d1_names = {r["name"] for r in rows}
+    id_to_name = {r["team_id"]: r["name"] for r in rows}
     served_names = {t["name"] for t in served["analytics"]["teams"]}
-    missing = sorted(d1_ids - served_names)
+
+    assert len(served_names) >= MIN_TEAMS, f"served universe suspiciously small: {len(served_names)}"
+
+    # (a) every team D1 knows must be servable
+    missing = sorted(d1_names - served_names)
     assert not missing, (
         f"{len(missing)} team(s) exist in D1 `teams` but cannot be served:\n"
         + "\n".join(f"  - {n}" for n in missing[:15])
-        + "\n\nD1 `teams` has no live writer (F3): the served identity comes from the "
-          "ephemeral disk file. Either reconcile the two or retire the D1 copy."
+    )
+
+    # (b) every served team must resolve to a team D1 knows (alias-aware)
+    aliases = cfbd_shared.team_aliases(SEASON) or {}
+
+    def canon(name: str) -> str:
+        return id_to_name.get(aliases.get(name)) or name
+
+    unresolved = sorted(n for n in served_names if canon(n) not in d1_names
+                        and canon(n) not in served_names)
+    unresolvable = sorted(n for n in served_names if canon(n) not in d1_names)
+    assert not unresolvable, (
+        f"{len(unresolvable)} team(s) are SERVED but D1 cannot identify them, so their metrics\n"
+        "can never be archived:\n"
+        + "\n".join(f"  - {n}" for n in unresolvable[:15])
+        + ("\n(unresolved after alias normalisation: " + ", ".join(unresolved[:10]) + ")"
+           if unresolved else "")
     )
 
 

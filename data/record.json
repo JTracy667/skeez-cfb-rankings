@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "updated": "2026-09-28T13:43:10.254069",
+  "updated": "2026-09-28T14:07:32.532214",
   "picks": [
     {
       "key": "tcu|north carolina",
@@ -4727,13 +4727,14 @@
       "home": "Clemson",
       "away": "Miami",
       "date": "2026-10-03T04:00:00.000Z",
-      "spread": null,
-      "total": null,
-      "over_pick": null,
-      "home_proj": 19.2,
-      "away_proj": 32.1,
+      "spread": 16.5,
+      "total": 49.0,
+      "over_pick": "over",
+      "home_proj": 19.3,
+      "away_proj": 31.0,
       "su_pick": "Miami",
-      "ats_pick": null
+      "ats_pick": "Clemson",
+      "relocked": true
     },
     {
       "key": "mississippi state|alabama",
