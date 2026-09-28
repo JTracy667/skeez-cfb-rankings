@@ -24,10 +24,10 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v58** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v58-line-movements-d1` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v58` |
-| Rollback tag | **v57** — `scripts/cfb_deploy.sh --rollback v57` (v56…v50 also in the registry) |
+| Live build | **v59** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v59-best-bets-d1` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v59` |
+| Rollback tag | **v58** — `scripts/cfb_deploy.sh --rollback v58` (v57…v50 also in the registry) |
 | Last verified | 2026-09-28 12:42 PT (CTO) — `DEPLOY VERIFIED LIVE: v56`; marker match (not `build`); app image v56 (version 52); all public pages 200 |
 | Injuries | D1 `app_state.active_injuries` is the served source (45 teams / 56 tracked at migration). `/api/injuries` and the win-totals build read it. Kill switch `INJURIES_FROM_D1=0`. **D1 `injury_snapshots` is a settled-outcome tracking table, NOT the current injury state.** |
 | Quota ledger | `/api/health` `budget` is read from D1 `api_usage` — the ledger of record. The disk mirror `data/budget_ledger.json` is a **local-dev fallback only** (Phase 6). Kill switch `BUDGET_FROM_D1=0`. |
@@ -46,6 +46,24 @@ curl -s https://skeezcfb-rankings.com/api/health   # status ok + build + code.ma
 ---
 
 ## RECENT CHANGES & OPEN WORK
+
+### v58 → v59 (2026-09-28, CTO) — Phase 6 step 5: the best-bets tracker is durable in D1
+
+`data/best_bets.json` is **not a cache** — it is the tracked record of which plays were locked
+and how they graded, and BOTH `_lock_best_bets` and `_ingest_best_bets` read-modify-write it.
+It was on the ephemeral disk, so a recycle silently reset the tracker: locked picks and graded
+results were being discarded. Now D1-first (`app_state` key `best_bets`, kill switch
+`BEST_BETS_FROM_D1`), write-through mirror, seeded with 32 picks / 20 graded results.
+
+**Deliberate asymmetry:** writes ALWAYS mirror to D1; the kill switch governs READS only, so
+flipping it for a rollback can never lose a lock or a graded result.
+
+**The runtime-written disk tier is now CLEARED.** What still reads disk, and why:
+- `cfbd_logos.json` — static asset baked into the image, never written at runtime (accepted).
+- `teams.json` — **F3**, the last `xfail`, awaiting the backfill-only vs live-writer decision.
+- `cfbd_analytics.json` — D1-served since v51; still reads identity fields, finishing next.
+
+Deploy: ~1.3 min, first `wrangler deploy` applied the image, retry not needed.
 
 ### v57 → v58 (2026-09-28, CTO) — Phase 6 step 4: the line-movement log is durable in D1
 
