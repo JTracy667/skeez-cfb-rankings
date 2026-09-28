@@ -56,7 +56,9 @@ SERVE_ALLOWLIST: dict[str, str] = {
     "line_movements.json": "F2/Phase 6 - line-movement history read while serving; same treatment",
     "active_injuries.json": "F2/Phase 6 - injury board read while serving; D1 injury_snapshots exists but is not the served source",
     "teams.json":          "F3/Phase 6 - team identity read from disk while D1 `teams` also exists (two sources, no live writer)",
-    "budget_ledger.json":  "F2/Phase 6 - /api/health reads the quota ledger from disk although D1 api_usage is the ledger of record",
+    # DIFFED OUT in Phase 6 (2026-09-28): budget.state() is D1-FIRST now (budget.py,
+    # BUDGET_FROM_D1 kill switch), so /api/health reads D1 api_usage -- the ledger of record --
+    # and the file mirror is only a local-dev fallback.
     # DIFFED OUT in Phase 2 (2026-09-28) once results and the record moved to D1:
     #   finals_cache.json -- the ephemeral disk cache is deleted; _fetch_final_scores
     #                        archives to D1 `games` and falls back to D1.
@@ -78,7 +80,7 @@ BUILD_ALLOWLIST: dict[str, str] = {
     "active_injuries.json": "F2/Phase 6 - compute_win_totals() reads it before persisting the board",
     "cfbd_analytics.json":  "F7/Phase 6 - compute_win_totals() reads it; a board built from the image file persists the staleness",
     "teams.json":           "F3/Phase 6 - compute_win_totals() reads team identity from disk while D1 `teams` also exists",
-    "budget_ledger.json":   "F2/Phase 6 - compute_win_totals() reads the quota ledger from disk",
+    # DIFFED OUT in Phase 6: same conversion as the serve scope above.
     "cfbd_logos.json": "PERMANENT - static reference asset (baked into the image, never written at runtime); no revert risk",
 }
 

@@ -1177,7 +1177,7 @@ def api_boards_status():
     return out
 
 
-CODE_MARKER = "v54-archive-failures-loud"   # bump when a release must be provably live
+CODE_MARKER = "v55-budget-ledger-d1"   # bump when a release must be provably live
 
 
 @app.get("/api/health")

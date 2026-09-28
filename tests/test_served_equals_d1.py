@@ -251,6 +251,41 @@ def test_schedule_falls_back_to_disk_when_d1_has_nothing(app_module, monkeypatch
     assert isinstance(got, dict) and "matchups" in got
 
 
+def test_budget_ledger_reads_d1_first_and_falls_back_to_the_file(monkeypatch):
+    """Phase 6: D1 `api_usage` is the ledger of record; the disk mirror can only be staler.
+
+    `flush()` writes the file and D1 in the SAME call, so the file is never ahead of D1 --
+    and on the container it lives on an EPHEMERAL disk, exactly the stale-read class that hid
+    the analytics bug. Make the two disagree and assert D1 wins.
+    """
+    import budget  # noqa: PLC0415
+
+    d1_truth = {"schema": 1, "day": {"2026-09-28": {"cfbd": {"calls": 4321}}},
+                "month": {"2026-09": {"cfbd": {"calls": 4321}}}, "paused": {}}
+    stale_file = {"schema": 1, "day": {"2026-09-28": {"cfbd": {"calls": 7}}},
+                  "month": {"2026-09": {"cfbd": {"calls": 7}}}, "paused": {}}
+
+    monkeypatch.setattr(budget, "_d1_load", lambda: d1_truth)
+    monkeypatch.setattr(budget, "_read_file", lambda: stale_file)
+    monkeypatch.setattr(budget, "_state", None)
+    assert budget.state()["day"]["2026-09-28"]["cfbd"]["calls"] == 4321, \
+        "the stale disk mirror won over D1"
+
+    # D1 has nothing -> the file is the fallback (local dev / D1 unreachable).
+    monkeypatch.setattr(budget, "_state", None)
+    monkeypatch.setattr(budget, "_d1_load", lambda: None)
+    assert budget.state()["day"]["2026-09-28"]["cfbd"]["calls"] == 7
+
+    # Kill switch: with BUDGET_FROM_D1=0 the file is authoritative and D1 is not consulted.
+    monkeypatch.setattr(budget, "_state", None)
+    monkeypatch.setenv("BUDGET_FROM_D1", "0")
+    monkeypatch.setattr(budget, "_d1_load",
+                        lambda: (_ for _ in ()).throw(
+                            AssertionError("D1 must not be consulted when the kill switch is off")))
+    assert budget.state()["day"]["2026-09-28"]["cfbd"]["calls"] == 7
+    monkeypatch.setattr(budget, "_state", None)
+
+
 # ------------------------------------------------------- KNOWN-BROKEN (F1), xfail-strict
 
 

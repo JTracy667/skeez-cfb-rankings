@@ -102,37 +102,46 @@ def _write_file(d: dict) -> None:
         print(f"[budget] file mirror failed: {e}")
 
 
-def _merge_into(dst: dict, src: dict) -> dict:
-    """Merge a ledger from D1 into the in-memory one, taking the LARGER counter
-    per (bucket, period, source) — counters only go up within a period, so max()
-    is the correct reconcile after a recycle."""
-    for bucket in ("day", "month"):
-        for period, sources in (src.get(bucket) or {}).items():
-            tgt = dst[bucket].setdefault(period, {})
-            for source, rec in (sources or {}).items():
-                cur = tgt.setdefault(source, {"calls": 0})
-                cur["calls"] = max(int(cur.get("calls") or 0), int(rec.get("calls") or 0))
-                for k in ("provider_remaining", "provider_limit", "provider_used"):
-                    if rec.get(k) is not None:
-                        cur[k] = rec[k]
-    return dst
+# `_merge_into` was REMOVED in Phase 6. It took max(file, D1) per counter, which made the
+# ephemeral disk file a *reconcile input* on the serving path. That read is gone: `flush()`
+# writes the file and D1 in the same call, and if a flush ever died between the two the next
+# successful flush rewrites the CUMULATIVE counters anyway -- so the file can never be ahead
+# of D1 in any case that matters. On the container it is also wiped with the instance, so it
+# cannot recover anything either. It is a local-dev fallback, nothing more. Do not restore a
+# file-primary merge here.
 
 
 def state() -> dict:
-    """In-memory ledger, hydrated once per process (file mirror + D1 of record)."""
+    """In-memory ledger, hydrated once per process.
+
+    D1 ``api_usage`` is the LEDGER OF RECORD and is read FIRST (Phase 6, F-budget). The file
+    mirror is the FALLBACK only.
+
+    Why the order matters: ``flush()`` writes the file and D1 in the same call, so the file
+    can only ever be EQUAL TO or STALER THAN D1 -- and on the container it lives on an
+    EPHEMERAL disk, which is precisely the class of stale read that hid the analytics bug for
+    a week. Hydration happens once per process; after that the in-memory counters are the
+    live truth. Kill switch: ``BUDGET_FROM_D1=0``.
+    """
     global _state
     if _state is None:
         with _lock:
             if _state is None:
-                d = _read_file()
-                try:
-                    remote = _d1_load()
-                    if remote:
-                        d = _merge_into(d, remote)
-                except Exception as e:  # noqa: BLE001
-                    print(f"[budget] D1 hydrate skipped: {e}")
+                d = None
+                if _d1_enabled():
+                    try:
+                        d = _d1_load()
+                    except Exception as e:  # noqa: BLE001
+                        print(f"[budget] D1 hydrate skipped, falling back to the file mirror: {e}")
+                if not d:
+                    d = _read_file()
                 _state = d
     return _state
+
+
+def _d1_enabled() -> bool:
+    """Reads default ON; the flag is a kill switch, not a gate."""
+    return os.environ.get("BUDGET_FROM_D1", "1").strip().lower() in ("1", "true", "yes", "on")
 
 
 # ------------------------------------------------------- D1 ledger of record
