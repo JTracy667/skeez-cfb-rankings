@@ -1177,7 +1177,7 @@ def api_boards_status():
     return out
 
 
-CODE_MARKER = "v49-board-rebuild-fix"   # bump when a release must be provably live
+CODE_MARKER = "v50-serve-fresh-analytics"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
