@@ -125,6 +125,20 @@ printf '%s' "$NEW" | $WRANGLER secret put BUILD_TAG >/dev/null 2>&1 \
 echo "=== wrangler deploy ==="
 wrangler_deploy
 
+# 5b. THE IMAGE-APPLICATION GATE.
+# `wrangler deploy` can print the image diff and report success while only the Worker's env
+# moved: /api/health then says build=vN while the container APPLICATION still points at the
+# old image, and the site serves old code forever. (v52->v53 sat exactly like that for an
+# hour; a second `wrangler deploy` applied it immediately.) The app config is also EVENTUALLY
+# CONSISTENT, so this polls rather than judging on one read. If the image never lands, deploy
+# once more before letting the verify step fail and roll back.
+if ! python "$(dirname "$0")/verify_container_swap.py" --tag "$NEW" --app-image-only --window 120; then
+  echo "    container app did not take $NEW -> re-running wrangler deploy"
+  wrangler_deploy
+  python "$(dirname "$0")/verify_container_swap.py" --tag "$NEW" --app-image-only --window 180 \
+    || { rollback "$PREV" "container app never moved to $NEW"; exit 1; }
+fi
+
 if [ "$NO_VERIFY" = "--no-verify" ]; then
   echo "deployed; verification skipped (--no-verify)."
   echo "verify manually once the warm instance recycles:"

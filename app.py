@@ -1177,7 +1177,7 @@ def api_boards_status():
     return out
 
 
-CODE_MARKER = "v53-schedule-in-d1"   # bump when a release must be provably live
+CODE_MARKER = "v54-archive-failures-loud"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -1212,6 +1212,10 @@ def api_health():
         "model_version": composite_version(),
         "teams": len(load_local()),
         "cache_ttl": CACHE_TTL,
+        # F5: archive health. A dead D1 archive used to be indistinguishable from a busy
+        # one -- the guard caught the exception, printed it to a log the container throws
+        # away, and returned 0. `count > 0` here means writes are silently NOT landing.
+        "archive": d1_write_path.archive_failure_state(),
     }
     # Phase 3.5: burn summary + degraded-mode staleness flag, cheap enough for a
     # health probe. `degraded` is the flag the site/pages read to show that data

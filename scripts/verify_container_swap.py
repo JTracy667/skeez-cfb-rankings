@@ -110,7 +110,11 @@ def one_site_check():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", required=True, help="image tag that should be running, e.g. v53")
-    ap.add_argument("--marker", required=True, help="CODE_MARKER baked into that image")
+    ap.add_argument("--marker", default="", help="CODE_MARKER baked into that image")
+    ap.add_argument("--app-image-only", action="store_true",
+                    help="check ONLY that the container app is configured for --tag, then exit "
+                         "(used by cfb_deploy.sh to catch a `wrangler deploy` that reported "
+                         "success without applying the image, before deciding to retry)")
     ap.add_argument("--attempts", type=int, default=3)
     ap.add_argument("--window", type=int, default=420,
                     help="seconds to wait for an idle window, per attempt (must exceed sleepAfter)")
@@ -130,6 +134,9 @@ def main():
               "  `wrangler deploy` did not apply the container image change -- re-run it and\n"
               "  watch for 'SUCCESS Modified application'.")
         return 1
+    if a.app_image_only:
+        print(f"APP IMAGE OK: {a.tag}")
+        return 0
 
     for n in range(1, a.attempts + 1):
         print(f"attempt {n}/{a.attempts}: waiting for the old instance to retire")

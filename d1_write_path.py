@@ -46,7 +46,16 @@ def enabled() -> bool:
 
 
 def _guard(fn):
-    """Never let an archive failure reach the site."""
+    """Never let an archive failure reach the site -- and never hide it either (F5).
+
+    Returning 0 and printing to a log the container throws away made a DEAD archive look
+    exactly like a healthy one: nothing downstream could tell "wrote 0 rows" apart from
+    "never wrote anything". A failed write was indistinguishable from a quiet one, so the
+    site could serve stale data with every probe still green.
+
+    The failure is now recorded to D1 `freshness_events` (durable history, already read by
+    ops) and surfaced in `/api/health` via `archive_failure_state()`.
+    """
     def wrapper(*a, **k):
         if not enabled():
             return 0
@@ -54,9 +63,36 @@ def _guard(fn):
             return fn(*a, **k)
         except Exception as e:  # noqa: BLE001
             print(f"[d1_write_path] {fn.__name__} failed (site unaffected): {e}")
+            _record_archive_failure(fn.__name__, e)
             return 0
     wrapper.__name__ = fn.__name__
     return wrapper
+
+
+# F5: in-process view of archive failures since this container booted. The D1 rows are the
+# durable history; this is what /api/health can answer without a query.
+_ARCHIVE_FAILURES = {"count": 0, "last_fn": None, "last_error": None, "last_ts": None}
+
+
+def archive_failure_state() -> dict:
+    """Archive failures since this container booted (F5). Non-zero means writes are
+    silently NOT landing -- the state that used to be invisible."""
+    return dict(_ARCHIVE_FAILURES)
+
+
+def _record_archive_failure(fn_name: str, exc: Exception) -> None:
+    """Best-effort, and it MUST NOT raise: this runs INSIDE an exception handler and
+    telemetry must never be able to affect the site."""
+    _ARCHIVE_FAILURES["count"] += 1
+    _ARCHIVE_FAILURES["last_fn"] = fn_name
+    _ARCHIVE_FAILURES["last_error"] = f"{type(exc).__name__}: {exc}"[:300]
+    _ARCHIVE_FAILURES["last_ts"] = _now()
+    try:
+        record_freshness_event(event="archive_failure", source=fn_name,
+                               detail=_ARCHIVE_FAILURES["last_error"])
+    except Exception as e:  # noqa: BLE001
+        # If we cannot even record the failure, say so loudly on stdout -- but never raise.
+        print(f"[d1_write_path] could not record archive_failure for {fn_name}: {e}")
 
 
 def _now() -> str:
