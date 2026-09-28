@@ -24,11 +24,12 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v51** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v51-serve-from-d1` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v51` |
-| Rollback tag | **v50** — `scripts/cfb_deploy.sh --rollback v50` (v49 also in the registry) |
-| Last verified | 2026-09-27 ~22:20 PT (CTO) — `build v51`, marker `v51-serve-from-d1`; all 5 pages 200; `input_vintages` all 2026; Georgia rank 1 @ sp+ 30.2 |
+| Live build | **v52** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v52-results-in-d1` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v52` |
+| Rollback tag | **v51** — `scripts/cfb_deploy.sh --rollback v51` (v50 also in the registry) |
+| Last verified | 2026-09-28 (CTO) — `build v52`, marker `v52-results-in-d1`; all 6 pages 200; `/api/record` serves 889 picks / 332 results (from D1 `app_state.su_ats_record`); D1 `games` newest scored week 4 |
+| Enforcement gate | `python scripts/run_enforcement_tests.py` — **blocking** before any deploy (needs `CF_D1_TOKEN`; refuses to run without it) |
 | Known-stale docs | `docs/SESSION_HANDOFF.md` (state as of Sep 23 — do NOT trust its state), `CLOUDFLARE_DEPLOY.md` (says `sleepAfter 20m`) |
 | Data map | **`docs/DATA_FLOW.md`** — read it before touching any producer or reader |
 
@@ -40,6 +41,33 @@ curl -s https://skeezcfb-rankings.com/api/health   # status ok + build + code.ma
 ---
 
 ## RECENT CHANGES & OPEN WORK
+
+### v51 → v52 (2026-09-28, CTO) — results + record durable in D1 (finding F1)
+
+**What was wrong:** results were graded into `data/finals_cache.json` and the SU/ATS record
+into `data/record.json` — both **runtime writes on the container's ephemeral disk**
+(`sleepAfter` 5m). D1 `games` had nothing newer than **week 3** while the site served
+week 5, so the store the parity suite asserts against silently fell behind the site.
+
+**What v52 does:**
+- `_fetch_final_scores()` order is now memory → live CFBD fetch **which archives to D1
+  `games`** → D1 fallback. The disk cache is deleted from the code path.
+- The record lives in D1 `app_state` (`su_ats_record`); `data/record.json` is a local-dev
+  fallback. Migrated 889 picks / 332 results.
+- **F6 fixed ahead of schedule** (the plan had it in Phase 5): `read_enabled()` (default ON)
+  and `write_enabled()` are now separate. Before, reads were gated on the WRITE flag, so
+  verifying that serving read D1 required enabling writes to PRODUCTION D1.
+- One door per dataset in the data layer: `d1_write_path.snapshot_games()` /
+  `load_games()`. `scripts/refresh_d1_games.py` refills a season in one CFBD call.
+
+**Trap recorded:** backfilling D1 made the F1 `xfail` XPASS at once; lifting the marker
+there would have left a green test guarding nothing, because the live path still did not
+persist. Lifted only once `test_live_finals_fetch_archives_to_d1` proved the code path.
+**Rule: never lift an `xfail` because the data got fixed.**
+
+**Left deliberately unfinished:** `best_bets.json` is still read from disk on the serve
+path. Phase 2 fixed the results source, not the best-bets BOARD, which needs its own D1
+door (Phase 6). Recorded in the guard allowlist rather than claimed.
 
 ### v49 → v51 (2026-09-27, CTO) — the D1 serving fix
 
