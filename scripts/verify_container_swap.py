@@ -69,7 +69,7 @@ def cf_api(path):
         sys.exit("config error: CLOUDFLARE_API_TOKEN not set "
                  "(resolve it with scripts/cf_deploy_token.py)")
     url = (f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT}"
-           f"/containers/applications/{APP}/{path}")
+           f"/containers/applications/{APP}" + (f"/{path}" if path else ""))
     req = urllib.request.Request(url, headers={"Authorization": "Bearer " + tok})
     return json.load(urllib.request.urlopen(req, timeout=60))
 
