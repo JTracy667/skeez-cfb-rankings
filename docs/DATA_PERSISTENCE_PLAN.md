@@ -406,3 +406,108 @@ BUILD PATH
 - The parity check covers 8 keys on 4 teams. It is a smoke-level check, not exhaustive.
 - `games` "max week 15" is the *scheduled* season extent, not evidence of recent results.
   The meaningful figures are the scored-game counts.
+
+
+---
+
+# PHASE 1 — COMPLETE (2026-09-28)
+
+**Status: DONE.** Two enforcement suites, both green, both proven to fail when they should.
+No behaviour change shipped: this phase adds instruments, not fixes.
+
+## Artifacts
+
+| File | What it is |
+|---|---|
+| `tests/test_served_equals_d1.py` | Parity: what the site SERVES must equal what D1 STORES. |
+| `tests/test_no_disk_reads_in_serving.py` | Chokepoint guard: no `data/` read on the serve, build or import path. |
+| `tests/_reads_probe.py` | Measures `data/` reads for one scope, in a fresh interpreter. |
+| `scripts/run_enforcement_tests.py` | The gate. Refuses to run without D1 credentials. |
+
+Run it: `python scripts/run_enforcement_tests.py` (~20s; `--all` adds the rest of the suite).
+
+## What each instrument actually enforces
+
+* **Chokepoint guard — "allowlist subset".** Measures every `data/` read on three scopes and
+  asserts the set is a subset of a justified allowlist. It therefore passes today while
+  naming every known offender, and it fails on ANY new read. Each allowlist entry must name
+  the finding that owns it (`F<n>`) or be marked `PERMANENT`, plus the phase that removes
+  it. The exit criterion of each later phase is: *delete its entries from the allowlist.*
+* **Parity — strict vs known-broken.** Strict checks must always pass. Known-broken checks
+  carry `@pytest.mark.xfail(strict=True)`, so when a phase fixes one it starts *passing* and
+  pytest reports `XPASS(strict)` **as a failure** — the signal to remove the marker. The
+  worklist cannot silently rot into false coverage.
+* **The differential test (the important one).** A parity check where both sides agree *by
+  construction* proves nothing: the disk file was regenerated FROM D1 in v50, so served and
+  stored match whether or not D1 is actually read. `test_serving_follows_d1_even_when_the_disk_file_disagrees`
+  poisons the on-disk file with a sentinel and asserts the site serves D1 anyway. **That is
+  the v50 defect as an executable assertion.**
+
+## Counterfactuals run (the instruments are proven, not assumed)
+
+| # | Injected | Expected | Result |
+|---|---|---|---|
+| 1 | `open(data/rating_vintages.json)` added to the served `/ping` route | guard fails, naming the file and route | **FAILED: `rating_vintages.json <- GET /ping`** ✔ |
+| 2 | on-disk analytics poisoned while D1 enabled | serving must follow D1 | **differential test passed; served followed D1** ✔ |
+
+Both injections were reverted; `app.py` verified clean afterwards.
+
+## MEASURED `data/` reads — the F1/F2/F3 map, by scope
+
+Measured with `CFB_GUARD_DISCOVER=1`, fresh interpreter per scope:
+
+**SERVE (9)**
+```
+cfbd_analytics.json  <- /api/analytics, /api/best-bets, /api/projections
+odds_cache.json      <- /api/odds
+line_movements.json  <- /api/line-movements
+active_injuries.json <- /api/injuries
+teams.json           <- /api/best-bets, /api/health
+budget_ledger.json   <- /api/health
+finals_cache.json    <- /api/best-bets/record
+record.json          <- /api/record
+best_bets.json       <- /api/best-bets, /api/best-bets/record
+```
+**BUILD (5)** — worse than serve: a board built from a stale file has the staleness
+**persisted into D1**.
+```
+week_schedule.json   <- load_schedule()          <-- F2, located at last
+cfbd_analytics.json  <- compute_win_totals()
+teams.json           <- compute_win_totals()
+budget_ledger.json   <- compute_win_totals()
+active_injuries.json <- compute_win_totals()
+```
+**IMPORT (1)** — `cfbd_logos.json`, static reference, `PERMANENT` (no revert risk).
+
+## Findings this phase produced
+
+* **F2 is located, and it is on the BUILD path:** `load_schedule()` reads
+  `data/week_schedule.json`. Serving `/api/schedule` does *not* touch disk — so the earlier
+  framing was wrong and the risk is worse, because the board gets persisted.
+* **New exposure not in the audit:** `/api/health` reads `budget_ledger.json` off disk while
+  **D1 `api_usage` is the ledger of record**. The quota display can therefore be stale in
+  exactly the v50 way.
+* **F3 is confirmed empirically and is concrete:** D1 `teams` holds **684** teams, the site
+  serves **685**, and two D1 teams cannot be served at all — **Anna Maria College**,
+  **Defiance College**. Two populations, two sources, no reconciliation.
+* **F1 confirmed by test.** `newest scored week in D1 = 3`; the site serves week 5.
+
+## Three things learned the hard way (each is now guarded against)
+
+1. **Patching only `io.open` hides the defect.** A bare `open(...)` resolves via
+   `builtins.open`, and that blind spot concealed exactly the
+   `open(_CFBD_ANALYTICS_FILE)` call — the v50 file. Both must be patched.
+2. **A test whose two sides agree by construction is decoration.** The first parity suite
+   passed against a disk file regenerated from D1. Only forcing them apart revealed it.
+3. **In-process measurement is order-dependent.** The guard passed alone and failed in a
+   combined run; caches warmed by another module changed the answer. It now measures in a
+   fresh subprocess. One read (`fbs_teams.json`) sits on a branch gated by an external call
+   and is marked `INTERMITTENT`: waived from the stale check only, still a hard failure if it
+   appears unlisted.
+
+## Still open from this phase
+
+* Wire the gate into the deploy path (`scripts/cfb_deploy.sh` / Phase 7) — right now it is
+  runnable, not yet blocking.
+* The gate takes ~20s and needs `CF_D1_TOKEN`; it must run in the container/CI context with
+  store credentials or it correctly refuses.

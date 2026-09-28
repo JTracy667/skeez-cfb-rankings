@@ -67,6 +67,16 @@ copy: D1-first → Georgia `sp_plus` **30.2**; disk-only → **28.2**; 685 teams
 from D1, identity intact. Then live: `build v51` / `marker v51-serve-from-d1`, all five
 pages 200, `input_vintages` all 2026, Georgia rank 1.
 
+### Phase 1 of the data-layer plan — DONE (2026-09-28, CTO)
+
+Two enforcement suites now guard the whole defect class, and both were proven to fail when
+they should (counterfactual: a disk read injected into `/ping` was caught and named):
+`tests/test_served_equals_d1.py`, `tests/test_no_disk_reads_in_serving.py`. Gate:
+`python scripts/run_enforcement_tests.py` (refuses to run without `CF_D1_TOKEN`; ~20s).
+Full plan, measured `data/` read inventory and per-phase exit criteria:
+`docs/DATA_PERSISTENCE_PLAN.md`. Known-broken checks are `xfail(strict=True)`, so fixing
+one turns the suite RED until its marker is removed — the worklist cannot rot.
+
 ### Open work (in priority order)
 
 > **ACTIVE PLAN: `docs/DATA_PERSISTENCE_PLAN.md`** — phases 0–7, acceptance criteria,
@@ -121,6 +131,7 @@ Use the script; it encodes the whole procedure and auto-rolls-back:
 export CLOUDFLARE_API_TOKEN="$(python "$LOCALAPPDATA/hermes/profiles/cto/scripts/cf_deploy_token.py")"
 export CLOUDFLARE_ACCOUNT_ID=90c2c31beec12cb7de1c249ade1eb773
 
+python scripts/run_enforcement_tests.py        # BLOCKING: served==D1 + no new data/ reads
 bash scripts/cfb_deploy.sh vNN <code-marker>   # build -> preflight -> deploy -> verify
 bash scripts/cfb_deploy.sh --rollback vNN      # re-point prod at a known-good tag
 ```
