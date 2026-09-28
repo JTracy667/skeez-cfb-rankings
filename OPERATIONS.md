@@ -24,10 +24,10 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v60** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v60-teams-live-writer` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v60` |
-| Rollback tag | **v59** — `scripts/cfb_deploy.sh --rollback v59` (v58…v50 also in the registry) |
+| Live build | **v61** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v61-analytics-identity-d1` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v61` |
+| Rollback tag | **v60** — `scripts/cfb_deploy.sh --rollback v60` (v59…v50 also in the registry) |
 | Last verified | 2026-09-28 12:42 PT (CTO) — `DEPLOY VERIFIED LIVE: v56`; marker match (not `build`); app image v56 (version 52); all public pages 200 |
 | Injuries | D1 `app_state.active_injuries` is the served source (45 teams / 56 tracked at migration). `/api/injuries` and the win-totals build read it. Kill switch `INJURIES_FROM_D1=0`. **D1 `injury_snapshots` is a settled-outcome tracking table, NOT the current injury state.** |
 | Quota ledger | `/api/health` `budget` is read from D1 `api_usage` — the ledger of record. The disk mirror `data/budget_ledger.json` is a **local-dev fallback only** (Phase 6). Kill switch `BUDGET_FROM_D1=0`. |
@@ -46,6 +46,34 @@ curl -s https://skeezcfb-rankings.com/api/health   # status ok + build + code.ma
 ---
 
 ## RECENT CHANGES & OPEN WORK
+
+### v60 → v61 (2026-09-28, CTO) — Phase 6 step 6: analytics IDENTITY is durable
+
+`stat_observations` holds numerics only, so the served records' string fields (conf, streak,
+mascot, emoji) still came from `data/cfbd_analytics.json` — the image-copied file. v51 fixed the
+**numerics**; the **strings** were left behind, and a recycle reverted them to build-time values.
+`conf` and `streak` are not static, so that was a real (quieter) staleness hole.
+
+Now `app_state` key `analytics_identity` holds every string field per team, written by
+`_store_analytics_identity()` on the same live pull as the numerics. `_served_analytics()` reads
+identity from D1; the file is read only when D1 has no identity map at all.
+
+**Two call sites were still on the raw file — one of them a BUILD path:** `get_rankings()` (a
+board built from the image file bakes the staleness into D1 — the documented trap) and
+`/api/projections`. Both are D1-first now.
+
+**Regression found and fixed:** `tests/test_board_rebuild.py` went red, because its fixture
+stubbed the raw file accessor and my change moved `get_rankings()` onto the accessor, so the test
+read REAL D1 instead of its frozen two — breaking a test that documents itself as hermetic. The
+fixture now stubs `_served_analytics`. That test caught a genuine hermeticity leak, not just a
+changed call.
+
+**Disk tier is DONE.** No runtime-written data file is read on the serve/build path any more.
+What remains is static only: `cfbd_logos.json`, `teams.json`, `fbs_teams.json` — baked into the
+image, never written at runtime (`teams.json` is read by `load_local()` and nothing writes it),
+so there is no revert risk.
+
+Suite 107 passed, 0 xfailed. Gate PASS, 0 xfailed.
 
 ### v59 → v60 (2026-09-28, CTO) — F3 CLOSED: `teams` has a live writer; gate is fully green
 
