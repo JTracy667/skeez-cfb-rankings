@@ -7,7 +7,7 @@ All bots, work orders, and deployments must operate from this directory.
 
 ## Start here — MANDATORY, before any action on this repo
 
-**Read these two files first, in this order, before you run a command, edit a file,
+**Read these files first, in this order, before you run a command, edit a file,
 or answer a question about how the site works:**
 
 1. **`OPERATIONS.md`** — how the site runs, how it deploys, the refresh anchors, the
@@ -16,6 +16,11 @@ or answer a question about how the site works:**
    which table stores it, what reads it, and whether it is durable. It also lists the
    traps that have already caused incidents (ephemeral container disk, D1-first
    serving, upsert overwrites, silent `@_guard` failures).
+3. **`docs/DATA_PERSISTENCE_PLAN.md`** — the **active phased plan** for closing the data
+   defect class (phases, acceptance criteria, sequencing, rollback). If you are about to
+   change a producer or a reader, check whether a phase covers it first.
+4. **`docs/DATA_SYMMETRY_AUDIT.md`** — the measured write/read audit (findings F1–F8 with
+   receipts) that the plan works from.
 
 **Why this is mandatory:** the site has repeatedly been broken by a session reasoning
 about its wiring from memory instead of from a document. The v50 incident — a full week

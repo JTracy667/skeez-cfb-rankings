@@ -54,7 +54,7 @@ baked into the image. That is why a week of weekly pulls was invisible to visito
 | freshness / boot events | app | **D1 `freshness_events`** (201) | `id` | yes | diagnostics |
 | model predictions | `snapshot_predictions()` | **D1 `model_predictions`** (272) | — | yes | backtests |
 | raw API payloads | `snapshot_raw_payload()` | **D1 `raw_payloads`** | — | yes, but **only 6 rows** | — |
-| **player-level data** | *(nothing writes it)* | **D1 `players` — 0 ROWS** | — | **empty** | — |
+| **player-level data** | *(nothing writes it yet)* | **D1 `players` — 0 ROWS** | — | empty — **KEEP** | — |
 | backtest runs | backtest tooling | **D1 `backtest_runs`** (12) | — | yes | backtests |
 
 ---
@@ -96,7 +96,7 @@ baked into the image. That is why a week of weekly pulls was invisible to visito
 |---|---|---|---|
 | 1 | Intra-week overwrite in `stat_observations` | no revision history; unauditable pulls | add `pull_id`/`recorded_at` to the key → append-only. **Jeff's call (row growth ~2×/day)** |
 | 2 | Raw API payloads not retained (6 rows) | can't recompute metrics from source | archive the pull's raw JSON per pull |
-| 3 | `players` table empty | no player-level persistence | decide what's actually needed |
+| 5 | `players` table empty | none today — it is hooked up to nothing | **KEEP (Jeff, 2026-09-28): reserved for player-vs-player matchups. Intentionally unwired; do not delete, do not wire without a work order.** |
 | 4 | `@_guard` silent failures | a dead archive looks healthy | log failures to `freshness_events` + alert |
 | 5 | No parity test between D1 and what's served | exactly how the v49/v50 bug hid | **contract test: served payload == D1 latest** |
 | 6 | Reads gated on `D1_WRITE_ENABLED` | misleading coupling | split into a read flag |

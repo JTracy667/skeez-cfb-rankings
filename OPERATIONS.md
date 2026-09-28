@@ -69,7 +69,8 @@ pages 200, `input_vintages` all 2026, Georgia rank 1.
 
 ### Open work (in priority order)
 
-> **Superseded by the full audit: `docs/DATA_SYMMETRY_AUDIT.md` (2026-09-28).** It walks
+> **ACTIVE PLAN: `docs/DATA_PERSISTENCE_PLAN.md`** — phases 0–7, acceptance criteria,
+> sequencing and rollback for closing the audit's F1–F8. Superseded by the full audit: `docs/DATA_SYMMETRY_AUDIT.md` (2026-09-28).** It walks
 > write/read symmetry across all 17 D1 tables AND the disk tier, with findings ranked
 > F1–F8 and receipts. Read that first; the list below is the older, narrower version.
 

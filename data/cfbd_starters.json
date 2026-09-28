@@ -130,7 +130,7 @@
   "Oklahoma State": {
     "qb": {
       "player": "Drew Mestemaker",
-      "att": 114.0,
+      "att": 141.0,
       "last_name": "mestemaker",
       "first_init": "d"
     }
@@ -431,14 +431,6 @@
       "first_init": "n"
     }
   },
-  "Elon": {
-    "qb": {
-      "player": "TJ Crews IV",
-      "att": 39.0,
-      "last_name": "crews",
-      "first_init": "t"
-    }
-  },
   "UC Davis": {
     "qb": {
       "player": "Treynor Cleeland",
@@ -482,7 +474,7 @@
   "Florida Atlantic": {
     "qb": {
       "player": "Caden Veltkamp",
-      "att": 159.0,
+      "att": 158.0,
       "last_name": "veltkamp",
       "first_init": "c"
     }
@@ -575,14 +567,6 @@
       "first_init": "d"
     }
   },
-  "Iowa": {
-    "qb": {
-      "player": "Hank Brown",
-      "att": 96.0,
-      "last_name": "brown",
-      "first_init": "h"
-    }
-  },
   "Clemson": {
     "qb": {
       "player": "Tait Reynolds",
@@ -594,7 +578,7 @@
   "West Virginia": {
     "qb": {
       "player": "Michael Hawkins Jr.",
-      "att": 38.0,
+      "att": 60.0,
       "last_name": "hawkins",
       "first_init": "m"
     }
@@ -730,7 +714,7 @@
   "Western Kentucky": {
     "qb": {
       "player": "Rodney Tisdale Jr.",
-      "att": 78.0,
+      "att": 77.0,
       "last_name": "tisdale",
       "first_init": "r"
     }
@@ -783,6 +767,14 @@
       "first_init": "j"
     }
   },
+  "Duquesne": {
+    "qb": {
+      "player": "Carson Camp",
+      "att": 76.0,
+      "last_name": "camp",
+      "first_init": "c"
+    }
+  },
   "Wagner": {
     "qb": {
       "player": "Benjamin Newman",
@@ -821,6 +813,14 @@
       "att": 96.0,
       "last_name": "grote",
       "first_init": "t"
+    }
+  },
+  "Elon": {
+    "qb": {
+      "player": "Elijah Guttman",
+      "att": 48.0,
+      "last_name": "guttman",
+      "first_init": "e"
     }
   },
   "Bethune-Cookman": {
@@ -991,6 +991,14 @@
       "first_init": "a"
     }
   },
+  "Florida A&M": {
+    "qb": {
+      "player": "Armond Parker",
+      "att": 58.0,
+      "last_name": "parker",
+      "first_init": "a"
+    }
+  },
   "North Carolina A&T": {
     "qb": {
       "player": "Kevin White",
@@ -1013,14 +1021,6 @@
       "att": 144.0,
       "last_name": "chambliss",
       "first_init": "t"
-    }
-  },
-  "Florida A&M": {
-    "qb": {
-      "player": "Isaiah Knowles",
-      "att": 45.0,
-      "last_name": "knowles",
-      "first_init": "i"
     }
   },
   "Memphis": {
@@ -1085,14 +1085,6 @@
       "att": 129.0,
       "last_name": "browne",
       "first_init": "r"
-    }
-  },
-  "Alabama A&M": {
-    "qb": {
-      "player": "Cornelious Brown",
-      "att": 132.0,
-      "last_name": "brown",
-      "first_init": "c"
     }
   },
   "Towson": {
@@ -1415,6 +1407,14 @@
       "first_init": "t"
     }
   },
+  "Maine": {
+    "qb": {
+      "player": "Eddie Buehler",
+      "att": 151.0,
+      "last_name": "buehler",
+      "first_init": "e"
+    }
+  },
   "Richmond": {
     "qb": {
       "player": "Ashten Snelsire",
@@ -1695,14 +1695,6 @@
       "first_init": "e"
     }
   },
-  "Maine": {
-    "qb": {
-      "player": "Eddie Buehler",
-      "att": 116.0,
-      "last_name": "buehler",
-      "first_init": "e"
-    }
-  },
   "New Mexico State": {
     "qb": {
       "player": "Trey Hedden",
@@ -1733,6 +1725,14 @@
       "att": 126.0,
       "last_name": "wood",
       "first_init": "j"
+    }
+  },
+  "Iowa": {
+    "qb": {
+      "player": "Hank Brown",
+      "att": 97.0,
+      "last_name": "brown",
+      "first_init": "h"
     }
   },
   "McNeese": {
@@ -1823,14 +1823,6 @@
       "first_init": "n"
     }
   },
-  "Duquesne": {
-    "qb": {
-      "player": "Carson Camp",
-      "att": 55.0,
-      "last_name": "camp",
-      "first_init": "c"
-    }
-  },
   "Pennsylvania": {
     "qb": {
       "player": "Miles Teodecki",
@@ -1845,6 +1837,14 @@
       "att": 145.0,
       "last_name": "kaminski",
       "first_init": "j"
+    }
+  },
+  "Alabama A&M": {
+    "qb": {
+      "player": "Cornelious Brown",
+      "att": 158.0,
+      "last_name": "brown",
+      "first_init": "c"
     }
   },
   "Washington State": {
