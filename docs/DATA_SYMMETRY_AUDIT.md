@@ -138,7 +138,14 @@ with no error. This is the same failure shape as v50.
 the durable `slate_cache`, so there are **two sources for one page** — precisely the
 condition that made the analytics bug invisible.
 
-### F3 — `teams` is read-only and `players` is an orphan. **MEDIUM.**
+### F3 — **CLOSED 2026-09-28 (v60).** `teams` has a live writer now; `players` stays KEEP/unwired.
+
+Was: `teams` read by the live path, written only by `scripts/backfill_d1.py`. Now
+`_store_team_identity()` rides every analytics archive, and `_served_analytics()` serves D1
+identity rows so nothing in `teams` is unrenderable. Measured: 3 of the 5 apparent mismatches
+were the aliases `cfbd_shared.team_aliases()` already documents; the real drift was Anna Maria
+College and Defiance College (D-III, zero analytics rows). `players` remains as Jeff decided —
+KEEP, reserved for player-vs-player matchups, not wired to anything.
 `teams` is read by the live path but written by **nothing** on it (`upsert_teams` exists
 only in backfill scripts/selftests) — so new teams/conference changes require a manual
 backfill. `players` has **0 rows, no writer, no reader** — it was created and never used.

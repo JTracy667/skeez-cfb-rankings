@@ -24,10 +24,10 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v59** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v59-best-bets-d1` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v59` |
-| Rollback tag | **v58** — `scripts/cfb_deploy.sh --rollback v58` (v57…v50 also in the registry) |
+| Live build | **v60** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v60-teams-live-writer` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v60` |
+| Rollback tag | **v59** — `scripts/cfb_deploy.sh --rollback v59` (v58…v50 also in the registry) |
 | Last verified | 2026-09-28 12:42 PT (CTO) — `DEPLOY VERIFIED LIVE: v56`; marker match (not `build`); app image v56 (version 52); all public pages 200 |
 | Injuries | D1 `app_state.active_injuries` is the served source (45 teams / 56 tracked at migration). `/api/injuries` and the win-totals build read it. Kill switch `INJURIES_FROM_D1=0`. **D1 `injury_snapshots` is a settled-outcome tracking table, NOT the current injury state.** |
 | Quota ledger | `/api/health` `budget` is read from D1 `api_usage` — the ledger of record. The disk mirror `data/budget_ledger.json` is a **local-dev fallback only** (Phase 6). Kill switch `BUDGET_FROM_D1=0`. |
@@ -46,6 +46,35 @@ curl -s https://skeezcfb-rankings.com/api/health   # status ok + build + code.ma
 ---
 
 ## RECENT CHANGES & OPEN WORK
+
+### v59 → v60 (2026-09-28, CTO) — F3 CLOSED: `teams` has a live writer; gate is fully green
+
+**The last `xfail` is gone.** Enforcement gate **23 passed, 0 xfailed**; suite **104 passed,
+0 xfailed** — the first fully-green run of the enforcement gate.
+
+**What F3 really was.** The audit said "D1 `teams` 684 vs served 685". Chasing the 5
+mismatches found only ONE real drift:
+- `Albany`/`UAlbany`, `UTRGV`/`UT Rio Grande Valley`, `Southeastern Louisiana`/`SE Louisiana`
+  are **not** drift — `cfbd_shared.team_aliases()` documents those three cases verbatim and
+  the system has always resolved them. A raw `name` comparison cries wolf forever.
+- **Anna Maria College (MSCAC) and Defiance College (Heartland)** — both D-III, both in D1
+  `teams`, both absent from the analytics universe, both with **zero analytics rows**. That
+  pair was the entire finding.
+
+**Fixed (approved live writer):** `d1_write_path.snapshot_team_identity()` + `app._store_team_identity()`
+called from `_store_team_analytics`, so the identity list rides **every live pull** instead of a
+manual backfill. Writes **canonical** names from `cfbd_shared.teams_by_name()`; writing an alias
+over a canonical name would rename a team to something the rest of the system does not recognise.
+`_served_analytics()` now also serves D1 `teams` identity rows, **identity only** — no numeric
+field is invented, so nothing downstream can read a fabricated value.
+
+**The test was rewritten, not merely un-xfailed.** It now asserts BOTH directions: every team D1
+knows is servable, AND every served team resolves to a D1 team (alias-aware). The second is the
+dangerous one (a served team D1 cannot identify can never have metrics archived) and it is NOT
+satisfied by building the served list from D1 — so the pair is a control, not a tautology.
+Counterfactual proven: neutering the identity seed makes it FAIL.
+
+Deploy: ~1.5 min, first `wrangler deploy` applied the image.
 
 ### v58 → v59 (2026-09-28, CTO) — Phase 6 step 5: the best-bets tracker is durable in D1
 
