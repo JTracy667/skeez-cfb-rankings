@@ -202,30 +202,74 @@ def _cache_set(store: dict, data: dict):
     store["ts"] = time.time()
 
 
-def _odds_disk_cache_get() -> dict | None:
-    """Load yesterday's odds from disk if still fresh (< ODDS_TTL old)."""
+ODDS_CACHE_STATE_KEY = "odds_cache"   # D1 app_state key -- durable odds cache
+
+
+def _odds_cache_from_d1_enabled() -> bool:
+    """Reads default ON; the flag is a kill switch, not a gate."""
+    return os.environ.get("ODDS_CACHE_FROM_D1", "1").strip().lower() in ("1", "true", "yes", "on")
+
+
+def _odds_cache_payload() -> dict | None:
+    """The cached odds payload {ts, odds}. D1 FIRST -- the container disk is EPHEMERAL (Phase 6).
+
+    This cache exists to avoid re-buying the day's odds from a METERED provider after a
+    container recycle. On an ephemeral disk it CANNOT do that job: the file is wiped with the
+    instance, so every recycle re-fetched and spent PropLine quota for data the site already
+    had. Persisting it in D1 is what makes the cache actually save calls.
+    Kill switch: ``ODDS_CACHE_FROM_D1=0``.
+    """
+    if _odds_cache_from_d1_enabled():
+        try:
+            cached = d1_write_path.load_state(ODDS_CACHE_STATE_KEY)
+            if cached:
+                payload = json.loads(cached)
+                if isinstance(payload, dict) and "odds" in payload:
+                    return payload
+        except Exception as e:  # noqa: BLE001
+            print(f"[Odds] D1 cache read failed, falling back to disk: {e}")
     try:
-        if not ODDS_CACHE_FILE.exists():
-            return None
-        payload = json.loads(ODDS_CACHE_FILE.read_text(encoding="utf-8"))
-        if time.time() - payload.get("ts", 0) < ODDS_TTL:
-            raw = payload.get("odds", {})
-            # Keys were stored as "home|away" strings — convert back to tuples
-            return {tuple(k.split("|")): v for k, v in raw.items()}
-    except Exception as e:
+        if ODDS_CACHE_FILE.exists():
+            payload = json.loads(ODDS_CACHE_FILE.read_text(encoding="utf-8"))
+            if isinstance(payload, dict) and "odds" in payload:
+                return payload
+    except Exception as e:  # noqa: BLE001
         print(f"[Odds] disk cache read failed: {e}")
     return None
 
 
+def _unpack_odds(payload: dict | None) -> dict | None:
+    """Stored "home|away" string keys -> (home, away) tuples."""
+    if not payload:
+        return None
+    raw_map = payload.get("odds") or {}
+    return {tuple(k.split("|")): v for k, v in raw_map.items()} or None
+
+
+def _odds_disk_cache_get() -> dict | None:
+    """Cached odds if still fresh (< ODDS_TTL old), else None. D1-first."""
+    payload = _odds_cache_payload()
+    if payload and time.time() - payload.get("ts", 0) < ODDS_TTL:
+        return _unpack_odds(payload)
+    return None
+
+
 def _odds_disk_cache_set(odds_map: dict):
-    """Persist the merged odds map to disk with a timestamp (daily refresh)."""
+    """Persist the merged odds map. D1 first (durable across recycles), then the file mirror."""
     try:
-        # Tuple keys aren't JSON-serializable — store as "home|away" strings
+        # Tuple keys aren't JSON-serializable -- store as "home|away" strings
         serializable = {f"{k[0]}|{k[1]}": v for k, v in odds_map.items()}
-        payload = {"ts": time.time(), "odds": serializable}
-        ODDS_CACHE_FILE.write_text(json.dumps(payload), encoding="utf-8")
-    except Exception as e:
-        print(f"[Odds] disk cache write failed: {e}")
+        blob = json.dumps({"ts": time.time(), "odds": serializable})
+        try:
+            d1_write_path.save_state(ODDS_CACHE_STATE_KEY, blob)
+        except Exception as e:  # noqa: BLE001
+            print(f"[Odds] D1 cache write failed: {e}")
+        try:
+            ODDS_CACHE_FILE.write_text(blob, encoding="utf-8")
+        except Exception as e:  # noqa: BLE001
+            print(f"[Odds] disk cache write failed: {e}")
+    except Exception as e:  # noqa: BLE001
+        print(f"[Odds] cache serialization failed: {e}")
 
 
 # ── Line-movement tracking + background auto-refresh ──
@@ -1177,7 +1221,7 @@ def api_boards_status():
     return out
 
 
-CODE_MARKER = "v56-injuries-in-d1"   # bump when a release must be provably live
+CODE_MARKER = "v57-odds-cache-d1"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -2934,18 +2978,8 @@ def _fetch_odds_map(allow_live: bool = False) -> dict:
 
 
 def _odds_disk_cache_any_age() -> dict | None:
-    """Load disk odds cache regardless of age (emergency stale fallback)."""
-    try:
-        if not ODDS_CACHE_FILE.exists():
-            return None
-        payload = json.loads(ODDS_CACHE_FILE.read_text(encoding="utf-8"))
-        raw = payload.get("odds", {})
-        return {tuple(k.split("|")): v for k, v in raw.items()} or None
-    except Exception as e:
-        print(f"[Odds] stale disk cache read failed: {e}")
-        return None
-
-
+    """Cached odds regardless of age (emergency stale fallback). D1-first (Phase 6)."""
+    return _unpack_odds(_odds_cache_payload())
 def _find_odds_entry(odds_map: dict, home: str, away: str, kick_iso: str = ""):
     """Find an odds entry for (home, away), tolerating feed name differences.
 

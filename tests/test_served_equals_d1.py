@@ -330,6 +330,46 @@ def test_injury_writes_reach_the_d1_door(app_module, monkeypatch, tmp_path):
         "the injury write never reached the D1 door"
 
 
+def test_odds_cache_is_d1_first_and_durable(app_module, monkeypatch, tmp_path):
+    """Phase 6: the odds cache exists to avoid re-buying metered odds after a container
+    recycle -- which an EPHEMERAL file can never do. D1 is the store now, so it actually saves
+    the calls it was written for."""
+    import json  # noqa: PLC0415
+    import time as _t  # noqa: PLC0415
+
+    disk = tmp_path / "odds_cache.json"
+    disk.write_text(json.dumps({"ts": _t.time(), "odds": {"Disk|Won": {"total": 41.5}}}),
+                    encoding="utf-8")
+    monkeypatch.setattr(app_module, "ODDS_CACHE_FILE", disk)
+
+    d1_payload = {"ts": _t.time(), "odds": {"D1|Won": {"total": 52.5}}}
+    monkeypatch.setattr(app_module.d1_write_path, "load_state",
+                        lambda key: json.dumps(d1_payload) if key == "odds_cache" else None)
+    monkeypatch.setattr(app_module, "ODDS_TTL", 86400)
+
+    got = app_module._odds_disk_cache_get()
+    assert ("D1", "Won") in got, "the ephemeral disk cache won over D1"
+    assert ("Disk", "Won") not in got
+
+    # Regard-of-age fallback reads D1 too.
+    monkeypatch.setattr(app_module, "ODDS_TTL", 0)
+    assert ("D1", "Won") in (app_module._odds_disk_cache_any_age() or {})
+
+
+def test_odds_cache_writes_reach_the_d1_door(app_module, monkeypatch, tmp_path):
+    """A write that only lands in the file is the bug: the next recycle would re-buy the odds."""
+    import json  # noqa: PLC0415
+
+    monkeypatch.setattr(app_module, "ODDS_CACHE_FILE", tmp_path / "odds_cache.json")
+    saved: dict = {}
+    monkeypatch.setattr(app_module.d1_write_path, "save_state",
+                        lambda k, v: saved.__setitem__(k, json.loads(v)) or 1)
+
+    app_module._odds_disk_cache_set({("Texas", "OU"): {"total": 55.0}})
+    assert saved.get("odds_cache", {}).get("odds", {}).get("Texas|OU"), \
+        "the odds cache never reached the D1 door"
+
+
 # ------------------------------------------------------- KNOWN-BROKEN (F1), xfail-strict
 
 

@@ -52,7 +52,10 @@ DISCOVER = os.environ.get("CFB_GUARD_DISCOVER") == "1"
 
 SERVE_ALLOWLIST: dict[str, str] = {
     "cfbd_analytics.json": "F7/Phase 6 - _served_analytics() reads the image file for IDENTITY/string fields + fallback; numerics come from D1. Documented design, but the identity half is still ephemeral-baked.",
-    "odds_cache.json":     "F2/Phase 6 - licensed odds cache read while serving; move behind a D1-first accessor",
+    # DIFFED OUT in Phase 6 (2026-09-28): the odds cache is D1-FIRST now (_odds_cache_payload,
+    # app_state key `odds_cache`, kill switch ODDS_CACHE_FROM_D1). This one also buys back real
+    # quota: the cache exists to avoid re-fetching metered odds after a recycle, which an
+    # ephemeral file could never do.
     "line_movements.json": "F2/Phase 6 - line-movement history read while serving; same treatment",
     # DIFFED OUT in Phase 6 (2026-09-28): _load_injuries_doc() is D1-FIRST now (app_state
     # `active_injuries`, kill switch INJURIES_FROM_D1). Note D1 `injury_snapshots` is a
