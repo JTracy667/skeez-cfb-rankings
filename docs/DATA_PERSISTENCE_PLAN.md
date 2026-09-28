@@ -321,13 +321,88 @@ cause is unambiguous.
 
 ---
 
-## PHASE 0 BASELINE (to be filled with real output before Phase 1 begins)
+## PHASE 0 BASELINE — COMPLETE 2026-09-28
 
+Recorded from live command output. Phase 0 status: **DONE** (read-only, no writes, no
+deploys). Phase 1 may begin from these numbers.
+
+**1. Prod state**
 ```
-(prod state)      —
-(repo state)      —
-(D1 table counts) —
-(games recency)   —
-(parity, before)  —
-(audit scripts)   —
+status: ok | build: v51 | code.marker: v51-serve-from-d1     ✔ as expected
 ```
+
+**2. Repo state**
+```
+head:   1d72ba3 (2026-09-28) docs: DATA PERSISTENCE PLAN (phases 0-7) -- plan only
+dirty:  0 files                                              ✔ clean
+```
+
+**3. Credentials / D1 reachability**
+```
+cf_deploy_token.py resolves OK ; D1 query returns        ✔
+```
+
+**4. D1 table counts (all 17) — the "before" numbers**
+```
+api_usage            32      players               0
+app_state             3      rankings_daily      175
+backtest_runs        12      raw_payloads          6
+closing_lines      7,184     served_snapshots    130
+freshness_events     202     slate_cache           4
+games             21,204     stat_observations 92,406
+injury_snapshots     402     teams               684
+model_predictions    272     weather_snapshots 43,806
+odds_snapshots   189,528
+```
+
+**5. Recency baseline**
+```
+games (season 2026)         : max week 15 scheduled, 1,065 games WITH scores
+games 2026 week >= 5 scored : 0          ← F1 receipt, unchanged
+newest stat_observations    : 2026-09-28T04:02:41Z (the 21:02 PT anchor pull)
+players                     : 0
+```
+
+**6. Parity baseline (served vs D1, newest archived week)**
+```
+PARITY: PASS — 8/8 checked (Georgia, Ohio State, Alabama, Texas × sp_plus, srs)
+served teams: 685
+```
+Note: team analytics is green **because v51 fixed it**. This is therefore NOT a
+sufficient parity test — Phase 1's parity suite must cover the datasets that are still
+broken (results/`games`, the schedule), or it will pass on day one and prove nothing.
+
+**7. Enforcement baseline (audit scripts)**
+```
+SERVE PATH
+  / /analytics /schedule /win-totals   reads: app_state
+  /api/health                          reads: app_state, api_usage
+  /api/rankings                        reads: app_state, slate_cache
+  /api/schedule                        reads: app_state, slate_cache
+  /api/analytics                       reads: stat_observations, app_state, teams
+BUILD PATH
+  get_rankings(force=True)             reads: stat_observations, api_usage, teams
+  load_schedule()                      reads: (none — disk file)
+  compute_win_totals(force=True)       reads: (none)
+```
+
+### What the baseline establishes
+
+1. **The F1 defect is confirmed on the day we start:** zero scored games for 2026 week ≥ 5.
+2. **Team analytics parity is already green** (v51), so the parity suite must be aimed at
+   the *broken* datasets or it is decoration.
+3. **The disk tier is real and measured:** `load_schedule()` and `compute_win_totals()`
+   touch D1 zero times — their data comes from ephemeral disk.
+4. **Some streams are demonstrably live** and were not part of the defect:
+   `odds_snapshots` (+7,546), `weather_snapshots` (+3,024), `served_snapshots` (+2),
+   `freshness_events` (+1) all grew between the audit and this baseline. The frozen ones
+   are `games` (results) and the disk files.
+5. **`players` = 0**, kept by decision, unwired.
+
+### Baseline limitations — recorded honestly
+
+- The SQL capture cannot see **disk-file reads**; the disk tier is measured from the
+  `*_FILE` constants and their call sites (audit §4), not from this capture.
+- The parity check covers 8 keys on 4 teams. It is a smoke-level check, not exhaustive.
+- `games` "max week 15" is the *scheduled* season extent, not evidence of recent results.
+  The meaningful figures are the scored-game counts.
