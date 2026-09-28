@@ -1177,7 +1177,7 @@ def api_boards_status():
     return out
 
 
-CODE_MARKER = "v50-serve-fresh-analytics"   # bump when a release must be provably live
+CODE_MARKER = "v51-serve-from-d1"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -1287,7 +1287,7 @@ def api_analytics():
     cached = _cache_get(_analytics_cache, ANALYTICS_TTL)
     if cached:
         return cached
-    teams = _load_cfbd_analytics_file()
+    teams = _served_analytics()          # D1-first (Jeff: D1 is the system of record)
     if not teams:
         teams = fetch_live_analytics()
     if not teams:
@@ -4268,6 +4268,58 @@ def _load_cfbd_analytics_file():
         return []
 
 
+def _served_analytics():
+    """Analytics to SERVE — D1 FIRST. Jeff's direction: D1 is the system of record.
+
+    WHY THIS EXISTS: the pull path has always archived to D1
+    (`_store_team_analytics` -> `snapshot_team_analytics`), and a read path was built
+    (`d1_write_path.load_team_analytics`) — but NOTHING CALLED IT. Serving read
+    `data/cfbd_analytics.json`, the file COPY'd into the image, and Cloudflare Container
+    filesystems are EPHEMERAL: every recycle reverted the site to the build-time copy,
+    so the weekly pull's fresh data was invisible to visitors (verified 2026-09-27 —
+    served Georgia sp_plus 28.2 vs D1 30.2, and the file had not been committed since
+    the prior week).
+
+    D1 `stat_observations` holds NUMERIC metrics only; the served records also carry
+    identity/string fields (mascot/conf/emoji/streak) that table cannot hold. So: take
+    the disk file for identity + as fallback, then OVERLAY the D1 numerics per team.
+    Never regress to a short/empty payload — if D1 is empty, disabled, or errors, serve
+    the disk file unchanged.
+    """
+    disk = _load_cfbd_analytics_file() or []
+    if os.environ.get("ANALYTICS_FROM_D1", "1") != "1":
+        return disk
+    try:
+        rows = d1_write_path.load_team_analytics(CFBD_YEAR)
+    except Exception as e:  # noqa: BLE001 — serving must never depend on D1 being up
+        print(f"[analytics] D1 read failed; serving disk file: {e}")
+        return disk
+    if not rows:
+        return disk
+    by_name = {}
+    for r in disk:
+        if r.get("name"):
+            by_name[r["name"]] = dict(r)
+    out, added = [], 0
+    for r in rows:
+        name = r.get("name")
+        if not name:
+            continue
+        base = by_name.pop(name, None)
+        if base is None:
+            base = {"name": name, "mascot": "", "conf": "FBS", "emoji": "🏈"}
+            added += 1
+        for k, v in r.items():
+            if k in ("name", "team_id"):
+                continue
+            if isinstance(v, (int, float)):   # D1 holds numerics; strings stay from disk
+                base[k] = v
+        out.append(base)
+    out.extend(by_name.values())              # disk teams D1 did not cover (identity only)
+    print(f"[analytics] served from D1: {len(rows)} teams ({added} not in the disk file)")
+    return out
+
+
 # One analytics pull archives EVERY numeric metric on each team's record — no key list.
 # A fixed list silently dropped fields twice in this codebase (a hand-maintained merge
 # whitelist, and the 41 advanced metrics the parser never kept), and the composite's
@@ -4305,7 +4357,7 @@ def _build_team_map() -> dict:
     team_map = {t["name"]: dict(t) for t in teams}
     # Load CFBD analytics from pre-fetched file (not live API)
     try:
-        cfbd_analytics = _load_cfbd_analytics_file()
+        cfbd_analytics = _served_analytics()   # D1-first, not the image file
         if cfbd_analytics:
             for t in cfbd_analytics:
                 name = t["name"]
@@ -6577,7 +6629,7 @@ def _matchup_teams() -> list:
     cached = _cache_get(_analytics_cache, ANALYTICS_TTL)
     if cached and cached.get("teams"):
         return cached["teams"]
-    teams = _load_cfbd_analytics_file()
+    teams = _served_analytics()
     return [dict(t) for t in (teams or [])]
 
 
