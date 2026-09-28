@@ -324,11 +324,24 @@ def load_team_analytics(season: int, week: int | None = None,
                 return []
             week = weeks[0]
         want = set(keys) if keys else None
-        rows = d1_store.query(
-            "SELECT o.subject_id AS tid, o.stat_key AS k, o.value AS v, t.name AS name "
-            "FROM stat_observations o LEFT JOIN teams t ON t.team_id = o.subject_id "
-            "WHERE o.season = ? AND o.week = ? AND o.subject_type = 'team'",
-            [int(season), int(week)])
+        if d1_store.stat_obs_append_only():
+            # Phase 4 (F4): the archive is APPEND-ONLY now, so several pulls can share this
+            # (season, week). Serve the NEWEST one explicitly. Relying on the loop below to
+            # let "the last row win" would be luck, not a guarantee -- SQLite makes no promise
+            # about row order without ORDER BY.
+            rows = d1_store.query(
+                "SELECT o.subject_id AS tid, o.stat_key AS k, o.value AS v, t.name AS name "
+                "FROM stat_observations o LEFT JOIN teams t ON t.team_id = o.subject_id "
+                "WHERE o.season = ? AND o.week = ? AND o.subject_type = 'team' "
+                "AND o.recorded_at = (SELECT MAX(recorded_at) FROM stat_observations "
+                "                     WHERE season = ? AND week = ? AND subject_type = 'team')",
+                [int(season), int(week), int(season), int(week)])
+        else:
+            rows = d1_store.query(
+                "SELECT o.subject_id AS tid, o.stat_key AS k, o.value AS v, t.name AS name "
+                "FROM stat_observations o LEFT JOIN teams t ON t.team_id = o.subject_id "
+                "WHERE o.season = ? AND o.week = ? AND o.subject_type = 'team'",
+                [int(season), int(week)])
         by_tid: dict = {}
         for r in rows or []:
             k = r.get("k")

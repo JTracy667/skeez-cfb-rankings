@@ -192,7 +192,8 @@ def _chunks(rows: list, n: int = CHUNK):
 
 
 def _upsert(table: str, cols: list[str], rows: list[dict],
-            conflict: list[str] | None, update: list[str] | None) -> int:
+            conflict: list[str] | None, update: list[str] | None,
+            do_nothing: bool = False) -> int:
     """One batched multi-row INSERT per chunk (idempotent when conflict given).
     D1 caps bound parameters at 100/query -> chunk by column count.
     Returns CONFIRMED rows written (from the D1 response), not planned rows."""
@@ -201,7 +202,11 @@ def _upsert(table: str, cols: list[str], rows: list[dict],
         assert_headroom(len(part))
         ph = ",".join("(" + ",".join("?" * len(cols)) + ")" for _ in part)
         sql = f"INSERT INTO {table} ({','.join(cols)}) VALUES {ph}"
-        if conflict and update:
+        if conflict and do_nothing:
+            # Append-only mode: re-writing the SAME key in the same pull is a no-op, and a
+            # different pull is a different key. There is nothing to update.
+            sql += f" ON CONFLICT({','.join(conflict)}) DO NOTHING"
+        elif conflict and update:
             sql += (f" ON CONFLICT({','.join(conflict)}) DO UPDATE SET "
                     + ",".join(f"{c}=excluded.{c}" for c in update))
         params = [v for r in part for v in (r.get(c) for c in cols)]
@@ -284,11 +289,14 @@ def upsert_stat_observations(rows: list[dict]) -> int:
         r.setdefault("source", "cfbd")
         r.setdefault("week", 0)
         r.setdefault("recorded_at", now)
+    append = stat_obs_append_only()
     return _upsert("stat_observations",
                    ["subject_type", "subject_id", "season", "week", "stat_key",
                     "value", "source", "recorded_at"],
-                   rows, ["subject_type", "subject_id", "season", "stat_key", "week"],
-                   ["value", "source", "recorded_at"])
+                   rows,
+                   _STAT_OBS_CONFLICT_APPEND if append else _STAT_OBS_CONFLICT_LEGACY,
+                   [] if append else ["value", "source", "recorded_at"],
+                   do_nothing=append)
 
 
 # ── Bulk stat_observations upsert ────────────────────────────────────────────
@@ -300,8 +308,43 @@ def upsert_stat_observations(rows: list[dict]) -> int:
 # inlined and one statement can carry hundreds of rows.
 _STAT_OBS_COLS = ["subject_type", "subject_id", "season", "week", "stat_key",
                   "value", "source", "recorded_at"]
-_STAT_OBS_CONFLICT = ["subject_type", "subject_id", "season", "stat_key", "week"]
+_STAT_OBS_CONFLICT_LEGACY = ["subject_type", "subject_id", "season", "stat_key", "week"]
+# Phase 4 (F4): `recorded_at` joins the unique key so an archive becomes APPEND-ONLY. One
+# archive = one recorded_at (the bulk writer stamps a single `now` for the whole call), so the
+# key gains a per-pull discriminator: the weekly anchors stop collapsing into one row and a pull
+# leaves a trace. No new column is needed -- recorded_at was already there.
+_STAT_OBS_CONFLICT_APPEND = _STAT_OBS_CONFLICT_LEGACY + ["recorded_at"]
 _STAT_OBS_UPDATE = ["value", "source", "recorded_at"]
+
+# The index swap is a D1 migration and CANNOT be atomic with an image deploy. If the writer
+# hardcoded the new target, the window between "index changed" and "new image live" would make
+# every archive fail (the old target matches no index); hardcoded to the old one, the window
+# moves to the other side. So it probes the LIVE index and adapts: no window at all, and the
+# migration can be applied before OR after the deploy.
+_STAT_OBS_APPEND_ONLY: bool | None = None
+
+
+def stat_obs_append_only(refresh: bool = False) -> bool:
+    """True when the live unique index on stat_observations includes `recorded_at`."""
+    global _STAT_OBS_APPEND_ONLY
+    if _STAT_OBS_APPEND_ONLY is None or refresh:
+        try:
+            rows = query("SELECT sql FROM sqlite_master WHERE type='index' "
+                         "AND tbl_name='stat_observations' AND sql LIKE '%UNIQUE%'")
+            _STAT_OBS_APPEND_ONLY = any("recorded_at" in (r.get("sql") or "")
+                                        for r in (rows or []))
+        except Exception as e:  # noqa: BLE001
+            print(f"[d1_store] stat_obs index probe failed, assuming LEGACY: {e}")
+            _STAT_OBS_APPEND_ONLY = False
+    return bool(_STAT_OBS_APPEND_ONLY)
+
+
+def _stat_obs_conflict_sql(append_only: bool) -> str:
+    """The ON CONFLICT clause matching the index that is actually live."""
+    if append_only:
+        return " ON CONFLICT(" + ",".join(_STAT_OBS_CONFLICT_APPEND) + ") DO NOTHING"
+    return (" ON CONFLICT(" + ",".join(_STAT_OBS_CONFLICT_LEGACY) + ") DO UPDATE SET "
+            + ",".join(f"{c}=excluded.{c}" for c in _STAT_OBS_UPDATE))
 # Cap the SQL text well under D1's statement limit; a 22k-row archive becomes ~60 statements.
 SAFE_SQL_CHARS = 55_000
 
@@ -329,8 +372,9 @@ def stat_observation_chunks(rows: list[dict],
     if not rows:
         return []
     head_len = len(f"INSERT INTO stat_observations ({','.join(_STAT_OBS_COLS)}) VALUES ")
-    tail_len = len(" ON CONFLICT(" + ",".join(_STAT_OBS_CONFLICT) + ") DO UPDATE SET "
-                   + ",".join(f"{c}=excluded.{c}" for c in _STAT_OBS_UPDATE))
+    # Size against the LONGER conflict clause: over-estimating statement size is safe, and this
+    # keeps the function DB-free (it is pure, and tested as such).
+    tail_len = max(len(_stat_obs_conflict_sql(True)), len(_stat_obs_conflict_sql(False)))
     out: list[list[dict]] = []
     cur: list[dict] = []
     size = head_len + tail_len
@@ -350,12 +394,16 @@ def _stat_obs_piece(r: dict) -> str:
     return "(" + ",".join(_sql_lit(r.get(c)) for c in _STAT_OBS_COLS) + ")"
 
 
-def stat_observation_insert_sql(chunk: list[dict]) -> str:
-    """One idempotent multi-row INSERT for a chunk (values inlined — see note above)."""
+def stat_observation_insert_sql(chunk: list[dict], append_only: bool | None = None) -> str:
+    """One idempotent multi-row INSERT for a chunk (values inlined -- see note above).
+
+    `append_only=None` probes the live index; tests pass it explicitly.
+    """
+    if append_only is None:
+        append_only = stat_obs_append_only()
     head = f"INSERT INTO stat_observations ({','.join(_STAT_OBS_COLS)}) VALUES "
-    tail = (" ON CONFLICT(" + ",".join(_STAT_OBS_CONFLICT) + ") DO UPDATE SET "
-            + ",".join(f"{c}=excluded.{c}" for c in _STAT_OBS_UPDATE))
-    return head + ",".join(_stat_obs_piece(r) for r in chunk) + tail
+    return (head + ",".join(_stat_obs_piece(r) for r in chunk)
+            + _stat_obs_conflict_sql(append_only))
 
 
 def stat_observation_insert_sqls(rows: list[dict],
