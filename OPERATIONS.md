@@ -24,13 +24,14 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v54** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v54-archive-failures-loud` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v54` |
-| Rollback tag | **v53** — `scripts/cfb_deploy.sh --rollback v53` (v52, v51, v50 also in the registry) |
-| Last verified | 2026-09-28 12:23 PT (CTO) — `DEPLOY VERIFIED LIVE: v54`; marker match (not `build`); app image v54 (version 50); all public pages 200; `/api/health` `archive` = `{count: 0, last_fn: null, ...}` |
+| Live build | **v55** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v55-budget-ledger-d1` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v55` |
+| Rollback tag | **v54** — `scripts/cfb_deploy.sh --rollback v54` (v53, v52, v51, v50 also in the registry) |
+| Last verified | 2026-09-28 12:33 PT (CTO) — `DEPLOY VERIFIED LIVE: v55`; marker match (not `build`); app image v55 (version 51); all public pages 200 |
+| Quota ledger | `/api/health` `budget` is read from D1 `api_usage` — the ledger of record. The disk mirror `data/budget_ledger.json` is a **local-dev fallback only** (Phase 6). Kill switch `BUDGET_FROM_D1=0`. |
 | Archive health | `/api/health` → **`archive`** — `count > 0` means D1 writes are silently NOT landing (F5; before v54 this state was invisible) |
-| Container app image | must read `...:v54` via the Containers API — **`build` in `/api/health` does NOT prove this** (see the v52→v53 note) |
+| Container app image | must read `...:v55` via the Containers API — **`build` in `/api/health` does NOT prove this** (see the v52→v53 note) |
 | Deploy verifier | `python scripts/verify_container_swap.py --tag vN --marker <CODE_MARKER>` — API-driven, touches the site **once** |
 | Enforcement gate | `python scripts/run_enforcement_tests.py` — **blocking** before any deploy (needs `CF_D1_TOKEN`; refuses to run without it) |
 | Known-stale docs | `docs/SESSION_HANDOFF.md` (state as of Sep 23 — do NOT trust its state), `CLOUDFLARE_DEPLOY.md` (says `sleepAfter 20m`) |
@@ -44,6 +45,29 @@ curl -s https://skeezcfb-rankings.com/api/health   # status ok + build + code.ma
 ---
 
 ## RECENT CHANGES & OPEN WORK
+
+### v54 → v55 (2026-09-28, CTO) — Phase 6 step 1: the quota ledger reads D1
+
+**Shipped:** the first file of Phase 6's disk tier. `budget.state()` now reads D1 `api_usage` —
+the **ledger of record** — FIRST, with `data/budget_ledger.json` demoted to a local-dev fallback.
+Kill switch `BUDGET_FROM_D1=0`.
+
+**Why it was wrong:** `state()` read the disk file first and merged D1 on top with `max()`, which
+made an **ephemeral disk file a reconcile input on the serving path** — `/api/health` and
+`compute_win_totals()` both read it. Same stale-read class as the analytics bug.
+
+**Why D1-first is correct here, not merely tidier:** `flush()` writes the file and D1 in the
+**same call**, so the file can never be ahead of D1; if a flush died between the two, the next
+successful flush rewrites the **cumulative** counters anyway. And on the container the file is
+wiped with the instance, so it cannot recover anything either.
+
+**Also removed:** `_merge_into`, which existed only to implement the old file-primary max-merge.
+A comment marks the spot with the reasoning, so a future session does not "restore" the pattern.
+
+**Receipts:** `DEPLOY VERIFIED LIVE: v55`, marker `v55-budget-ledger-d1`, app image v55 (version
+51), all pages 200. Guard allowlist **shrank by two** — `budget_ledger.json` is no longer read in
+the SERVE or BUILD scope. Gate 11 passed / 1 xfailed (F3 alone); suite 92 passed / 1 xfailed.
+The per-file classification for the remaining 7 is now in `docs/DATA_FLOW.md`.
 
 ### v53 → v54 (2026-09-28, CTO) — Phase 5 (F5): a failed archive is visible now
 

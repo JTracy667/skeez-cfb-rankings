@@ -100,3 +100,33 @@ baked into the image. That is why a week of weekly pulls was invisible to visito
 | 4 | `@_guard` silent failures | a dead archive looks healthy | log failures to `freshness_events` + alert |
 | 5 | No parity test between D1 and what's served | exactly how the v49/v50 bug hid | **contract test: served payload == D1 latest** |
 | 6 | Reads gated on `D1_WRITE_ENABLED` | misleading coupling | split into a read flag |
+
+
+---
+
+## PHASE 6 — DISK-TIER CLASSIFICATION (2026-09-28)
+
+Every `data/*.json` file still read at serve/build/import time, with its **decision** and the
+**evidence** for it. The measured set is **8 files, not the plan's original 11**: `week_schedule`
+(Phase 3), `record` and `finals_cache` (Phase 2) are done, and `line_history`,
+`best_line_store`, `best_line_ts` are no longer read by anything at all.
+
+"Scope" = where the read is reachable, from the guard's own discovery output. "Converted" means
+one accessor + a kill switch + a parity/durability test, **and the file's allowlist entry
+deleted** (deleting the entry is the receipt).
+
+| file | scope | decision | evidence / why |
+|---|---|---|---|
+| `budget_ledger.json` | serve, build | **D1-AUTHORITATIVE — CONVERTED v55** | `flush()` writes the file and D1 `api_usage` in the SAME call, so the file can never be ahead of D1; a dead flush self-heals on the next one (counters are cumulative); on the container the file dies with the instance. Local-dev fallback only. Kill switch `BUDGET_FROM_D1`. |
+| `cfbd_logos.json` | import | **STATIC (bundled)** | git-tracked, last written 2026-08-13, never written at runtime — an asset, not state. |
+| `cfbd_analytics.json` | serve, build | **D1-AUTHORITATIVE (numerics) — v51** | `_served_analytics()` reads D1 `stat_observations` first; the disk supplies identity/string fields and is the fallback. Kill switch `ANALYTICS_FROM_D1`. |
+| `teams.json` | serve, build | **OPEN — F3** | D1 `teams` is read by the live path but written by nothing on it (`upsert_teams` exists only in backfill scripts). D1 has 684 rows, the site serves 685. Decide: wire a live write, or declare backfill-only and put its refresh on the weekly cron. |
+| `active_injuries.json` | serve, build | **CONVERT NEXT** | D1 `injury_snapshots` (402 rows) already exists, and it is on the **build** path too (`compute_win_totals()`), so its staleness can reach a board. |
+| `best_bets.json` | serve | **QUEUED** | tracker board; needs its own D1 home or an explicit transient justification. |
+| `line_movements.json` | serve | **QUEUED** | a rolling CLV event log (7-day window). Decide D1 table vs explicit transient. |
+| `odds_cache.json` | serve | **QUEUED** | self-described cache ("disk-persisted so restarts reuse the daily fetch") with D1 `odds_snapshots` (203k rows) alongside — likely D1-authoritative. |
+
+**The rule:** a file may only be called **explicitly transient** with a written justification
+naming *what rebuilds it* and *before which read*. Failing that, it converts. The guard test —
+not discipline — is the completion criterion: it fails on any unjustified read, so a half-done
+phase is visible rather than assumed.
