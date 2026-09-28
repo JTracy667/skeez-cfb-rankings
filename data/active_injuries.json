@@ -811,6 +811,12 @@
       ],
       "manual_overrides": [],
       "updated_at": "2026-09-26T10:15:46.640242"
+    },
+    "TestState": {
+      "team": "TestState",
+      "net_injury_points": 0,
+      "injuries": [],
+      "manual_overrides": []
     }
   }
 }

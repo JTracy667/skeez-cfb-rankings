@@ -5,16 +5,27 @@
 This is the single source of truth for the Skeez CFB Rankings codebase.
 All bots, work orders, and deployments must operate from this directory.
 
-## Start here
+## Start here — MANDATORY, before any action on this repo
 
-**Read `OPERATIONS.md` before doing anything to this repo.** It is the operations
-map: how the site runs, how it deploys, where its data actually lives (baked image
-files vs D1), the refresh anchors, the admin gate, quotas, and which older docs are
-stale. It exists so a session does not re-learn the site from source every time.
+**Read these two files first, in this order, before you run a command, edit a file,
+or answer a question about how the site works:**
 
-**Doc hygiene rule (Jeff, 2026-09-27):** update `OPERATIONS.md` after **every**
-deploy — at minimum its `CURRENT STATE` block. Any durable fact you had to discover
-by reading source belongs in that file before you finish.
+1. **`OPERATIONS.md`** — how the site runs, how it deploys, the refresh anchors, the
+   admin gate, quotas, and which older docs are stale.
+2. **`docs/DATA_FLOW.md`** — the authoritative map of every dataset: who produces it,
+   which table stores it, what reads it, and whether it is durable. It also lists the
+   traps that have already caused incidents (ephemeral container disk, D1-first
+   serving, upsert overwrites, silent `@_guard` failures).
+
+**Why this is mandatory:** the site has repeatedly been broken by a session reasoning
+about its wiring from memory instead of from a document. The v50 incident — a full week
+of weekly pulls never reaching the site because the serving path read the image file
+instead of D1 — happened for exactly that reason. Do not re-derive; read.
+
+**Doc hygiene rule (Jeff, 2026-09-27):** update `OPERATIONS.md` after **every** deploy
+— at minimum its `CURRENT STATE` block — and update `docs/DATA_FLOW.md` in the same
+commit as any change to a producer or a reader. Any durable fact you had to discover by
+reading source belongs in one of those files before you finish.
 
 ## History
 

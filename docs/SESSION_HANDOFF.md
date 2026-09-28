@@ -1,33 +1,18 @@
-# SESSION HANDOFF — CFB (skeezcfb-rankings.com)
+# SESSION HANDOFF — HISTORY & LESSONS (CFB / skeezcfb-rankings.com)
 
-> **STATE IN THIS DOC IS STALE — do not trust it.** It was written 2026-09-23 and says
-> the live build is v27 (it is past that). For current state and all procedures, read
-> **`OPERATIONS.md`** at the repo root. This file is kept for its *history and lessons*
-> (the backtest rig narrative, the book-of-record mapping, the credential-grep traps),
-> not for state. Its deploy-credential grep procedure is SUPERSEDED by
-> `scripts/cf_deploy_token.py`.
+> **STATE DOES NOT LIVE HERE.** Live state, procedures and open work are in
+> **`OPERATIONS.md`** (repo root) and **`docs/DATA_FLOW.md`**. This file is kept only for
+> its *history and hard-won lessons* (the line-source design, the backtest rig narrative,
+> the credential-probe traps) — never for current state.
+>
+> Its original state section claimed a live build of **v27** while production was already
+> far ahead; that section has been **removed** so it cannot mislead a session again.
 
-**Written:** 2026-09-23 · for a fresh CTO session to resume with zero re-discovery.
 Repo: `C:\Users\jtracy\dev\cfb-power-rankings`
 
 ---
 
-## 1. PRODUCTION STATE — verified, not assumed
-
-| | |
-|---|---|
-| **Live build** | **v27** — `GET /api/health` → `build v27, status ok` |
-| Deploy path | Cloudflare Worker + Container (`wrangler containers build` + `wrangler deploy`), **Render is decommissioned** |
-| Public pages | `/` 200 · `/analytics` 200 · `/schedule` 200 · `/win-totals` 200 (extensionless routes; `.html` 404s by design) |
-| Rankings gates | 25 rows · **sorted by composite rank: TRUE** · `elo_nulls=0` · `sp_zero=0` |
-| Rollback | re-deploy a previous known-good tag (`scripts/cfb_deploy.sh --rollback v26`); keep old tags in the registry |
-
-**Rollback tag if v27 misbehaves: `v26`.**
-**Preflight before any deploy:** `python scripts/selftest_book_of_record.py` (15 assertions) + `python -c "import py_compile; py_compile.compile('app.py', doraise=True)"`.
-
----
-
-## 2. WHAT v27 SHIPPED — "Decision A" line source
+## 1. HISTORY — the "Decision A" line source (shipped v27)
 
 **Problem:** the displayed line came from PropLine `/best-line` (cross-book consensus over 18 books), so the
 edge shown was measured against a price Jeff often **cannot bet**.
@@ -50,7 +35,7 @@ DraftKings 1, plus Polymarket 108 / Fliff 5 / Kalshi 1 from the consensus path.
 
 ---
 
-## 3. JEFF'S BOOKS — mapping is settled, do not re-litigate
+## 2. JEFF'S BOOKS — mapping is settled, do not re-litigate
 
 | Book | Feed key | Notes |
 |---|---|---|
@@ -62,7 +47,7 @@ DraftKings 1, plus Polymarket 108 / Fliff 5 / Kalshi 1 from the consensus path.
 
 ---
 
-## 4. BACKTESTING RIG — where V4 stands
+## 3. BACKTESTING RIG — where the work stands
 
 **Phase 1 (historical line harvest): COMPLETE.**
 - `scripts/harvest_odds_history.py` — 77 week-seasons (2021–2025), ~40 MB in `data/odds_history/` (not committed)
@@ -99,25 +84,28 @@ ARM 3 (the intended ship candidate) was WORSE than arm 1 alone — 50.6% vs 51.3
 
 ---
 
-## 5. DEPLOY + CREDENTIAL PROCEDURE (this cost hours — read it)
+## 4. DEPLOY CREDENTIALS — the traps (this cost hours; read it)
 
-`scripts/cfb_deploy.sh v28` — takes the tag, bumps `wrangler.jsonc`, builds, preflights, deploys, then
-**verifies** by polling `/api/health` until `build` equals the new tag (auto-rollback on 500/timeout).
-The verify window is long: the container serves the OLD image until it recycles (`sleepAfter` 20m), so
-budget **~20–90 min**. Probe interval must exceed `sleepAfter` or the instance never sleeps and the new
-image can never come live → false rollback.
+`scripts/cfb_deploy.sh vNN <code-marker>` — takes the tag, bumps `wrangler.jsonc`, builds, preflights,
+deploys, then **verifies** by polling `/api/health` until `code.marker` equals the new marker
+(auto-rollback on 500/timeout). The verify window is long: the container serves the OLD image until it
+recycles (`sleepAfter` **5m** idle), so budget **~6–12 min** typical. Probe interval must exceed
+`sleepAfter` or the instance never sleeps and the new image can never come live → false rollback.
 
-**The script REQUIRES `CLOUDFLARE_API_TOKEN` in the environment.** It is **not** in any `.env` — recover it
-at deploy time from the terminal cache:
+**The script REQUIRES `CLOUDFLARE_API_TOKEN` in the environment.** Resolve it with the canonical helper —
+**never by grepping caches**:
 
 ```bash
-TOK=$(grep -hoE 'CLOUDFLARE_API_TOKEN="[^"]+' \
-  "$LOCALAPPDATA/hermes/profiles/cto/cache/terminal/"*.sh | head -1 \
-  | sed 's/^CLOUDFLARE_API_TOKEN=//' | tr -d '"' | tr -d '\r')
-export CLOUDFLARE_API_TOKEN="$TOK"
+export CLOUDFLARE_API_TOKEN="$(python "$LOCALAPPDATA/hermes/profiles/cto/scripts/cf_deploy_token.py")"
 export CLOUDFLARE_ACCOUNT_ID=90c2c31beec12cb7de1c249ade1eb773
-bash scripts/cfb_deploy.sh v28
+bash scripts/cfb_deploy.sh vNN <code-marker>
 ```
+
+`cf_deploy_token.py` prints the first token that actually passes
+`/accounts/<id>/containers/me` and caches it to `profiles/cto/.cf_deploy_token` (outside `cache/`, so it
+is not pruned). The old procedure — grepping `profiles/cto/cache/terminal/*.sh` — is **superseded and
+dangerous**: that directory is pruned at 24h idle, which is exactly how the v45 deploy died with
+"CLOUDFLARE_API_TOKEN is not set".
 
 ### TWO TRAPS THAT WASTED HOURS — do not repeat
 
@@ -138,20 +126,19 @@ or revoked credential. A bad probe plus a bad grep produced a confident false al
 
 ## 6. STANDING RULES THAT APPLY HERE
 
+- **Read `OPERATIONS.md` + `docs/DATA_FLOW.md` before any action on this repo.**
 - **Any betting-model calibration change or site-visible number change needs Jeff's sign-off first.**
 - Never change what external data sources track or how parsers interpret them (Research territory).
 - Never trust `node --check`: verify page JS by executing it in a Node vm sandbox against the live API.
-- Any new page must be added to the **Render-era Dockerfile COPY line** — wait, the Dockerfile is the
-  container build; a page missing from COPY 500s in prod. Verify the COPY line lists every `*.html`.
+- Any new page must be added to the **Dockerfile `COPY` line** — a page missing from it 500s in prod.
+  Verify the COPY line lists every `*.html`.
 - Rankings page sorts by **composite rank ALWAYS**; AP/Coaches columns are reference-only, never sortable.
 - Schedule data comes from CFBD `/games`; ESPN scoreboard truncates to 25 events/week — never wire it back.
 - Jeff wants **headline + receipts** for status asks; forensics only on request.
 
 ---
 
-## 7. FIRST ACTIONS FOR THE NEW SESSION
+## 6. WHAT TO DO FIRST IN A NEW SESSION
 
-1. `curl -s https://skeezcfb-rankings.com/api/health` → confirm `build v27`.
-2. **Start Phase 2 (V4 arms)** — it is unblocked, needs no credentials, and the harvest data is on disk.
-   Arm 2 anchors on **betonlineag**, not Pinnacle.
-3. Phase 3 (PropLine daily snapshot) after that, with a deploy + smoke.
+Read `OPERATIONS.md` → its **RECENT CHANGES & OPEN WORK** section lists the current priority order.
+Do not resume from this file.

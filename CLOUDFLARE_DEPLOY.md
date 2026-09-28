@@ -87,8 +87,8 @@ The app re-pulls CFBD ratings (SP+/Elo/FPI/talent) at **Sun/Mon/Tue/Wed
 correction: the anchor is 9pm PACIFIC; the original 21:00 ET fired at 6pm PT.
 
 This host cannot rely on app.py's background scheduler thread for that:
-`sleepAfter = "20m"` stops the thread whenever traffic stops, so a pull would
-happen only when something woke the container. Hence:
+`sleepAfter` (now **5m** idle) stops the thread whenever traffic stops, so a pull
+would happen only when something woke the container. Hence:
 
 - `src/index.js` has a `scheduled()` handler that POSTs
   `/api/analytics/refresh-if-due` (idempotent, anchor-gated — same check the

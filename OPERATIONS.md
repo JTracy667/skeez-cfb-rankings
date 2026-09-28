@@ -4,6 +4,11 @@
 deploys, where its data actually lives, and how to prove each claim. The point is that
 a fresh session can act without re-deriving any of this from source.
 
+**Companion doc: `docs/DATA_FLOW.md`** — the per-dataset producer → store → reader map
+(and the list of traps that have already caused incidents). Read **both** before
+touching the site; a change to a producer or reader must update `DATA_FLOW.md` in the
+same commit.
+
 **MAINTENANCE RULE (Jeff, 2026-09-27): update this file after EVERY deploy** — at
 minimum the `CURRENT STATE` block. If you had to read source to answer "how does X
 work", write the answer here before you finish. A stale ops doc is worse than none,
@@ -19,17 +24,65 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v50** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v50-serve-fresh-analytics` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v50` |
-| Rollback tag | **v49** — `scripts/cfb_deploy.sh --rollback v49` |
-| Last verified | 2026-09-27 ~21:45 PT (CTO) — all 5 pages 200; `input_vintages` all 2026; Georgia rank 1 @ sp+ 30.2 |
+| Live build | **v51** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v51-serve-from-d1` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v51` |
+| Rollback tag | **v50** — `scripts/cfb_deploy.sh --rollback v50` (v49 also in the registry) |
+| Last verified | 2026-09-27 ~22:20 PT (CTO) — `build v51`, marker `v51-serve-from-d1`; all 5 pages 200; `input_vintages` all 2026; Georgia rank 1 @ sp+ 30.2 |
 | Known-stale docs | `docs/SESSION_HANDOFF.md` (state as of Sep 23 — do NOT trust its state), `CLOUDFLARE_DEPLOY.md` (says `sleepAfter 20m`) |
+| Data map | **`docs/DATA_FLOW.md`** — read it before touching any producer or reader |
 
 Verify in one line:
 ```bash
 curl -s https://skeezcfb-rankings.com/api/health   # status ok + build + code.marker + budgets
 ```
+
+---
+
+## RECENT CHANGES & OPEN WORK
+
+### v49 → v51 (2026-09-27, CTO) — the D1 serving fix
+
+**What was broken (and for how long).** Two independent defects made the weekly data
+pipeline effectively invisible:
+
+1. **The serving path never read D1.** The pull archived fresh metrics to D1 every time,
+   and a D1 read function existed (`d1_write_path.load_team_analytics`) — but **nothing
+   called it.** `/api/analytics`, `_build_team_map()` and `/api/matchup` all read
+   `data/cfbd_analytics.json`, the file baked into the image. Because the container disk
+   is ephemeral, the site reverted to the build-time copy on every recycle. Evidence:
+   the served payload matched the **2026-09-23** file exactly while D1 held the fresh
+   values (Georgia `sp_plus` 28.2 served vs **30.2** in D1), and the board rebuild ran on
+   those stale inputs — silently mis-ordering the top of the rankings.
+2. **v50** (same night) regenerated the baked dataset and shipped it, which fixed the
+   *values* but was only a per-week patch.
+
+**What v51 does.** `_served_analytics()` — **D1 first** — wired into all three serving
+call sites. `stat_observations` holds numerics only, so the disk file supplies
+identity/string fields (mascot/conf/emoji) and acts as the fallback; the numerics are
+overlaid from D1 per team. Kill switch: `ANALYTICS_FROM_D1=0` restores disk-only.
+
+**How it was verified.** With the disk file *deliberately reverted* to the stale Sep-23
+copy: D1-first → Georgia `sp_plus` **30.2**; disk-only → **28.2**; 685 teams, 682 sourced
+from D1, identity intact. Then live: `build v51` / `marker v51-serve-from-d1`, all five
+pages 200, `input_vintages` all 2026, Georgia rank 1.
+
+### Open work (in priority order)
+
+1. **Parity contract test — served payload == D1 latest.** This is the test that would
+   have caught the v49/v50 bug. Nothing currently asserts it. **Do this first.**
+2. **`stat_observations` is upsert-on-key** → the four weekly anchors collapse to one
+   row per metric; intermediate pulls leave no trace, so archives are unauditable.
+   Fix = append a `pull_id`/`recorded_at` to the key (row growth ~2×/day) — **Jeff's call**.
+3. **`@_guard` swallows archive failures** (`d1_write_path.py`) — a dead archive looks
+   healthy. Log failures to `freshness_events` and alert.
+4. **Raw API payloads are not retained** (`raw_payloads` = 6 rows) — the source data
+   behind the metrics can't be recomputed. Archive the pull's raw JSON.
+5. **`players` table is empty** — decide whether player-level persistence is needed.
+6. **Reads are gated on `D1_WRITE_ENABLED`** — split into a separate read flag.
+7. **Arm the release watcher** (`CFB_ETAG_TRIGGER_LIVE=1`) once the dark run is trusted.
+8. **`/api/analytics/fetch` does not stamp the last-pull time** — watcher-triggered
+   pulls are invisible to `pull-status` and to the freshness guard.
 
 ---
 
