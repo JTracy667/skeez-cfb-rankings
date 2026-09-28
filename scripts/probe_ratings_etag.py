@@ -1,39 +1,51 @@
 #!/usr/bin/env python3
-"""probe_ratings_etag.py — learn whether CFBD's ratings ETag marks a real release.
+"""probe_ratings_etag.py — CFBD ratings RELEASE WATCHER: detect a release, and
+(optionally) trigger the analytics pull immediately instead of waiting for an anchor.
 
-THE QUESTION THIS ANSWERS
--------------------------
-CFBD publishes ratings at an unpredictable time between Sunday night and Wednesday, and
-we currently blind-poll the window. CFBD serves ETags on /ratings/{sp,elo,fpi}, and a
-conditional GET with `If-None-Match` returns 304 + 0 bytes when unchanged. That would let
-us probe often and pull the (expensive) full payload only when something actually changed.
+WHY
+---
+CFBD drops the composite inputs at an unpredictable time between Sunday night and
+Wednesday, and we currently pull only at the Sun/Mon/Tue/Wed 21:00 PT anchors — so the
+site can serve up to a day of stale ratings after a release has already happened. We
+ALREADY pay for this probe, which detects the release; this turns a signal we already
+have into fresh data.
 
-UNVERIFIED, AND THE WHOLE POINT OF THIS PROBE: we know the mechanism works, but NOT that
-the ETag flips when ratings change. Nobody can know that until a real release is observed.
-This script observes one — cheaply, read-only, changing no serving path — and records it.
+COST (unchanged from the original probe)
+----------------------------------------
+2 calls per in-window hour: the primary `ratings/sp` conditional GET + the
+`ratings/srs` publication check = ~676 calls/mo, ~2.3% of the 30,000 allowance. The
+other ratings endpoints are conditional-GET'd ONLY when the primary flips, so a full
+release confirmation costs ~4 calls once. A full analytics pull is ~16 calls.
+See docs/CFBD_API_MAP.md §3d.
 
-WHAT IT ALSO ANSWERS
-  * whether the three endpoints (sp / elo / fpi) update together or independently, which
-    decides whether one probe can stand in for three
-  * whether the conditional-200 body is byte-identical to a plain GET, i.e. whether the
-    ETag route still returns the SAME DATA (it should — same resource — but this proves it
-    rather than assuming it)
-  * real quota cost per probe, from CFBD's own X-CallLimit-Remaining header
-
-DESIGN
-  * Window-bounded: probes only Sun 18:00 -> Wed 23:59 PT. Outside it a release cannot
-    happen, so it exits silently without spending a call.
+WHAT MAKES THIS SAFE
+--------------------
+  * Release-gated: watches `ratings/sp` (primary). `stats/season` and `ppa` move with
+    GAME RESULTS and `games/weather` moves hourly — triggering on "any flip" would fire
+    on noise and could bake a mixed-vintage snapshot.
+  * Settle-gated: a changed ETag is HELD as `pending` until the same new value is seen
+    on a later probe at least SETTLE_MIN minutes apart. Avoids pulling a
+    half-published dataset; fires at most once per settled change.
+  * DARK BY DEFAULT: logs what it would do unless CFB_ETAG_TRIGGER_LIVE=1.
+  * The anchors stay as the BACKSTOP (wrangler crons), so a missed flip still pulls.
+  * The pull path is UNCHANGED, so D1 archiving is unchanged: the trigger POSTs
+    /api/analytics/fetch (admin-gated), which runs the same fetch_live_analytics ->
+    _store_team_analytics -> d1_write_path.snapshot_team_analytics chain and writes the
+    same stat_observations rows to D1 cfb-history.
+  * Window-bounded: Sun 18:00 -> Wed 23:59 PT. Outside it a release cannot happen, so it
+    exits silently without spending a call.
   * SILENT when nothing changed (the cron no_agent contract: empty output == no message).
-    Speaks only when an ETag actually flips, which is the news we want.
-  * Read-only. Writes no D1 rows, touches no prod code path, does not affect the site.
+  * Read-only until a settled change is confirmed; writes no D1 rows itself.
 
-Run:  python scripts/probe_ratings_etag.py            (normal, window-aware)
+Run:  python scripts/probe_ratings_etag.py            (window-aware, dark)
       python scripts/probe_ratings_etag.py --force    (ignore the window, probe now)
+      CFB_ETAG_TRIGGER_LIVE=1 python scripts/probe_ratings_etag.py   (armed trigger)
 """
 import hashlib
 import json
 import os
 import sys
+import urllib.error
 import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -45,12 +57,21 @@ BASE = "https://api.collegefootballdata.com"
 PT = ZoneInfo("America/Los_Angeles")
 YEAR = 2026
 
-ENDPOINTS = {                       # primary probe first; the rest are confirmed on change
+# Primary gates the trigger; the rest are confirmed only when the primary flips.
+PRIMARY = "sp"
+ENDPOINTS = {
     "sp": f"/ratings/sp?year={YEAR}",
     "elo": f"/ratings/elo?year={YEAR}",
     "fpi": f"/ratings/fpi?year={YEAR}",
+    "srs": f"/ratings/srs?year={YEAR}",
 }
-PRIMARY = "sp"
+
+SRS_2026_URL = f"/ratings/srs?year={YEAR}"
+PUBLIC = os.environ.get("CFB_PUBLIC_URL", "https://skeezcfb-rankings.com")
+# A pending change must be re-observed at least this many minutes later to settle.
+SETTLE_MIN = int(os.environ.get("CFB_ETAG_SETTLE_MIN", "30"))
+# DARK BY DEFAULT. CFB_ETAG_TRIGGER_LIVE=1 arms the trigger.
+LIVE = os.environ.get("CFB_ETAG_TRIGGER_LIVE", "0") == "1"
 
 
 def api_key():
@@ -61,6 +82,40 @@ def api_key():
         if line.startswith("CFBD_API_KEY="):
             return line.split("=", 1)[1].strip()
     raise SystemExit("no CFBD_API_KEY")
+
+
+def admin_token():
+    k = os.environ.get("ADMIN_TOKEN")
+    if k:
+        return k
+    for line in open(os.path.join(HERE, ".env"), encoding="utf-8"):
+        if line.startswith("ADMIN_TOKEN="):
+            return line.split("=", 1)[1].strip()
+    p = os.path.join(HERE, ".admin_token")
+    if os.path.exists(p):
+        return open(p, encoding="utf-8").read().strip()
+    raise SystemExit("no ADMIN_TOKEN")
+
+
+def settle_elapsed_min(pending):
+    return (datetime.now(PT) - datetime.fromisoformat(pending["since"])).total_seconds() / 60
+
+
+def fire_pull(reason):
+    """Trigger the admin-gated analytics pull. SAME code path as the anchors and the
+    manual fetch, so the D1 archive (stat_observations) is UNCHANGED."""
+    req = urllib.request.Request(PUBLIC + "/api/analytics/fetch", data=b"{}", method="POST")
+    req.add_header("X-Admin-Token", admin_token())
+    req.add_header("Content-Type", "application/json")
+    req.add_header("User-Agent", "cfb-etag-watcher/1.0")
+    req.add_header("Accept", "application/json")
+    try:
+        with urllib.request.urlopen(req, timeout=180) as r:
+            return r.status, r.read().decode("utf-8", "replace")[:300]
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode("utf-8", "replace")[:300]
+    except Exception as e:  # noqa: BLE001
+        return None, str(e)[:200]
 
 
 def in_release_window(now=None):
@@ -111,22 +166,16 @@ def append_history(rec):
         f.write(json.dumps(rec, sort_keys=True) + "\n")
 
 
-SRS_2026_URL = "/ratings/srs?year=2026"
-
-
 def check_srs_2026(st):
     """Watch for CFBD starting to publish THIS season's SRS.
 
-    `ratings/srs?year=2026` returns [] today, so the app's explicit fallback serves the
-    PREVIOUS season's SRS — which is 12% of the composite weight and is displayed on the
-    analytics page unlabelled. Silent until it changes, then it says so, because that is
-    the moment the 2025 fallback stops being needed.
-
+    Silent until it changes, then say so. SRS is REFERENCE-ONLY (weight 0.00 since
+    V6.1), so this does NOT change the composite — only what the analytics page shows.
     Costs 1 call per in-window probe. Read-only.
     """
     prev = st.get("srs_2026_rows")
     try:
-        status, _, body, _ = get(SRS_2026_URL)
+        _status, _etag, body, _rem = get(SRS_2026_URL)
         n = len(json.loads(body)) if body else 0
     except Exception:
         return
@@ -136,15 +185,15 @@ def check_srs_2026(st):
     if n > 0 and (prev or 0) == 0:
         print("CFBD SRS 2026 IS NOW PUBLISHED")
         print(f"  ratings/srs?year=2026 -> {n} rows (was 0)")
-        print("  -> the app's 2025 fallback for SRS can be retired. Until now 12% of the")
-        print("     composite weight has been riding on last season's ratings, and the")
-        print("     analytics page shows that SRS unlabelled. Jeff's call, not a silent fix.")
+        print("  -> SRS is REFERENCE-ONLY (weight 0.00 since V6.1): this does NOT change")
+        print("     the composite, only what the analytics page displays.")
 
 
 def main():
     force = "--force" in sys.argv
     st = load_state()
     etags = st.get("etags", {})
+    pending = st.get("pending", {})
 
     # --- Baseline: no ETag recorded yet. Capture all three, and prove the conditional
     # path returns the same bytes as a plain GET (the "same data" question).
@@ -187,36 +236,79 @@ def main():
     check_srs_2026(st)
     save_state(st)
 
-    # --- Probe: conditional GET on the primary endpoint only (1 call).
-    status, etag, body, rem = get(ENDPOINTS[PRIMARY], etag=etags.get(PRIMARY))
-    if status == 304:
-        return 0                      # silent: nothing changed
+    # --- Probe the PRIMARY only (1 call).
+    status, etag, body, _rem = get(ENDPOINTS[PRIMARY], etag=etags.get(PRIMARY))
 
-    # --- CHANGE DETECTED. Confirm the others, and record everything.
-    rec = {
-        "ts": datetime.now(PT).isoformat(), "event": "change_detected",
-        "primary": PRIMARY, "old_etag": etags.get(PRIMARY), "new_etag": etag,
-        "bytes": len(body), "rows": len(json.loads(body)) if body else 0,
-        "sha256": hashlib.sha256(body).hexdigest()[:16], "remaining": rem,
-        "others_changed": {},
-    }
-    for name in ("elo", "fpi"):
-        s, e, b, _ = get(ENDPOINTS[name], etag=etags.get(name))
-        rec["others_changed"][name] = (s != 304)
-        rec[f"{name}_rows"] = len(json.loads(b)) if b else 0
+    if status == 304:
+        # Unchanged. A pending candidate older than SETTLE_MIN is now SETTLED: it moved
+        # earlier, and on this later probe it did NOT move again.
+        p = pending.get(PRIMARY)
+        if p:
+            aged = settle_elapsed_min(p)
+            if aged >= SETTLE_MIN:
+                etags[PRIMARY] = p["etag"]
+                pending.pop(PRIMARY, None)
+                st["etags"], st["pending"] = etags, pending
+                save_state(st)
+                append_history({"ts": datetime.now(PT).isoformat(), "event": "settled",
+                                "endpoint": PRIMARY, "etag": etags[PRIMARY],
+                                "waited_min": round(aged, 1)})
+                print("RATINGS RELEASE SETTLED — CFBD ratings changed and held")
+                print(f"  {PRIMARY} etag -> {etags[PRIMARY]} (stable {aged:.0f} min)")
+                if LIVE:
+                    code, resp = fire_pull("settled release")
+                    print(f"  TRIGGERED pull: HTTP {code} {resp}")
+                else:
+                    print("  DARK: would have POSTed /api/analytics/fetch"
+                          " (~16 calls; D1 archive unchanged)")
+                    print("  arm with CFB_ETAG_TRIGGER_LIVE=1")
+            else:
+                print("RATINGS RELEASE PENDING SETTLE (awaiting a stable re-check)")
+                print(f"  {PRIMARY} etag {p['etag']} first seen {aged:.0f} min ago"
+                      f" (settle at {SETTLE_MIN} min)")
+        return 0
+
+    # --- CHANGE DETECTED on the primary.
+    prev_pending = pending.get(PRIMARY)
+    if prev_pending and prev_pending.get("etag") == etag:
+        aged = settle_elapsed_min(prev_pending)
+    else:
+        pending[PRIMARY] = {"etag": etag, "since": datetime.now(PT).isoformat()}
+        aged = 0.0
+
+    others = {}
+    for name in ("elo", "fpi", "srs"):
+        had_baseline = name in etags
+        s, e, _b, _r = get(ENDPOINTS[name], etag=etags.get(name))
+        # A first sighting is a BASELINE, not a change — never report a missing
+        # baseline as "changed", which would misreport the release.
+        others[name] = (s != 304) if had_baseline else None
         if s != 304 and e:
             etags[name] = e
-    etags[PRIMARY] = etag
-    st["etags"] = etags
-    save_state(st)
-    append_history(rec)
 
-    others = ", ".join(f"{k}={'changed' if v else 'unchanged'}"
-                       for k, v in rec["others_changed"].items())
+    st["pending"] = pending
+    save_state(st)
+    append_history({"ts": datetime.now(PT).isoformat(), "event": "change_detected",
+                    "primary": PRIMARY, "new_etag": etag, "others_changed": others})
+
     print("ETAG PROBE: RATINGS RELEASE DETECTED")
-    print(f"  {PRIMARY}: etag changed, rows={rec['rows']} sha={rec['sha256']}")
-    print(f"  {others}")
-    print("  -> the ETag DOES flip on a release; conditional polling is viable")
+    print(f"  {PRIMARY}: etag changed, rows={len(json.loads(body)) if body else 0}")
+    print("  " + ", ".join(
+        (f"{k}={'changed' if v else 'unchanged'}" if v is not None else f"{k}=baselined")
+        for k, v in others.items()))
+    if aged >= SETTLE_MIN:
+        etags[PRIMARY] = etag
+        pending.pop(PRIMARY, None)
+        st["etags"], st["pending"] = etags, pending
+        save_state(st)
+        print(f"  SETTLED: {PRIMARY} etag -> {etag} (stable {aged:.0f} min)")
+        if LIVE:
+            code, resp = fire_pull("change detected")
+            print(f"  TRIGGERED pull: HTTP {code} {resp}")
+        else:
+            print("  DARK: would have POSTed /api/analytics/fetch (D1 archive unchanged)")
+    else:
+        print(f"  pending settle (re-confirm in >= {SETTLE_MIN} min)")
     return 0
 
 

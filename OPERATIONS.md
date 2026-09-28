@@ -113,10 +113,14 @@ is the gate that catches a missing Dockerfile `COPY`) → set `BUILD_TAG` Worker
   atomicity data.
 - **Known design gap (Jeff, 2026-09-27):** the anchors refresh only 4×/week, so the
   site can serve up to a day of stale data after a release, even though we already pay
-  for a probe that *detects* the release. The intended fix is to make the probe
-  *trigger* the pull (release-gated + settle-gated), keeping the anchors as a backstop.
-  Blocker: the ETag baseline must live in **D1** (it is currently a repo file, i.e.
-  ephemeral in the container). See `docs/CFBD_API_MAP.md` §3c/§3d.
+  for a probe that *detects* the release. **The probe is now a release WATCHER**
+  (`scripts/probe_ratings_etag.py`): it detects a settled release and, when armed,
+  triggers the pull immediately. It is **DARK by default** — log-only — and armed with
+  `CFB_ETAG_TRIGGER_LIVE=1`. It reuses the existing hourly cron (`cto-cfb-ratings-etag-
+  probe`), so it costs no extra calls. The trigger POSTs the admin-gated
+  `/api/analytics/fetch`, i.e. **the same pull path, so D1 archiving is unchanged**.
+  Safety: release-gated (primary `ratings/sp` only) + settle-gated (needs a stable
+  re-check `>= SETTLE_MIN`). The anchors stay as the backstop.
 - Wired via `wrangler.jsonc` crons `0 4 * * 1,2,3,4` **and** `0 5 * * 1,2,3,4`
   (21:00 PT = 04:00Z under PDT / 05:00Z under PST — both hours or the anchor is missed
   half the year; cron days are UTC, so Sun 21:00 PT is Mon 04:00Z). The Worker's
@@ -140,11 +144,14 @@ is the gate that catches a missing Dockerfile `COPY`) → set `BUILD_TAG` Worker
   dependency **fails closed (503)** when the token is unset. `ADMIN_TOKEN` lives in
   repo `.env`, in `.admin_token`, and as a Worker secret passed into the container via
   `src/index.js` `envVars`. FastAPI `/docs`, `/redoc`, `/openapi.json` are disabled.
-- Gated (8): `rankings/refresh`, `refresh`, `analytics/refresh-if-due`,
+- Gated (8 + these): `rankings/refresh`, `refresh`, `analytics/refresh-if-due`,
   `schedule/update`, `injuries/sync`, `injuries/override`, `record/ingest`,
-  `record/repair-ats` — plus `analytics/fetch` and the admin-only `/api/matchup`.
-- Deliberately **NOT** gated: **`/api/analytics/fetch`** and **`/api/schedule/fetch`** —
-  a public page cannot hold a secret; they are throttled via a cached payload instead.
+  `record/repair-ats` — plus **`/api/analytics/fetch`** and the admin-only `/api/matchup`.
+- **NOT gated: `/api/schedule/fetch`** (public, throttled via a cached payload — a public
+  page cannot hold a secret). `/api/analytics/fetch` **is** gated: the analytics page's
+  manual refresh button was removed, so nothing public calls it any more.
+  *(Verified against `app.py` decorators 2026-09-27; an earlier version of this file
+  wrongly listed both as ungated.)*
 
 ## 6. THE MODEL — what is live, and what is reference-only
 

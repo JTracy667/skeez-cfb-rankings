@@ -205,6 +205,7 @@ img.team-logo {
 <script>
 const API = '/api';
 let teams = [];
+let currentSeason = null;
 let currentTab = 'spplus';
 let sortCol = null;
 let sortDir = 'desc';
@@ -219,6 +220,7 @@ async function fetchAnalytics() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     teams = data.teams || [];
+    currentSeason = data.season || null;
     document.getElementById('sourceBadge').textContent = `cfbd · ${teams.length} teams`;
     document.getElementById('sourceBadge').style.background = 'rgba(63,185,80,0.12)';
     document.getElementById('sourceBadge').style.color = '#3fb950';
@@ -307,15 +309,17 @@ function renderFPI(filtered) {
 function renderSRS(filtered) {
   const list = filtered || teams;
   const sorted = [...list].sort((a, b) => val(b, 'srs', -999) - val(a, 'srs', -999));
-  // SRS falls back to the PREVIOUS season when CFBD has not published the current one.
-  // Label the vintage: an unlabelled year-old rating that carries 12% of the composite
-  // weight reads as current, which is exactly the confusion this prevents. Degrades to
-  // no label (never a wrong label) when the field is absent, e.g. an older disk cache.
-  const vintage = (list.find(t => t.srs_source_year) || {}).srs_source_year || null;
-  const lbl = vintage ? ` (${vintage})` : '';
-  const note = vintage
-    ? `<p class="metric-note">Showing <strong>${vintage}</strong> season SRS — CFBD has not published this season's SRS yet. This input carries 12% of the composite weight.</p>`
-    : '';
+  // SRS is REFERENCE-ONLY: it is NOT in the live composite (weight 0.00 since V6.1),
+    // so a displayed vintage changes nothing about the board. It falls back to the
+    // PREVIOUS season when CFBD has not published the current one, so label the vintage
+    // and note the fallback ONLY when a prior season is actually being served — never
+    // claim "not published yet" while showing the current season.
+    const vintage = (list.find(t => t.srs_source_year) || {}).srs_source_year || null;
+    const staleVintage = vintage && currentSeason && String(vintage) !== String(currentSeason);
+    const lbl = vintage ? ` (${vintage})` : '';
+    const note = staleVintage
+      ? `<p class="metric-note">Showing <strong>${vintage}</strong> season SRS — CFBD has not published the ${currentSeason} season's SRS yet. Reference only: SRS does not feed the composite.</p>`
+      : '';
   let html = note + `<table><thead><tr><th>#</th><th>Team</th><th>SRS${lbl}</th><th>SRS Rating</th></tr></thead><tbody>`;
   sorted.forEach((t, i) => {
     const srs = val(t, 'srs', 0);
