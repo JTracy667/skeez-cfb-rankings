@@ -108,17 +108,51 @@ age-based freshness check cannot detect a release (data can be 2h old and still 
 it). Window-bounded probing spends zero calls outside it:
 `scripts/probe_ratings_etag.py` (cron `cto-cfb-ratings-etag-probe`).
 
+### 3d. What a full analytics pull costs, and what moves together (measured 2026-09-27)
+
+**A full pull is ~16 calls, not hundreds.** `drives` and `roster` each fetch the whole
+league in **ONE** call and are sliced by team client-side (`_cfbd_drives_for_teams`,
+`_cfbd_roster_experience`). Never re-implement them as per-team loops — that would turn
+a 16-call pull into a ~270-call one.
+
+**Budget context (30,000 allowance):**
+
+| Activity | Calls/mo | Share |
+|---|---|---|
+| ETag probe, hourly in the Sun 18:00→Wed 23:59 window (2 calls/h × 78h/wk) | ~676 | ~2.3% |
+| Weekly analytics pull × 4 anchors (~16 calls each) | ~291 | ~1.0% |
+
+**So the probe already costs ~2.3× the pulls.** Change-triggered pulling does not add
+quota — it converts a signal we are *already paying for* into fresh data.
+
+**Publication atomicity.** Conditional-GET against the ETags recorded on 2026-09-22
+(`scripts/atom probe`), 2026-09-27 — which datasets had moved during the week:
+
+- **moved:** `ratings/sp`, `ratings/elo`, `ratings/fpi`, `ratings/srs`, `stats/season`,
+  `stats/season/advanced`, `ppa/teams`, `ppa/players/season`, `teams`, `records`,
+  `games/weather`
+- **static:** `talent`, `recruiting/teams`, `player/returning`, `roster`
+
+**The ratings trio + SRS flip together** (confirmed on a live release: sp/elo/fpi all
+changed in one 18:18 PT event). But "moved this week" ≠ "moved with the release":
+`stats/season` and `ppa` also move with *game results*, and `games/weather` moves hourly.
+Therefore a trigger on "any flip" would fire on non-release noise and could bake a
+**mixed-vintage snapshot** (new SP+ against last week's efficiency). A release trigger
+must watch only the release-gating endpoints and use a **settle gate** (two consecutive
+identical ETags before pulling), not fire on first change.
+
 ---
 
 ## 4. Known traps
 
 1. **304 still costs a call.** Budget it as a call, always.
 2. **`/games` ETag is volatile by design** (row order). Canonicalise.
-3. **`ratings/srs?year=2026` returns an empty array.** The app then falls back to the
-   **previous season** (2025), which is why live SRS values exist. The same
-   fallback pattern covers `ratings/elo` and `talent`. Consequence: any per-input
-   freshness gate must be **per-input cadence-aware**, not a single age threshold — an
-   input that is legitimately a season old will otherwise trip it permanently.
+3. **`ratings/srs?year=2026` returned an empty array until 2026-09-27**, when CFBD
+   published it (268 rows). The app then falls back to the **previous season** (2025),
+   which is why live SRS values exist. The same fallback pattern covers `ratings/elo`
+   and `talent`. Consequence: any per-input freshness gate must be **per-input
+   cadence-aware**, not a single age threshold — an input that is legitimately a season
+   old will otherwise trip it permanently.
 4. **Empty results are not errors.** `drives` (week 4, pre-game) and `ratings/srs`
    return `[]` with HTTP 200. Treat 200 + empty as "no data yet", and check whether a
    caller is silently operating on a fallback.

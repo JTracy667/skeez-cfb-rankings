@@ -106,6 +106,17 @@ is the gate that catches a missing Dockerfile `COPY`) → set `BUILD_TAG` Worker
 - **CFBD analytics anchors: Sun / Mon / Tue / Wed at 21:00 America/Los_Angeles** —
   CFBD publishes the composite inputs (SP+ / Elo / FPI / talent) at an unpredictable
   time between Sunday night and Wednesday.
+- **A full analytics pull is ~16 CFBD calls** (`drives` and `roster` are one call each
+  for the whole league — never make them per-team). The hourly in-window ETag probe
+  (`cto-cfb-ratings-etag-probe`) costs ~2.3× the pulls; see
+  `docs/CFBD_API_MAP.md` §3d for the measured budget table and the publication-
+  atomicity data.
+- **Known design gap (Jeff, 2026-09-27):** the anchors refresh only 4×/week, so the
+  site can serve up to a day of stale data after a release, even though we already pay
+  for a probe that *detects* the release. The intended fix is to make the probe
+  *trigger* the pull (release-gated + settle-gated), keeping the anchors as a backstop.
+  Blocker: the ETag baseline must live in **D1** (it is currently a repo file, i.e.
+  ephemeral in the container). See `docs/CFBD_API_MAP.md` §3c/§3d.
 - Wired via `wrangler.jsonc` crons `0 4 * * 1,2,3,4` **and** `0 5 * * 1,2,3,4`
   (21:00 PT = 04:00Z under PDT / 05:00Z under PST — both hours or the anchor is missed
   half the year; cron days are UTC, so Sun 21:00 PT is Mon 04:00Z). The Worker's
