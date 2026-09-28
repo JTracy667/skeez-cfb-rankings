@@ -71,7 +71,19 @@ rollback() {   # rollback <tag> <reason>
   for p in "" analytics schedule win-totals api/health; do
     printf '   /%-12s %s\n' "$p" "$(curl -s -m 60 -o /dev/null -w '%{http_code}' -A 'Mozilla/5.0' "$PUBLIC_URL/$p")"
   done
-  echo "!!! ROLLBACK COMPLETE (prod on $1). Investigate before retrying."
+  # The container app image update is EVENTUALLY CONSISTENT and can lag by MINUTES, not
+  # seconds. On 2026-09-28 this function printed "ROLLBACK COMPLETE" while the container app
+  # still pointed at the NEW tag: the rollback had not landed at all, and the page checks
+  # above (all 200) happily agreed. Confirm the app image before claiming anything.
+  if python "$(dirname "$0")/verify_container_swap.py" --tag "$1" --app-image-only \
+       --window "${CFB_ROLLBACK_WINDOW:-600}"; then
+    echo "!!! ROLLBACK COMPLETE (prod on $1, container app image confirmed). Investigate before retrying."
+  else
+    echo "!!! ROLLBACK NOT CONFIRMED: the container app image is NOT $1."
+    echo "!!!   Prod may still be running the release you just tried to back out."
+    echo "!!!   Do NOT assume the rollback took -- check the app image AND the code marker."
+    return 1
+  fi
 }
 
 # ---------------------------------------------------------------- rollback mode
@@ -130,12 +142,13 @@ wrangler_deploy
 # moved: /api/health then says build=vN while the container APPLICATION still points at the
 # old image, and the site serves old code forever. (v52->v53 sat exactly like that for an
 # hour; a second `wrangler deploy` applied it immediately.) The app config is also EVENTUALLY
-# CONSISTENT, so this polls rather than judging on one read. If the image never lands, deploy
+# CONSISTENT and can lag by MINUTES -- a 120s window once produced a FALSE rollback that
+# itself did not land. So this polls, generously, rather than judging on one read. If the image never lands, deploy
 # once more before letting the verify step fail and roll back.
-if ! python "$(dirname "$0")/verify_container_swap.py" --tag "$NEW" --app-image-only --window 120; then
+if ! python "$(dirname "$0")/verify_container_swap.py" --tag "$NEW" --app-image-only --window "${CFB_IMAGE_WINDOW:-420}"; then
   echo "    container app did not take $NEW -> re-running wrangler deploy"
   wrangler_deploy
-  python "$(dirname "$0")/verify_container_swap.py" --tag "$NEW" --app-image-only --window 180 \
+  python "$(dirname "$0")/verify_container_swap.py" --tag "$NEW" --app-image-only --window "${CFB_IMAGE_WINDOW_RETRY:-600}" \
     || { rollback "$PREV" "container app never moved to $NEW"; exit 1; }
 fi
 
