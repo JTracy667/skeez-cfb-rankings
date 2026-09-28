@@ -122,6 +122,19 @@ or an explicit statement of why disk is safe.
 
 ## 5. Findings, ranked
 
+### Dispositions (Phase 7, 2026-09-28)
+
+| Finding | Disposition | Receipt |
+|---|---|---|
+| F1 — results served from an ephemeral cache | **RESOLVED** (v52, Phase 2) | D1 `games` is the door (`snapshot_games`/`load_games`); `test_live_finals_fetch_archives_to_d1` proves the live fetch archives |
+| F2 — ephemeral read-modify-write loses writes | **RESOLVED** (v53 + Phase 6) | `week_schedule`, `active_injuries`, `best_bets`, `line_movements`, `odds_cache` — each D1-first with a durability test |
+| F3 — `teams` read-only; `players` orphan | **RESOLVED** (v60) | `snapshot_team_identity()` live writer; served universe covers D1; `players` KEEP/unwired per Jeff |
+| F4 — no pull history in `stat_observations` | **OPEN** — Phase 4, append-only approved by Jeff; the only remaining schema change | — |
+| F5 — `@_guard` swallows failures | **RESOLVED** (v54, Phase 5) | `freshness_events` + `/api/health.archive`; `tests/test_archive_failures_surface.py` |
+| F6 — D1 reads gated on the write flag | **RESOLVED** (v52) | `read_enabled()` split from `write_enabled()`; flag contract test |
+| F7 — nothing asserts served == D1 | **RESOLVED** | the parity suite is a blocking step of the deploy gate |
+| F8 — 8 tables written with no live reader | **ACCEPTED (INFO)** — per-table intent, not a code change; several are deliberately offline (backtests, ops). Revisit only if one is *expected* to feed the site | — |
+
 ### F1 — Results/games are not persisted live. **HIGH.**
 D1 `games` has **0 scored games for 2026 week ≥ 5**; the newest scored rows are the
 9/21 backfill. The live app *grades* results (`_ingest_results`) into `data/record.json`

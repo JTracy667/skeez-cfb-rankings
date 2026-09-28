@@ -21,6 +21,10 @@ or answer a question about how the site works:**
    change a producer or a reader, check whether a phase covers it first.
 4. **`docs/DATA_SYMMETRY_AUDIT.md`** — the measured write/read audit (findings F1–F8 with
    receipts) that the plan works from.
+5. **The traps → tests table** — in `docs/DATA_PERSISTENCE_PLAN.md`, Phase 7. Every trap this
+   repo has paid for, next to the mechanical thing that CATCHES it, or labelled an accepted
+   limitation. Check it before "fixing" anything that looks like a deploy or data-path bug:
+   most of them already have a guard, and the ones that do not are written down as such.
 
 **Why this is mandatory:** the site has repeatedly been broken by a session reasoning
 about its wiring from memory instead of from a document. The v50 incident — a full week

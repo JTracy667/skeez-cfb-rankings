@@ -260,6 +260,40 @@ built, *and* each trap is listed next to the mechanical thing that catches it. I
 the honest distinction visible — the traps that are **not** testable are labelled as accepted
 limitations instead of being counted as protection.
 
+### The traps → tests table (Phase 7's deliverable)
+
+Every trap is either **enforced by something that FAILS** or **labelled an accepted
+limitation**. A trap in neither column is a bug in this plan. "Documentation is not a
+control" — a trap that only lives in prose is listed as an accepted limitation, not as
+protection.
+
+| # | Trap | What catches it | Status |
+|---|------|-----------------|--------|
+| 1 | Serving reads a file the container reverts on recycle (the v50 defect) | `tests/test_no_disk_reads_in_serving.py` — the allowlist IS the manifest of tolerated reads — plus `test_serving_follows_d1_even_when_the_disk_file_disagrees` | ENFORCED |
+| 2 | A runtime write that lands only on the ephemeral disk (F2 shape: schedule override, injuries, best-bets, movement log, odds cache) | the guard, plus a "*writes reach the D1 door*" test per dataset — a write that only lands in the file IS the bug | ENFORCED |
+| 3 | A board BUILT from a stale file bakes the staleness into D1 | guard BUILD scope; `get_rankings()` and `/api/projections` go through the D1-first accessor | ENFORCED |
+| 4 | A dead archive looks healthy (silent `@_guard`) — F5 | `tests/test_archive_failures_surface.py` + `/api/health` → `archive.count > 0` | ENFORCED |
+| 5 | D1 reads silently gated on the WRITE flag — F6 | `tests/test_analytics_archive.py` flag contract | ENFORCED |
+| 6 | Served ≠ D1 drift — F7 | the parity suite runs inside the deploy gate (`scripts/run_enforcement_tests.py`) | ENFORCED |
+| 7 | A fix "verified" by a test that cannot fail | counterfactual requirement, plus `xfail(strict=True)`: fixing a finding turns the suite RED until the marker is deleted | ENFORCED |
+| 8 | A probe attributing a read to a scope IT chose | reads measured in fresh subprocesses (`tests/_reads_probe.py`) | ENFORCED |
+| 9 | Spying on `io.open` only, missing bare `open()` | patch `builtins.open` AND `io.open` | ENFORCED |
+| 10 | Tests spending the metered cap | `tests/conftest.py` sets `CFB_SKIP_LIVE_FETCH` / `CFB_SKIP_BOOTWARM` | ENFORCED |
+| 11 | `wrangler deploy` prints SUCCESS while the container image is unchanged | `cfb_deploy.sh` step 5b + `verify_container_swap.py` phase 0 (app `configuration.image`) | ENFORCED |
+| 12 | `/api/health` `build` names the Worker's tag, not the running code | deploy gate 3 asserts the release's CODE marker | ENFORCED |
+| 13 | Polling the site resets `sleepAfter` and stalls the recycle it waits for | the verifier is API-driven and makes exactly ONE site request | ENFORCED (process) |
+| 14 | A rollback that never landed, announced as COMPLETE | `rollback()` confirms the app image or prints ROLLBACK NOT CONFIRMED | ENFORCED |
+| 15 | The app-image update is eventually consistent and lags by MINUTES (77s to ~6 min observed) | windows of 420s / 600s, returning as soon as the image matches | ENFORCED |
+| 16 | A new page missing from the Dockerfile `COPY` line 500s in prod | — | ACCEPTED LIMITATION — no mechanical check; the deploy preflight boots the image locally and hits every public page, which catches most cases |
+| 17 | `node --check` passing page JS with undefined template refs | — | ACCEPTED LIMITATION — page JS must be EXECUTED in a Node `vm` against a live payload and tbody rows counted; manual, per page |
+| 18 | A scripted edit anchored on the wrong occurrence clobbers code | — | ACCEPTED LIMITATION — process rule: anchor on a uniquely-identifying line, read the diff back, `py_compile` |
+| 19 | ESPN scoreboard truncates to 25 events/week | — | ACCEPTED LIMITATION — rule: schedule data comes from CFBD `/games` |
+
+**Dispositions.** 15 of 19 traps are enforced by something that fails. 4 are labelled accepted
+limitations, each with the process rule that stands in for a test — none of them is counted as
+protection. Every trap in the "ENFORCED" column is exercised by the deploy gate, so a
+regression stops a deploy rather than being discovered by Jeff.
+
 **Done when.** The table is complete, every audit finding has a disposition with a receipt,
 and the docs are committed alongside the code they describe.
 
