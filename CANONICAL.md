@@ -3,8 +3,18 @@
 **Canonical location: `C:\Users\jtracy\dev\cfb-power-rankings`**
 
 This is the single source of truth for the Skeez CFB Rankings codebase.
-All bots, work orders, and deployments (Render until Cloudflare cutover
-completes; Cloudflare Containers after) must operate from this directory.
+All bots, work orders, and deployments must operate from this directory.
+
+## Start here
+
+**Read `OPERATIONS.md` before doing anything to this repo.** It is the operations
+map: how the site runs, how it deploys, where its data actually lives (baked image
+files vs D1), the refresh anchors, the admin gate, quotas, and which older docs are
+stale. It exists so a session does not re-learn the site from source every time.
+
+**Doc hygiene rule (Jeff, 2026-09-27):** update `OPERATIONS.md` after **every**
+deploy — at minimum its `CURRENT STATE` block. Any durable fact you had to discover
+by reading source belongs in that file before you finish.
 
 ## History
 

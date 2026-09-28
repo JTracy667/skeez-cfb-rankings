@@ -75,7 +75,7 @@ curl http://localhost:8004/api/health   # {"status":"ok","teams":25,...}
   and are re-fetched on restart — no persistent storage configured.
 - **Scaling**: `max_instances: 1` — matches wrangler.jsonc (single DO singleton; one warm
   instance serves all traffic, cache stays coherent). Bump only if cold-start gaps hurt.
-  Containers sleep after 20m idle (`sleepAfter` in src/index.js) and cold-start on next request.
+  Containers sleep after **5m** idle (`sleepAfter` in src/index.js) and cold-start on next request.
 - **CORS**: pages and API are served same-origin through the Worker (no CORS
   needed). If you add a custom domain or a Pages frontend, set the `CORS_ORIGINS`
   env var (comma-separated) — the app's allowlist reads it at startup.
@@ -102,8 +102,8 @@ happen only when something woke the container. Hence:
 
 **A new image only reaches a sleeping-or-new instance.** After
 `wrangler containers build --push` + `wrangler deploy`, a warm instance keeps
-serving the OLD image until it recycles (20m idle); verify with
-`/api/analytics/pull-status`, which only exists in v10+.
+serving the OLD image until it recycles (**`sleepAfter` 5m idle**); verify with
+`/api/health` `build` **plus** `code.marker`.
 
 **Cloudflare in front of the Worker blocks header-poor clients** (403
 `error code: 1010`) — requests with the bare `Python-urllib` signature are

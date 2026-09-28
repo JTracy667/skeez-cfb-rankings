@@ -1,5 +1,12 @@
 # SESSION HANDOFF — CFB (skeezcfb-rankings.com)
 
+> **STATE IN THIS DOC IS STALE — do not trust it.** It was written 2026-09-23 and says
+> the live build is v27 (it is past that). For current state and all procedures, read
+> **`OPERATIONS.md`** at the repo root. This file is kept for its *history and lessons*
+> (the backtest rig narrative, the book-of-record mapping, the credential-grep traps),
+> not for state. Its deploy-credential grep procedure is SUPERSEDED by
+> `scripts/cf_deploy_token.py`.
+
 **Written:** 2026-09-23 · for a fresh CTO session to resume with zero re-discovery.
 Repo: `C:\Users\jtracy\dev\cfb-power-rankings`
 
