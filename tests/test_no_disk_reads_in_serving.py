@@ -56,7 +56,10 @@ SERVE_ALLOWLIST: dict[str, str] = {
     # app_state key `odds_cache`, kill switch ODDS_CACHE_FROM_D1). This one also buys back real
     # quota: the cache exists to avoid re-fetching metered odds after a recycle, which an
     # ephemeral file could never do.
-    "line_movements.json": "F2/Phase 6 - line-movement history read while serving; same treatment",
+    # DIFFED OUT in Phase 6 (2026-09-28): the rolling 7-day CLV record is D1-FIRST now
+    # (_movement_payload, app_state key `line_movements`, kill switch MOVEMENTS_FROM_D1). This
+    # was not a mere cache -- it is the audit trail of what the line did, so a recycle used to
+    # destroy the record itself.
     # DIFFED OUT in Phase 6 (2026-09-28): _load_injuries_doc() is D1-FIRST now (app_state
     # `active_injuries`, kill switch INJURIES_FROM_D1). Note D1 `injury_snapshots` is a
     # SETTLED-OUTCOME tracking table, not a home for the current injury state -- the door

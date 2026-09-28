@@ -275,15 +275,54 @@ def _odds_disk_cache_set(odds_map: dict):
 # ── Line-movement tracking + background auto-refresh ──
 LINE_MOVEMENTS_FILE = BASE_DIR / "data" / "line_movements.json"  # rolling event log (CLV record)
 LINE_MOVEMENTS_MAX_AGE = 7 * 86400  # keep 7 days of movement events
+LINE_MOVEMENTS_STATE_KEY = "line_movements"   # D1 app_state key -- durable copy
+
+
+def _movements_from_d1_enabled() -> bool:
+    """Reads default ON; the flag is a kill switch, not a gate."""
+    return os.environ.get("MOVEMENTS_FROM_D1", "1").strip().lower() in ("1", "true", "yes", "on")
+
+
+def _movement_payload() -> dict:
+    """The movement log payload {ts, movements}. D1 FIRST -- the disk is EPHEMERAL (Phase 6).
+
+    This is not just a cache: it is a rolling 7-day CLV record of what the line DID, so losing
+    it on a recycle loses the audit trail itself. Kill switch: ``MOVEMENTS_FROM_D1=0``.
+    """
+    if _movements_from_d1_enabled():
+        try:
+            cached = d1_write_path.load_state(LINE_MOVEMENTS_STATE_KEY)
+            if cached:
+                payload = json.loads(cached)
+                if isinstance(payload, dict) and "movements" in payload:
+                    return payload
+        except Exception as e:  # noqa: BLE001
+            print(f"[Lines] D1 movement log read failed, falling back to disk: {e}")
+    try:
+        if LINE_MOVEMENTS_FILE.exists():
+            payload = json.loads(LINE_MOVEMENTS_FILE.read_text(encoding="utf-8"))
+            if isinstance(payload, dict) and "movements" in payload:
+                return payload
+    except Exception as e:  # noqa: BLE001
+        print(f"[Lines] disk movement log read failed: {e}")
+    return {"ts": 0, "movements": []}
 
 
 def _load_movement_log() -> list[dict]:
+    return _movement_payload().get("movements", [])
+
+
+def _save_movement_log(log: list[dict]) -> None:
+    """Write-through: D1 first (durable), then the file mirror."""
+    blob = json.dumps({"ts": time.time(), "movements": log[-2000:]}, ensure_ascii=False)
     try:
-        if LINE_MOVEMENTS_FILE.exists():
-            return json.loads(LINE_MOVEMENTS_FILE.read_text(encoding="utf-8")).get("movements", [])
-    except Exception:
-        pass
-    return []
+        d1_write_path.save_state(LINE_MOVEMENTS_STATE_KEY, blob)
+    except Exception as e:  # noqa: BLE001
+        print(f"[Lines] D1 movement log write failed: {e}")
+    try:
+        LINE_MOVEMENTS_FILE.write_text(blob, encoding="utf-8")
+    except Exception as e:  # noqa: BLE001
+        print(f"[Lines] movement log write failed: {e}")
 
 
 def _append_movement_log(movements: list[dict]):
@@ -294,12 +333,7 @@ def _append_movement_log(movements: list[dict]):
     log.extend(movements)
     cutoff = time.time() - LINE_MOVEMENTS_MAX_AGE
     log = [m for m in log if m.get("ts", 0) >= cutoff]
-    try:
-        LINE_MOVEMENTS_FILE.write_text(
-            json.dumps({"ts": time.time(), "movements": log[-2000:]}, ensure_ascii=False),
-            encoding="utf-8")
-    except Exception as e:
-        print(f"[Lines] movement log write failed: {e}")
+    _save_movement_log(log)
 
 
 def _snapshot_lines(odds_map: dict) -> list[dict]:
@@ -1221,7 +1255,7 @@ def api_boards_status():
     return out
 
 
-CODE_MARKER = "v57-odds-cache-d1"   # bump when a release must be provably live
+CODE_MARKER = "v58-line-movements-d1"   # bump when a release must be provably live
 
 
 @app.get("/api/health")

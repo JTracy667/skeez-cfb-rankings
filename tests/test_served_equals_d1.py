@@ -370,6 +370,56 @@ def test_odds_cache_writes_reach_the_d1_door(app_module, monkeypatch, tmp_path):
         "the odds cache never reached the D1 door"
 
 
+def test_movement_log_is_d1_first_and_beats_a_disagreeing_disk(app_module, monkeypatch, tmp_path):
+    """Phase 6: the rolling 7-day CLV record lived on an EPHEMERAL disk, so a recycle destroyed
+    the audit trail of what the line actually did. D1 is the store now."""
+    import json  # noqa: PLC0415
+    import time as _t  # noqa: PLC0415
+
+    disk = tmp_path / "line_movements.json"
+    disk.write_text(json.dumps({"ts": _t.time(), "movements": [{"ts": _t.time(), "game": "Disk"}]}),
+                    encoding="utf-8")
+    monkeypatch.setattr(app_module, "LINE_MOVEMENTS_FILE", disk)
+    monkeypatch.setattr(
+        app_module.d1_write_path, "load_state",
+        lambda k: json.dumps({"ts": _t.time(), "movements": [{"ts": _t.time(), "game": "D1"}]})
+        if k == "line_movements" else None)
+
+    got = app_module._load_movement_log()
+    assert [m["game"] for m in got] == ["D1"], "the ephemeral disk log won over D1"
+
+
+def test_movement_append_extends_the_d1_log_and_reaches_the_d1_door(app_module, monkeypatch, tmp_path):
+    """An append that only lands in the file is the bug: the next recycle erases the history."""
+    import json  # noqa: PLC0415
+    import time as _t  # noqa: PLC0415
+
+    monkeypatch.setattr(app_module, "LINE_MOVEMENTS_FILE", tmp_path / "line_movements.json")
+    monkeypatch.setattr(
+        app_module.d1_write_path, "load_state",
+        lambda k: json.dumps({"ts": 0, "movements": [{"ts": _t.time(), "game": "existing"}]})
+        if k == "line_movements" else None)
+    saved: dict = {}
+    monkeypatch.setattr(app_module.d1_write_path, "save_state",
+                        lambda k, v: saved.__setitem__(k, json.loads(v)) or 1)
+
+    app_module._append_movement_log([{"ts": _t.time(), "game": "new"}])
+    got = [m["game"] for m in saved.get("line_movements", {}).get("movements", [])]
+    assert got == ["existing", "new"], got
+
+
+def test_movement_log_falls_back_to_disk_when_d1_is_empty(app_module, monkeypatch, tmp_path):
+    import json  # noqa: PLC0415
+    import time as _t  # noqa: PLC0415
+
+    disk = tmp_path / "line_movements.json"
+    disk.write_text(json.dumps({"ts": _t.time(), "movements": [{"ts": _t.time(), "game": "Disk"}]}),
+                    encoding="utf-8")
+    monkeypatch.setattr(app_module, "LINE_MOVEMENTS_FILE", disk)
+    monkeypatch.setattr(app_module.d1_write_path, "load_state", lambda k: None)
+    assert [m["game"] for m in app_module._load_movement_log()] == ["Disk"]
+
+
 # ------------------------------------------------------- KNOWN-BROKEN (F1), xfail-strict
 
 
