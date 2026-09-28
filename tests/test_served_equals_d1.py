@@ -286,6 +286,50 @@ def test_budget_ledger_reads_d1_first_and_falls_back_to_the_file(monkeypatch):
     monkeypatch.setattr(budget, "_state", None)
 
 
+def test_injuries_are_d1_first_and_beat_a_disagreeing_disk(app_module, monkeypatch, tmp_path):
+    """Phase 6: `POST /api/injuries/override` was a read-modify-write on an EPHEMERAL file, so
+    a manual injury override silently evaporated on the next container recycle -- F2's shape
+    again, but this one loses a human's correction. D1 is the store now."""
+    import json  # noqa: PLC0415
+
+    disk = tmp_path / "active_injuries.json"
+    disk.write_text(json.dumps({"teams": {"Texas": {"net_injury_points": 99.0}}}), encoding="utf-8")
+    monkeypatch.setattr(app_module, "ACTIVE_INJURIES_FILE", disk)
+
+    d1_doc = {"teams": {"Texas": {"net_injury_points": -7.0}},
+              "total_teams_with_injuries": 1, "total_tracked_injuries": 1}
+    monkeypatch.setattr(app_module.d1_write_path, "load_state",
+                        lambda key: json.dumps(d1_doc) if key == "active_injuries" else None)
+
+    got = app_module._load_active_injuries()
+    assert got["Texas"]["net_injury_points"] == -7.0, "the ephemeral file won over D1"
+
+
+def test_injuries_fall_back_to_disk_when_d1_has_nothing(app_module, monkeypatch, tmp_path):
+    import json  # noqa: PLC0415
+
+    disk = tmp_path / "active_injuries.json"
+    disk.write_text(json.dumps({"teams": {"Texas": {"net_injury_points": -3.0}}}), encoding="utf-8")
+    monkeypatch.setattr(app_module, "ACTIVE_INJURIES_FILE", disk)
+    monkeypatch.setattr(app_module.d1_write_path, "load_state", lambda key: None)
+
+    assert app_module._load_active_injuries()["Texas"]["net_injury_points"] == -3.0
+
+
+def test_injury_writes_reach_the_d1_door(app_module, monkeypatch, tmp_path):
+    """A write that only lands in the file is exactly the bug. Assert the D1 door is called."""
+    import json  # noqa: PLC0415
+
+    monkeypatch.setattr(app_module, "ACTIVE_INJURIES_FILE", tmp_path / "active_injuries.json")
+    saved: dict = {}
+    monkeypatch.setattr(app_module.d1_write_path, "save_state",
+                        lambda k, v: saved.__setitem__(k, json.loads(v)) or 1)
+
+    app_module._save_injuries_doc({"teams": {"Texas": {"net_injury_points": -4.0}}})
+    assert saved.get("active_injuries", {}).get("teams", {}).get("Texas"), \
+        "the injury write never reached the D1 door"
+
+
 # ------------------------------------------------------- KNOWN-BROKEN (F1), xfail-strict
 
 

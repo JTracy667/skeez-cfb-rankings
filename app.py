@@ -1177,7 +1177,7 @@ def api_boards_status():
     return out
 
 
-CODE_MARKER = "v55-budget-ledger-d1"   # bump when a release must be provably live
+CODE_MARKER = "v56-injuries-in-d1"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -3618,16 +3618,61 @@ def project_score_multi_factor(team_data: dict, is_home: bool = True, opp_compos
 
 
 
-def _load_active_injuries() -> dict[str, dict]:
-    """Load active team injuries from disk cache (team_name -> injury info)."""
-    if ACTIVE_INJURIES_FILE.exists():
+INJURIES_STATE_KEY = "active_injuries"   # D1 app_state key -- durable copy of the injury doc
+
+
+def _injuries_from_d1_enabled() -> bool:
+    """Reads default ON; the flag is a kill switch, not a gate."""
+    return os.environ.get("INJURIES_FROM_D1", "1").strip().lower() in ("1", "true", "yes", "on")
+
+
+def _load_injuries_doc() -> dict:
+    """The WHOLE active-injuries document. D1 FIRST -- the container disk is EPHEMERAL.
+
+    Two defects lived here, both the same class as F2, and one of them was a data-loss bug:
+      * `POST /api/injuries/override` was a read-modify-write on `data/active_injuries.json`,
+        so a MANUAL INJURY OVERRIDE silently evaporated on the next container recycle.
+      * `/api/injuries` and the win-totals build read that file directly, so a recycled
+        container served whatever the image happened to carry.
+    The file is the local-dev fallback. Kill switch: ``INJURIES_FROM_D1=0``.
+    """
+    if _injuries_from_d1_enabled():
         try:
+            raw = d1_write_path.load_state(INJURIES_STATE_KEY)
+            if raw:
+                doc = json.loads(raw)
+                if isinstance(doc, dict) and "teams" in doc:
+                    return doc
+        except Exception as e:  # noqa: BLE001
+            print(f"[injuries] D1 read failed, falling back to disk: {e}")
+    try:
+        if ACTIVE_INJURIES_FILE.exists():
             with open(ACTIVE_INJURIES_FILE, "r") as f:
-                data = json.load(f)
-                return data.get("teams", {})
-        except Exception as e:
-            print(f"[injuries] load failed: {e}")
-    return {}
+                doc = json.load(f)
+                if isinstance(doc, dict):
+                    return doc
+    except Exception as e:  # noqa: BLE001
+        print(f"[injuries] disk load failed: {e}")
+    return {"teams": {}, "total_teams_with_injuries": 0, "total_tracked_injuries": 0}
+
+
+def _save_injuries_doc(doc: dict) -> None:
+    """Write-through: D1 first (the durable copy), then the file mirror."""
+    payload = json.dumps(doc, indent=2, default=str)
+    try:
+        d1_write_path.save_state(INJURIES_STATE_KEY, payload)
+    except Exception as e:  # noqa: BLE001
+        print(f"[injuries] D1 write failed: {e}")
+    try:
+        with open(ACTIVE_INJURIES_FILE, "w") as f:
+            f.write(payload)
+    except Exception as e:  # noqa: BLE001
+        print(f"[injuries] file mirror failed: {e}")
+
+
+def _load_active_injuries() -> dict[str, dict]:
+    """Active team injuries (team_name -> injury info), D1-first."""
+    return _load_injuries_doc().get("teams", {})
 
 
 def matchup_conditions(home_name: str, away_name: str, injuries_map: dict | None = None,
@@ -5277,10 +5322,7 @@ def api_schedule_weeks(year: int = CFBD_YEAR):
 def api_injuries():
     """Get all active college football injuries, tracked key players, and point deductions."""
     try:
-        if ACTIVE_INJURIES_FILE.exists():
-            with open(ACTIVE_INJURIES_FILE, "r") as f:
-                return json.load(f)
-        return {"teams": {}, "total_teams_with_injuries": 0, "total_tracked_injuries": 0}
+        return _load_injuries_doc()
     except Exception as e:
         print(f"[GET /api/injuries ERROR] {e}")
         return {"error": str(e), "teams": {}}
@@ -5312,13 +5354,9 @@ def api_injuries_override(payload: dict):
     team = payload.get("team")
     if not team:
         raise HTTPException(400, "Missing team name")
-    data = {}
-    if ACTIVE_INJURIES_FILE.exists():
-        try:
-            with open(ACTIVE_INJURIES_FILE, "r") as f:
-                data = json.load(f)
-        except Exception:
-            data = {}
+    # D1-first. This used to be a read-modify-write on an EPHEMERAL file, so a manual
+    # override silently evaporated on the next container recycle (the same class as F2).
+    data = _load_injuries_doc()
     teams_dict = data.setdefault("teams", {})
     team_entry = teams_dict.setdefault(
         team,
@@ -5349,8 +5387,7 @@ def api_injuries_override(payload: dict):
     all_items = team_entry.get("injuries", []) + team_entry.get("manual_overrides", [])
     team_entry["net_injury_points"] = round(sum(i.get("deduction", 0.0) for i in all_items), 1)
 
-    with open(ACTIVE_INJURIES_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+    _save_injuries_doc(data)
     return {"status": "updated", "team": team, "net_injury_points": team_entry["net_injury_points"]}
 
 # ── Records: Straight-Up (SU) + Against-the-Spread (ATS) tracking ──

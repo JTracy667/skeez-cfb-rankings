@@ -411,8 +411,17 @@ def scrape_injuries() -> dict:
     team_analytics = _load_team_analytics()
     starters_map = _load_team_starters()
     ppa_map = _load_player_ppa()
+    # D1-FIRST (Phase 6): app.py SERVES injuries from D1 (app_state `active_injuries`), so
+    # merging from the ephemeral file alone could DROP a manual override that lives only in D1.
     existing_store = {}
-    if os.path.exists(ACTIVE_INJURIES_FILE):
+    try:
+        import d1_write_path as _dw
+        _raw = _dw.load_state("active_injuries")
+        if _raw:
+            existing_store = json.loads(_raw).get("teams", {})
+    except Exception as e:  # noqa: BLE001
+        print(f"[i] D1 existing-store read skipped: {e}")
+    if not existing_store and os.path.exists(ACTIVE_INJURIES_FILE):
         try:
             with open(ACTIVE_INJURIES_FILE, "r") as f:
                 existing_store = json.load(f).get("teams", {})
@@ -494,6 +503,16 @@ def scrape_injuries() -> dict:
 
     with open(ACTIVE_INJURIES_FILE, "w") as f:
         json.dump(payload, f, indent=2)
+
+    # ...and the DURABLE copy, which is what app.py actually serves from (Phase 6). Without
+    # this a sync would write only the file and the site would keep serving the previous
+    # snapshot from D1 -- a silent no-op sync.
+    try:
+        import d1_write_path as _dw
+        _dw.save_state("active_injuries", json.dumps(payload, indent=2, default=str))
+        print("[+] injuries mirrored to D1 app_state.active_injuries")
+    except Exception as e:  # noqa: BLE001
+        print(f"[!] D1 mirror FAILED -- the site will keep serving the previous snapshot: {e}")
 
     print(f"[+] Scraped {len(teams_out)} teams with injuries ({total_injuries} players, {total_qb_deductions} key QBs)")
     return payload

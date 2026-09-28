@@ -54,7 +54,10 @@ SERVE_ALLOWLIST: dict[str, str] = {
     "cfbd_analytics.json": "F7/Phase 6 - _served_analytics() reads the image file for IDENTITY/string fields + fallback; numerics come from D1. Documented design, but the identity half is still ephemeral-baked.",
     "odds_cache.json":     "F2/Phase 6 - licensed odds cache read while serving; move behind a D1-first accessor",
     "line_movements.json": "F2/Phase 6 - line-movement history read while serving; same treatment",
-    "active_injuries.json": "F2/Phase 6 - injury board read while serving; D1 injury_snapshots exists but is not the served source",
+    # DIFFED OUT in Phase 6 (2026-09-28): _load_injuries_doc() is D1-FIRST now (app_state
+    # `active_injuries`, kill switch INJURIES_FROM_D1). Note D1 `injury_snapshots` is a
+    # SETTLED-OUTCOME tracking table, not a home for the current injury state -- the door
+    # uses app_state.
     "teams.json":          "F3/Phase 6 - team identity read from disk while D1 `teams` also exists (two sources, no live writer)",
     # DIFFED OUT in Phase 6 (2026-09-28): budget.state() is D1-FIRST now (budget.py,
     # BUDGET_FROM_D1 kill switch), so /api/health reads D1 api_usage -- the ledger of record --
@@ -77,7 +80,7 @@ BUILD_ALLOWLIST: dict[str, str] = {
     # bakes the staleness into D1.
     # DIFFED OUT in Phase 3 (2026-09-28): load_schedule() is D1-first now
     # (app_state `week_schedule`), so the file is no longer read on any measured path.
-    "active_injuries.json": "F2/Phase 6 - compute_win_totals() reads it before persisting the board",
+    # DIFFED OUT in Phase 6: same conversion as the serve scope above.
     "cfbd_analytics.json":  "F7/Phase 6 - compute_win_totals() reads it; a board built from the image file persists the staleness",
     "teams.json":           "F3/Phase 6 - compute_win_totals() reads team identity from disk while D1 `teams` also exists",
     # DIFFED OUT in Phase 6: same conversion as the serve scope above.
