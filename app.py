@@ -1255,7 +1255,7 @@ def api_boards_status():
     return out
 
 
-CODE_MARKER = "v58-line-movements-d1"   # bump when a release must be provably live
+CODE_MARKER = "v59-best-bets-d1"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -5979,21 +5979,53 @@ def api_record_repair_ats(spread: float, ats_pick: str, key: str):
 
 # ── Best Bets: separate tracker for high-confidence value plays ──
 BEST_BETS_FILE = BASE_DIR / "data" / "best_bets.json"
+BEST_BETS_STATE_KEY = "best_bets"   # D1 app_state key -- durable tracker
+
+
+def _best_bets_from_d1_enabled() -> bool:
+    """Reads default ON; the flag is a kill switch, not a gate."""
+    return os.environ.get("BEST_BETS_FROM_D1", "1").strip().lower() in ("1", "true", "yes", "on")
 
 
 def _load_best_bets() -> dict:
+    """The best-bets tracker. D1 FIRST -- the disk is EPHEMERAL (Phase 6).
+
+    This is NOT a cache. It is the tracked RECORD of which plays were locked and how they
+    graded, and both `_lock_best_bets` and `_ingest_best_bets` READ-MODIFY-WRITE it. On an
+    ephemeral disk a recycle silently reset that record, so locked picks and their graded
+    results were being discarded -- the v49/v50 stale-data class, applied to the tracker.
+    Kill switch: ``BEST_BETS_FROM_D1=0``.
+    """
+    if _best_bets_from_d1_enabled():
+        try:
+            cached = d1_write_path.load_state(BEST_BETS_STATE_KEY)
+            if cached:
+                doc = json.loads(cached)
+                if isinstance(doc, dict) and "picks" in doc:
+                    return doc
+        except Exception as e:  # noqa: BLE001
+            print(f"[BEST BETS] D1 read failed, falling back to disk: {e}")
     try:
         with open(BEST_BETS_FILE) as f:
-            return json.load(f)
-    except Exception:
-        return {"season": 2026, "updated": "", "picks": [], "results": []}
+            doc = json.load(f)
+            if isinstance(doc, dict):
+                return doc
+    except Exception:  # noqa: BLE001
+        pass
+    return {"season": 2026, "updated": "", "picks": [], "results": []}
 
 
 def _save_best_bets(bb: dict) -> None:
+    """Write-through: D1 first (durable), then the file mirror."""
     bb["updated"] = datetime.now().isoformat()
+    blob = json.dumps(bb, indent=2)
     try:
-        BEST_BETS_FILE.write_text(json.dumps(bb, indent=2), encoding="utf-8")
-    except Exception as e:
+        d1_write_path.save_state(BEST_BETS_STATE_KEY, blob)
+    except Exception as e:  # noqa: BLE001
+        print(f"[BEST BETS] D1 save failed: {e}")
+    try:
+        BEST_BETS_FILE.write_text(blob, encoding="utf-8")
+    except Exception as e:  # noqa: BLE001
         print(f"[BEST BETS SAVE ERROR] {e}")
 
 

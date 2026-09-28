@@ -72,7 +72,10 @@ SERVE_ALLOWLIST: dict[str, str] = {
     #   finals_cache.json -- the ephemeral disk cache is deleted; _fetch_final_scores
     #                        archives to D1 `games` and falls back to D1.
     #   record.json      -- the SU/ATS record now lives in D1 app_state (su_ats_record).
-    "best_bets.json":      "F1/Phase 6 - best-bets board still read from disk. NOT covered by Phase 2: the board itself (not the results source) is what needs a D1 door.",
+    # DIFFED OUT in Phase 6 (2026-09-28): the tracked best-bets record is D1-FIRST now
+    # (_load_best_bets, app_state key `best_bets`, kill switch BEST_BETS_FROM_D1). Both
+    # _lock_best_bets and _ingest_best_bets read-modify-write it, so an ephemeral disk was
+    # resetting locked picks and their graded results on every recycle.
     # read by `import app` itself, which every scope does
     "cfbd_logos.json": "PERMANENT - static reference asset (baked into the image, never written at runtime); no revert risk",
     # INTERMITTENT: this read is taken only on a branch gated by an external call, so it

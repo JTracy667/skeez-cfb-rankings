@@ -420,6 +420,52 @@ def test_movement_log_falls_back_to_disk_when_d1_is_empty(app_module, monkeypatc
     assert [m["game"] for m in app_module._load_movement_log()] == ["Disk"]
 
 
+def test_best_bets_is_d1_first_and_beats_a_disagreeing_disk(app_module, monkeypatch, tmp_path):
+    """Phase 6: the tracked best-bets record (locked picks + graded results) was a
+    read-modify-write on an EPHEMERAL file, so a recycle reset it -- v49/v50 class, on the
+    tracker."""
+    import json  # noqa: PLC0415
+
+    disk = tmp_path / "best_bets.json"
+    disk.write_text(json.dumps({"season": 2026, "picks": [{"id": "disk"}], "results": []}),
+                    encoding="utf-8")
+    monkeypatch.setattr(app_module, "BEST_BETS_FILE", disk)
+    monkeypatch.setattr(
+        app_module.d1_write_path, "load_state",
+        lambda k: json.dumps({"season": 2026, "picks": [{"id": "d1"}], "results": [{"id": "r1"}]})
+        if k == "best_bets" else None)
+
+    got = app_module._load_best_bets()
+    assert [p["id"] for p in got["picks"]] == ["d1"], "the ephemeral disk tracker won over D1"
+    assert len(got["results"]) == 1, "graded results were lost"
+
+
+def test_best_bets_writes_reach_the_d1_door(app_module, monkeypatch, tmp_path):
+    """A lock (or a graded result) that only lands in the file is the bug: the next recycle
+    erases it."""
+    import json  # noqa: PLC0415
+
+    monkeypatch.setattr(app_module, "BEST_BETS_FILE", tmp_path / "best_bets.json")
+    saved: dict = {}
+    monkeypatch.setattr(app_module.d1_write_path, "save_state",
+                        lambda k, v: saved.__setitem__(k, json.loads(v)) or 1)
+
+    app_module._save_best_bets({"season": 2026, "picks": [{"id": "p1"}], "results": []})
+    assert saved.get("best_bets", {}).get("picks", [{}])[0].get("id") == "p1", \
+        "the best-bets write never reached the D1 door"
+
+
+def test_best_bets_falls_back_to_disk_when_d1_is_empty(app_module, monkeypatch, tmp_path):
+    import json  # noqa: PLC0415
+
+    disk = tmp_path / "best_bets.json"
+    disk.write_text(json.dumps({"season": 2026, "picks": [{"id": "disk"}], "results": []}),
+                    encoding="utf-8")
+    monkeypatch.setattr(app_module, "BEST_BETS_FILE", disk)
+    monkeypatch.setattr(app_module.d1_write_path, "load_state", lambda k: None)
+    assert app_module._load_best_bets()["picks"][0]["id"] == "disk"
+
+
 # ------------------------------------------------------- KNOWN-BROKEN (F1), xfail-strict
 
 
