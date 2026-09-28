@@ -26,7 +26,7 @@ working clone).
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
 | Live build | **v56** — `/api/health` → `build`, proven by `code.marker` |
 | Code marker | `v56-injuries-in-d1` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v56` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v58` |
 | Rollback tag | **v55** — `scripts/cfb_deploy.sh --rollback v55` (v54…v50 also in the registry) |
 | Last verified | 2026-09-28 12:42 PT (CTO) — `DEPLOY VERIFIED LIVE: v56`; marker match (not `build`); app image v56 (version 52); all public pages 200 |
 | Injuries | D1 `app_state.active_injuries` is the served source (45 teams / 56 tracked at migration). `/api/injuries` and the win-totals build read it. Kill switch `INJURIES_FROM_D1=0`. **D1 `injury_snapshots` is a settled-outcome tracking table, NOT the current injury state.** |

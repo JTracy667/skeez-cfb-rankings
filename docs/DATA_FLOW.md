@@ -123,7 +123,7 @@ deleted** (deleting the entry is the receipt).
 | `teams.json` | serve, build | **OPEN — F3** | D1 `teams` is read by the live path but written by nothing on it (`upsert_teams` exists only in backfill scripts). D1 has 684 rows, the site serves 685. Decide: wire a live write, or declare backfill-only and put its refresh on the weekly cron. |
 | `active_injuries.json` | serve, build | **D1-AUTHORITATIVE — CONVERTED v56** | D1 `app_state.active_injuries` (NOT `injury_snapshots` — that is a settled-outcome tracking table). The override was a read-modify-write on an ephemeral file, so a manual override evaporated; the win-totals build read it too. Kill switch `INJURIES_FROM_D1`. |
 | `best_bets.json` | serve | **QUEUED** | tracker board; needs its own D1 home or an explicit transient justification. |
-| `line_movements.json` | serve | **QUEUED** | a rolling CLV event log (7-day window). Decide D1 table vs explicit transient. |
+| `line_movements.json` | D1-AUTHORITATIVE (Phase 6, v58) | serve | **QUEUED** | a rolling CLV event log (7-day window). Decide D1 table vs explicit transient. |
 | `odds_cache.json` | serve | **QUEUED** | self-described cache ("disk-persisted so restarts reuse the daily fetch") with D1 `odds_snapshots` (203k rows) alongside — likely D1-authoritative. |
 
 **The rule:** a file may only be called **explicitly transient** with a written justification
