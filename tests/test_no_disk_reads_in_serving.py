@@ -57,9 +57,11 @@ SERVE_ALLOWLIST: dict[str, str] = {
     "active_injuries.json": "F2/Phase 6 - injury board read while serving; D1 injury_snapshots exists but is not the served source",
     "teams.json":          "F3/Phase 6 - team identity read from disk while D1 `teams` also exists (two sources, no live writer)",
     "budget_ledger.json":  "F2/Phase 6 - /api/health reads the quota ledger from disk although D1 api_usage is the ledger of record",
-    "finals_cache.json":   "F1/Phase 2 - finished-game cache read while serving; results must come from D1 `games`",
-    "record.json":         "F1/Phase 2 - W-L record read from disk while D1 `games` holds the finals it should be derived from",
-    "best_bets.json":      "F1/Phase 2 - derived best-bets/record read from disk; depends on the same results source",
+    # DIFFED OUT in Phase 2 (2026-09-28) once results and the record moved to D1:
+    #   finals_cache.json -- the ephemeral disk cache is deleted; _fetch_final_scores
+    #                        archives to D1 `games` and falls back to D1.
+    #   record.json      -- the SU/ATS record now lives in D1 app_state (su_ats_record).
+    "best_bets.json":      "F1/Phase 6 - best-bets board still read from disk. NOT covered by Phase 2: the board itself (not the results source) is what needs a D1 door.",
     # read by `import app` itself, which every scope does
     "cfbd_logos.json": "PERMANENT - static reference asset (baked into the image, never written at runtime); no revert risk",
     # INTERMITTENT: this read is taken only on a branch gated by an external call, so it

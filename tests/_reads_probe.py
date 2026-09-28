@@ -25,6 +25,7 @@ DATA_DIR = (REPO / "data").resolve()
 os.environ.setdefault("CFB_SKIP_BOOTWARM", "1")
 os.environ.setdefault("REFRESH_INTERVAL_SECONDS", "0")
 os.environ.setdefault("D1_WRITE_ENABLED", "1")
+os.environ.setdefault("D1_READ_ENABLED", "1")
 
 # Every GET route in app.py (path params filled with plausible values).
 ENDPOINTS = [

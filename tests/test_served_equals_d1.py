@@ -198,16 +198,42 @@ def test_serving_follows_d1_even_when_the_disk_file_disagrees(app_module, served
         f"only {len(followed_d1)} teams verified against D1 ({len(sample)} sampled)")
 
 
+def test_live_finals_fetch_archives_to_d1(app_module, monkeypatch):
+    """The LIVE results path must ARCHIVE what it fetches.
+
+    Without this, fixing F1 once by backfill is a lie: D1 goes stale again the moment the
+    live path grades a new weekend into a file nobody durable ever reads. No network and no
+    production write -- the data-layer door is stubbed so we assert the CALL.
+    """
+    fake = [{"id": 1, "season": SEASON, "week": 9, "homeId": 11, "awayId": 22,
+             "homeTeam": "Alpha", "awayTeam": "Beta", "homePoints": 31, "awayPoints": 17,
+             "completed": True, "startDate": "2026-10-31T16:00:00.000Z",
+             "venue": "Test Field", "neutralSite": False}]
+    seen: dict = {}
+    monkeypatch.setattr(app_module.d1_write_path, "snapshot_games",
+                        lambda games: seen.setdefault("games", games) and 0 or len(games))
+    monkeypatch.setattr(app_module, "_http_get", lambda *a, **k: fake)
+    monkeypatch.delenv("CFB_SKIP_LIVE_FETCH", raising=False)   # force the live branch
+    app_module._FINALS_CACHE["data"], app_module._FINALS_CACHE["ts"] = {}, 0
+
+    out = app_module._fetch_final_scores(SEASON)
+
+    assert seen.get("games") == fake, (
+        "the live finals fetch did NOT archive to D1 -- results would go stale again (F1)")
+    assert any(v.get("home_score") == 31 for v in out.values()), (
+        "the fetched finals were not graded into the returned map")
+
+
 # ------------------------------------------------------- KNOWN-BROKEN (F1), xfail-strict
 
 
-@pytest.mark.xfail(strict=True, reason="F1: results are not persisted to D1 games (Phase 2)")
 def test_d1_results_keep_up_with_the_served_week(served):
     """D1 `games` must hold finals for the most recently completed week the site is on.
 
-    Phase 2 removes this xfail. While it stays red, D1 cannot be used as the results
-    source for anything -- backtests, records, or the matchup engine -- without silently
-    missing the most recent games.
+    F1, fixed in Phase 2 (2026-09-28): the xfail was lifted only after BOTH halves existed
+    -- the backfill that filled the gap AND `test_live_finals_fetch_archives_to_d1`, which
+    proves the live path keeps it filled. Lifting it on the backfill alone would have left
+    a green test guarding nothing.
     """
     d = _d1()
     rows = d.query(

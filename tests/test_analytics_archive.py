@@ -8,7 +8,9 @@ stat_observations — the table the backtest harness already reads — whose uni
 (subject, season, week, key) gives backtests point-in-time weekly rows.
 
 Hermetic: no network, no D1. The row builder is pure by design so it can be tested without
-a database, and the writer is proved to be a no-op while D1 writes are off.
+a database, and the writer is proved to be a no-op while D1 writes are off. The READ gate is
+asserted on the flags themselves (F6), never on returned rows -- asserting rows would make
+this file depend on a live store.
 """
 import os
 
@@ -91,7 +93,21 @@ def test_writer_is_gated_off_without_d1_writes_enabled(no_d1):
     assert d1_write_path.snapshot_team_analytics(TEAMS, KEYS, 2026, 5) == 0
 
 
-def test_readers_are_noops_without_d1_writes_enabled(no_d1):
+def test_reads_are_not_gated_by_the_write_flag(no_d1):
+    """F6: a READ must not depend on the WRITE flag.
+
+    The old coupling meant an unset `D1_WRITE_ENABLED` silently returned [] from every
+    read, so callers fell back to the ephemeral disk with no warning -- and the only way to
+    test that serving read D1 was to enable writes to PRODUCTION D1.
+    """
+    assert d1_write_path.read_enabled() is True
+    assert d1_write_path.write_enabled() is False
+
+
+def test_reads_are_noops_when_reads_are_disabled(monkeypatch):
+    """The read gate still exists -- it is just its own flag now."""
+    monkeypatch.setenv("D1_READ_ENABLED", "0")
+    monkeypatch.setenv("D1_WRITE_ENABLED", "1")
     assert d1_write_path.load_team_analytics(2026) == []
     assert d1_write_path.archived_analytics_weeks(2026) == []
 

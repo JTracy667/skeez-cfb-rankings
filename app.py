@@ -1177,7 +1177,7 @@ def api_boards_status():
     return out
 
 
-CODE_MARKER = "v51-serve-from-d1"   # bump when a release must be provably live
+CODE_MARKER = "v52-results-in-d1"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -5323,6 +5323,7 @@ def api_injuries_override(payload: dict):
 
 # ── Records: Straight-Up (SU) + Against-the-Spread (ATS) tracking ──
 RECORD_FILE = BASE_DIR / "data" / "record.json"
+RECORD_STATE_KEY = "su_ats_record"   # D1 app_state key -- the durable copy of the record
 
 
 def _totals_fields(home_proj: float, away_proj: float, book_total: float | None) -> tuple:
@@ -5377,6 +5378,18 @@ def _norm_key_name(name: str) -> str:
 
 
 def _load_record() -> dict:
+    """The SU/ATS record. D1 FIRST -- the container disk is EPHEMERAL (F1).
+
+    `data/record.json` is the local-dev fallback only. On the container it reverted to the
+    build-time copy on every recycle (`sleepAfter` 5m), so a graded record could simply
+    vanish while the site kept serving as if nothing had happened.
+    """
+    try:
+        raw = d1_write_path.load_state(RECORD_STATE_KEY)
+        if raw:
+            return json.loads(raw)
+    except Exception as e:
+        print(f"[RECORD] D1 read failed: {e}")
     try:
         with open(RECORD_FILE) as f:
             return json.load(f)
@@ -5386,8 +5399,13 @@ def _load_record() -> dict:
 
 def _save_record(record: dict) -> None:
     record["updated"] = datetime.now().isoformat()
+    payload = json.dumps(record, indent=2)
     try:
-        RECORD_FILE.write_text(json.dumps(record, indent=2), encoding="utf-8")
+        d1_write_path.save_state(RECORD_STATE_KEY, payload)   # durable (F1)
+    except Exception as e:
+        print(f"[RECORD SAVE ERROR d1] {e}")
+    try:
+        RECORD_FILE.write_text(payload, encoding="utf-8")
     except Exception as e:
         print(f"[RECORD SAVE ERROR] {e}")
 
@@ -5506,37 +5524,62 @@ def _grade_ats(ats_pick: str, home: str, away: str, spread: float, home_score: i
 # ── Results ingestion: pull final scores and grade locked picks ──
 _FINALS_CACHE = {"data": {}, "ts": 0}
 FINALS_TTL = 600  # re-fetch final scores at most every 10 min
-FINALS_CACHE_FILE = BASE_DIR / "data" / "finals_cache.json"
+# The old `data/finals_cache.json` disk cache is DELETED in this version: it was a
+# runtime write on an EPHEMERAL container disk, so D1 `games` silently fell behind the
+# site (F1). Results are archived to D1 now; see _persist_finals_to_d1/_finals_from_d1.
+
+
+def _finals_from_d1(year: int = CFBD_YEAR) -> dict:
+    """Completed games from D1 `games` -- the DURABLE results copy (finding F1)."""
+    out = {}
+    for r in d1_write_path.load_games(year, completed_only=True):
+        h, a = r.get("home"), r.get("away")
+        if not h or not a:
+            continue
+        out[frozenset({_norm_key_name(h), _norm_key_name(a)})] = {
+            "home": h, "away": a,
+            "home_score": r.get("home_score"), "away_score": r.get("away_score"),
+        }
+    return out
+
+
+def _persist_finals_to_d1(games: list) -> int:
+    """Archive fetched games into D1 `games` via the data-layer door (no-op if writes off)."""
+    try:
+        return d1_write_path.snapshot_games(games)
+    except Exception as e:  # noqa: BLE001 - archiving must never break the site
+        print(f"[Finals] D1 archive failed: {e}")
+        return 0
 
 
 def _fetch_final_scores(year: int = CFBD_YEAR) -> dict:
-    """Fetch completed-game final scores from CFBD /games.
+    """Completed-game final scores, from a DURABLE source.
 
     Returns {frozenset({home_lower, away_lower}): {"home":, "away":,
              "home_score":, "away_score":}} for completed games only.
+
+    Order: memory (TTL) -> live CFBD fetch, which ARCHIVES to D1 -> D1 as the fallback.
+    The old `data/finals_cache.json` disk cache is GONE: it was a runtime write on an
+    EPHEMERAL disk, so D1 `games` had nothing newer than week 3 while the site served
+    week 5 (F1).
     """
     # Memory cache
     if _FINALS_CACHE["data"] and time.time() - _FINALS_CACHE["ts"] < FINALS_TTL:
         return _FINALS_CACHE["data"]
-    # Disk cache (survives process restart on same instance)
-    try:
-        if FINALS_CACHE_FILE.exists():
-            payload = json.loads(FINALS_CACHE_FILE.read_text(encoding="utf-8"))
-            if time.time() - payload.get("ts", 0) < FINALS_TTL:
-                # Rebuild frozenset keys (stored as "home|away" strings)
-                finals = {}
-                for k, v in payload.get("finals", {}).items():
-                    finals[frozenset(k.split("|"))] = v
-                _FINALS_CACHE["data"] = finals
-                _FINALS_CACHE["ts"] = payload.get("ts", 0)
-                return finals
-    except Exception as e:
-        print(f"[Finals] disk cache read failed: {e}")
-    # Live fetch
-    finals = {}
-    try:
-        games = _http_get(f"{CFBD_BASE}/games", params={"year": year}, headers=CFBD_HEADERS)
-        for g in (games or []):
+
+    live_games = None
+    if os.environ.get("CFB_SKIP_LIVE_FETCH") == "1":
+        pass  # tests must never spend the metered CFBD cap the site serves from
+    else:
+        try:
+            live_games = _http_get(f"{CFBD_BASE}/games", params={"year": year},
+                                   headers=CFBD_HEADERS)
+        except Exception as e:
+            print(f"[Finals fetch failed] {e}")
+
+    if live_games:
+        finals = {}
+        for g in live_games:
             if not g.get("completed") or g.get("homePoints") is None:
                 continue
             h = g.get("homeTeam", "")
@@ -5551,14 +5594,14 @@ def _fetch_final_scores(year: int = CFBD_YEAR) -> dict:
             }
         _FINALS_CACHE["data"] = finals
         _FINALS_CACHE["ts"] = time.time()
-        # Persist to disk (frozenset keys -> "home|away" strings)
-        try:
-            ser = {"ts": time.time(), "finals": {"|".join(sorted(k)): v for k, v in finals.items()}}
-            FINALS_CACHE_FILE.write_text(json.dumps(ser), encoding="utf-8")
-        except Exception as e:
-            print(f"[Finals] disk cache write failed: {e}")
-    except Exception as e:
-        print(f"[Finals fetch failed] {e}")
+        _persist_finals_to_d1(live_games)      # durable archive (F1)
+        return finals
+
+    # Durable fallback: D1 holds every final we have ever graded.
+    finals = _finals_from_d1(year)
+    if finals:
+        _FINALS_CACHE["data"] = finals
+        _FINALS_CACHE["ts"] = time.time()
     return finals
 
 

@@ -14,3 +14,11 @@ Set BEFORE any test module imports app (pytest loads conftest.py first).
 import os
 
 os.environ.setdefault("CFB_SKIP_BOOTWARM", "1")
+
+# `_fetch_final_scores` live-fetches CFBD /games on a cache miss. Same standing rule as the
+# bootwarm guard above: a test run must never spend the metered cap the site serves from.
+os.environ.setdefault("CFB_SKIP_LIVE_FETCH", "1")
+
+# Reads default ON and are NOT gated by the write flag (F6). Tests must be able to verify
+# that serving reads D1 WITHOUT enabling writes to production D1.
+os.environ.setdefault("D1_READ_ENABLED", "1")

@@ -25,8 +25,24 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 _RANK_DATE_FILE = os.path.join(BASE_DIR, "data", "d1_rankings_last.json")
 
 
-def enabled() -> bool:
+def write_enabled() -> bool:
     return os.environ.get("D1_WRITE_ENABLED", "").strip().lower() in ("1", "true", "yes", "on")
+
+
+def read_enabled() -> bool:
+    """Reads default ON and are NOT gated by the write flag (F6).
+
+    WHY THE SPLIT: `D1_WRITE_ENABLED` gated READS too, so with it unset every read
+    silently returned [] / None and callers fell back to the ephemeral disk with no
+    warning -- and the only way to test that serving reads D1 was to enable WRITES to
+    PRODUCTION D1. Reads are the safe direction; they must not require that.
+    """
+    return os.environ.get("D1_READ_ENABLED", "1").strip().lower() in ("1", "true", "yes", "on")
+
+
+def enabled() -> bool:
+    """Backwards-compatible alias for the WRITE gate."""
+    return write_enabled()
 
 
 def _guard(fn):
@@ -211,7 +227,7 @@ def snapshot_team_analytics(teams, keys=None, season: int = 0, week: int | None 
 
 def archived_analytics_weeks(season: int) -> list[int]:
     """Weeks holding archived team analytics for a season (newest first)."""
-    if not enabled():
+    if not read_enabled():
         return []
     try:
         rows = d1_store.query(
@@ -234,7 +250,7 @@ def load_team_analytics(season: int, week: int | None = None,
     cannot hold, so this is NOT a drop-in file replacement. Returns [] when nothing is
     archived so callers keep their own fallback.
     """
-    if not enabled():
+    if not read_enabled():
         return []
     try:
         if week is None:
@@ -410,9 +426,48 @@ def snapshot_predictions(games: list[dict], model_version: str = "composite") ->
     return d1_store.insert_model_predictions(rows)
 
 
+# ── Results (D1 `games`) — the durable store for finals (finding F1) ──────────
+# Same field mapping as scripts/backfill_d1.py::do_games and scripts/refresh_d1_games.py.
+# Two mappings that drift is how a dataset goes inconsistent, so keep them identical.
+
+def snapshot_games(games: list) -> int:
+    """Archive fetched games (finals AND schedule) into D1 `games`. Write door for results."""
+    rows = [{"game_id": g["id"], "season": g.get("season"), "week": g.get("week"),
+             "home_id": g.get("homeId"), "away_id": g.get("awayId"),
+             "kickoff": g.get("startDate"), "home_score": g.get("homePoints"),
+             "away_score": g.get("awayPoints"),
+             "status": "final" if g.get("completed") else "scheduled",
+             "venue": g.get("venue"), "neutrality": 1 if g.get("neutralSite") else 0}
+            for g in (games or []) if g.get("id")]
+    if not rows:
+        return 0
+    return d1_store.upsert_games(rows)
+
+
+def load_games(season: int, completed_only: bool = True) -> list[dict]:
+    """Games for a season with team NAMES resolved. Read door for the results dataset.
+
+    Resolving home/away to names here keeps the join in the data layer instead of every
+    caller re-deriving it (and the served payload is name-keyed).
+    """
+    if not read_enabled():
+        return []
+    sql = ("SELECT g.game_id, g.season, g.week, g.kickoff, g.status, g.home_score, "
+           "       g.away_score, h.name AS home, a.name AS away "
+           "FROM games g LEFT JOIN teams h ON h.team_id = g.home_id "
+           "LEFT JOIN teams a ON a.team_id = g.away_id WHERE g.season = ?")
+    if completed_only:
+        sql += " AND g.home_score IS NOT NULL AND g.away_score IS NOT NULL"
+    try:
+        return d1_store.query(sql, [season])
+    except Exception as e:  # noqa: BLE001
+        print(f"[d1] load_games failed: {e}")
+        return []
+
+
 def load_state(key: str) -> str | None:
     """Read a durable app_state value from D1. None when disabled/absent/unreadable."""
-    if not enabled():
+    if not read_enabled():
         return None
     try:
         return d1_store.get_app_state(key)
@@ -449,7 +504,7 @@ def store_slate(season: int, week: int, fingerprint: str, model_version: str,
 
 def load_slate(season: int, week: int, kind: str = "schedule") -> dict | None:
     """Read a stored board. None when absent, disabled, or unreadable."""
-    if not enabled():
+    if not read_enabled():
         return None
     try:
         return d1_store.load_slate(int(season), int(week), kind=kind)
