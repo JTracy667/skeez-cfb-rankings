@@ -24,12 +24,13 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v53** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v53-schedule-in-d1` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v53` |
-| Rollback tag | **v52** — `scripts/cfb_deploy.sh --rollback v52` (v51, v50 also in the registry) |
-| Last verified | 2026-09-28 12:01 PT (CTO) — `VERIFIED LIVE: v53 / v53-schedule-in-d1` (code marker, not `build`); all 8 public endpoints 200; `/api/rankings` 25-row board, ranks ascending (composite); D1 `games` newest scored week 4 |
-| Container app image | must read `...:v53` via the Containers API — **`build` in `/api/health` does NOT prove this** (see the v52→v53 note) |
+| Live build | **v54** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v54-archive-failures-loud` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v54` |
+| Rollback tag | **v53** — `scripts/cfb_deploy.sh --rollback v53` (v52, v51, v50 also in the registry) |
+| Last verified | 2026-09-28 12:23 PT (CTO) — `DEPLOY VERIFIED LIVE: v54`; marker match (not `build`); app image v54 (version 50); all public pages 200; `/api/health` `archive` = `{count: 0, last_fn: null, ...}` |
+| Archive health | `/api/health` → **`archive`** — `count > 0` means D1 writes are silently NOT landing (F5; before v54 this state was invisible) |
+| Container app image | must read `...:v54` via the Containers API — **`build` in `/api/health` does NOT prove this** (see the v52→v53 note) |
 | Deploy verifier | `python scripts/verify_container_swap.py --tag vN --marker <CODE_MARKER>` — API-driven, touches the site **once** |
 | Enforcement gate | `python scripts/run_enforcement_tests.py` — **blocking** before any deploy (needs `CF_D1_TOKEN`; refuses to run without it) |
 | Known-stale docs | `docs/SESSION_HANDOFF.md` (state as of Sep 23 — do NOT trust its state), `CLOUDFLARE_DEPLOY.md` (says `sleepAfter 20m`) |
@@ -43,6 +44,28 @@ curl -s https://skeezcfb-rankings.com/api/health   # status ok + build + code.ma
 ---
 
 ## RECENT CHANGES & OPEN WORK
+
+### v53 → v54 (2026-09-28, CTO) — Phase 5 (F5): a failed archive is visible now
+
+**Shipped:** Phase 5 of `docs/DATA_PERSISTENCE_PLAN.md` (F5 alone — F6 was pulled forward into
+Phase 2). `@_guard` in `d1_write_path.py` no longer swallows archive failures: every failure is
+recorded to D1 `freshness_events` (`event=archive_failure`) and surfaced in `/api/health` as
+`archive` (`count` / `last_fn` / `last_error` / `last_ts`). **The site is still never affected —
+the guard still returns 0; this is visibility only.**
+
+**Why it mattered:** a dead archive was indistinguishable from a quiet one. `@_guard` caught the
+exception, printed to a log the container discards, and returned `0`, so nothing downstream
+could tell "wrote 0 rows" from "never wrote anything" — the same failure shape as the original
+v49 bug, one layer down, with every probe still green.
+
+**Deploy was ~2 minutes** (12:21:40 → 12:23). The step-5b app-image gate caught the transition
+cleanly: `app image v53 (version 49)` → `app image v54 (version 50)` → `APP IMAGE OK`. No retry
+needed. Receipts: `DEPLOY VERIFIED LIVE: v54`, marker `v54-archive-failures-loud`, all pages
+200, `archive` present and `count: 0`.
+
+**Reading `archive` in health:** `count > 0` means D1 writes are silently NOT landing. `count:
+0` on a freshly booted container is expected (the counter is per-boot; the durable history is
+the `freshness_events` rows).
 
 ### v52 → v53 (2026-09-28, CTO) — Phase 3 (F2) + the deploy path fixed for real
 

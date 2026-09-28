@@ -652,3 +652,58 @@ precision (compiled + diff-reviewed before anything else ran). **Rule: anchor a 
 edit on a uniquely-identifying line, and verify the diff shows what you intended — the fuzzy
 matcher shifted indentation on three attempts and silently produced broken Python each
 time.**
+
+
+---
+
+# PHASE 5 — COMPLETE (2026-09-28)
+
+**Status: code complete, full suite 91 passed / 1 xfailed, enforcement gate PASS.**
+Closes **F5**. (F6, the read/write flag split, was pulled forward into Phase 2, so this phase
+is F5 alone.)
+
+## The defect
+
+Every `snapshot_*` in `d1_write_path.py` is wrapped in `@_guard`, which caught all exceptions,
+printed `[d1_write_path] X failed (site unaffected)` to a log the container discards, and
+returned `0`.
+
+That made a **dead archive indistinguishable from a quiet one**. Nothing downstream could tell
+"wrote 0 rows" apart from "never wrote anything". The site could serve stale data with every
+probe still green — which is the same failure shape as the original v49 bug, one layer down.
+
+## What changed
+
+* `_guard` records each failure to D1 **`freshness_events`** — `event=archive_failure`,
+  `source=` the function name, `detail=` the exception. Durable history that ops already reads.
+* `archive_failure_state()` exposes `count` / `last_fn` / `last_error` / `last_ts` since boot,
+  surfaced in `/api/health` as `archive`.
+* The recorder is itself wrapped in `try/except`: it runs **inside** an exception handler, so
+  if it could raise it would convert a swallowed write failure into a 500 on the serving path.
+* The guard still returns `0`. **The site is never affected — this change is visibility only.**
+
+## Verification (counterfactual)
+
+| Check | Result |
+|---|---|
+| Full suite | **91 passed, 1 xfailed** (+4 new tests) |
+| Enforcement gate | **PASS** (10 passed, 1 xfailed) |
+| Forced failure recorded in-process + to `freshness_events` | pass |
+| Recorder cannot raise | pass |
+| `/api/health` exposes the state | pass |
+| **Count moves in `/api/health` when a write fails** | pass |
+| **Counterfactual: old `_guard` restored → first test FAILS** | **proven** |
+
+Tests are hermetic — the D1 append is stubbed, so no production write. `tests/test_archive_failures_surface.py`.
+
+## Allowlist delta
+
+None. F5 is on the write path, not the read path, so no `data/` entry moves. Phase 6 still owns
+the remaining reads.
+
+## Deploy-path lesson carried in the same release
+
+`cfb_deploy.sh` step 5b now confirms the **container app image** actually took the new tag
+before verifying, and re-runs `wrangler deploy` once if it did not. That exact failure — a
+`wrangler deploy` that reported success and moved only the Worker env — cost 90 minutes today.
+`verify_container_swap.py --app-image-only` is the check.
