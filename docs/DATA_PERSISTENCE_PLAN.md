@@ -511,3 +511,79 @@ active_injuries.json <- compute_win_totals()
   runnable, not yet blocking.
 * The gate takes ~20s and needs `CF_D1_TOKEN`; it must run in the container/CI context with
   store credentials or it correctly refuses.
+
+
+---
+
+# PHASE 2 — COMPLETE (2026-09-28)
+
+**Status: code complete, full suite green, shipped as `v52-results-in-d1`.** Closes **F1**
+(results not persisted) and pulls **F6** (the read/write flag coupling) forward from
+Phase 5.
+
+## The defect
+
+Results were graded from a live CFBD fetch into `data/finals_cache.json` — a **runtime
+write on the container's ephemeral disk**. The SU/ATS record had the same shape
+(`data/record.json`). So D1 `games`, the store the parity suite asserts against, had
+**nothing newer than week 3 while the site served week 5**.
+
+## What changed
+
+1. **`_fetch_final_scores()` no longer touches a disk cache at all.** Order is now
+   memory (TTL) → live CFBD fetch, which **archives to D1 `games`** → **D1 as the durable
+   fallback**. `data/finals_cache.json` is deleted from the code path.
+2. **The record lives in D1 `app_state`** (`su_ats_record`); `data/record.json` is a
+   local-dev fallback only. Migrated: **889 picks / 332 results** seeded.
+3. **One door per dataset in the data layer**, not raw SQL in the monolith:
+   `d1_write_path.snapshot_games()` (write) and `d1_write_path.load_games()` (read, resolves
+   home/away names). Field mapping identical to `backfill_d1.py::do_games` — deliberately,
+   because two mappings that drift is how a dataset goes inconsistent.
+4. **`scripts/refresh_d1_games.py`** — a one-CFBD-call refill of a season's games. Ran it:
+   D1 2026 went from newest-scored-week **3** to **4** (283 week-4 games, 1,348 scored games
+   total, up from 1,065).
+
+## F6 pulled forward from Phase 5 (and why)
+
+Phase 2 could not be *tested* without it. Reads were gated on `D1_WRITE_ENABLED`, so the
+only way to verify "serving reads D1" was to enable **writes to production D1**. Split into
+`read_enabled()` (default **ON**) and `write_enabled()`; `enabled()` remains the write
+alias. `tests/test_analytics_archive.py` had **encoded the old coupling** as a contract
+("readers are no-ops without D1 writes enabled"); it now asserts the new contract — and
+asserts the *flags* rather than returned rows, so it stays hermetic.
+
+## The trap this phase walked past
+
+Filling D1 by backfill made the F1 `xfail` **XPASS immediately**. Lifting the marker there
+would have left a **green test guarding nothing**, because the live path still did not
+persist — it merely had fresh data. The marker was lifted only after
+`test_live_finals_fetch_archives_to_d1` existed: it stubs the data-layer door and asserts
+the live fetch *calls* it (no network, no production write).
+
+**Rule this establishes:** never lift an `xfail` because the *data* got fixed. A finding is
+closed when the *code path* is proven, not when the symptom is gone.
+
+## Verification
+
+| Check | Result |
+|---|---|
+| Full suite | **85 passed, 1 xfailed** |
+| Enforcement gate | **8 passed, 1 xfailed** (only F3 remains) |
+| Counterfactual — live path archives | passes (door stubbed, asserts the call) |
+| Live deploy | `v52-results-in-d1` |
+
+## Allowlist delta (the exit criterion working as designed)
+
+* **Removed:** `data/finals_cache.json`, `data/record.json` — no longer read on the serve
+  path. Confirmed by re-running the guard in discovery mode.
+* **Re-labelled honestly:** `best_bets.json` moved from `F1/Phase 2` to `F1/Phase 6`. The
+  best-bets **board** needs its own D1 door; Phase 2 fixed the *results source*, not the
+  board. Claiming it here would have been a false pass.
+
+## Hardening found along the way
+
+* `tests/conftest.py` now sets **`CFB_SKIP_LIVE_FETCH=1`**, so a test run can never spend
+  the metered CFBD cap the site serves from (`_fetch_final_scores` live-fetches on a cache
+  miss). Same standing rule as the existing bootwarm guard.
+* Tests set `D1_READ_ENABLED=1` and leave writes **off** — verifying served-vs-D1 without
+  granting test processes the ability to write production.
