@@ -19,11 +19,11 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v49** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v49-board-rebuild-fix` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v49` |
-| Rollback tag | previous known-good tag — `scripts/cfb_deploy.sh --rollback vN` |
-| Last verified | 2026-09-27 (CTO) |
+| Live build | **v50** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v50-serve-fresh-analytics` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v50` |
+| Rollback tag | **v49** — `scripts/cfb_deploy.sh --rollback v49` |
+| Last verified | 2026-09-27 ~21:45 PT (CTO) — all 5 pages 200; `input_vintages` all 2026; Georgia rank 1 @ sp+ 30.2 |
 | Known-stale docs | `docs/SESSION_HANDOFF.md` (state as of Sep 23 — do NOT trust its state), `CLOUDFLARE_DEPLOY.md` (says `sleepAfter 20m`) |
 
 Verify in one line:
@@ -97,6 +97,21 @@ is the gate that catches a missing Dockerfile `COPY`) → set `BUILD_TAG` Worker
   deploy or a container recycle **reverts the analytics to the baked build-time copy**.
   So a *durable* dataset change = **regenerate the file in the repo and ship a new
   image** — a live `/api/analytics/fetch` alone is not durable.
+- **THE BIG ONE — the serving path ignored D1 (verified 2026-09-27).** The weekly pull
+  DOES run and DOES archive fresh data to D1 (`stat_observations`), but
+  `_load_cfbd_analytics_file()` / `_build_team_map()` read only the **disk file**, never
+  D1. So the pull's result is invisible to visitors: the site serves whatever was baked
+  at the last image build. Evidence: `data/cfbd_analytics.json` was last committed
+  **2026-09-23**, so the site served Sep-23 analytics until v50 — while D1 held the
+  fresh values (Georgia `sp_plus` 30.2 in D1 vs 28.2 served). Rank-affecting: on current
+  SP+ Georgia leads Ohio State; the stale board showed the reverse.
+  **This is a Cloudflare-cutover regression** (on Render the disk persisted, so pulls
+  stuck). `CLOUDFLARE_DEPLOY.md` had noted runtime writes are ephemeral and "re-fetched
+  on restart" — but that re-fetch is gated by a 12h age check whose stamp only advances
+  on an *anchor-flagged* pull, so after a recycle the site commonly serves the build copy.
+  **STRUCTURAL FIX NEEDED: make the serving path read the D1 copy** (Jeff's direction:
+  D1 is the system of record). Regenerating the baked file + redeploying is only a
+  per-week patch.
 - **D1 (`cfb-history`) is the durable archive** for games, ratings, weather_snapshots,
   stat_observations, model_predictions, api_usage, etc. See `D1_SCHEMA_SPEC.md`.
 - There is no user/session database. Site state = files in the image + D1.
