@@ -87,6 +87,11 @@ baked into the image. That is why a week of weekly pulls was invisible to visito
 
 ## 4. Gaps and the plan
 
+> **Measured audit of this whole map: `docs/DATA_SYMMETRY_AUDIT.md`** — write/read
+> symmetry per table, the disk tier that is still served, and findings F1–F8 ranked.
+> Re-runnable: `scripts/audit_d1_symmetry.py` (serve path) and
+> `scripts/audit_d1_buildpath.py` (board build path, writes stubbed).
+
 | # | gap | impact | plan |
 |---|---|---|---|
 | 1 | Intra-week overwrite in `stat_observations` | no revision history; unauditable pulls | add `pull_id`/`recorded_at` to the key → append-only. **Jeff's call (row growth ~2×/day)** |

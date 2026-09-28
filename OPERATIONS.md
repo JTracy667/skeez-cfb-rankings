@@ -69,6 +69,10 @@ pages 200, `input_vintages` all 2026, Georgia rank 1.
 
 ### Open work (in priority order)
 
+> **Superseded by the full audit: `docs/DATA_SYMMETRY_AUDIT.md` (2026-09-28).** It walks
+> write/read symmetry across all 17 D1 tables AND the disk tier, with findings ranked
+> F1–F8 and receipts. Read that first; the list below is the older, narrower version.
+
 1. **Parity contract test — served payload == D1 latest.** This is the test that would
    have caught the v49/v50 bug. Nothing currently asserts it. **Do this first.**
 2. **`stat_observations` is upsert-on-key** → the four weekly anchors collapse to one
