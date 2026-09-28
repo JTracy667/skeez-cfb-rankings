@@ -119,11 +119,12 @@ a 16-call pull into a ~270-call one.
 
 | Activity | Calls/mo | Share |
 |---|---|---|
-| ETag probe, hourly in the Sun 18:00→Wed 23:59 window (2 calls/h × 78h/wk) | ~676 | ~2.3% |
+| ETag watcher, hourly in the Sun 18:00→Wed 23:59 window (8 endpoints × 78h/wk) | ~2,704 | ~9.0% |
 | Weekly analytics pull × 4 anchors (~16 calls each) | ~291 | ~1.0% |
 
-**So the probe already costs ~2.3× the pulls.** Change-triggered pulling does not add
-quota — it converts a signal we are *already paying for* into fresh data.
+**So the watcher costs ~9× the pulls themselves** (~2,704 vs ~291/mo) — still only ~9%
+of the allowance. Change-triggered pulling adds no *pull* quota: it converts a signal we
+are already paying for into fresh data, and the number of pulls stays ~unchanged.
 
 **Publication atomicity.** Conditional-GET against the ETags recorded on 2026-09-22
 (`scripts/atom probe`), 2026-09-27 — which datasets had moved during the week:

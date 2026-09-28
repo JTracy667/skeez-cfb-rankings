@@ -114,13 +114,19 @@ is the gate that catches a missing Dockerfile `COPY`) → set `BUILD_TAG` Worker
 - **Known design gap (Jeff, 2026-09-27):** the anchors refresh only 4×/week, so the
   site can serve up to a day of stale data after a release, even though we already pay
   for a probe that *detects* the release. **The probe is now a release WATCHER**
-  (`scripts/probe_ratings_etag.py`): it detects a settled release and, when armed,
-  triggers the pull immediately. It is **DARK by default** — log-only — and armed with
-  `CFB_ETAG_TRIGGER_LIVE=1`. It reuses the existing hourly cron (`cto-cfb-ratings-etag-
-  probe`), so it costs no extra calls. The trigger POSTs the admin-gated
-  `/api/analytics/fetch`, i.e. **the same pull path, so D1 archiving is unchanged**.
-  Safety: release-gated (primary `ratings/sp` only) + settle-gated (needs a stable
-  re-check `>= SETTLE_MIN`). The anchors stay as the backstop.
+  (`scripts/probe_ratings_etag.py`): it conditional-GETs **8 composite-relevant
+  endpoints** each in-window hour — `ratings/{sp,elo,fpi,srs}`, `stats/season/advanced`
+  and `ppa/teams` (the source of the **efficiency** input, ~31% of the weight), plus
+  `talent` and `player/returning` — settle-gates each independently, and when armed
+  triggers the pull immediately. **Watching only the ratings trio would MISS an
+  efficiency update.** **DARK by default** (log-only); armed with
+  `CFB_ETAG_TRIGGER_LIVE=1`. Cost scales with the watch set: **~9.0% of the CFBD
+  allowance** (8 calls × 78 in-window hrs/wk), up from 2.3% ratings-only. It reuses the
+  existing hourly cron (`cto-cfb-ratings-etag-probe`) — no new job. The trigger POSTs
+  the admin-gated `/api/analytics/fetch`: **the same pull path, so D1 archiving is
+  unchanged**. **Caveat:** `/api/analytics/fetch` does NOT stamp the last-pull time
+  (only `refresh-if-due` does), so a watcher-triggered pull is invisible to
+  `/api/analytics/pull-status` and to the freshness guard. The anchors stay the backstop.
 - Wired via `wrangler.jsonc` crons `0 4 * * 1,2,3,4` **and** `0 5 * * 1,2,3,4`
   (21:00 PT = 04:00Z under PDT / 05:00Z under PST — both hours or the anchor is missed
   half the year; cron days are UTC, so Sun 21:00 PT is Mon 04:00Z). The Worker's

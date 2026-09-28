@@ -57,14 +57,23 @@ BASE = "https://api.collegefootballdata.com"
 PT = ZoneInfo("America/Los_Angeles")
 YEAR = 2026
 
-# Primary gates the trigger; the rest are confirmed only when the primary flips.
+# EVERY watched endpoint is conditional-GET'd each run and settle-gated independently.
+# Watching ONLY the ratings trio would miss an efficiency update: the composite's
+# `efficiency` input (~31% of the weight) is computed from stats/season/advanced + ppa,
+# NOT from the ratings. `talent` (~32%) and `returning` (~19%) are season-long priors,
+# watched so a re-publication cannot be silently missed.
 PRIMARY = "sp"
-ENDPOINTS = {
+WATCH = {
     "sp": f"/ratings/sp?year={YEAR}",
     "elo": f"/ratings/elo?year={YEAR}",
     "fpi": f"/ratings/fpi?year={YEAR}",
     "srs": f"/ratings/srs?year={YEAR}",
+    "stats_advanced": f"/stats/season/advanced?year={YEAR}",
+    "ppa_teams": f"/ppa/teams?year={YEAR}",
+    "talent": f"/talent?year={YEAR}",
+    "returning": f"/player/returning?year={YEAR}",
 }
+ENDPOINTS = WATCH          # kept for the baseline probe below
 
 SRS_2026_URL = f"/ratings/srs?year={YEAR}"
 PUBLIC = os.environ.get("CFB_PUBLIC_URL", "https://skeezcfb-rankings.com")
@@ -236,79 +245,66 @@ def main():
     check_srs_2026(st)
     save_state(st)
 
-    # --- Probe the PRIMARY only (1 call).
-    status, etag, body, _rem = get(ENDPOINTS[PRIMARY], etag=etags.get(PRIMARY))
-
-    if status == 304:
-        # Unchanged. A pending candidate older than SETTLE_MIN is now SETTLED: it moved
-        # earlier, and on this later probe it did NOT move again.
-        p = pending.get(PRIMARY)
-        if p:
-            aged = settle_elapsed_min(p)
-            if aged >= SETTLE_MIN:
-                etags[PRIMARY] = p["etag"]
-                pending.pop(PRIMARY, None)
-                st["etags"], st["pending"] = etags, pending
-                save_state(st)
-                append_history({"ts": datetime.now(PT).isoformat(), "event": "settled",
-                                "endpoint": PRIMARY, "etag": etags[PRIMARY],
-                                "waited_min": round(aged, 1)})
-                print("RATINGS RELEASE SETTLED — CFBD ratings changed and held")
-                print(f"  {PRIMARY} etag -> {etags[PRIMARY]} (stable {aged:.0f} min)")
-                if LIVE:
-                    code, resp = fire_pull("settled release")
-                    print(f"  TRIGGERED pull: HTTP {code} {resp}")
-                else:
-                    print("  DARK: would have POSTed /api/analytics/fetch"
-                          " (~16 calls; D1 archive unchanged)")
-                    print("  arm with CFB_ETAG_TRIGGER_LIVE=1")
-            else:
-                print("RATINGS RELEASE PENDING SETTLE (awaiting a stable re-check)")
-                print(f"  {PRIMARY} etag {p['etag']} first seen {aged:.0f} min ago"
-                      f" (settle at {SETTLE_MIN} min)")
-        return 0
-
-    # --- CHANGE DETECTED on the primary.
-    prev_pending = pending.get(PRIMARY)
-    if prev_pending and prev_pending.get("etag") == etag:
-        aged = settle_elapsed_min(prev_pending)
-    else:
-        pending[PRIMARY] = {"etag": etag, "since": datetime.now(PT).isoformat()}
-        aged = 0.0
-
-    others = {}
-    for name in ("elo", "fpi", "srs"):
+    # --- Probe EVERY watched endpoint (1 conditional GET each). Each is settle-gated
+    # independently, and ANY settled change triggers the pull. Watching only the ratings
+    # trio would MISS an efficiency update (stats/season/advanced + ppa).
+    settled, detected, baselined = {}, {}, []
+    for name, path in WATCH.items():
         had_baseline = name in etags
-        s, e, _b, _r = get(ENDPOINTS[name], etag=etags.get(name))
+        s, e, body, _r = get(path, etag=etags.get(name))
         # A first sighting is a BASELINE, not a change — never report a missing
-        # baseline as "changed", which would misreport the release.
-        others[name] = (s != 304) if had_baseline else None
-        if s != 304 and e:
+        # baseline as "changed", which would misreport a release.
+        if not had_baseline:
+            if e:
+                etags[name] = e
+                baselined.append(name)
+            continue
+        if s == 304:
+            p = pending.get(name)
+            if p and settle_elapsed_min(p) >= SETTLE_MIN:
+                waited = round(settle_elapsed_min(p), 1)
+                etags[name] = p["etag"]
+                pending.pop(name, None)
+                settled[name] = (p["etag"], waited)
+            continue
+        prev = pending.get(name)
+        if prev and prev.get("etag") == e:
+            aged = settle_elapsed_min(prev)
+        else:
+            pending[name] = {"etag": e, "since": datetime.now(PT).isoformat()}
+            aged = 0.0
+        if aged >= SETTLE_MIN:
             etags[name] = e
+            pending.pop(name, None)
+            settled[name] = (e, round(aged, 1))
+        else:
+            detected[name] = (round(aged, 1),
+                              len(json.loads(body)) if body else None)
 
-    st["pending"] = pending
+    st["etags"], st["pending"] = etags, pending
     save_state(st)
-    append_history({"ts": datetime.now(PT).isoformat(), "event": "change_detected",
-                    "primary": PRIMARY, "new_etag": etag, "others_changed": others})
-
-    print("ETAG PROBE: RATINGS RELEASE DETECTED")
-    print(f"  {PRIMARY}: etag changed, rows={len(json.loads(body)) if body else 0}")
-    print("  " + ", ".join(
-        (f"{k}={'changed' if v else 'unchanged'}" if v is not None else f"{k}=baselined")
-        for k, v in others.items()))
-    if aged >= SETTLE_MIN:
-        etags[PRIMARY] = etag
-        pending.pop(PRIMARY, None)
-        st["etags"], st["pending"] = etags, pending
-        save_state(st)
-        print(f"  SETTLED: {PRIMARY} etag -> {etag} (stable {aged:.0f} min)")
+    if not settled and not detected and not baselined:
+        return 0                      # silent: nothing changed
+    append_history({"ts": datetime.now(PT).isoformat(), "event": "probe",
+                    "settled": sorted(settled), "detected": sorted(detected),
+                    "baselined": sorted(baselined)})
+    if baselined:
+        print("ETAG WATCH baseline recorded: " + ", ".join(sorted(baselined)))
+    if detected:
+        print("CFBD DATA CHANGE PENDING SETTLE (needs a stable re-check)")
+        for k, (aged, rows) in sorted(detected.items()):
+            print(f"  {k}: changed {aged:.0f} min ago, rows={rows}")
+    if settled:
+        print("CFBD DATA RELEASE SETTLED — pull warranted")
+        for k, (etagv, waited) in sorted(settled.items()):
+            print(f"  {k}: etag -> {etagv} (stable {waited:.0f} min)")
         if LIVE:
-            code, resp = fire_pull("change detected")
+            code, resp = fire_pull("settled change: " + ",".join(sorted(settled)))
             print(f"  TRIGGERED pull: HTTP {code} {resp}")
         else:
-            print("  DARK: would have POSTed /api/analytics/fetch (D1 archive unchanged)")
-    else:
-        print(f"  pending settle (re-confirm in >= {SETTLE_MIN} min)")
+            print("  DARK: would have POSTed /api/analytics/fetch"
+                  " (~16 calls; D1 archive unchanged)")
+            print("  arm with CFB_ETAG_TRIGGER_LIVE=1")
     return 0
 
 
