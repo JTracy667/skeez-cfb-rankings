@@ -24,14 +24,15 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v55** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v55-budget-ledger-d1` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v55` |
-| Rollback tag | **v54** — `scripts/cfb_deploy.sh --rollback v54` (v53, v52, v51, v50 also in the registry) |
-| Last verified | 2026-09-28 12:33 PT (CTO) — `DEPLOY VERIFIED LIVE: v55`; marker match (not `build`); app image v55 (version 51); all public pages 200 |
+| Live build | **v56** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v56-injuries-in-d1` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v56` |
+| Rollback tag | **v55** — `scripts/cfb_deploy.sh --rollback v55` (v54…v50 also in the registry) |
+| Last verified | 2026-09-28 12:42 PT (CTO) — `DEPLOY VERIFIED LIVE: v56`; marker match (not `build`); app image v56 (version 52); all public pages 200 |
+| Injuries | D1 `app_state.active_injuries` is the served source (45 teams / 56 tracked at migration). `/api/injuries` and the win-totals build read it. Kill switch `INJURIES_FROM_D1=0`. **D1 `injury_snapshots` is a settled-outcome tracking table, NOT the current injury state.** |
 | Quota ledger | `/api/health` `budget` is read from D1 `api_usage` — the ledger of record. The disk mirror `data/budget_ledger.json` is a **local-dev fallback only** (Phase 6). Kill switch `BUDGET_FROM_D1=0`. |
 | Archive health | `/api/health` → **`archive`** — `count > 0` means D1 writes are silently NOT landing (F5; before v54 this state was invisible) |
-| Container app image | must read `...:v55` via the Containers API — **`build` in `/api/health` does NOT prove this** (see the v52→v53 note) |
+| Container app image | must read `...:v56` via the Containers API — **`build` in `/api/health` does NOT prove this** (see the v52→v53 note) |
 | Deploy verifier | `python scripts/verify_container_swap.py --tag vN --marker <CODE_MARKER>` — API-driven, touches the site **once** |
 | Enforcement gate | `python scripts/run_enforcement_tests.py` — **blocking** before any deploy (needs `CF_D1_TOKEN`; refuses to run without it) |
 | Known-stale docs | `docs/SESSION_HANDOFF.md` (state as of Sep 23 — do NOT trust its state), `CLOUDFLARE_DEPLOY.md` (says `sleepAfter 20m`) |
@@ -46,7 +47,32 @@ curl -s https://skeezcfb-rankings.com/api/health   # status ok + build + code.ma
 
 ## RECENT CHANGES & OPEN WORK
 
+### v55 → v56 (2026-09-28, CTO) — Phase 6 step 2: injuries serve from D1
+
+**Shipped:** `active_injuries.json` converted. `_load_injuries_doc()` (whole doc, D1-first) and
+`_save_injuries_doc()` (write-through) now own it; `_load_active_injuries()`, `/api/injuries` and
+`POST /api/injuries/override` all route through them. Kill switch `INJURIES_FROM_D1=0`.
+
+**One of these defects was DATA LOSS, not staleness.** `POST /api/injuries/override` was a
+read-modify-write on an **ephemeral** file, so a **manual injury override — a human's correction —
+silently evaporated on the next recycle.** And the win-totals **build** path read the same file,
+so a recycled container could bake a stale injury adjustment into a board.
+
+**`injury_snapshots` is NOT the home, and looking like it is would have been the trap:** 402 rows,
+obvious name, but it is a **settled-outcome tracking table** (`predicted_margin` / `actual_margin`
+/ `residual_*`). The door uses `app_state.active_injuries`, the same shape as the Phase 3 fix.
+
+**Cross-file dependency handled:** `/api/injuries/sync` delegates to `scripts/fetch_injuries.py`,
+so that scraper now reads its existing store **D1-first** (merging from the file alone could DROP a
+D1-only manual override) and writes the durable copy too. Without that the sync would have become a
+**silent no-op** — writing the file while the site kept serving the previous D1 snapshot.
+
+**Receipts:** `DEPLOY VERIFIED LIVE: v56`, marker `v56-injuries-in-d1`, app image v56 (version 52),
+all pages 200. Guard allowlist **shrank by two**. Suite 95 passed / 1 xfailed; gate 14 passed / 1
+xfailed (F3 alone).
+
 ### v54 → v55 (2026-09-28, CTO) — Phase 6 step 1: the quota ledger reads D1
+
 
 **Shipped:** the first file of Phase 6's disk tier. `budget.state()` now reads D1 `api_usage` —
 the **ledger of record** — FIRST, with `data/budget_ledger.json` demoted to a local-dev fallback.
