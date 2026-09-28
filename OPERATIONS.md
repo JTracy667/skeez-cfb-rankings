@@ -24,10 +24,10 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v56** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v56-injuries-in-d1` |
+| Live build | **v58** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v58-line-movements-d1` |
 | Image tag in `wrangler.jsonc` | `cfb-power-rankings:v58` |
-| Rollback tag | **v55** — `scripts/cfb_deploy.sh --rollback v55` (v54…v50 also in the registry) |
+| Rollback tag | **v57** — `scripts/cfb_deploy.sh --rollback v57` (v56…v50 also in the registry) |
 | Last verified | 2026-09-28 12:42 PT (CTO) — `DEPLOY VERIFIED LIVE: v56`; marker match (not `build`); app image v56 (version 52); all public pages 200 |
 | Injuries | D1 `app_state.active_injuries` is the served source (45 teams / 56 tracked at migration). `/api/injuries` and the win-totals build read it. Kill switch `INJURIES_FROM_D1=0`. **D1 `injury_snapshots` is a settled-outcome tracking table, NOT the current injury state.** |
 | Quota ledger | `/api/health` `budget` is read from D1 `api_usage` — the ledger of record. The disk mirror `data/budget_ledger.json` is a **local-dev fallback only** (Phase 6). Kill switch `BUDGET_FROM_D1=0`. |
@@ -46,6 +46,38 @@ curl -s https://skeezcfb-rankings.com/api/health   # status ok + build + code.ma
 ---
 
 ## RECENT CHANGES & OPEN WORK
+
+### v57 → v58 (2026-09-28, CTO) — Phase 6 step 4: the line-movement log is durable in D1
+
+`data/line_movements.json` is a rolling **7-day CLV record** of what the line did — the audit
+trail behind the movement feed, not a cache. It was on the ephemeral disk and `_append_movement_log`
+was a read-modify-write against that FILE, so a recycle loaded a fresh empty file and appended to
+nothing. **The record of the moves was being discarded every 5 idle minutes.**
+
+Now D1-first (`app_state` key `line_movements`, kill switch `MOVEMENTS_FROM_D1`); the append
+EXTENDS the durable log; write-through mirror. Seeded with 370 movements.
+
+Deploy: ~1 minute, first `wrangler deploy` applied the image, retry not needed.
+
+### v56 → v57 (2026-09-28, CTO) — Phase 6 step 3: the odds cache is durable in D1
+
+`data/odds_cache.json` exists to **avoid re-buying the day's odds from a metered provider**
+after a recycle — that is what the constant says. On an ephemeral disk it could never do that:
+every recycle re-fetched and spent PropLine quota for data the site already had. So this one
+was not merely stale-reading, it was **silently spending calls it was written to save.** Now
+D1-first (`app_state` key `odds_cache`, kill switch `ODDS_CACHE_FROM_D1`), seeded with 636 games.
+
+**Three deploy-machinery faults surfaced on this release** (all now fixed in `scripts/`; see
+section 2 — read it before deploying):
+1. The first `wrangler deploy` again did not apply the container image — the v52→v53 defect,
+   recurring. Step 5b's self-heal caught and re-ran it, exactly as designed.
+2. The app-config lag is **minutes, not seconds** (~77s to ~6 min observed). A 120s window
+   produced a FALSE failure.
+3. `rollback()` never checked the app image — it printed "ROLLBACK COMPLETE" on five HTTP 200s,
+   while the rollback had **not landed at all**. Windows are minutes now and the rollback
+   CONFIRMS the image or says "ROLLBACK NOT CONFIRMED".
+
+The release shipped and the rollback was theatre; prod was on v57 the whole time.
 
 ### v55 → v56 (2026-09-28, CTO) — Phase 6 step 2: injuries serve from D1
 
