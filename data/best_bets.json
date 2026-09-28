@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "updated": "2026-09-28T09:37:42.620499",
+  "updated": "2026-09-28T10:29:52.783572",
   "picks": [
     {
       "key": "ohio state|ball state",
@@ -435,6 +435,20 @@
       "over_pick": "over",
       "total_edge": 0.1,
       "model_total": 52.6
+    },
+    {
+      "key": "colorado state|oregon state",
+      "week": 5,
+      "home": "Colorado State",
+      "away": "Oregon State",
+      "date": "2026-10-03T22:00:00.000Z",
+      "spread": 5.5,
+      "spread_pick": "home",
+      "spread_edge": 2.1,
+      "total": 61.0,
+      "over_pick": "under",
+      "total_edge": 11.4,
+      "model_total": 49.6
     }
   ],
   "results": [

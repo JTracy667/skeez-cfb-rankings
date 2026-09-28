@@ -82,8 +82,13 @@ def main() -> int:
                 except Exception:  # noqa: BLE001 - an endpoint error is not this probe's subject
                     pass
         elif scope == "build":
+            # NB: load_schedule() is included because it is reachable from the PUBLIC
+            # /api/schedule fallback branch and the ADMIN POST /api/schedule/update — NOT
+            # because a board builder calls it. An earlier version of this probe implied
+            # otherwise and produced a wrong "the build path bakes staleness into D1" claim.
             for label, call in (
-                ("load_schedule()", lambda: app.load_schedule()),
+                ("load_schedule() [serve fallback + admin POST]",
+                 lambda: app.load_schedule()),
                 ("compute_win_totals()", lambda: app.compute_win_totals()),
                 ("get_rankings()", lambda: app.get_rankings()),
             ):

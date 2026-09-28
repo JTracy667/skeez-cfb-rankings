@@ -73,7 +73,8 @@ SERVE_ALLOWLIST: dict[str, str] = {
 BUILD_ALLOWLIST: dict[str, str] = {
     # These matter MORE than the serve reads: a board built from a stale ephemeral file
     # bakes the staleness into D1.
-    "week_schedule.json":   "F2/Phase 3 - load_schedule() reads it, and the schedule board is then persisted",
+    # DIFFED OUT in Phase 3 (2026-09-28): load_schedule() is D1-first now
+    # (app_state `week_schedule`), so the file is no longer read on any measured path.
     "active_injuries.json": "F2/Phase 6 - compute_win_totals() reads it before persisting the board",
     "cfbd_analytics.json":  "F7/Phase 6 - compute_win_totals() reads it; a board built from the image file persists the staleness",
     "teams.json":           "F3/Phase 6 - compute_win_totals() reads team identity from disk while D1 `teams` also exists",

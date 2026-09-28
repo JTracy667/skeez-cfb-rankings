@@ -1177,7 +1177,7 @@ def api_boards_status():
     return out
 
 
-CODE_MARKER = "v52-results-in-d1"   # bump when a release must be provably live
+CODE_MARKER = "v53-schedule-in-d1"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -4242,7 +4242,25 @@ def load_fbs_conferences() -> dict:
         return {}
 
 # ── Schedule / Differentials ──
+SCHEDULE_STATE_KEY = "week_schedule"   # D1 app_state key -- durable copy of the matchup set
+
+
 def load_schedule() -> dict:
+    """The weekly matchup set. D1 FIRST -- the container disk is EPHEMERAL (finding F2).
+
+    This is also the store behind the ADMIN override (`POST /api/schedule/update`), which
+    used to be a read-modify-write on `data/week_schedule.json`. On the container that file
+    is discarded on every recycle (`sleepAfter` 5m), so a manual override silently
+    evaporated and the site reverted to the baked copy.
+
+    `data/week_schedule.json` is now the local-dev fallback only.
+    """
+    try:
+        raw = d1_write_path.load_state(SCHEDULE_STATE_KEY)
+        if raw:
+            return json.loads(raw)
+    except Exception as e:
+        print(f"[SCHEDULE] D1 read failed: {e}")
     try:
         with open(SCHEDULE_FILE) as f:
             return json.load(f)
@@ -4588,8 +4606,18 @@ def api_schedule_update(matchups: list[dict]):
     sched = load_schedule()
     sched["matchups"] = clean
     sched["updated"] = datetime.now().isoformat()
-    with open(SCHEDULE_FILE, "w") as f:
-        json.dump(sched, f, indent=2)
+    payload = json.dumps(sched, indent=2)
+    # D1 first: the container disk is ephemeral, so an override written only to the file
+    # did not survive the next recycle (F2).
+    try:
+        d1_write_path.save_state(SCHEDULE_STATE_KEY, payload)
+    except Exception as e:
+        print(f"[SCHEDULE SAVE ERROR d1] {e}")
+    try:
+        with open(SCHEDULE_FILE, "w") as f:
+            f.write(payload)
+    except Exception as e:
+        print(f"[SCHEDULE SAVE ERROR] {e}")
     return {"status": "updated", "count": len(clean)}
 
 _PRED_LOCK = {"ts": 0.0}

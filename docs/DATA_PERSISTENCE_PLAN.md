@@ -468,8 +468,10 @@ finals_cache.json    <- /api/best-bets/record
 record.json          <- /api/record
 best_bets.json       <- /api/best-bets, /api/best-bets/record
 ```
-**BUILD (5)** — worse than serve: a board built from a stale file has the staleness
-**persisted into D1**.
+**BUILD (5)** — reads seen while calling the builders. NOTE (corrected in Phase 3):
+`load_schedule()` was put in this scope by the PROBE, not by a board builder; its real
+callers are the serve fallback and the admin POST. Do not read this scope as proof that a
+board baked staleness into D1.
 ```
 week_schedule.json   <- load_schedule()          <-- F2, located at last
 cfbd_analytics.json  <- compute_win_totals()
@@ -481,9 +483,13 @@ active_injuries.json <- compute_win_totals()
 
 ## Findings this phase produced
 
-* **F2 is located, and it is on the BUILD path:** `load_schedule()` reads
-  `data/week_schedule.json`. Serving `/api/schedule` does *not* touch disk — so the earlier
-  framing was wrong and the risk is worse, because the board gets persisted.
+* **F2 located — CORRECTED 2026-09-28 in Phase 3.** The first version of this bullet claimed
+  F2 "is on the BUILD path" and that "the board gets persisted", i.e. staleness baked into
+  D1. **That was wrong.** It came from this plan's own probe calling `load_schedule()`
+  directly and labelling the result "BUILD". No board builder calls it. The real callers are
+  the `/api/schedule` **fallback branch** and the **admin** `POST /api/schedule/update`.
+  The actual defect: the admin override was a read-modify-write on an ephemeral file, so a
+  manual override silently evaporated on the next container recycle.
 * **New exposure not in the audit:** `/api/health` reads `budget_ledger.json` off disk while
   **D1 `api_usage` is the ledger of record**. The quota display can therefore be stale in
   exactly the v50 way.
@@ -587,3 +593,62 @@ closed when the *code path* is proven, not when the symptom is gone.
   miss). Same standing rule as the existing bootwarm guard.
 * Tests set `D1_READ_ENABLED=1` and leave writes **off** — verifying served-vs-D1 without
   granting test processes the ability to write production.
+
+
+---
+
+# PHASE 3 — COMPLETE (2026-09-28)
+
+**Status: code complete, full suite green (87 passed, 1 xfailed), shipped as
+`v53-schedule-in-d1`.** Closes **F2**.
+
+## This phase corrected a wrong claim from Phase 1
+
+Phase 1 said F2 "is on the BUILD path … the board gets persisted", i.e. staleness baked into
+D1. **That was wrong.** It came from this plan's own probe calling `load_schedule()` directly
+and labelling the result "BUILD". No board builder calls it. The probe now labels that call
+site honestly (`load_schedule() [serve fallback + admin POST]`), and the Phase 1 text above
+carries a correction.
+
+**Why it matters beyond the one bullet:** a probe that attributes a read to a scope *it
+chose* is reporting on the probe, not on the system. The allowlist survived that error
+because the entry named the right file; the *reason* it carried was wrong.
+
+## The real defect
+
+`POST /api/schedule/update` (the admin override) was a **read-modify-write on
+`data/week_schedule.json`** — a file on the container's ephemeral disk. So a manual override
+silently evaporated on the next recycle (`sleepAfter` 5m) and the site reverted to the
+baked copy. The `/api/schedule` fallback branch read the same file.
+
+## What changed
+
+* `load_schedule()` is **D1-first** (D1 `app_state` key `week_schedule`), disk as the
+  local-dev fallback.
+* The admin override writes **D1 first**, then the file.
+* Seeded the current content into D1 so nothing needs the file (a no-op migration: same
+  bytes, different store).
+
+## Verification
+
+| Check | Result |
+|---|---|
+| Full suite | **87 passed, 1 xfailed** |
+| Enforcement gate | **10 passed, 1 xfailed** (only F3 remains) |
+| Guard discovery | `data/week_schedule.json` **no longer read** on any measured path |
+| Durability test | D1 wins over a disagreeing disk; falls back cleanly when D1 is empty |
+| Live deploy | `v53-schedule-in-d1` |
+
+## Allowlist delta
+
+* **Removed:** `data/week_schedule.json` (build scope). The BUILD allowlist is now empty of
+  schedule entries; what remains is `active_injuries.json` (Phase 6).
+
+## Process note
+
+Mid-edit I anchored a scripted line-replacement on the wrong occurrence and clobbered ~175
+lines of `app.py`. Recovered with `git checkout -- app.py` and re-applied both edits at full
+precision (compiled + diff-reviewed before anything else ran). **Rule: anchor a scripted
+edit on a uniquely-identifying line, and verify the diff shows what you intended — the fuzzy
+matcher shifted indentation on three attempts and silently produced broken Python each
+time.**

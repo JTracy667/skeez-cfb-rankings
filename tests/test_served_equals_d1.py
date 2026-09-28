@@ -224,6 +224,33 @@ def test_live_finals_fetch_archives_to_d1(app_module, monkeypatch):
         "the fetched finals were not graded into the returned map")
 
 
+def test_schedule_override_is_durable_d1_first(app_module, monkeypatch):
+    """F2: the admin schedule override must survive a container recycle.
+
+    `POST /api/schedule/update` used to be a read-modify-write on `data/week_schedule.json`
+    -- an EPHEMERAL disk -- so a manual override silently evaporated and the site reverted
+    to the baked copy. D1 is the store now; prove it by making D1 and the disk disagree and
+    asserting D1 wins. No production write: the state read is stubbed.
+    """
+    import json  # noqa: PLC0415
+
+    sentinel = {"week": 99, "season": SEASON, "updated": "from-d1",
+                "matchups": [{"home": "D1 Home", "away": "D1 Away"}]}
+    monkeypatch.setattr(app_module.d1_write_path, "load_state",
+                        lambda key: json.dumps(sentinel) if key == "week_schedule" else None)
+
+    got = app_module.load_schedule()
+    assert got.get("updated") == "from-d1", f"D1 did not win over disk: {got}"
+    assert got["matchups"][0]["home"] == "D1 Home"
+
+
+def test_schedule_falls_back_to_disk_when_d1_has_nothing(app_module, monkeypatch):
+    """A local-dev run with no D1 state must still load the file rather than crash."""
+    monkeypatch.setattr(app_module.d1_write_path, "load_state", lambda key: None)
+    got = app_module.load_schedule()
+    assert isinstance(got, dict) and "matchups" in got
+
+
 # ------------------------------------------------------- KNOWN-BROKEN (F1), xfail-strict
 
 
