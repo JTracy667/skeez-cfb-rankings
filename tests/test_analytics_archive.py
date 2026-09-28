@@ -176,10 +176,25 @@ def test_bulk_every_row_is_present_exactly_once():
     assert sum(s.count("'metric_") for s in sqls) == 777
 
 
-def test_bulk_is_idempotent_on_the_dedupe_index():
-    sql = d1_store.stat_observation_insert_sqls(_rows_n(2))[0]
-    assert "ON CONFLICT(subject_type,subject_id,season,stat_key,week)" in sql
-    assert "value=excluded.value" in sql
+def test_bulk_targets_the_dedupe_index_that_is_actually_live():
+    """Phase 4 changed the unique key, so assert BOTH branches AND that the live statement
+    matches the live index. Pinning one branch is how this test went stale the moment the key
+    moved -- and a writer aimed at an index that does not exist fails every archive."""
+    rows = _rows_n(2)
+
+    legacy = d1_store.stat_observation_insert_sql(rows, append_only=False)
+    assert "ON CONFLICT(subject_type,subject_id,season,stat_key,week)" in legacy
+    assert "value=excluded.value" in legacy
+
+    append = d1_store.stat_observation_insert_sql(rows, append_only=True)
+    assert "ON CONFLICT(subject_type,subject_id,season,stat_key,week,recorded_at)" in append
+    assert "DO NOTHING" in append
+
+    live = d1_store.stat_observation_insert_sqls(rows)[0]
+    if d1_store.stat_obs_append_only(refresh=True):
+        assert live == append, "append-only is live but the writer emitted the LEGACY target"
+    else:
+        assert live == legacy, "the legacy index is live but the writer emitted the APPEND target"
 
 
 def test_bulk_escapes_string_values():

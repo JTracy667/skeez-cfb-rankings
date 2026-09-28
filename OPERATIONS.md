@@ -24,10 +24,10 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v61** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v61-analytics-identity-d1` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v61` |
-| Rollback tag | **v60** — `scripts/cfb_deploy.sh --rollback v60` (v59…v50 also in the registry) |
+| Live build | **v62** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v62-stat-obs-append-only` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v62` |
+| Rollback tag | **v61** — `scripts/cfb_deploy.sh --rollback v61` (v60…v50 also in the registry) |
 | Last verified | 2026-09-28 12:42 PT (CTO) — `DEPLOY VERIFIED LIVE: v56`; marker match (not `build`); app image v56 (version 52); all public pages 200 |
 | Injuries | D1 `app_state.active_injuries` is the served source (45 teams / 56 tracked at migration). `/api/injuries` and the win-totals build read it. Kill switch `INJURIES_FROM_D1=0`. **D1 `injury_snapshots` is a settled-outcome tracking table, NOT the current injury state.** |
 | Quota ledger | `/api/health` `budget` is read from D1 `api_usage` — the ledger of record. The disk mirror `data/budget_ledger.json` is a **local-dev fallback only** (Phase 6). Kill switch `BUDGET_FROM_D1=0`. |
@@ -46,6 +46,37 @@ curl -s https://skeezcfb-rankings.com/api/health   # status ok + build + code.ma
 ---
 
 ## RECENT CHANGES & OPEN WORK
+
+### v61 → v62 (2026-09-28, CTO) — Phase 4 (F4): `stat_observations` is APPEND-ONLY
+
+**The last open finding — and the ONLY schema change in the whole plan.** `stat_observations`
+was written ON CONFLICT DO UPDATE on a key that stopped at `week`, so all four weekly anchors
+collapsed into ONE row per metric, last write wins, intermediate pulls left no trace. F4 is
+**auditability, not data loss** — the values were right, the history was gone.
+
+**No new column and no table rebuild.** `recorded_at` already existed and the bulk writer already
+stamps ONE timestamp for the whole call, so it IS a pull id; the 92,406 existing rows already
+carry 89 distinct stamps. The change is the unique index:
+`(…, week)` -> `(…, week, recorded_at)`. Creating it cannot fail on existing data — the old index
+already made the first five columns unique.
+
+**The transition, which was the real risk.** The index swap is a D1 migration and cannot be
+atomic with an image deploy, so the writer **probes the live index and picks the matching
+ON CONFLICT target** (`d1_store.stat_obs_append_only()`): append -> `DO NOTHING` on 6 columns,
+legacy -> `DO UPDATE` on 5. Both writers adapt, including the singular
+`upsert_stat_observations` used by `massey_fcs.py` and four backfill scripts. **Deployed v62
+first while still in legacy mode, then applied the migration — there was never a window where
+archives failed.**
+
+**Reader:** `load_team_analytics` serves the NEWEST pull explicitly. Letting "the last row win"
+would have been luck — SQLite promises no row order without `ORDER BY`.
+
+**Receipts:** migration applied (`probe -> True`); `test_one_archive_keeps_its_own_rows` asserted
+**n==1 before** the migration and **n==2 after**, with real rows — it proved the defect was live
+and then proved the fix. Probe rows cleaned by exact stamp (never a numeric threshold).
+Gate PASS 26 passed, 0 xfailed, parity green. Migration script:
+`scripts/migrate_stat_obs_append_only.py` (`--dry-run` / `--revert`; revert refuses when it would
+discard archived pulls unless `--force`).
 
 ### v60 → v61 (2026-09-28, CTO) — Phase 6 step 6: analytics IDENTITY is durable
 

@@ -129,7 +129,7 @@ or an explicit statement of why disk is safe.
 | F1 — results served from an ephemeral cache | **RESOLVED** (v52, Phase 2) | D1 `games` is the door (`snapshot_games`/`load_games`); `test_live_finals_fetch_archives_to_d1` proves the live fetch archives |
 | F2 — ephemeral read-modify-write loses writes | **RESOLVED** (v53 + Phase 6) | `week_schedule`, `active_injuries`, `best_bets`, `line_movements`, `odds_cache` — each D1-first with a durability test |
 | F3 — `teams` read-only; `players` orphan | **RESOLVED** (v60) | `snapshot_team_identity()` live writer; served universe covers D1; `players` KEEP/unwired per Jeff |
-| F4 — no pull history in `stat_observations` | **OPEN** — Phase 4, append-only approved by Jeff; the only remaining schema change | — |
+| F4 — no pull history in `stat_observations` | **RESOLVED** (v62, Phase 4) | unique index now includes `recorded_at`; writer adapts to the live index; `tests/test_stat_obs_append_only.py` proved n==1 before / n==2 after |
 | F5 — `@_guard` swallows failures | **RESOLVED** (v54, Phase 5) | `freshness_events` + `/api/health.archive`; `tests/test_archive_failures_surface.py` |
 | F6 — D1 reads gated on the write flag | **RESOLVED** (v52) | `read_enabled()` split from `write_enabled()`; flag contract test |
 | F7 — nothing asserts served == D1 | **RESOLVED** | the parity suite is a blocking step of the deploy gate |
