@@ -1076,7 +1076,7 @@ def get_rankings(force: bool = False) -> RankingsResponse:
             return RankingsResponse(**_data)
 
     # Primary source: the CFBD analytics file (identical to the composite tab).
-    teams = _load_cfbd_analytics_file()
+    teams = _served_analytics()   # D1-first (Phase 6): the file reverted on recycle
     if not teams:
         # Fallbacks if the file is missing/stale.
         teams = fetch_live_analytics() or load_local()
@@ -1255,7 +1255,7 @@ def api_boards_status():
     return out
 
 
-CODE_MARKER = "v60-teams-live-writer"   # bump when a release must be provably live
+CODE_MARKER = "v61-analytics-identity-d1"   # bump when a release must be provably live
 
 
 @app.get("/api/health")
@@ -4403,6 +4403,54 @@ def _load_cfbd_analytics_file():
         return []
 
 
+ANALYTICS_IDENTITY_KEY = "analytics_identity"   # D1 app_state key -- string fields per team
+
+
+def _store_analytics_identity(teams: list[dict]) -> int:
+    """Archive the TEAM IDENTITY (all string fields) so serving never needs the disk file.
+
+    WHY: `stat_observations` holds NUMERIC metrics only, so the served records' string fields
+    (mascot/conf/emoji/streak) came from data/cfbd_analytics.json -- a file COPY'd into the
+    image and overwritten in place by a pull. Cloudflare Container disks are EPHEMERAL, so a
+    recycle reverted those fields to their BUILD-TIME values. `streak` and `conf` are not
+    static, so that was a real staleness hole, just a quieter one than the numerics.
+
+    Stores every STRING field per team (not a hand-listed subset) for the same reason the
+    analytics archive derives its keys from the record: a fixed list silently drops fields.
+
+    Never raises: the site must not care whether the archive succeeded.
+    """
+    try:
+        ident = {}
+        for t in teams or []:
+            name = (t.get("name") or "").strip()
+            if not name:
+                continue
+            ident[name] = {k: v for k, v in t.items() if isinstance(v, str)}
+        if not ident:
+            return 0
+        blob = json.dumps(ident, ensure_ascii=False)
+        d1_write_path.save_state(ANALYTICS_IDENTITY_KEY, blob)
+        print(f"[analytics] archived identity fields for {len(ident)} teams to D1")
+        return len(ident)
+    except Exception as e:  # noqa: BLE001
+        print(f"[analytics] identity archive failed (site unaffected): {e}")
+        return 0
+
+
+def _analytics_identity_map() -> dict:
+    """D1 identity fields {name: {string fields}}. {} when unavailable -> caller falls back."""
+    try:
+        blob = d1_write_path.load_state(ANALYTICS_IDENTITY_KEY)
+        if not blob:
+            return {}
+        doc = json.loads(blob)
+        return doc if isinstance(doc, dict) else {}
+    except Exception as e:  # noqa: BLE001
+        print(f"[analytics] identity read from D1 failed, falling back to disk: {e}")
+        return {}
+
+
 def _served_analytics():
     """Analytics to SERVE — D1 FIRST. Jeff's direction: D1 is the system of record.
 
@@ -4421,9 +4469,13 @@ def _served_analytics():
     Never regress to a short/empty payload — if D1 is empty, disabled, or errors, serve
     the disk file unchanged.
     """
-    disk = _load_cfbd_analytics_file() or []
+    # Identity/string fields cannot live in stat_observations, so they used to come from the
+    # image-copied disk file and a recycle reverted them to build-time values (Phase 6). D1
+    # holds them now -- so the disk file is read ONLY when D1 has no identity map at all.
+    ident = _analytics_identity_map()
+    disk = [] if ident else (_load_cfbd_analytics_file() or [])
     if os.environ.get("ANALYTICS_FROM_D1", "1") != "1":
-        return disk
+        return _load_cfbd_analytics_file() or []
     try:
         rows = d1_write_path.load_team_analytics(CFBD_YEAR)
     except Exception as e:  # noqa: BLE001 — serving must never depend on D1 being up
@@ -4432,9 +4484,13 @@ def _served_analytics():
     if not rows:
         return disk
     by_name = {}
-    for r in disk:
-        if r.get("name"):
-            by_name[r["name"]] = dict(r)
+    if ident:
+        for nm, fields in ident.items():
+            by_name[nm] = dict(fields, name=nm)
+    else:
+        for r in disk:
+            if r.get("name"):
+                by_name[r["name"]] = dict(r)
     out, added = [], 0
     for r in rows:
         name = r.get("name")
@@ -4493,6 +4549,7 @@ def _store_team_analytics(teams: list[dict]) -> int:
         # F3: the IDENTITY list rides the same live pull. `teams` used to be written only by a
         # manual backfill script, so it drifted from the served universe silently.
         _store_team_identity()
+        _store_analytics_identity(teams)
         return n
     except Exception as e:  # noqa: BLE001
         print(f"[analytics] D1 archive failed (site unaffected): {e}")
@@ -4726,7 +4783,7 @@ def api_projections():
     try:
         # Use the full FBS analytics set (687 teams), not just the 25 ranked
         # teams, so the frontend's "Bottom 10" shows the actual worst teams.
-        all_teams = _load_cfbd_analytics_file()
+        all_teams = _served_analytics()   # D1-first (Phase 6)
         if not all_teams:
             # Fallback to ranked teams if analytics file is missing
             rankings = get_rankings()

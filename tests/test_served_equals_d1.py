@@ -499,6 +499,58 @@ def test_best_bets_falls_back_to_disk_when_d1_is_empty(app_module, monkeypatch, 
     assert app_module._load_best_bets()["picks"][0]["id"] == "disk"
 
 
+def test_analytics_identity_is_d1_first_and_beats_a_disagreeing_disk(app_module, monkeypatch, tmp_path):
+    """Phase 6: the identity/string fields (conf, streak) came from the image-copied file, so a
+    recycle reverted them to BUILD-TIME values. `conf` and `streak` are not static."""
+    import json  # noqa: PLC0415
+
+    disk = tmp_path / "cfbd_analytics.json"
+    disk.write_text(json.dumps([{"name": "Texas", "conf": "DISK", "streak": "W99"}]),
+                    encoding="utf-8")
+    monkeypatch.setattr(app_module, "_CFBD_ANALYTICS_FILE", disk)
+    monkeypatch.setattr(
+        app_module.d1_write_path, "load_state",
+        lambda k: json.dumps({"Texas": {"name": "Texas", "conf": "SEC", "streak": "W3"}})
+        if k == "analytics_identity" else None)
+    monkeypatch.setattr(app_module.d1_write_path, "load_team_analytics",
+                        lambda *a, **k: [{"name": "Texas", "sp_plus": 12.5}])
+
+    out = app_module._served_analytics()
+    tx = next(t for t in out if t["name"] == "Texas")
+    assert tx["conf"] == "SEC", "the ephemeral disk identity won over D1"
+    assert tx["streak"] == "W3", "streak reverted to the build-time value"
+    assert tx["sp_plus"] == 12.5, "D1 numerics must still overlay"
+
+
+def test_analytics_identity_writes_reach_the_d1_door(app_module, monkeypatch):
+    """A pull that only writes identity to the ephemeral file is the bug."""
+    import json  # noqa: PLC0415
+
+    saved: dict = {}
+    monkeypatch.setattr(app_module.d1_write_path, "save_state",
+                        lambda k, v: saved.__setitem__(k, json.loads(v)) or 1)
+    n = app_module._store_analytics_identity(
+        [{"name": "Texas", "conf": "SEC", "streak": "W3", "sp_plus": 12.5}])
+    assert n == 1
+    got = saved.get("analytics_identity", {}).get("Texas", {})
+    assert got.get("conf") == "SEC" and got.get("streak") == "W3"
+    assert "sp_plus" not in got, "only STRING fields belong in the identity map"
+
+
+def test_analytics_identity_falls_back_to_disk_when_d1_is_empty(app_module, monkeypatch, tmp_path):
+    import json  # noqa: PLC0415
+
+    disk = tmp_path / "cfbd_analytics.json"
+    disk.write_text(json.dumps([{"name": "Texas", "conf": "DISK", "streak": "W99"}]),
+                    encoding="utf-8")
+    monkeypatch.setattr(app_module, "_CFBD_ANALYTICS_FILE", disk)
+    monkeypatch.setattr(app_module.d1_write_path, "load_state", lambda k: None)
+    monkeypatch.setattr(app_module.d1_write_path, "load_team_analytics", lambda *a, **k: [])
+
+    out = app_module._served_analytics()
+    assert next(t for t in out if t["name"] == "Texas")["conf"] == "DISK"
+
+
 # ------------------------------------------------------- KNOWN-BROKEN (F1), xfail-strict
 
 

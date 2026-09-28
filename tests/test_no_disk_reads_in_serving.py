@@ -51,7 +51,10 @@ DISCOVER = os.environ.get("CFB_GUARD_DISCOVER") == "1"
 # that phase's entries from the list below.
 
 SERVE_ALLOWLIST: dict[str, str] = {
-    "cfbd_analytics.json": "F7/Phase 6 - _served_analytics() reads the image file for IDENTITY/string fields + fallback; numerics come from D1. Documented design, but the identity half is still ephemeral-baked.",
+    # DIFFED OUT in Phase 6 (2026-09-28): identity/string fields (conf, streak) now live in D1
+    # (app_state key `analytics_identity`, written by _store_analytics_identity on every pull),
+    # so _served_analytics() reads the disk file only when D1 has no identity map at all.
+
     # DIFFED OUT in Phase 6 (2026-09-28): the odds cache is D1-FIRST now (_odds_cache_payload,
     # app_state key `odds_cache`, kill switch ODDS_CACHE_FROM_D1). This one also buys back real
     # quota: the cache exists to avoid re-fetching metered odds after a recycle, which an
@@ -64,7 +67,7 @@ SERVE_ALLOWLIST: dict[str, str] = {
     # `active_injuries`, kill switch INJURIES_FROM_D1). Note D1 `injury_snapshots` is a
     # SETTLED-OUTCOME tracking table, not a home for the current injury state -- the door
     # uses app_state.
-    "teams.json":          "F3/Phase 6 - team identity read from disk while D1 `teams` also exists (two sources, no live writer)",
+    "teams.json":          "PERMANENT - static reference asset (baked into the image, never written at runtime); read by load_local(). No revert risk.",
     # DIFFED OUT in Phase 6 (2026-09-28): budget.state() is D1-FIRST now (budget.py,
     # BUDGET_FROM_D1 kill switch), so /api/health reads D1 api_usage -- the ledger of record --
     # and the file mirror is only a local-dev fallback.
@@ -90,8 +93,10 @@ BUILD_ALLOWLIST: dict[str, str] = {
     # DIFFED OUT in Phase 3 (2026-09-28): load_schedule() is D1-first now
     # (app_state `week_schedule`), so the file is no longer read on any measured path.
     # DIFFED OUT in Phase 6: same conversion as the serve scope above.
-    "cfbd_analytics.json":  "F7/Phase 6 - compute_win_totals() reads it; a board built from the image file persists the staleness",
-    "teams.json":           "F3/Phase 6 - compute_win_totals() reads team identity from disk while D1 `teams` also exists",
+    # DIFFED OUT in Phase 6 (2026-09-28): get_rankings() and /api/projections now go through
+    # _served_analytics() (D1-first). A board can no longer be built from the image file.
+
+    "teams.json":           "PERMANENT - static reference asset (baked into the image, never written at runtime). No revert risk.",
     # DIFFED OUT in Phase 6: same conversion as the serve scope above.
     "cfbd_logos.json": "PERMANENT - static reference asset (baked into the image, never written at runtime); no revert risk",
 }

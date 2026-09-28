@@ -37,7 +37,10 @@ def frozen_rankings_env(monkeypatch):
         return teams
 
     monkeypatch.setattr(app, "_board_served", fake_served)
-    monkeypatch.setattr(app, "_load_cfbd_analytics_file",
+    # get_rankings() reads through _served_analytics() now (D1-first, Phase 6), so stubbing the
+    # raw file accessor is no longer enough -- and would let a REAL D1 read into a test that
+    # documents itself as hermetic. Stub the accessor get_rankings actually calls.
+    monkeypatch.setattr(app, "_served_analytics",
                         lambda: [{"name": "Georgia", "sp_plus": 20.0},
                                  {"name": "Alabama", "sp_plus": 19.0}])
     monkeypatch.setattr(app, "_enrich_with_composite", fake_enrich)
