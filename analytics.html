@@ -226,7 +226,7 @@ async function fetchAnalytics() {
     document.getElementById('sourceBadge').style.color = '#3fb950';
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
-    renderAll();
+    renderActive();
   } catch (e) {
     console.error('Failed to load analytics:', e);
     document.getElementById('loading').textContent = 'Failed to load data. Check console.';
@@ -512,27 +512,41 @@ function renderComposite(filtered) {
   document.getElementById('composite').innerHTML = html;
 }
 
-// ── Master render ──
-function renderAll() {
+// ── Master render (Task 7) ──
+// Render ONLY the visible section. Rebuilding all 15 tables on every keystroke was the
+// cost, and 14 of them were hidden. Every activation renders from `teams` + the live
+// query, so a section can never be left blank or stale.
+function filteredTeams() {
   const q = document.getElementById('search').value.toLowerCase();
-  const filtered = q ? teams.filter(t => t.name.toLowerCase().includes(q)) : teams;
-  renderSummary();
-  renderSPPlus(filtered);
-  renderFPI(filtered);
-  renderSRS(filtered);
-  renderElo(filtered);
-  renderSPOffense(filtered);
-  renderSPDefense(filtered);
-  renderOffense(filtered);
-  renderDefense(filtered);
-  renderTurnovers(filtered);
-  renderCPI(filtered);
-  renderRecruiting(filtered);
-  renderCoaching(filtered);
-  renderPortal(filtered);
-  renderComposite(filtered);
-  renderProjections();
+  return q ? teams.filter(t => t.name.toLowerCase().includes(q)) : teams;
 }
+
+function activeTabName() {
+  const btn = document.querySelector('.tab-btn.active');
+  return (btn && btn.dataset.tab) || currentTab;
+}
+
+// Tab -> section renderer. `projections` is deliberately absent: it renders from its own
+// feed (Task 1), not from `teams`.
+const SECTION_RENDERERS = {
+  spplus: renderSPPlus, fpi: renderFPI, srs: renderSRS, elo: renderElo,
+  spoff: renderSPOffense, spdef: renderSPDefense, offense: renderOffense,
+  defense: renderDefense, turnovers: renderTurnovers, cpi: renderCPI,
+  recruiting: renderRecruiting, coaching: renderCoaching, portal: renderPortal,
+  composite: renderComposite,
+};
+
+function renderActive() {
+  if (!teams.length) return;
+  renderSummary();                      // summary always reflects the current data
+  const tab = activeTabName();
+  if (tab === 'projections') return;    // Task 1 owns that pane
+  const fn = SECTION_RENDERERS[tab];
+  if (fn) fn(filteredTeams());
+}
+
+// Keep the old name working for any caller, but it no longer means "render everything".
+function renderAll() { renderActive(); }
 
 // ── Tab switching ──
 document.getElementById('tabs').addEventListener('click', e => {
@@ -541,13 +555,29 @@ document.getElementById('tabs').addEventListener('click', e => {
   e.target.classList.add('active');
   document.querySelectorAll('.metric-section').forEach(s => s.classList.remove('active'));
   document.getElementById(e.target.dataset.tab).classList.add('active');
+  currentTab = e.target.dataset.tab;
+  if (currentTab === 'projections') {
+    ensureProjections();                // Task 1: load on first activation, if due
+    return;
+  }
+  renderActive();
 });
 
-// ── Search ──
-document.getElementById('search').addEventListener('input', renderAll);
+// ── Search (Task 7: debounced, and it only re-renders what is on screen) ──
+const SEARCH_DEBOUNCE_MS = 200;
+let searchTimer = null;
+document.getElementById('search').addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    // Projections do not depend on the search query, so typing must not touch them.
+    if (activeTabName() === 'projections') return;
+    renderActive();
+  }, SEARCH_DEBOUNCE_MS);
+});
 
 // ── Auto-refresh: re-read the server's data every 5 min, and whenever the tab
-// regains focus (so a page parked in a background tab is current on return) ──
+// regains focus (so a page parked in a background tab is current on return).
+// Task 1: this no longer drags projections along -- they refresh on their own tab. ──
 setInterval(reloadAnalytics, 5 * 60 * 1000);
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') reloadAnalytics();
@@ -555,35 +585,67 @@ document.addEventListener('visibilitychange', () => {
 
 // ── Init ──
 async function init() {
+  // Task 1: the primary analytics render happens here and NOTHING else is requested.
+  // Projections/odds wait for their tab.
   await fetchAnalytics();
-  await fetchProjectionsAndOdds();
 }
 init();
 
-// ── Projections & Odds Data ──
+// ── Projections & Odds Data (Task 1) ──
+// Loaded on FIRST activation of the Projections & Odds tab, never at startup: the live
+// /api/projections call takes seconds and its pane is hidden by default. The two feeds are
+// independent -- either one failing still renders the other, with a retryable error.
 let projections = [];
 let odds = [];
+const PROJ_TTL_MS = 5 * 60 * 1000;
+const projState = { loaded: false, loading: false, lastAt: 0, generation: 0,
+                    errors: { projections: null, odds: null } };
 
-async function fetchProjectionsAndOdds() {
-  try {
-    const [projRes, oddsRes] = await Promise.all([
-      fetch(`${API}/projections`),
-      fetch(`${API}/odds`)
-    ]);
-    if (projRes.ok) {
-      const projData = await projRes.json();
-      projections = projData.projections || [];
-    }
-    if (oddsRes.ok) {
-      const oddsData = await oddsRes.json();
-      odds = oddsData.odds || [];
-    }
-    document.getElementById('sourceBadge').textContent = `cfbd · ${teams.length} teams · ${odds.length} odds`;
-    renderProjections();
-  } catch (e) {
-    console.error('Projections/Odds load failed:', e);
-  }
+function projectionsDue() {
+  return !projState.loaded || (Date.now() - projState.lastAt) >= PROJ_TTL_MS;
 }
+
+function ensureProjections(force) {
+  if (projState.loading) return;                       // duplicate activation: no 2nd request
+  if (!force && !projectionsDue()) { renderProjections(); return; }
+  loadProjectionsAndOdds();
+}
+
+async function loadFeed(name) {
+  const res = await fetch(name === 'projections' ? `${API}/projections` : `${API}/odds`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return (name === 'projections' ? data.projections : data.odds) || [];
+}
+
+async function loadProjectionsAndOdds(only) {
+  const gen = ++projState.generation;
+  projState.loading = true;
+  renderProjections();                                 // visible loading state
+  const wanted = only ? [only] : ['projections', 'odds'];
+  const results = await Promise.all(wanted.map(async n => {
+    try { return [n, await loadFeed(n), null]; } catch (e) { return [n, null, e]; }
+  }));
+  if (gen !== projState.generation) return;            // superseded: drop the stale response
+  results.forEach(([n, value, err]) => {
+    if (err) { projState.errors[n] = err.message || String(err); }
+    else {
+      projState.errors[n] = null;
+      if (n === 'projections') projections = value; else odds = value;
+    }
+  });
+  projState.loading = false;
+  projState.loaded = true;
+  projState.lastAt = Date.now();
+  document.getElementById('sourceBadge').textContent = `cfbd · ${teams.length} teams · ${odds.length} odds`;
+  renderProjections();
+}
+
+function retryFeed(name) {
+  if (projState.loading) return;
+  loadProjectionsAndOdds(name);
+}
+window.retryFeed = retryFeed;                          // the inline button calls it
 
 // Mascot name mapping for display
 const MASCOT_NAMES = {};
@@ -594,16 +656,30 @@ function getMascotName(name) {
 }
 
 // ── Render Projections & Odds ──
+function feedError(label, name) {
+  return `<div class="proj-card" id="${name}Error">` +
+    `<div class="loading">${label} unavailable — ` +
+    `<button class="tab-btn" onclick="retryFeed('${name}')">Retry</button></div></div>`;
+}
+
 function renderProjections() {
   const container = document.getElementById('projections');
-  if (!projections.length && !odds.length) {
+  const errP = projState.errors.projections;
+  const errO = projState.errors.odds;
+  if (projState.loading && !projections.length && !odds.length) {
+    container.innerHTML = '<div class="loading">Loading projections and odds…</div>';
+    return;
+  }
+  // Only genuinely-empty is "No data"; a failed feed gets its own retryable error above.
+  if (!projections.length && !odds.length && !errP && !errO) {
     container.innerHTML = '<div class="loading">No projection or odds data available.</div>';
     return;
   }
 
   let html = '<div class="projections-grid">';
 
-  // Left column: Top 15 Projections
+  // Left column: Top 15 Projections (or its error, leaving the odds side untouched)
+  if (errP) { html += feedError('Projections', 'projections'); } else {
   html += '<div class="proj-card">';
   html += '<h3><span class="icon">🎯</span> Multi-Factor Projections (Top 15)</h3>';
   const sorted = [...projections].sort((a, b) => b.home_projection.composite - a.home_projection.composite);
@@ -641,9 +717,10 @@ function renderProjections() {
   html += '</div>';
 
   html += '</div>'; // end grid
+  }
 
-  // Full odds table
-  if (odds.length) {
+  // Full odds table (its own error, independent of projections)
+  if (errO) { html += feedError('Odds', 'odds'); } else if (odds.length) {
     html += '<div class="proj-card" style="margin-top: 16px;">';
     html += '<h3><span class="icon">🏈</span> Live Betting Lines</h3>';
     html += '<table class="odds-table"><thead><tr>';

@@ -702,25 +702,41 @@ document.getElementById('refreshBtn').addEventListener('click', () => fetchSched
   // Default to the current season week (server derives it from CFBD's real
   // game dates with a Monday week-over rule: the week flips on the Monday
   // before its Thursday kickoff). ?week=N still overrides for deep links.
-  try {
-    const params = new URLSearchParams(location.search);
-    const forced = parseInt(params.get('week'), 10);
-    if (forced) {
-      currentWeek = forced;
-    } else {
+  const params = new URLSearchParams(location.search);
+  const forced = parseInt(params.get('week'), 10);
+
+  // Task 8: with no forced week these two requests are independent, so issue them
+  // together instead of awaiting one after the other. A forced week skips
+  // /schedule/current-week entirely -- it cannot change the selection.
+  const weekList = loadWeeks();                 // never rejects; keeps its own catch
+  const currentWeekRes = forced ? Promise.resolve(null) : (async () => {
+    try {
       const res = await fetch(`${API}/schedule/current-week`);
-      if (res.ok) {
-        const data = await res.json();
-        currentWeek = data.week || currentWeek;
-      }
+      return res.ok ? await res.json() : null;  // a failed lookup must not kill the page
+    } catch (e) {
+      console.error('Failed to resolve current week:', e);
+      return null;
     }
-  } catch (e) { console.error('Failed to resolve current week:', e); }
-  await loadWeeks();
-  // If the requested week isn't published yet (e.g. a bye week), fall back to
-  // the nearest available one so the page never loads empty by accident.
+  })();
+
+  if (forced) {
+    currentWeek = forced;
+  } else {
+    const data = await currentWeekRes;
+    if (data && data.week) currentWeek = data.week;
+  }
+
+  await weekList;
+  // If the requested week isn't published yet (e.g. a bye week), fall back to the
+  // first available option -- unchanged from before. When the weeks list could not
+  // be loaded at all, KEEP the resolved (or forced) week: falling back to the empty
+  // dropdown's first entry would silently serve week 1.
   const sel = document.getElementById('weekSelect');
-  if (![...sel.options].some(o => o.value === String(currentWeek))) {
-    currentWeek = parseInt(sel.options[0]?.value || '1', 10);
+  const opts = [...sel.options].map(o => o.value);
+  if (opts.length) {
+    if (!opts.includes(String(currentWeek))) currentWeek = parseInt(opts[0], 10);
+  } else if (!currentWeek) {
+    currentWeek = 1;
   }
   fetchSchedule(currentWeek);
 })();

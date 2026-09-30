@@ -4,7 +4,10 @@
 > from, where is it stored, and what reads it" for every dataset. If you change a
 > producer or a reader, update this file **in the same commit**.
 
-Last verified: 2026-09-27, live build **v51** (`code.marker = v51-serve-from-d1`).
+Last verified: 2026-09-30 — live build **v62** (`/api/health` build=v62; Containers API app
+image `...:v62`). The marker/publication rows below marked *(branch)* describe branch
+`perf/d1-snapshot-safety`, which is NOT deployed; prod is v62 and still reads by
+`MAX(recorded_at)`.
 
 ---
 
@@ -26,6 +29,9 @@ bootstrap/fallback only — never the source of truth.
 | page / endpoint | reads | notes |
 |---|---|---|
 | `/api/analytics` | `_served_analytics()` → **D1 first** (v51) | disk file only as fallback |
+| analytics numerics *(branch)* | D1 `stat_observations` **at the stamp named by `app_state.analytics_publication:<season>`** | already published in prod for 2026 (stamp `2026-09-30T16:18:36Z`, 682 teams / 34,552 rows). Never `MAX(recorded_at)`. Marker absent/malformed/counts-mismatched → serving returns nothing, so the archive and the marker must ship together, **marker last**. |
+| analytics identity *(branch)* | live D1 `app_state.analytics_identity` (JSON **string**) | the marker ALSO carries an identity snapshot, but that is an audit/rollback copy and is **not** a serving source: serving it would freeze streak/conf/mascot at the publication stamp |
+| `/api/projections` *(branch)* | cached in-process, keyed by the published stamp | hidden tabs no longer trigger it at all: the Analytics page requests projections/odds only when that tab is first opened |
 | `/api/rankings` | `_build_team_map()` → `_served_analytics()` | composite computed per request, 60s cache |
 | `/schedule`, `/win-totals` | same `_build_team_map()` | |
 | `/api/matchup` | `_served_analytics()` | |
