@@ -280,14 +280,88 @@ def team_analytics_rows(teams, keys=None, season: int = 0, week: int | None = No
     return rows
 
 
+# --- Task 4 + 9: only a COMPLETE pull is ever served (QA rulings Q2/Q6) -------------------
+# The archive is append-only, so `recorded_at = MAX(recorded_at)` let ANY later writer -- an
+# FCS poll, a massey backfill -- become the ENTIRE selected numeric payload for a week: every
+# other metric disappeared and the composite silently imputed 50. Selection is now driven by a
+# durable publication record written LAST, after every chunk has confirmed, holding the pull's
+# stamp, its counts, and the matching string identity. Numerics and identity therefore switch
+# together in ONE app_state upsert, and a partial pull is never promoted because it is
+# invisible to the selector until the record points at it.
+PUBLICATION_KEY_PREFIX = "analytics_publication"
+
+
+def publication_key(season: int) -> str:
+    return f"{PUBLICATION_KEY_PREFIX}:{int(season)}"
+
+
+def analytics_publication(season: int) -> dict | None:
+    """The published complete pull for a season. None when absent/unreadable/malformed."""
+    if not read_enabled():
+        return None
+    try:
+        blob = d1_store.get_app_state(publication_key(season))
+    except Exception as e:  # noqa: BLE001
+        print(f"[d1_write_path] publication read failed for {season}: {e}")
+        return None
+    if not blob:
+        return None
+    try:
+        doc = json.loads(blob)
+    except Exception:  # noqa: BLE001
+        print(f"[d1_write_path] publication record for {season} is malformed; ignoring it")
+        return None
+    return doc if isinstance(doc, dict) else None
+
+
+def publish_analytics_pull(season: int, week: int, stamp: str, n_rows: int, n_teams: int,
+                           identity: dict | None = None) -> int:
+    """Publish a COMPLETE pull: ONE upsert carrying the marker AND the identity blob."""
+    doc = {"season": int(season), "week": int(week), "stamp": str(stamp),
+           "n_rows": int(n_rows), "n_teams": int(n_teams),
+           "identity": identity or {}, "published_at": _now()}
+    return d1_store.set_app_state(publication_key(season), json.dumps(doc))
+
+
+def _selection_counts(season: int, week: int, stamp: str) -> tuple[int, int]:
+    """(rows, teams) actually readable at a stamp — read back, never assumed."""
+    rows = d1_store.query(
+        "SELECT COUNT(*) AS n, COUNT(DISTINCT subject_id) AS t FROM stat_observations "
+        "WHERE season = ? AND week = ? AND subject_type = 'team' AND recorded_at = ?",
+        [int(season), int(week), str(stamp)])
+    if not rows:
+        return 0, 0
+    return int(rows[0].get("n") or 0), int(rows[0].get("t") or 0)
+
+
 @_guard
 def snapshot_team_analytics(teams, keys=None, season: int = 0, week: int | None = None,
-                            source: str = "cfbd") -> int:
-    """Archive per-team season analytics into stat_observations. Returns rows written."""
+                            source: str = "cfbd", publish: bool = True,
+                            identity: dict | None = None) -> int:
+    """Archive per-team season analytics into stat_observations. Returns rows written.
+
+    One stamp for the whole pull (so the pull has an identity the marker can name), then --
+    only when every chunk has confirmed -- ONE publication record naming that stamp. A pull
+    whose readable rows do not cover what it wrote is NOT published, so a later partial
+    writer can never displace it.
+    """
     rows = team_analytics_rows(teams, keys, season, week, source=source)
     if not rows:
         return 0
-    return d1_store.upsert_stat_observations_bulk(rows)
+    stamp = _now()
+    for r in rows:
+        r["recorded_at"] = stamp
+    n = d1_store.upsert_stat_observations_bulk(rows)
+    if not n:
+        return 0
+    if publish:
+        got_rows, got_teams = _selection_counts(season, week, stamp)
+        if got_rows < n:
+            print(f"[d1_write_path] NOT publishing {season} wk{week}: {n} rows confirmed but "
+                  f"only {got_rows} readable at stamp {stamp}")
+            return n
+        publish_analytics_pull(season, week, stamp, got_rows, got_teams, identity)
+    return n
 
 
 def archived_analytics_weeks(season: int) -> list[int]:
@@ -305,30 +379,71 @@ def archived_analytics_weeks(season: int) -> list[int]:
         return []
 
 
+def _fold_rows(rows, want) -> list[dict]:
+    """Fold (team, stat_key, value) rows into one dict per team."""
+    by_tid: dict = {}
+    for r in rows or []:
+        k = r.get("k")
+        if want is not None and k not in want:
+            continue
+        rec = by_tid.setdefault(r.get("tid"), {"team_id": r.get("tid"), "name": r.get("name")})
+        rec[k] = r.get("v")
+    return list(by_tid.values())
+
+
+def _select_at_stamp(season: int, week: int, stamp: str, want):
+    return _fold_rows(d1_store.query(
+        "SELECT o.subject_id AS tid, o.stat_key AS k, o.value AS v, t.name AS name "
+        "FROM stat_observations o LEFT JOIN teams t ON t.team_id = o.subject_id "
+        "WHERE o.season = ? AND o.week = ? AND o.subject_type = 'team' AND o.recorded_at = ?",
+        [int(season), int(week), str(stamp)]), want)
+
+
 def load_team_analytics(season: int, week: int | None = None,
                         keys: list | tuple | None = None) -> list[dict]:
-    """Rebuild team analytics records from D1 (latest archived week when week is None).
+    """SERVING door — the published COMPLETE pull only (Task 4/9).
 
-    The inverse of snapshot_team_analytics: one dict per team keyed by metric name, for
-    report tooling and backtests. Identity is joined from `teams`. Numeric metrics only —
-    the served file also carries mascot/conf/emoji/streak strings, which stat_observations
-    cannot hold, so this is NOT a drop-in file replacement. Returns [] when nothing is
-    archived so callers keep their own fallback.
+    Selection is the publication record's stamp, never `MAX(recorded_at)`: the archive is
+    append-only, so a newer stamp can belong to a single-row poll, which under the old rule
+    became the whole served payload. An absent, malformed, count-mismatched or different-week
+    record yields [] so the caller keeps its own fallback (the disk file) — a partial or
+    unmarked selection is never promoted to visitors.
     """
     if not read_enabled():
         return []
+    pub = analytics_publication(season)
+    if not pub:
+        return []
     try:
-        if week is None:
-            weeks = archived_analytics_weeks(season)
-            if not weeks:
-                return []
-            week = weeks[0]
-        want = set(keys) if keys else None
+        wk, stamp = int(pub.get("week")), str(pub.get("stamp") or "")
+        if week is not None and int(week) != wk:
+            return []
+        if not stamp:
+            return []
+        n_rows, n_teams = _selection_counts(season, wk, stamp)
+        if n_rows != int(pub.get("n_rows") or -1) or n_teams != int(pub.get("n_teams") or -1):
+            print(f"[d1_write_path] publication for {season} wk{wk} does not match the table "
+                  f"(marker {pub.get('n_rows')}/{pub.get('n_teams')}, read back "
+                  f"{n_rows}/{n_teams}); serving the fallback instead")
+            return []
+        return _select_at_stamp(season, wk, stamp, set(keys) if keys else None)
+    except Exception as e:  # noqa: BLE001
+        print(f"[d1_write_path] load_team_analytics failed: {e}")
+        return []
+
+
+def load_team_analytics_raw(season: int, week: int, keys: list | tuple | None = None) -> list[dict]:
+    """HISTORICAL/backtest door — newest stamp for an EXPLICIT week, marker or not.
+
+    Kept because report tooling and backtests read archived seasons that predate the
+    publication record. This is NOT the serving path: unmarked data must never reach a
+    visitor, which is exactly why the two doors are separate functions.
+    """
+    if not read_enabled():
+        return []
+    want = set(keys) if keys else None
+    try:
         if d1_store.stat_obs_append_only():
-            # Phase 4 (F4): the archive is APPEND-ONLY now, so several pulls can share this
-            # (season, week). Serve the NEWEST one explicitly. Relying on the loop below to
-            # let "the last row win" would be luck, not a guarantee -- SQLite makes no promise
-            # about row order without ORDER BY.
             rows = d1_store.query(
                 "SELECT o.subject_id AS tid, o.stat_key AS k, o.value AS v, t.name AS name "
                 "FROM stat_observations o LEFT JOIN teams t ON t.team_id = o.subject_id "
@@ -342,17 +457,9 @@ def load_team_analytics(season: int, week: int | None = None,
                 "FROM stat_observations o LEFT JOIN teams t ON t.team_id = o.subject_id "
                 "WHERE o.season = ? AND o.week = ? AND o.subject_type = 'team'",
                 [int(season), int(week)])
-        by_tid: dict = {}
-        for r in rows or []:
-            k = r.get("k")
-            if want is not None and k not in want:
-                continue
-            rec = by_tid.setdefault(r.get("tid"), {"team_id": r.get("tid"),
-                                                   "name": r.get("name")})
-            rec[k] = r.get("v")
-        return list(by_tid.values())
+        return _fold_rows(rows, want)
     except Exception as e:  # noqa: BLE001
-        print(f"[d1_write_path] load_team_analytics failed: {e}")
+        print(f"[d1_write_path] load_team_analytics_raw failed: {e}")
         return []
 
 

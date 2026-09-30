@@ -87,19 +87,65 @@ def _d1_metric(name, key, week):
     return rows[0]["v"] if rows else None
 
 
+def _d1_metric_map_at(keys, week, stamp):
+    """{(team_name, stat_key): value} for ONE published pull (its exact stamp).
+
+    Serving selects by the publication record's stamp, so parity must too -- comparing
+    against `MAX(recorded_at)` would use the very selector this work order removed, and a
+    later single-row poll would make both sides agree on the wrong snapshot.
+    """
+    if not keys:
+        return {}
+    marks = ",".join("?" * len(keys))
+    rows = _d1().query(
+        f"SELECT t.name n, o.stat_key k, o.value v FROM stat_observations o "
+        f"JOIN teams t ON t.team_id=o.subject_id "
+        f"WHERE o.season=? AND o.week=? AND o.subject_type='team' AND o.recorded_at=? "
+        f"AND o.stat_key IN ({marks})",
+        [SEASON, week, stamp, *keys])
+    return {(r["n"], r["k"]): r["v"] for r in rows}
+
 # --------------------------------------------------------------------------- STRICT
 
 
-def test_served_analytics_equals_d1_newest(served):
-    """Team analytics served on the site must equal D1's newest archived values."""
-    week = _newest_team_week()
-    assert week is not None, "no team rows in stat_observations - D1 has no analytics at all"
+def test_served_analytics_equals_the_published_complete_pull(served):
+    """Serving must equal the EXACT snapshot the publication record names (Task 4).
 
-    stored_map = _d1_metric_map(("sp_plus", "srs"), week)
+    The previous version compared against `MAX(recorded_at)` across all rows for the week --
+    the SAME selector the serving path used, so it could never observe the defect (a later
+    single-row poll displacing the whole pull). Both sides now select one snapshot: the
+    marker's stamp.
+
+    With no publication record, serving is on the documented disk fallback; the fallback
+    contract is then verified explicitly and the run is labelled TRANSITION PENDING rather
+    than being reported as a D1 parity pass.
+    """
+    import json  # noqa: PLC0415
+    import pathlib  # noqa: PLC0415
+
+    import d1_write_path  # noqa: PLC0415
+    pub = d1_write_path.analytics_publication(SEASON)
+    served_teams = served["analytics"]["teams"]
+
+    if not pub:
+        disk = json.loads((pathlib.Path(__file__).resolve().parents[1] / "data"
+                           / "cfbd_analytics.json").read_text(encoding="utf-8"))
+        disk_names = {t.get("name") for t in disk if t.get("name")}
+        served_names = {t.get("name") for t in served_teams}
+        assert len(served_names) >= MIN_TEAMS, "served universe suspiciously small"
+        assert disk_names <= served_names, (
+            "no publication record -> serving must be the documented disk fallback, but "
+            f"{len(disk_names - served_names)} disk team(s) are not served")
+        print("[parity] TRANSITION PENDING: no analytics publication record in D1; verified "
+              "the disk fallback contract only. A complete pull publishes the marker.")
+        return
+
+    week, stamp = int(pub["week"]), str(pub["stamp"])
+    stored_map = _d1_metric_map_at(("sp_plus", "srs"), week, stamp)
     checked, bad = 0, []
     # NB: must be the ANALYTICS payload -- /api/rankings is served from a D1 slate board,
     # so it cannot observe the analytics source at all (learned the hard way 2026-09-28).
-    for t in served["analytics"]["teams"][:40]:
+    for t in served_teams[:40]:
         for key in ("sp_plus", "srs"):
             if t.get(key) is None:
                 continue
@@ -108,12 +154,13 @@ def test_served_analytics_equals_d1_newest(served):
                 continue
             checked += 1
             if abs(float(t[key]) - float(stored)) > TOL:
-                bad.append(f"{t['name']} {key}: served {t[key]} != D1 {stored} (week {week})")
+                bad.append(f"{t['name']} {key}: served {t[key]} != published {stored} "
+                           f"(wk {week}, stamp {stamp})")
 
     assert checked >= MIN_TEAMS, (
         f"only {checked} (team, metric) pairs were comparable - parity is not being "
         "verified. Check the D1 join and the served payload shape, do not loosen this.")
-    assert not bad, "served != stored for:\n" + "\n".join(f"  - {b}" for b in bad)
+    assert not bad, "served != published snapshot for:\n" + "\n".join(f"  - {b}" for b in bad)
 
 
 def test_rankings_board_is_sorted_by_composite_rank(served):

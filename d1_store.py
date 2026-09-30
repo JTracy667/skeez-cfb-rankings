@@ -413,8 +413,69 @@ def stat_observation_insert_sqls(rows: list[dict],
             for c in stat_observation_chunks(rows, max_rows_per_statement)]
 
 
+# --- Task 6 (Q5): recover from a STALE writer mode without risking duplicate writes -------
+# The index swap is a D1 migration that cannot be atomic with an image deploy, so a
+# long-lived process can hold a mode that no longer matches the live index. Recovering means
+# refreshing the mode and retrying ONCE -- but ONLY for a positively identified conflict-target
+# mismatch. Classifying any error that merely mentions "conflict" as a mode change would
+# retry ordinary write failures.
+_CONFLICT_TARGET_SIGNS = (
+    "on conflict clause does not match any primary key or unique constraint",
+    "no such conflict target",
+    "conflict target",
+)
+
+
+def _is_conflict_target_mismatch(exc: Exception) -> bool:
+    msg = f"{exc}".lower()
+    return any(s in msg for s in _CONFLICT_TARGET_SIGNS)
+
+
+def _chunk_rows_present(chunk: list[dict]) -> bool:
+    """True when a chunk's rows are already in the table under its own stamp.
+
+    Needed because append-only writes use `DO NOTHING`: REPLAYING an already-landed chunk
+    confirms 0 new writes, and "0 confirmed" must not be read as "the batch is missing"
+    (QA ruling Q5). One query per zero-confirmed chunk; a chunk is one pull, one week, so
+    its rows share season/week/subject_type/recorded_at and the count is exact.
+    """
+    r0 = chunk[0]
+    rows = query("SELECT COUNT(*) AS n FROM stat_observations WHERE recorded_at = ? "
+                 "AND season = ? AND week = ? AND subject_type = ?",
+                 [r0.get("recorded_at"), r0.get("season"), r0.get("week"),
+                  r0.get("subject_type")])
+    return int((rows[0].get("n") if rows else 0) or 0) >= len(chunk)
+
+
+def _bulk_write_once(rows: list[dict]) -> int:
+    n = 0
+    for chunk in stat_observation_chunks(rows):
+        assert_headroom(len(chunk))
+        _, meta = query_full(stat_observation_insert_sql(chunk), [])
+        confirmed = confirmed_writes(meta)
+        if confirmed <= 0:
+            if _chunk_rows_present(chunk):
+                # Idempotent replay of a chunk that already landed (append-only DO NOTHING).
+                # Counted as SATISFIED, not as zero: the caller's contract is "this pull's rows
+                # are in the archive", and a replay proves exactly that (QA Q5: "zero new writes
+                # on replay does not mean the completed batch is missing").
+                n += len(chunk)
+                continue
+            raise ConfirmedWriteError(
+                f"stat_observations(bulk): D1 confirmed 0 rows written for a "
+                f"{len(chunk)}-row statement and the rows are NOT present (meta={meta})")
+        commit_writes(confirmed)
+        n += confirmed
+    return n
+
+
 def upsert_stat_observations_bulk(rows: list[dict]) -> int:
-    """Idempotent stat_observations upsert with inlined literals (see the note above)."""
+    """Idempotent stat_observations upsert with inlined literals (see the note above).
+
+    Retries the WHOLE write at most once, and only after refreshing a positively identified
+    stale conflict target (Task 6). The stamp is preserved across the retry, so an
+    already-landed chunk replays as a no-op rather than duplicating rows.
+    """
     if not rows:
         return 0
     now = datetime.now(timezone.utc).isoformat()
@@ -423,18 +484,14 @@ def upsert_stat_observations_bulk(rows: list[dict]) -> int:
         r.setdefault("source", "cfbd")
         r.setdefault("week", 0)
         r.setdefault("recorded_at", now)
-    n = 0
-    for chunk in stat_observation_chunks(rows):
-        assert_headroom(len(chunk))
-        _, meta = query_full(stat_observation_insert_sql(chunk), [])
-        confirmed = confirmed_writes(meta)
-        if confirmed <= 0:
-            raise ConfirmedWriteError(
-                f"stat_observations(bulk): D1 confirmed 0 rows written for a "
-                f"{len(chunk)}-row statement (meta={meta})")
-        commit_writes(confirmed)
-        n += confirmed
-    return n
+    try:
+        return _bulk_write_once(rows)
+    except Exception as e:  # noqa: BLE001
+        if not _is_conflict_target_mismatch(e):
+            raise
+        print(f"[d1_store] stale conflict target detected; refreshing index mode: {e}")
+        stat_obs_append_only(refresh=True)
+        return _bulk_write_once(rows)
 
 
 def upsert_games(rows: list[dict]) -> int:

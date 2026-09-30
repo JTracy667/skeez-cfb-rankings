@@ -605,7 +605,14 @@ def run_weekly_analytics_pull() -> dict:
         with open(_CFBD_ANALYTICS_FILE, "w") as f:
             json.dump(analytics, f, indent=2)
         _enrich_with_composite(analytics)
-        _store_team_analytics(analytics)
+        n = _store_team_analytics(analytics)
+        # C4: never advance the serving cache past a failed archive -- the D1 copy is what
+        # the site serves, so a locally-refreshed cache would only hide the failure until
+        # the cache expired. Returning here also leaves the last-pull stamp alone, so the
+        # next scheduler tick retries.
+        if d1_write_path.write_enabled() and n <= 0:
+            print("[analytics] archive did not confirm; serving cache left untouched")
+            return summary
         _cache_set(_analytics_cache, {
             "week": datetime.now().strftime("%B %d, %Y"),
             "season": CFBD_YEAR,
@@ -4129,7 +4136,12 @@ def api_analytics_fetch():
             except Exception as e:
                 print(f"[!] Could not persist analytics to disk: {e}")
             _enrich_with_composite(analytics)
-            _store_team_analytics(analytics)
+            n = _store_team_analytics(analytics)
+            if d1_write_path.write_enabled() and n <= 0:
+                print("[analytics] fetch archive did not confirm; serving cache untouched")
+                return {"status": "archive_failed", "source": "cfbd",
+                        "teams": len(analytics),
+                        "note": "archive did not confirm; serving cache not advanced"}
             result = {
                 "week": datetime.now().strftime("%B %d, %Y"),
                 "season": CFBD_YEAR,
@@ -4406,6 +4418,17 @@ def _load_cfbd_analytics_file():
 ANALYTICS_IDENTITY_KEY = "analytics_identity"   # D1 app_state key -- string fields per team
 
 
+def _identity_map(teams: list[dict]) -> dict:
+    """{name: {string fields}} — every STRING field, never a hand-listed subset."""
+    ident = {}
+    for t in teams or []:
+        name = (t.get("name") or "").strip()
+        if not name:
+            continue
+        ident[name] = {k: v for k, v in t.items() if isinstance(v, str)}
+    return ident
+
+
 def _store_analytics_identity(teams: list[dict]) -> int:
     """Archive the TEAM IDENTITY (all string fields) so serving never needs the disk file.
 
@@ -4421,12 +4444,7 @@ def _store_analytics_identity(teams: list[dict]) -> int:
     Never raises: the site must not care whether the archive succeeded.
     """
     try:
-        ident = {}
-        for t in teams or []:
-            name = (t.get("name") or "").strip()
-            if not name:
-                continue
-            ident[name] = {k: v for k, v in t.items() if isinstance(v, str)}
+        ident = _identity_map(teams)
         if not ident:
             return 0
         blob = json.dumps(ident, ensure_ascii=False)
@@ -4439,7 +4457,18 @@ def _store_analytics_identity(teams: list[dict]) -> int:
 
 
 def _analytics_identity_map() -> dict:
-    """D1 identity fields {name: {string fields}}. {} when unavailable -> caller falls back."""
+    """D1 identity fields {name: {string fields}}. {} when unavailable -> caller falls back.
+
+    Task 9 / Q6: the identity blob RIDES the publication record, so the string fields and
+    the numerics always come from the same complete pull -- a new numeric snapshot can no
+    longer be served against mismatched identity. The standalone `analytics_identity` key
+    stays as the ROLLBACK path (an older image reads it), so moving this read behind the
+    marker cannot silently erase string fields.
+    """
+    pub = d1_write_path.analytics_publication(CFBD_YEAR)
+    ident = (pub or {}).get("identity") or {}
+    if isinstance(ident, dict) and ident:
+        return ident
     try:
         blob = d1_write_path.load_state(ANALYTICS_IDENTITY_KEY)
         if not blob:
@@ -4472,17 +4501,22 @@ def _served_analytics():
     # Identity/string fields cannot live in stat_observations, so they used to come from the
     # image-copied disk file and a recycle reverted them to build-time values (Phase 6). D1
     # holds them now -- so the disk file is read ONLY when D1 has no identity map at all.
-    ident = _analytics_identity_map()
-    disk = [] if ident else (_load_cfbd_analytics_file() or [])
+    # Task 3: check the opt-out BEFORE any D1 read. It used to run the identity query
+    # first, so ANALYTICS_FROM_D1=0 still paid D1 latency (and a D1 outage).
     if os.environ.get("ANALYTICS_FROM_D1", "1") != "1":
         return _load_cfbd_analytics_file() or []
+    ident = _analytics_identity_map()
+    disk = [] if ident else (_load_cfbd_analytics_file() or [])
     try:
         rows = d1_write_path.load_team_analytics(CFBD_YEAR)
     except Exception as e:  # noqa: BLE001 — serving must never depend on D1 being up
         print(f"[analytics] D1 read failed; serving disk file: {e}")
-        return disk
+        return _seed_d1_team_identity(list(disk))
     if not rows:
-        return disk
+        # No published COMPLETE pull (Task 4/9) -> the documented disk fallback. F3 identity
+        # completeness must NOT depend on the numeric marker: a team D1 knows but analytics
+        # never covered is a different (older) defect, and the two must not be coupled.
+        return _seed_d1_team_identity(list(disk))
     by_name = {}
     if ident:
         for nm, fields in ident.items():
@@ -4507,10 +4541,20 @@ def _served_analytics():
                 base[k] = v
         out.append(base)
     out.extend(by_name.values())              # disk teams D1 did not cover (identity only)
-    # F3: D1 `teams` IDENTITY rows are serveable too. A team the identity table knows but the
-    # analytics never covered would otherwise exist in D1 and be unrenderable -- exactly the
-    # drift the parity test exists to catch. IDENTITY ONLY: no numeric field is invented here,
-    # so nothing downstream can read a fabricated value.
+    out = _seed_d1_team_identity(out)
+    print(f"[analytics] served from D1: {len(rows)} teams ({added} not in the disk file)")
+    return out
+
+
+def _seed_d1_team_identity(out: list[dict]) -> list[dict]:
+    """F3: D1 `teams` IDENTITY rows are serveable too. A team the identity table knows but the
+    analytics never covered would otherwise exist in D1 and be unrenderable -- exactly the
+    drift the parity test exists to catch. IDENTITY ONLY: no numeric field is invented here,
+    so nothing downstream can read a fabricated value.
+
+    Applied on BOTH the D1 path and the disk fallback: this is identity completeness, not a
+    numeric claim, so it must not be gated on the publication marker.
+    """
     try:
         seen = {r.get("name") for r in out if r.get("name")}
         for row in d1_write_path.team_identity_rows():
@@ -4521,7 +4565,6 @@ def _served_analytics():
                 seen.add(nm)
     except Exception as e:  # noqa: BLE001
         print(f"[analytics] D1 team-identity seed failed (serving without it): {e}")
-    print(f"[analytics] served from D1: {len(rows)} teams ({added} not in the disk file)")
     return out
 
 
@@ -4543,7 +4586,9 @@ def _store_team_analytics(teams: list[dict]) -> int:
     """
     try:
         week = current_season_week(CFBD_YEAR)
-        n = d1_write_path.snapshot_team_analytics(teams, None, CFBD_YEAR, week)
+        # Task 9: identity rides the SAME publication record as the numerics.
+        n = d1_write_path.snapshot_team_analytics(teams, None, CFBD_YEAR, week,
+                                                  identity=_identity_map(teams))
         if n:
             print(f"[analytics] archived {n} stat_observations rows to D1 (wk{week})")
         # F3: the IDENTITY list rides the same live pull. `teams` used to be written only by a
