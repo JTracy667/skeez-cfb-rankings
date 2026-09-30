@@ -4459,19 +4459,19 @@ def _store_analytics_identity(teams: list[dict]) -> int:
 def _analytics_identity_map(pub: dict | None = d1_write_path._UNSET) -> dict:
     """D1 identity fields {name: {string fields}}. {} when unavailable -> caller falls back.
 
-    Task 9 / Q6: the identity blob RIDES the publication record, so the string fields and
-    the numerics always come from the same complete pull -- a new numeric snapshot can no
-    longer be served against mismatched identity. The standalone `analytics_identity` key
-    stays as the ROLLBACK path (an older image reads it), so moving this read behind the
-    marker cannot silently erase string fields.
+    Task 9 / Q6: an identity snapshot RIDES the publication record, so the read-back proves
+    the string fields and the numerics came from the same complete pull, and the standalone
+    `analytics_identity` key stays as the ROLLBACK path (an older image reads it).
+
+    The snapshot is an AUDIT/rollback copy and is NOT a serving source: serving it would
+    freeze string fields at the publication stamp, so a streak or conference pulled
+    afterwards would not appear until the next publication. Authority is the LIVE key; when
+    it is empty the caller still falls back to disk.
     """
-    # Task 3: the caller may pass the record it already read, so one request performs one
-    # marker read instead of one per consumer.
-    pub = (d1_write_path.analytics_publication(CFBD_YEAR)
-           if pub is d1_write_path._UNSET else pub)
-    ident = (pub or {}).get("identity") or {}
-    if isinstance(ident, dict) and ident:
-        return ident
+    # Task 3: the caller passes the record it already read, so ONE request performs ONE
+    # marker read instead of one per consumer. It is used for the audit read-back, never
+    # as a serving source.
+    _ = pub
     try:
         blob = d1_write_path.load_state(ANALYTICS_IDENTITY_KEY)
         if not blob:
