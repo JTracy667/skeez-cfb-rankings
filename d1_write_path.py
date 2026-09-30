@@ -386,9 +386,15 @@ def snapshot_team_analytics(teams, keys=None, season: int = 0, week: int | None 
     if not n:
         return 0
     if publish:
+        # D1's meta.rows_written counts INDEX maintenance, not rows: measured on a scratch
+        # database, a 2-row stat_observations insert reports 7 (one row + both indexes).
+        # Completeness is therefore checked with READ-BACK ROWS against the rows this pull
+        # intended to write. Comparing against `n` would refuse to publish forever on real D1
+        # -- exactly the kind of provider-specific defect SQLite cannot show.
+        expected = len(rows)
         got_rows, got_teams = _selection_counts(season, week, stamp)
-        if got_rows < n:
-            print(f"[d1_write_path] NOT publishing {season} wk{week}: {n} rows confirmed but "
+        if got_rows < expected:
+            print(f"[d1_write_path] NOT publishing {season} wk{week}: intended {expected} rows, "
                   f"only {got_rows} readable at stamp {stamp}")
             return n
         publish_analytics_pull(season, week, stamp, got_rows, got_teams, identity)

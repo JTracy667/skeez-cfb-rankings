@@ -163,3 +163,33 @@ def test_interrupted_multichunk_write_publishes_nothing(monkeypatch):
     resumed = dw.load_team_analytics(SEASON)
     assert len({r["name"] for r in resumed}) == 500
     assert all(r.get("sp_plus") is not None for r in resumed)
+
+
+def test_publication_is_not_refused_when_d1_reports_index_inflated_writes(monkeypatch):
+    """D1's meta.rows_written counts INDEX MAINTENANCE, not rows.
+
+    Measured on the real provider (2026-09-30, scratch D1): a 2-row stat_observations
+    insert reports 7. So completeness must be judged on READ-BACK ROWS. Comparing against
+    that number refuses to publish forever on real D1 -- and every hermetic test would
+    still be green, which is exactly why this case is pinned here.
+    """
+    conn = H.open_sqlite("append")
+    _seed_teams(conn)
+    H.patch_d1(monkeypatch, conn)
+    import d1_store
+    import d1_write_path as dw
+
+    real = d1_store.query_full
+
+    def inflated(sql, params=None, timeout=60):
+        rows, meta = real(sql, params, timeout)
+        if sql.startswith("INSERT INTO stat_observations") and meta:
+            meta = {"rows_written": int(meta.get("rows_written", 0)) * 3 + 1}
+        return rows, meta
+
+    monkeypatch.setattr(d1_store, "query_full", inflated)
+    assert dw.snapshot_team_analytics(TEAMS, KEYS, SEASON, WEEK) > 0
+    pub = dw.analytics_publication(SEASON)
+    assert pub is not None, "the pull must still publish"
+    assert pub["n_rows"] == 9, f"marker must record ROWS (9), got {pub.get('n_rows')}"
+    assert len(dw.load_team_analytics(SEASON)) == 3
