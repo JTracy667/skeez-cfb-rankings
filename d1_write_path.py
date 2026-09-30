@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from datetime import datetime, timezone
 
 import d1_store
@@ -108,14 +109,37 @@ def team_name_to_id() -> dict:
     return {r["name"]: r["team_id"] for r in d1_store.query("SELECT team_id, name FROM teams")}
 
 
-def team_identity_rows() -> list[dict]:
-    """Every team D1 `teams` knows: {name, conference}. READ-ONLY.
+# Task 3 (QA Q3/Q7): `teams` identity is read on EVERY serving request but changes only when
+# a pull writes it (locally or in another container), so a bounded TTL is the documented
+# trade: at most TEAM_IDENTITY_TTL seconds of lag on the IDENTITY list -- never on the
+# numerics, which stay exact via the publication record. A local write invalidates it
+# immediately.
+TEAM_IDENTITY_TTL = 300
+_TEAM_IDENTITY_CACHE: dict = {"at": 0.0, "rows": None}
+
+
+def invalidate_team_identity_cache() -> None:
+    """Called after a successful local `teams` write so identity is never stale locally."""
+    _TEAM_IDENTITY_CACHE["at"] = 0.0
+    _TEAM_IDENTITY_CACHE["rows"] = None
+
+
+def team_identity_rows(ttl: int | None = None) -> list[dict]:
+    """Every team D1 `teams` knows: {name, conference}. READ-ONLY, bounded-TTL cached.
 
     Used to make the served universe cover D1's identity list (F3) -- a team D1 knows but the
     site cannot render is drift the parity test is supposed to catch, so the site must be able
     to render all of them.
     """
-    return d1_store.query("SELECT name, conference FROM teams")
+    ttl = TEAM_IDENTITY_TTL if ttl is None else ttl
+    now = time.monotonic()
+    cached = _TEAM_IDENTITY_CACHE["rows"]
+    if cached is not None and (now - _TEAM_IDENTITY_CACHE["at"]) < ttl:
+        return cached
+    rows = d1_store.query("SELECT name, conference FROM teams") or []
+    _TEAM_IDENTITY_CACHE["rows"] = rows
+    _TEAM_IDENTITY_CACHE["at"] = now
+    return rows
 
 
 @_guard
@@ -134,7 +158,10 @@ def snapshot_team_identity(rows: list[dict]) -> int:
     """
     if not rows:
         return 0
-    return d1_store.upsert_teams(rows)
+    n = d1_store.upsert_teams(rows)
+    if n:
+        invalidate_team_identity_cache()
+    return n
 
 
 def game_ids_by_pair(season: int | None = None, normalizer=None) -> dict:
@@ -290,6 +317,10 @@ def team_analytics_rows(teams, keys=None, season: int = 0, week: int | None = No
 # invisible to the selector until the record points at it.
 PUBLICATION_KEY_PREFIX = "analytics_publication"
 
+# "the caller did not supply a record" vs "the caller found none". Without this, a
+# caller that legitimately read None would trigger a second marker read (Task 3).
+_UNSET = object()
+
 
 def publication_key(season: int) -> str:
     return f"{PUBLICATION_KEY_PREFIX}:{int(season)}"
@@ -400,7 +431,8 @@ def _select_at_stamp(season: int, week: int, stamp: str, want):
 
 
 def load_team_analytics(season: int, week: int | None = None,
-                        keys: list | tuple | None = None) -> list[dict]:
+                        keys: list | tuple | None = None,
+                        pub: dict | None = _UNSET) -> list[dict]:
     """SERVING door — the published COMPLETE pull only (Task 4/9).
 
     Selection is the publication record's stamp, never `MAX(recorded_at)`: the archive is
@@ -411,7 +443,9 @@ def load_team_analytics(season: int, week: int | None = None,
     """
     if not read_enabled():
         return []
-    pub = analytics_publication(season)
+    # Task 3: accept a record the caller already read, so ONE request performs ONE marker
+    # read instead of one per consumer (_served_analytics and this function both need it).
+    pub = analytics_publication(season) if pub is _UNSET else pub
     if not pub:
         return []
     try:

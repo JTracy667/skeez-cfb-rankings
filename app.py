@@ -21,7 +21,7 @@ import d1_write_path  # D1 live write-path (gated by D1_WRITE_ENABLED; never bre
 import uvicorn
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -4456,7 +4456,7 @@ def _store_analytics_identity(teams: list[dict]) -> int:
         return 0
 
 
-def _analytics_identity_map() -> dict:
+def _analytics_identity_map(pub: dict | None = d1_write_path._UNSET) -> dict:
     """D1 identity fields {name: {string fields}}. {} when unavailable -> caller falls back.
 
     Task 9 / Q6: the identity blob RIDES the publication record, so the string fields and
@@ -4465,7 +4465,10 @@ def _analytics_identity_map() -> dict:
     stays as the ROLLBACK path (an older image reads it), so moving this read behind the
     marker cannot silently erase string fields.
     """
-    pub = d1_write_path.analytics_publication(CFBD_YEAR)
+    # Task 3: the caller may pass the record it already read, so one request performs one
+    # marker read instead of one per consumer.
+    pub = (d1_write_path.analytics_publication(CFBD_YEAR)
+           if pub is d1_write_path._UNSET else pub)
     ident = (pub or {}).get("identity") or {}
     if isinstance(ident, dict) and ident:
         return ident
@@ -4505,10 +4508,13 @@ def _served_analytics():
     # first, so ANALYTICS_FROM_D1=0 still paid D1 latency (and a D1 outage).
     if os.environ.get("ANALYTICS_FROM_D1", "1") != "1":
         return _load_cfbd_analytics_file() or []
-    ident = _analytics_identity_map()
+    # Task 3: ONE marker read per request, shared by the identity map and the numeric
+    # selection (each used to read it separately).
+    pub = d1_write_path.analytics_publication(CFBD_YEAR)
+    ident = _analytics_identity_map(pub)
     disk = [] if ident else (_load_cfbd_analytics_file() or [])
     try:
-        rows = d1_write_path.load_team_analytics(CFBD_YEAR)
+        rows = d1_write_path.load_team_analytics(CFBD_YEAR, pub=pub)
     except Exception as e:  # noqa: BLE001 — serving must never depend on D1 being up
         print(f"[analytics] D1 read failed; serving disk file: {e}")
         return _seed_d1_team_identity(list(disk))
@@ -4822,31 +4828,63 @@ def api_odds():
         return {"error": str(e), "odds": []}
 
 
+# Task 2 (QA Q3/Q7): the projection pass is the expensive one -- 687 teams x 2 directions,
+# recomputed on EVERY request with no endpoint cache. The key is the PUBLICATION IDENTITY
+# (season, stamp, week) plus the live week and composite_version(), so invalidation is exact
+# across processes/containers instead of a TTL guess, and a weights change (env override or
+# code) invalidates automatically because composite_version() is a hash of the active config.
+# Disk-fallback state is a DISTINCT identity ("disk"): its inputs are not a published pull.
+_proj_cache: dict = {"key": None, "body": None}
+# Narrowly scoped to THIS endpoint: concurrent misses must not run the pass twice, and no
+# other endpoint ever waits on this lock.
+_proj_lock = threading.Lock()
+
+
+def _projections_cache_key(wk) -> tuple:
+    pub = d1_write_path.analytics_publication(CFBD_YEAR)
+    return (CFBD_YEAR, (pub or {}).get("stamp") or "disk", (pub or {}).get("week"),
+            wk, composite_version())
+
+
 @app.get("/api/projections")
 def api_projections():
-    """Get multi-factor projections for ALL FBS teams + live betting odds overlay."""
+    """Get multi-factor projections for ALL FBS teams + live betting odds overlay.
+
+    Warm requests are served from a payload keyed by the published pull, so the exact
+    projection values, team universe, ordering and response shape are unchanged -- the
+    bytes returned for a given key are the bytes that were computed for it.
+    """
     try:
-        # Use the full FBS analytics set (687 teams), not just the 25 ranked
-        # teams, so the frontend's "Bottom 10" shows the actual worst teams.
-        all_teams = _served_analytics()   # D1-first (Phase 6)
-        if not all_teams:
-            # Fallback to ranked teams if analytics file is missing
-            rankings = get_rankings()
-            all_teams = [t.model_dump() if hasattr(t, 'model_dump') else t.dict()
-                         for t in rankings.teams]
-        projections = []
         _wk = live_week()
-        for td in all_teams:
-            home_proj = project_score_multi_factor(td, is_home=True, week=_wk)
-            away_proj = project_score_multi_factor(td, is_home=False, week=_wk)
-            projections.append({
-                **td,
-                "home_projection": home_proj,
-                "away_projection": away_proj,
-            })
-        # Sort by composite (home) descending
-        projections.sort(key=lambda x: x["home_projection"]["composite"], reverse=True)
-        return {"projections": projections, "count": len(projections)}
+        key = _projections_cache_key(_wk)
+        if _proj_cache["key"] == key and _proj_cache["body"] is not None:
+            return Response(content=_proj_cache["body"], media_type="application/json")
+        with _proj_lock:
+            if _proj_cache["key"] == key and _proj_cache["body"] is not None:
+                return Response(content=_proj_cache["body"],
+                                media_type="application/json")
+            # Use the full FBS analytics set (687 teams), not just the 25 ranked
+            # teams, so the frontend's "Bottom 10" shows the actual worst teams.
+            all_teams = _served_analytics()   # D1-first (Phase 6)
+            if not all_teams:
+                # Fallback to ranked teams if analytics file is missing
+                rankings = get_rankings()
+                all_teams = [t.model_dump() if hasattr(t, 'model_dump') else t.dict()
+                             for t in rankings.teams]
+            projections = []
+            for td in all_teams:
+                home_proj = project_score_multi_factor(td, is_home=True, week=_wk)
+                away_proj = project_score_multi_factor(td, is_home=False, week=_wk)
+                projections.append({
+                    **td,
+                    "home_projection": home_proj,
+                    "away_projection": away_proj,
+                })
+            # Sort by composite (home) descending
+            projections.sort(key=lambda x: x["home_projection"]["composite"], reverse=True)
+            body = json.dumps({"projections": projections, "count": len(projections)})
+            _proj_cache["key"], _proj_cache["body"] = key, body
+            return Response(content=body, media_type="application/json")
     except Exception as e:
         print(f"[GET /api/projections ERROR] {e}")
         return {"error": str(e), "projections": []}
