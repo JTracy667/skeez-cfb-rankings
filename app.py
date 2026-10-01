@@ -1274,7 +1274,7 @@ def api_boards_status():
     return out
 
 
-CODE_MARKER = "v62-stat-obs-append-only"   # bump when a release must be provably live
+CODE_MARKER = "v63-outage-stale-serve"   # bump when a release must be provably live
 
 
 _IDENTITY_CACHE: dict | None = None
