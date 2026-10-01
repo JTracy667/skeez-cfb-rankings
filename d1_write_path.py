@@ -15,6 +15,7 @@ Two hard rules (from D1_RISK_REGISTER):
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from runtime_paths import data_dir as _rt_data_dir
 import os
@@ -376,6 +377,24 @@ def _manifest_reasons(man: dict) -> list[str]:
     return why
 
 
+def _value_digest(pairs) -> str:
+    """A stable fingerprint of a (subject_id, stat_key, value) set.
+
+    Both sides canonicalise the value the same way, so an int on one path and a float on the
+    other cannot produce a false mismatch. Order-independent (sorted) because the read-back and
+    the serving select do not share a row order.
+    """
+    parts = []
+    for sid, key, val in pairs:
+        try:
+            v = f"{float(val):.6f}"
+        except (TypeError, ValueError):
+            v = str(val)
+        parts.append(f"{int(sid)}|{key}|{v}")
+    blob = "\n".join(sorted(parts))
+    return hashlib.sha1(blob.encode("utf-8")).hexdigest()
+
+
 def _read_back_rows(season: int, week: int, stamp: str, expected: int,
                     page: int = 1000) -> list[dict]:
     """Every row actually readable at the stamp: (subject_id, stat_key, value).
@@ -403,14 +422,16 @@ def _read_back_rows(season: int, week: int, stamp: str, expected: int,
 
 
 def publish_analytics_pull(season: int, week: int, stamp: str, n_rows: int, n_teams: int,
-                           identity: dict | None = None, keys: list[str] | None = None) -> int:
-    """Publish a COMPLETE pull: ONE upsert carrying the marker, the identity blob, and the
-    manifest (row/team counts and the exact stat-key set) so a reader can audit what the
-    marker claims without trusting the writer."""
+                           identity: dict | None = None, keys: list[str] | None = None,
+                           digest: str | None = None) -> int:
+    """Publish a COMPLETE pull: ONE upsert carrying the marker, the identity blob, the manifest
+    (row/team counts and the exact stat-key set) and a digest of the verified VALUES, so a
+    reader can audit what the marker claims without trusting the writer."""
     doc = {"season": int(season), "week": int(week), "stamp": str(stamp),
            "n_rows": int(n_rows), "n_teams": int(n_teams),
            "keys": sorted(str(k) for k in (keys or [])),
            "n_keys": len(keys or []),
+           "digest": str(digest or ""),
            "identity": identity or {}, "published_at": _now()}
     return d1_store.set_app_state(publication_key(season), json.dumps(doc))
 
@@ -486,8 +507,11 @@ def snapshot_team_analytics(teams, keys=None, season: int = 0, week: int | None 
                   + (f"; e.g. missing={missing[:2]} extra={extra[:2]} wrong={wrong[:2]}"
                      if (missing or extra or wrong) else ""))
             return n
+        # QA round 3: publish a digest of the EXACT values that were verified, so a reader can
+        # prove later that the stored snapshot is still the one the marker names.
         publish_analytics_pull(season, week, stamp, got_rows, got_teams, identity,
-                               keys=man["keys"])
+                               keys=man["keys"],
+                               digest=_value_digest((k[0], k[1], v) for k, v in exp.items()))
     return n
 
 
@@ -526,6 +550,15 @@ def _select_at_stamp(season: int, week: int, stamp: str, want):
         [int(season), int(week), str(stamp)]), want)
 
 
+def _select_raw_at_stamp(season: int, week: int, stamp: str) -> list[dict]:
+    """The stamp's rows UNFOLDED, so they can be digested before being served."""
+    return d1_store.query(
+        "SELECT o.subject_id AS tid, o.stat_key AS k, o.value AS v, t.name AS name "
+        "FROM stat_observations o LEFT JOIN teams t ON t.team_id = o.subject_id "
+        "WHERE o.season = ? AND o.week = ? AND o.subject_type = 'team' AND o.recorded_at = ?",
+        [int(season), int(week), str(stamp)]) or []
+
+
 def load_team_analytics(season: int, week: int | None = None,
                         keys: list | tuple | None = None,
                         pub: dict | None = _UNSET) -> list[dict]:
@@ -556,7 +589,24 @@ def load_team_analytics(season: int, week: int | None = None,
                   f"(marker {pub.get('n_rows')}/{pub.get('n_teams')}, read back "
                   f"{n_rows}/{n_teams}); serving the fallback instead")
             return []
-        return _select_at_stamp(season, wk, stamp, set(keys) if keys else None)
+        rows = _select_raw_at_stamp(season, wk, stamp)
+        # QA round 3: counts are not integrity. A value changed under the SAME stamp keeps the
+        # row and team counts identical -- an offsetting +5/-5 pair leaves even the sums equal --
+        # so the marker alone cannot vouch for what is stored. Recompute the digest the
+        # publisher verified and refuse to serve a snapshot that no longer matches it.
+        marker_digest = str(pub.get("digest") or "")
+        if marker_digest:
+            got_digest = _value_digest((r.get("tid"), r.get("k"), r.get("v")) for r in rows)
+            if got_digest != marker_digest:
+                print(f"[d1_write_path] publication for {season} wk{wk} FAILED its value digest: "
+                      "the stored snapshot is not the one the marker names; serving the fallback "
+                      "instead")
+                return []
+        else:
+            # A marker written before digests existed: serve it, but never call it verified.
+            print(f"[d1_write_path] publication for {season} wk{wk} carries no value digest "
+                  "(predates it): serving UNVERIFIED")
+        return _fold_rows(rows, set(keys) if keys else None)
     except Exception as e:  # noqa: BLE001
         print(f"[d1_write_path] load_team_analytics failed: {e}")
         return []

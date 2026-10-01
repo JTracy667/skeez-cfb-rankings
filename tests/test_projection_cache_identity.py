@@ -37,18 +37,25 @@ def test_missing_fallback_file_is_its_own_identity(monkeypatch, tmp_path):
     assert "disk:absent" in str(app._projections_cache_key(5))
 
 
-def test_degraded_serve_state_is_part_of_the_fallback_key(monkeypatch, tmp_path):
+def test_the_fallback_key_is_stable_while_serve_state_changes(monkeypatch, tmp_path):
+    """The key must not depend on state that serving itself mutates.
+
+    An earlier version put `_ANALYTICS_SERVE` in the key, so the first request keyed on
+    "unknown" and its own warm follow-up keyed on "disk (no verified publication)" -- every
+    hit missed and the payload was recomputed on every request.
+    """
     f = tmp_path / "cfbd_analytics.json"
     f.write_text("{}", encoding="utf-8")
     monkeypatch.setattr(app, "_CFBD_ANALYTICS_FILE", f)
     monkeypatch.setattr(app.d1_write_path, "analytics_publication", lambda season: None)
+    monkeypatch.setattr(app, "_analytics_identity_map", lambda pub=None: {})
 
+    app._set_serve_state("unknown", False, "")
+    before_serving = app._projections_cache_key(5)
     app._set_serve_state("disk (no verified publication)", True, "no marker")
-    degraded = app._projections_cache_key(5)
-    app._set_serve_state("d1", False, "")
-    verified = app._projections_cache_key(5)
+    after_serving = app._projections_cache_key(5)
 
-    assert degraded != verified, "a degraded serve must not share a key with a verified one"
+    assert before_serving == after_serving, "a warm hit must still hit"
 
 
 def test_a_published_pull_keys_on_the_pull_not_the_disk(monkeypatch, tmp_path):
@@ -78,19 +85,26 @@ def test_an_empty_projection_set_is_not_cached_as_fresh(monkeypatch):
     assert app._proj_cache["body"] is None, "an empty result must not be cached as fresh"
 
 
-def test_a_degraded_result_is_not_cached_as_fresh(monkeypatch):
-    monkeypatch.setattr(app, "live_week", lambda: 5)
-    monkeypatch.setattr(app, "_served_analytics",
-                        lambda: [{"name": "Georgia", "sp_plus": 30.2, "conf": "SEC",
-                                  "mascot": "Bulldogs"}])
+def test_a_fallback_payload_is_not_reused_once_a_publication_appears(monkeypatch, tmp_path):
+    """A payload built from the fallback must never satisfy a request that has a publication.
+
+    The store decision is INPUT-based, not `_ANALYTICS_SERVE`-based: that global is set by
+    whichever request served last, so gating the cache on it made a warm follow-up depend on
+    unrelated state (and putting it in the key made every warm hit miss, because serving SETS
+    it). Which door produced a payload is carried by the key itself instead.
+    """
+    monkeypatch.setattr(app, "_CFBD_ANALYTICS_FILE", tmp_path / "cfbd_analytics.json")
+    monkeypatch.setattr(app, "_analytics_identity_map", lambda pub=None: {"G": {}})
     monkeypatch.setattr(app.d1_write_path, "analytics_publication", lambda season: None)
     app._set_serve_state("disk (no verified publication)", True, "no marker")
-    app._proj_cache["key"], app._proj_cache["body"] = None, None
+    fallback_key = app._projections_cache_key(5)
 
-    app.api_projections()
+    monkeypatch.setattr(app.d1_write_path, "analytics_publication", lambda season: _pub())
+    app._set_serve_state("d1", False, "")
+    verified_key = app._projections_cache_key(5)
 
-    assert app._proj_cache["body"] is None, \
-        "a payload computed from a degraded serve must not be cached as fresh"
+    assert fallback_key != verified_key, (
+        "a fallback payload must not be reused once a verified publication exists")
 
 
 def test_a_verified_result_is_cached(monkeypatch):

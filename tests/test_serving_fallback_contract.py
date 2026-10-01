@@ -89,7 +89,7 @@ def test_building_a_board_refuses_the_disk_fallback(monkeypatch):
 
 def test_verified_publication_reports_d1_and_not_degraded(monkeypatch):
     _stub_d1(monkeypatch, pub={"stamp": "2026-09-30T16:18:36Z", "week": 5,
-                               "identity": {"Georgia": {"mascot": "Bulldogs", "conf": "SEC"}}},
+                               "identity": {"Georgia": {"mascot": "Bulldogs", "conf": "SEC"}}, "digest": "dd"},
              rows=[{"name": "Georgia", "sp_plus": 30.2}])
     monkeypatch.setattr(app, "_analytics_identity_map",
                         lambda pub=None: {"Georgia": {"mascot": "Bulldogs", "conf": "SEC"}})
@@ -132,7 +132,8 @@ def test_publication_with_rows_but_no_live_identity_serves_without_crashing(monk
     the disk fallback was refactored into a lazy helper, but the success path still read the
     old `disk` local. Serving must never raise.
     """
-    _stub_d1(monkeypatch, pub={"stamp": "2026-09-30T16:18:36Z", "week": 5, "identity": {}},
+    _stub_d1(monkeypatch, pub={"stamp": "2026-09-30T16:18:36Z", "week": 5, "digest": "dd",
+                 "identity": {}},
              rows=[{"name": "Georgia", "sp_plus": 30.2}])
     monkeypatch.setattr(app, "_analytics_identity_map", lambda pub=None: {})
     monkeypatch.setattr(app, "_load_cfbd_analytics_file",

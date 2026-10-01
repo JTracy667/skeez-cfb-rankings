@@ -4620,6 +4620,11 @@ def _served_analytics():
         print(f"[analytics] WARNING: {len(stray)} rows outside the published identity universe")
         _set_serve_state("d1 (mixed universe)", True,
                          f"{len(stray)} rows outside the published snapshot")
+    elif not str((pub or {}).get("digest") or ""):
+        # QA round 3: a marker that carries no value digest cannot vouch for what is stored.
+        # Serve it (a missing digest is not a data defect) but never call it verified.
+        _set_serve_state("d1 (unverified marker)", True,
+                         "publication predates the value digest")
     else:
         _set_serve_state("d1", False, "")
     return out
@@ -4956,10 +4961,11 @@ def _projections_cache_key(wk) -> tuple:
     if pub and pub.get("stamp"):
         source = ("pull", pub.get("stamp"), pub.get("n_rows"), pub.get("n_keys"), ident_digest)
     else:
-        # Not a published pull: identify the actual fallback input AND whether that serve was
-        # degraded, so a degraded result can never be mistaken for a verified one.
-        source = ("fallback", _disk_input_identity(), _ANALYTICS_SERVE.get("source"),
-                  _ANALYTICS_SERVE.get("degraded"), ident_digest)
+        # Not a published pull: identify the actual fallback INPUT. The serve state is
+        # deliberately NOT in the key -- serving SETS that state, so including it made the key
+        # differ between a request and its own warm follow-up and every cache hit missed.
+        # "Do not cache a degraded result" is enforced where the payload is stored instead.
+        source = ("fallback", _disk_input_identity(), ident_digest)
     return (CFBD_YEAR, source, (pub or {}).get("week"), wk, composite_version())
 
 
@@ -5000,15 +5006,18 @@ def api_projections():
             # Sort by composite (home) descending
             projections.sort(key=lambda x: x["home_projection"]["composite"], reverse=True)
             body = json.dumps({"projections": projections, "count": len(projections)})
-            # QA §6: an empty payload, or one computed while the analytics serve was
-            # degraded, is NOT a fresh result -- caching it would pin a bad answer in place
-            # for as long as the (unchanged) key holds.
-            if projections and not _ANALYTICS_SERVE.get("degraded"):
+            # QA §6: an EMPTY payload is not a fresh result -- caching it would pin a bad
+            # answer in place for as long as its key holds.
+            #
+            # The store decision is INPUT-based, never `_ANALYTICS_SERVE`-based. That global is
+            # mutable state set by whatever served LAST, so gating on it made caching depend on
+            # an unrelated request (and on the key it would then also change -- a self-
+            # invalidating cache). Which door produced the payload is already in the key: a
+            # fallback keys on the disk input, a publication keys on the marker.
+            if projections:
                 _proj_cache["key"], _proj_cache["body"] = key, body
             else:
-                print(f"[projections] not caching: {len(projections)} projections, "
-                      f"serve={_ANALYTICS_SERVE.get('source')} "
-                      f"degraded={_ANALYTICS_SERVE.get('degraded')}")
+                print("[projections] not caching an empty projection set")
             return Response(content=body, media_type="application/json")
     except Exception as e:
         print(f"[GET /api/projections ERROR] {e}")

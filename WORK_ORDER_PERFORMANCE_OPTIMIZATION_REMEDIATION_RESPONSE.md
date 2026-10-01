@@ -351,3 +351,86 @@ shape I had in mind rather than the counterexample: no test served a publication
 live identity map, none compared a cached payload against a changed input, and my manifest was
 the first thing I thought of rather than the strongest thing available. The suite passing at
 151 was not evidence for those paths, and QA's probes were.
+
+---
+
+# Round 3 — QA's reader-integrity finding
+
+QA reran `3e14fa2` and confirmed the four round-two counterexamples are fixed, then refuted the
+candidate on one remaining requirement:
+
+> the reader trusts a marker after the stored values change … the new exact-row comparison
+> protects publication time; the serving reader still checks only row and team counts
+> (d1_write_path.py:553–559).
+
+**Correct, and it was the sharper version of my own fix.** I verified values when publishing
+and then let the reader trust the marker forever. Drift after publication is exactly what a
+marker cannot see.
+
+## Fix
+
+- **Writer:** `_value_digest()` — a sha1 over the exact `(subject_id, stat_key, value)` set that
+  was verified — is stored in the marker. Both sides canonicalise the value identically
+  (`%.6f`) so an int on one path and a float on the other cannot produce a false mismatch.
+- **Reader:** `load_team_analytics()` selects the stamp's rows, recomputes the digest over
+  exactly those rows, and **returns `[]` on mismatch** — so the altered snapshot is never
+  served; the caller serves its documented fallback and reports degraded. The count check stays
+  as a cheap first gate.
+- **Legacy markers** (written before digests, including the production marker from
+  2026-09-30) carry no digest. They still serve — a missing digest is not a data defect — but
+  the serve is reported as `d1 (unverified marker)`, degraded, so it is never *called*
+  verified. The next authoritative pull stores a digest and the state becomes `d1`.
+
+## The regression QA asked for
+
+`tests/test_published_snapshot_integrity.py`, 4 tests:
+
+- `test_a_published_snapshot_is_served_when_untouched` — positive control, so the check is not
+  simply refusing everything.
+- `test_a_value_changed_after_publication_is_not_served` — publish 24,000 rows, then change two
+  values under the same stamp from 10/10 to **15/5**; the test first asserts on the same
+  connection that the row count, team count and every per-key sum are unchanged (proving the
+  old check was blind), then asserts the snapshot is not served.
+- `test_the_serve_path_reports_the_failure_and_falls_back` — end to end: the altered value
+  never reaches the response, and the serve reports degraded.
+- `test_a_marker_without_a_digest_serves_but_is_never_called_verified`.
+
+## Two defects I introduced and caught while doing this
+
+1. **`hashlib` was not imported in `d1_write_path.py`.** The new digest call raised
+   `NameError`, and `@_guard` swallowed it into a *silent* "no publication" — the fixture's
+   `assert pub is not None` is what caught it. This is precisely the failure mode the skill
+   warns about: a guarded write failure is indistinguishable from a quiet one.
+2. **My round-two cache key included `_ANALYTICS_SERVE`, which serving itself sets.** The first
+   request keyed on `unknown`, its own warm follow-up keyed on `disk (no verified publication)`
+   — so every cache hit missed and the payload was recomputed on every request. The existing
+   warm-cache test caught it. Both the key and the store decision are now **input-based**: the
+   key carries which door produced the payload (marker vs disk input + identity digest) and the
+   store is skipped only for an empty payload.
+
+## Correction to the round-one report
+
+Round one claimed the cache "caches neither an empty nor a degraded payload". The accurate
+statement is: **an empty payload is never cached, and the door that produced a payload is part
+of its key**, so a fallback payload can never satisfy a request that has a verified publication.
+Gating the store on the degraded flag was the fragile version of that idea and has been removed.
+
+## Round 3 results
+
+| gate | result |
+|---|---|
+| `python -m pytest tests/` | **160 passed, 4 skipped** (was 156) |
+| `node --test tests/js/*.test.mjs` | **21 passed** |
+| `scripts/run_enforcement_tests.py --all` | **ENFORCEMENT GATE: PASS** |
+| `tests/test_d1_provider_specific.py` (scratch D1) | **4 passed** |
+| `node scripts/verify_pages_live.mjs` | **ALL LIVE PAGE CHECKS PASSED** |
+
+## One consequence to be explicit about
+
+Production's existing marker (`analytics_publication:2026`, written 2026-09-30) predates the
+digest, so until the next authoritative weekly pull rewrites it, prod serves are reported as
+`d1 (unverified marker)` and `serve.degraded` is **true**. Nothing is blanked and nothing is
+hidden — the data still serves exactly as before, it is just labelled for what it is. No
+production write was made to change this. If Jeff wants it verified immediately rather than at
+the next pull, that is a one-off marker rewrite: a production write, which needs his explicit
+approval.
