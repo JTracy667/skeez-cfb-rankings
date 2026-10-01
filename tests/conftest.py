@@ -50,6 +50,12 @@ if not os.environ.get("CFB_DATA_DIR"):
 #   ledger and the Cloudflare burn were charged.
 PROD_D1_DB_ID = "c3ec3149-cc85-483b-b727-5a18e3d5a1b9"
 
+# The shared ledger (hermes/d1_write_ledger.json) is PRODUCTION's rows-written counter and the
+# daily runaway guard. A test run must not move it: tests fake transports, tokens and database
+# ids, and charging those made the counter move (+997, +1) while nothing was written anywhere --
+# which is what turned a simple attribution into a hunt. Deterministic, not path-dependent.
+os.environ["D1_LEDGER_DISABLED"] = "1"
+
 if os.environ.get("CFB_ALLOW_PROD_TEST_WRITES") != "1":
     import d1_store as _d1_store
 

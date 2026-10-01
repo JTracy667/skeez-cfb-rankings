@@ -76,22 +76,70 @@ def _today() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
+def _ledger_enabled() -> bool:
+    """A write can only reach D1 if this process holds D1 credentials.
+
+    The ledger is the burn counter behind the daily runaway guard, so it must only be charged
+    for writes that could actually have burned rows. A run with no token -- a faked transport in
+    a test, an offline run, a hermetic harness -- burns nothing; charging it corrupts the day's
+    count and misleads the guard (found 2026-09-30: tokenless pytest runs moved the shared
+    ledger while nothing appeared in production OR scratch).
+
+    Evaluated per call, never at import: app.py loads the repo .env after d1_store is imported,
+    and a cached-at-import value would silently stop the container from counting.
+    """
+    return bool(os.environ.get("CF_D1_TOKEN") or os.environ.get("CLOUDFLARE_API_TOKEN"))
+
+
 def _load_ledger() -> dict:
-    try:
-        with open(_LEDGER, encoding="utf-8") as f:
-            d = json.load(f)
-        if d.get("date") == _today():
-            return d
-    except Exception:
-        pass
+    """Read the day's write count. NEVER destructive.
+
+    A reader can catch another process mid-write (a non-atomic truncate-and-rewrite is visible
+    as a partial file), so unreadable content is RETRIED before it is called corruption -- and
+    even then the live file is only COPIED aside, never moved. Moving it away is what destroyed
+    the count seven times on 2026-09-30, while the hardening was supposed to be protecting it.
+    """
+    if not os.path.exists(_LEDGER):
+        return {"date": _today(), "rows_written": 0}
+    import sys  # noqa: PLC0415
+    import time  # noqa: PLC0415
+
+    err = None
+    for attempt in range(5):
+        try:
+            with open(_LEDGER, encoding="utf-8") as f:
+                raw = f.read()
+            d = json.loads(raw)
+            if d.get("date") == _today():
+                return d
+            err = None
+            break          # valid JSON for another day: a fresh ledger, not corruption
+        except (OSError, ValueError) as e:  # lock or partial write: wait and retry
+            err = e
+            time.sleep(0.05 * (attempt + 1))
+    if err is not None:
+        keep = f"{_LEDGER}.unreadable-{time.strftime('%Y%m%d-%H%M%S')}"
+        try:
+            import shutil  # noqa: PLC0415
+            shutil.copy2(_LEDGER, keep)      # COPY: never take the file from its writer
+            where = keep
+        except Exception:  # noqa: BLE001
+            where = "(could not copy)"
+        print(f"WARNING: D1 write ledger {_LEDGER} unreadable after 5 tries ({err}). Copied to "
+              f"{where}; the live file is left in place. Today's write count reads 0, so the "
+              "runaway guard is NOT protecting today.", file=sys.stderr)
     return {"date": _today(), "rows_written": 0}
 
 
 def _save_ledger(d: dict) -> None:
+    """Write-then-rename: a reader never sees a half-written file, and a process killed
+    mid-write cannot leave a 0-byte ledger that reads as 0 rows written."""
     try:
         os.makedirs(os.path.dirname(_LEDGER), exist_ok=True)
-        with open(_LEDGER, "w", encoding="utf-8") as f:
+        tmp = f"{_LEDGER}.tmp-{os.getpid()}"
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump(d, f)
+        os.replace(tmp, _LEDGER)
     except Exception:
         pass
 
@@ -124,8 +172,28 @@ def commit_writes(n_rows: int, meter: bool = True) -> None:
     burn is answerable alongside the API burns. `meter=False` is used for the
     ledger's OWN writes to api_usage — counting the meter would make it feed itself.
     """
+    if os.environ.get("D1_LEDGER_DISABLED") == "1":
+        # A test run: the shared ledger is PRODUCTION's burn counter, not the test's to charge.
+        # Tests fake transports, tokens and database ids; charging those moved the real counter
+        # (+997, +1) while nothing was written to any database.
+        return
+    if not _ledger_enabled():
+        # No D1 credentials in this process, so this write cannot have burned rows: charging
+        # the ledger would corrupt the burn count and quietly mislead the runaway guard.
+        # Not an error -- just not D1's business.
+        return
     led = _load_ledger()
     led["rows_written"] += int(n_rows)
+    # Stamp the writer. The ledger is written by whichever process on this box reaches the
+    # store; when it moves outside a run you can account for, this says who did it instead of
+    # leaving attribution to guesswork.
+    try:
+        import traceback
+        fr = traceback.extract_stack(limit=3)[-2]
+        led["pid"] = os.getpid()
+        led["last_writer"] = f"{os.path.basename(fr.filename)}:{fr.lineno}:{fr.name}"
+    except Exception:  # noqa: BLE001
+        pass
     _save_ledger(led)
     if meter and int(n_rows) > 0:
         try:
