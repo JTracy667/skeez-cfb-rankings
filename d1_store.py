@@ -48,6 +48,20 @@ def _token() -> str:
     return tok
 
 
+def _writes_off() -> bool:
+    """True when writes are EXPLICITLY disabled (`D1_WRITE_ENABLED=0`).
+
+    Read directly instead of importing `d1_write_path.write_enabled()`: that module imports
+    THIS one, so importing it back would be circular.
+
+    WHY THIS EXISTS: `_upsert` has no gate of its own, so the metering flush ignored the flag
+    and a locally served candidate with a store token in its environment wrote 8 `api_usage`
+    rows to PRODUCTION D1 while the flag said writes were off. The flag must mean NOTHING is
+    written -- the metering table included.
+    """
+    return os.environ.get("D1_WRITE_ENABLED", "").strip().lower() in ("0", "false", "no", "off")
+
+
 def _api_url() -> str:
     return (f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}"
             f"/d1/database/{D1_DB_ID}/query")
@@ -271,6 +285,9 @@ def upsert_api_usage(rows: list[dict]) -> int:
     its own counter.
     """
     if not rows:
+        return 0
+    if _writes_off():
+        print("[d1_store] api_usage flush skipped: D1_WRITE_ENABLED is off")
         return 0
     try:
         return _upsert("api_usage", API_USAGE_COLS, rows,

@@ -17,8 +17,13 @@
 #
 # So the credentials are set to present-but-useless SENTINELS: the key is set (the .env loader
 # skips it) and every store call is rejected by the API, which drives the documented disk
-# fallback. D1_WRITE_ENABLED=0 means write_enabled() is false, and ADMIN_TOKEN is a random
-# undisclosed value so the ops POST routes are not callable by a visitor.
+# fallback. ADMIN_TOKEN is a random undisclosed value so the ops POST routes are not callable.
+#
+# THE SENTINEL IS THE GUARANTEE, NOT THE FLAG. `D1_WRITE_ENABLED=0` sets write_enabled() false,
+# but that flag does NOT cover every write path: the api_usage metering flush (budget.py ->
+# d1_store.upsert_api_usage) ignored it and wrote 8 rows to PRODUCTION D1 from a local instance
+# during round 5. A round-5 fix gates that path too, but a valid credential is what actually
+# stops a call, so keep the token bogus.
 param(
   [int]$Port = 8011,
   [string]$DataDir = "$env:LOCALAPPDATA\hermes\profiles\cto\cache\scratch\candidate_serve\data"
@@ -40,6 +45,13 @@ $env:ADMIN_TOKEN          = [guid]::NewGuid().ToString('N')
 $env:PROPLINE_KEY         = 'local-offline-no-fetch'
 $env:CFBD_API_KEY         = 'local-offline-no-fetch'
 $env:THE_ODDS_API_KEY     = 'local-offline-no-fetch'
+
+# Tripwire: the repo .env loader and d1_store's own default BOTH point at production, so
+# targeting prod by accident is the default outcome, not the exception. Refuse to serve at all.
+if ($env:CF_D1_DB_ID -eq 'c3ec3149-cc85-483b-b727-5a18e3d5a1b9') {
+  Write-Error 'refusing to serve: CF_D1_DB_ID points at PRODUCTION D1'
+  exit 2
+}
 
 Write-Host "serving the working tree at http://127.0.0.1:$Port  (offline: no D1, no fetches)"
 python -m uvicorn app:app --host 127.0.0.1 --port $Port

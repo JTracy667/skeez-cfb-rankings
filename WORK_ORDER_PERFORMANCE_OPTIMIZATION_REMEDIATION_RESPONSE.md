@@ -619,3 +619,39 @@ CTO-reported scratch-D1 runs, which QA has correctly refused to treat as indepen
 | `scripts/run_enforcement_tests.py` (no token) | PARTIAL, exit 3 |
 
 No deploy, no migration, no production write. Prod still build v62.
+
+---
+
+## Round 5 addendum — a production write I caused, and the fix
+
+Serving the candidate locally wrote **8 rows to production D1's `api_usage` table** at
+`2026-10-01T01:50:28Z`. Verified by a read-only query: 4 sources × 2 buckets (`day`/`month`),
+all eight carrying that exact `updated_at`; the local write ledger moved +8 in the same second.
+
+**Cause.** `budget.py:197` flushes the metering ledger through `d1_store.upsert_api_usage()`,
+whose `_upsert()` has **no write gate of its own** — so `D1_WRITE_ENABLED=0` did not stop it.
+My first local instance also had store credentials (the repository `.env` loader at `app.py:47`,
+plus `d1_store.py:45` accepting `CLOUDFLARE_API_TOKEN`), and `CF_D1_DB_ID` defaulted to the
+production id. A "writes are off" local run therefore wrote to production.
+
+**Effect — metering counters only.** No site data, no publication marker, no schema, and no
+served value changed. The counters are a read-modify-write seeded from D1's own values, so they
+were not under-reported. Disclosed here and to Jeff rather than buried: this was a production
+write I was not authorised to make, even though it changed nothing a visitor sees.
+
+**Fixes.**
+
+- `d1_store._writes_off()` and an early return in `upsert_api_usage()`: `D1_WRITE_ENABLED=0`
+  now means **nothing** is written, the metering table included. It reads the flag directly
+  because `d1_write_path` imports `d1_store` — importing it back would be circular.
+- `scripts/serve_candidate_local.ps1`: the **sentinel token** is now documented as the actual
+  guarantee (a valid credential is what stops a call; the flag alone was not enough), plus a
+  tripwire that refuses to serve at all if `CF_D1_DB_ID` is the production id — because the
+  `.env` loader and `d1_store`'s default both point at prod, so aiming at prod is the default
+  outcome rather than the exception.
+- Regression: `tests/test_write_gate_covers_metering.py` — RED first (`n == 1` with the flag
+  off), then 0 writes and no `INSERT INTO api_usage` reaching the store, plus a control proving
+  the ledger still flushes where writes ARE enabled (production sets the flag to `"1"`).
+
+**Round 5 results after the fix:** 163 passed, 4 skipped; gate PASS with a token, PARTIAL
+(exit 3) without; candidate page harness 13/13 against `http://127.0.0.1:8011`.
