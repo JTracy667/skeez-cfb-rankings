@@ -22,16 +22,10 @@ TABLES = ["teams", "players", "games", "stat_observations", "closing_lines",
 def _bootstrap_token() -> None:
     if os.environ.get("CF_D1_TOKEN") or os.environ.get("CLOUDFLARE_API_TOKEN"):
         return
-    for p in (os.path.join(os.environ.get("USERPROFILE", ""), "Desktop", "Cloudflare.txt"),
-              os.path.join(os.path.expanduser("~"), "Desktop", "Cloudflare.txt")):
-        try:
-            m = re.search(r"cfat_[A-Za-z0-9_\-]+", open(p, encoding="utf-8", errors="ignore").read())
-            if m:
-                os.environ["CF_D1_TOKEN"] = m.group(0)
-                return
-        except OSError:
-            continue
-    print("FATAL: no D1 token (set CF_D1_TOKEN)", file=sys.stderr)
+    # No file fallback. A token was previously regex-harvested from
+    # Desktop/Cloudflare.txt -- a plaintext credential on the desktop, which is exactly how a
+    # run could pick up live D1 access without exporting anything.
+    print("FATAL: no D1 token (set CF_D1_TOKEN, or CLOUDFLARE_API_TOKEN)", file=sys.stderr)
     raise SystemExit(2)
 
 

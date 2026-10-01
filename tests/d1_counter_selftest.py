@@ -11,7 +11,7 @@ Proves the counter of record is the D1 API RESPONSE, not a local guess:
     fail the run (and is still not marked done).
 
 Run:  python tests/d1_counter_selftest.py
-Requires the D1 token (read from Desktop/Cloudflare.txt) and live D1 access.
+Requires CF_D1_TOKEN in the environment and live D1 access.
 
 NOT a pytest test: named *_selftest.py so pytest does not collect it. It used to
 be tests/test_d1_counter.py and ran its body (and sys.exit) at import time, which
@@ -25,11 +25,11 @@ import sys
 import tempfile
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.environ["CF_D1_TOKEN"] = re.search(
-    r"cfat_[A-Za-z0-9_\-]+",
-    open(os.path.join(os.path.expanduser("~"), "Desktop", "Cloudflare.txt"),
-         encoding="utf-8", errors="ignore").read(),
-).group(0)
+# The token must be exported. It used to be regex-harvested from Desktop/Cloudflare.txt -- a
+# plaintext credential on the desktop, which is how a plain `pytest tests/` could reach live D1.
+if not os.environ.get("CF_D1_TOKEN"):
+    sys.exit("FATAL: set CF_D1_TOKEN (resolve one with the cto deploy-token helper) before "
+             "running this live selftest.")
 os.chdir(REPO)
 sys.path.insert(0, REPO)
 sys.path.insert(0, os.path.join(REPO, "scripts"))

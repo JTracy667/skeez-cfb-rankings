@@ -20,15 +20,12 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO" || exit 1
 mkdir -p logs
 
-# Local dev token file (see D1_RISK_REGISTER): never commit or echo this value.
+# The token must be exported explicitly. It used to be harvested from
+# Desktop/Cloudflare.txt -- a plaintext credential on the desktop. Never commit or echo it.
 if [ -z "${CF_D1_TOKEN:-}" ]; then
-  TOKFILE="${USERPROFILE:-$HOME}/Desktop/Cloudflare.txt"
-  CF_D1_TOKEN="$(grep -o 'cfat_[A-Za-z0-9_-]*' "$TOKFILE" 2>/dev/null | head -1)"
-  if [ -z "$CF_D1_TOKEN" ]; then
-    echo "FATAL: no CF_D1_TOKEN in env and none found in $TOKFILE" >&2
-    exit 1
-  fi
-  export CF_D1_TOKEN
+  echo "FATAL: CF_D1_TOKEN is not set. Export it (resolve one with" >&2
+  echo "       scripts/cf_deploy_token.py) before running a backfill." >&2
+  exit 1
 fi
 
 if pgrep -f "backfill_supervisor.py" >/dev/null 2>&1; then
