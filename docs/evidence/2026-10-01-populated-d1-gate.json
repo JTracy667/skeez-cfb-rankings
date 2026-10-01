@@ -1,0 +1,41 @@
+{
+  "generated_utc": "2026-10-01T15:11:32Z",
+  "branch": "perf/d1-snapshot-safety",
+  "commit": "2af4defa6d995da4893fcc8716d1bc79160eb339",
+  "database_id": "c3ec3149-cc85-483b-b727-5a18e3d5a1b9",
+  "database_label": "production (cfb-history)",
+  "token_fingerprint_sha256_12": "fe44a850fceb",
+  "access": "READ-ONLY: SELECT statements only; conftest refuses production writes in tests",
+  "gate": {
+    "cmd": "C:\\Users\\jtracy\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\python.exe -m pytest -q -p no:randomly tests/test_served_equals_d1.py::test_d1_results_keep_up_with_the_served_week --tb=short",
+    "rc": 0,
+    "stdout": ".                                                                        [100%]\n1 passed in 6.76s",
+    "stderr": ""
+  },
+  "gate_query": "SELECT MAX(week) AS newest_scored_week, COUNT(*) AS scored_games FROM games WHERE season=2026 AND home_score IS NOT NULL",
+  "gate_query_result": {
+    "cmd": "C:\\Users\\jtracy\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\python.exe -c import os,sys,json;sys.path.insert(0, r'C:\\Users\\jtracy\\dev\\cfb-power-rankings');import d1_store;print(json.dumps(d1_store.query('SELECT MAX(week) AS newest_scored_week, COUNT(*) AS scored_games FROM games WHERE season=2026 AND home_score IS NOT NULL')))",
+    "rc": 0,
+    "stdout": "[{\"newest_scored_week\": 4, \"scored_games\": 1348}]",
+    "stderr": ""
+  },
+  "ledger_before": {
+    "path": "C:\\Users\\jtracy\\AppData\\Local\\hermes\\d1_write_ledger.json",
+    "rows_written": 48173,
+    "sha256": "479f709722fe7974fa185e18ceb21fe9d32bf6d95f096c087dc079a50600d350",
+    "bytes": 125,
+    "mtime_utc": "2026-10-01T03:25:50Z"
+  },
+  "ledger_after": {
+    "path": "C:\\Users\\jtracy\\AppData\\Local\\hermes\\d1_write_ledger.json",
+    "rows_written": 48173,
+    "sha256": "479f709722fe7974fa185e18ceb21fe9d32bf6d95f096c087dc079a50600d350",
+    "bytes": 125,
+    "mtime_utc": "2026-10-01T03:25:50Z"
+  },
+  "ledger_moved": false,
+  "unverifiable_without_a_credential": [
+    "That the gate ran against THIS database (a reader without a D1 credential cannot re-execute it; this file is the raw output of the run, not a reproducible recipe).",
+    "That the ledger value reflects D1 row counts -- it is a local counter; a reader can read and hash the file, but not independently recompute the number."
+  ]
+}
