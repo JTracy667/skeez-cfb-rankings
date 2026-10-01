@@ -118,3 +118,56 @@ def test_a_marker_without_a_digest_serves_but_is_never_called_verified(conn, mon
     app._served_analytics()
     assert app._ANALYTICS_SERVE["degraded"] is True, \
         "a marker that cannot be verified must not be reported as verified"
+
+class _FallbackTeam:
+    def __init__(self, d):
+        self._d = d
+
+    def model_dump(self):
+        return dict(self._d)
+
+
+class _FallbackRankings:
+    def __init__(self, teams):
+        self.teams = teams
+
+
+def test_a_warm_projection_hit_cannot_serve_a_drifted_snapshot(conn, monkeypatch):
+    """QA round 4: the reader refuses the drifted snapshot, but a WARM HIT went around it.
+
+    Sequence: publish -> `api_projections()` caches a payload -> two values change under the
+    same stamp -> `api_projections()` again. The cache key carried the marker's metadata and
+    the served identity but nothing derived from the ROW VALUES, so the key was unchanged: the
+    warm hit returned the pre-drift payload while the serve state still said d1/degraded false.
+    A reader check that a cache can skip is not a check.
+    """
+    import json as _json
+
+    pub = _publish(conn)
+    monkeypatch.setattr(app, "live_week", lambda: WEEK)
+    monkeypatch.setattr(app, "project_score_multi_factor",
+                        lambda td, is_home=True, week=None: {"composite": 1.0, "total": 40.0})
+    monkeypatch.setattr(app, "get_rankings",
+                        lambda: _FallbackRankings([_FallbackTeam({"name": "Fallback Team"})]))
+    app._proj_cache["key"], app._proj_cache["body"] = None, None
+
+    first = _json.loads(app.api_projections().body)
+    assert first["count"] >= FULL_TEAMS, "the fixture must cache a full payload"
+    cached_body = app._proj_cache["body"]
+    assert cached_body is not None, "the first call must populate the cache"
+
+    _mutate_under_the_stamp(conn, pub["stamp"], FULL_KEYS[0])
+
+    second_body = app.api_projections().body
+
+    assert second_body != cached_body, (
+        "a warm hit must not return the pre-drift payload after the stored values changed")
+    assert app._ANALYTICS_SERVE["degraded"] is True, (
+        "post-publication drift must surface as a degraded serve, not a confident d1 serve")
+    second = _json.loads(second_body)
+    # Assert on the VALUES, not on the team names: identity (who a team is) legitimately comes
+    # from the teams table and survives; it is the analytics VALUES that must not be served.
+    drifted = [t.get("metric_00") for t in second["projections"]
+               if t.get("metric_00") in (15.0, 5.0)]
+    assert not drifted, (
+        f"the drifted values must not reach visitors, warm hit or not: {drifted}")

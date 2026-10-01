@@ -4959,7 +4959,12 @@ def _projections_cache_key(wk) -> tuple:
     pub = d1_write_path.analytics_publication(CFBD_YEAR)
     ident_digest = _served_identity_digest()
     if pub and pub.get("stamp"):
-        source = ("pull", pub.get("stamp"), pub.get("n_rows"), pub.get("n_keys"), ident_digest)
+        # QA round 4: the marker's metadata does NOT move when rows drift beneath it, so a
+        # payload cached on it survived the drift and the reader's value check never ran -- the
+        # warm hit was a way around the fix. Key on the values stored at the stamp RIGHT NOW.
+        values_digest = d1_write_path.published_values_digest(CFBD_YEAR, pub)
+        source = ("pull", pub.get("stamp"), pub.get("n_rows"), pub.get("n_keys"),
+                  values_digest, ident_digest)
     else:
         # Not a published pull: identify the actual fallback INPUT. The serve state is
         # deliberately NOT in the key -- serving SETS that state, so including it made the key

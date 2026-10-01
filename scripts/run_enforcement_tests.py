@@ -21,8 +21,10 @@ THIRD SUITE — the page scripts (node --test, no jsdom)
 
 WHY THIS IS A SCRIPT AND NOT JUST `pytest`
 `pytest.skip` is the polite thing to do when D1 credentials are absent -- and it would make
-this gate silently vacuous. So the gate REFUSES to run without `CF_D1_TOKEN` rather than
-skipping: a parity check that cannot reach the store must never be read as a pass.
+this gate silently vacuous. So the served==D1 parity check is never SKIPPED into a pass: with
+no `CF_D1_TOKEN` the gate reports it NOT VERIFIED and exits 3 (PARTIAL), distinct from PASS (0)
+and FAIL (1). The credential-free steps still run, so a reviewer without store access gets a
+real receipt for everything that does not need the store instead of no receipt at all.
 
 Usage:  python scripts/run_enforcement_tests.py [--all]
         --all   also run the rest of the suite afterwards
@@ -36,7 +38,9 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-ENFORCEMENT = ["tests/test_served_equals_d1.py", "tests/test_no_disk_reads_in_serving.py"]
+D1_PARITY = ["tests/test_served_equals_d1.py"]           # needs CF_D1_TOKEN
+HERMETIC = ["tests/test_no_disk_reads_in_serving.py"]    # needs no credentials
+EXIT_PARTIAL = 3                                          # ran, but a step is NOT VERIFIED
 
 
 def _data_hashes() -> dict:
@@ -57,11 +61,11 @@ def _data_hashes() -> dict:
 
 
 def main() -> int:
-    if not os.environ.get("CF_D1_TOKEN"):
-        print("REFUSING TO RUN: CF_D1_TOKEN is not set.", file=sys.stderr)
-        print("The enforcement gate verifies served == D1. Without store credentials it "
-              "cannot verify anything, and a skipped check is NOT a pass.", file=sys.stderr)
-        return 2
+    have_store = bool(os.environ.get("CF_D1_TOKEN"))
+    if not have_store:
+        print("PARTIAL RUN: CF_D1_TOKEN is not set, so the served==D1 parity check cannot "
+              "run.\nIt will be reported NOT VERIFIED -- never as a pass. Every "
+              "credential-free step\nstill runs and is reported on its own.", file=sys.stderr)
 
     data_before = _data_hashes()
 
@@ -76,8 +80,11 @@ def main() -> int:
               "silently verify nothing.", file=sys.stderr)
         return 2
 
-    rc = subprocess.call([sys.executable, "-m", "pytest", *ENFORCEMENT, "-q", "-rxs"],
+    rc = subprocess.call([sys.executable, "-m", "pytest", *HERMETIC, "-q", "-rxs"],
                          cwd=str(REPO))
+    if rc == 0 and have_store:
+        rc = subprocess.call([sys.executable, "-m", "pytest", *D1_PARITY, "-q", "-rxs"],
+                             cwd=str(REPO))
     if rc == 0:
         print("$ node --test tests/js/*.test.mjs", flush=True)
         rc = subprocess.call([node, "--test", *js_files], cwd=str(REPO))
@@ -97,7 +104,15 @@ def main() -> int:
         if rc == 0:
             rc = 1
 
-    print("\n" + ("ENFORCEMENT GATE: PASS" if rc == 0 else "ENFORCEMENT GATE: FAIL"), flush=True)
+    if rc != 0:
+        verdict = "ENFORCEMENT GATE: FAIL"
+    elif not have_store:
+        verdict = ("ENFORCEMENT GATE: PARTIAL -- served==D1 NOT VERIFIED "
+                   "(CF_D1_TOKEN unset); every other step passed")
+        rc = EXIT_PARTIAL
+    else:
+        verdict = "ENFORCEMENT GATE: PASS"
+    print("\n" + verdict, flush=True)
     return rc
 
 

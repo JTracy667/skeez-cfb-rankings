@@ -559,6 +559,33 @@ def _select_raw_at_stamp(season: int, week: int, stamp: str) -> list[dict]:
         [int(season), int(week), str(stamp)]) or []
 
 
+def published_values_digest(season: int, pub: dict | None = _UNSET) -> str | None:
+    """Fingerprint of the values CURRENTLY stored at the published stamp.
+
+    The marker's own `digest` records what was verified AT PUBLICATION; this records what is
+    there NOW. Any cache of a payload derived from those rows must key on THIS, or drift under
+    an unchanged marker is served from a warm hit and the reader's check never runs.
+
+    Selects only the three digest fields (no team join), so it is cheaper than a serve read.
+    """
+    if not read_enabled():
+        return None
+    pub = analytics_publication(season) if pub is _UNSET else pub
+    if not pub or not pub.get("stamp"):
+        return None
+    try:
+        wk, stamp = int(pub.get("week")), str(pub.get("stamp"))
+    except (TypeError, ValueError):
+        return None
+    rows = d1_store.query(
+        "SELECT subject_id AS tid, stat_key AS k, value AS v FROM stat_observations "
+        "WHERE season = ? AND week = ? AND subject_type = 'team' AND recorded_at = ?",
+        [int(season), wk, stamp]) or []
+    if not rows:
+        return None
+    return _value_digest((r.get("tid"), r.get("k"), r.get("v")) for r in rows)
+
+
 def load_team_analytics(season: int, week: int | None = None,
                         keys: list | tuple | None = None,
                         pub: dict | None = _UNSET) -> list[dict]:

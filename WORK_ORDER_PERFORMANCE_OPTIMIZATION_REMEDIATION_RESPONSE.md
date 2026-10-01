@@ -440,3 +440,101 @@ hidden — the data still serves exactly as before, it is just labelled for what
 production write was made to change this. If Jeff wants it verified immediately rather than at
 the next pull, that is a one-off marker rewrite: a production write, which needs his explicit
 approval.
+
+---
+
+# Round 4 — QA's warm-cache finding
+
+QA reran `211466b` and confirmed the direct reader fix (drift under the stamp now yields 0 rows
+from `load_team_analytics()`), then refuted the candidate on the path *around* it:
+
+> But the visitor-facing projections endpoint still served its cached pre-drift payload … The
+> cache key does not change when rows drift beneath an unchanged marker, so the reader check is
+> bypassed on a warm hit.
+
+**Correct, and reproduced exactly.** Printing the key on both sides of the mutation:
+
+```
+CALL1 key: (2026, ('pull', '<stamp>', 24000, 40, 'bf21a9e8fbc5a384'), 5, 5, 'cc4e71b6d16')
+CALL2 key: (2026, ('pull', '<stamp>', 24000, 40, 'bf21a9e8fbc5a384'), 5, 5, 'cc4e71b6d16')
+KEY CHANGED: False
+READER NOW: 0 teams                     <- the reader refused, as it should
+CALL2 count: 1285 serve: {'source': 'd1', 'degraded': False, 'reason': ''}
+IDENTICAL to call1: True                <- the pre-drift payload went to the visitor
+```
+
+A reader check that a cache can skip is not a check.
+
+## Fix
+
+- **`d1_write_path.published_values_digest()`** — a fingerprint of the values **currently**
+  stored at the published stamp. The marker's own `digest` records what was verified *at
+  publication*; this records what is there *now*. It selects only the three digest fields
+  (`subject_id`, `stat_key`, `value`) with no team join, so it is cheaper than a serve read.
+- **`app._projections_cache_key()`** now carries that digest in the published-pull branch, so
+  drift changes the key → the entry misses → the reader's verification actually runs → it
+  refuses → the documented fallback serves and the state reports degraded.
+
+Measured after the fix, same probe:
+
+```
+KEY CHANGED: True
+READER NOW: 0 teams
+CALL2 count: 1285 serve: {'source': 'disk (no verified publication)', 'degraded': True, ...}
+CALL2 drifted values served: 0
+IDENTICAL to call1: False
+```
+
+## The regression
+
+`tests/test_published_snapshot_integrity.py::test_a_warm_projection_hit_cannot_serve_a_drifted_snapshot`
+— QA's sequence end to end: publish → `api_projections()` caches a full payload → change two
+values under the same stamp (10/10 → 15/5) → `api_projections()` again. Asserts the body is no
+longer the cached bytes, that the serve reports degraded, and that no served team carries a
+drifted value.
+
+**One correction to my own first attempt at that test.** I asserted the drifted *team name* was
+absent from the payload; that failed, and the failure was mine, not the fix's. Identity (which
+team a row belongs to) legitimately comes from the `teams` table and survives the fallback — the
+requirement is that the drifted **analytics values** never reach a visitor. The assertion is now
+on the values, and the probe prints `CALL2 drifted values served: 0` as the receipt.
+
+## Cost of the fix, stated rather than hidden
+
+The digest read now happens on every projections request, including what used to be an instant
+warm hit:
+
+- `_value_digest()` over 24,000 rows: **5.86 ms median** (7 runs, in-process).
+- The query is three columns with no join; the full serving selector measured 19.0 ms at
+  production density in Task 5, so this is at or below that.
+
+A warm hit therefore costs roughly 20–25 ms instead of ~0 ms, while still avoiding the
+projection compute it exists to avoid. That is the honest price of not serving a stale payload,
+and no cheaper check is honest: SQLite has no digest function, and any aggregate
+(`COUNT`/`SUM`) is blind to an offsetting pair — which is precisely the mutation QA used.
+
+## Gate change: PARTIAL instead of refusing
+
+QA could not produce an independent gate receipt because the gate **refused** to run when
+`CF_D1_TOKEN` was unset. It now:
+
+- runs every credential-free step (no-disk-reads, the page-script suite, the `data/` hermeticity
+  hash check) and reports on them normally;
+- reports the `served==D1` parity step as **NOT VERIFIED** and exits **3 (PARTIAL)** — distinct
+  from PASS (0) and FAIL (1), so a skipped store check can never be read as a pass.
+
+`CF_D1_TOKEN` unset: `ENFORCEMENT GATE: PARTIAL -- served==D1 NOT VERIFIED (CF_D1_TOKEN unset);
+every other step passed`, exit 3. With the token: `ENFORCEMENT GATE: PASS`, exit 0.
+
+## Round 4 results
+
+| gate | result |
+|---|---|
+| `python -m pytest tests/` | **161 passed, 4 skipped** |
+| `node --test tests/js/*.test.mjs` | **21 passed** |
+| `scripts/run_enforcement_tests.py --all` (with token) | **PASS**, exit 0 |
+| `scripts/run_enforcement_tests.py` (no token) | **PARTIAL**, exit 3 |
+| `tests/test_d1_provider_specific.py` (scratch D1) | **4 passed** |
+| `node scripts/verify_pages_live.mjs` | **ALL LIVE PAGE CHECKS PASSED** |
+
+No deploy, no migration, no production write. Prod still build v62.
