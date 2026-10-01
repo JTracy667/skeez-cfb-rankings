@@ -24,16 +24,17 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v62** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v62-stat-obs-append-only` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v62` |
-| Rollback tag | **v61** — `scripts/cfb_deploy.sh --rollback v61` (v60…v50 also in the registry) |
-| Last verified | 2026-09-30 (CTO) — Containers API: app image `...cfb-power-rankings:v62`, app version 59 (this is the gate that counts); `/api/health` `build=v62`, `archive.count=0`; `/api/analytics` HTTP 200 with 687 teams. The previous line read "DEPLOY VERIFIED LIVE: v56" while the same block said v62 — corrected. |
+| Live build | **v63** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v63-outage-stale-serve` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v63` |
+| Rollback tag | **v62** — `scripts/cfb_deploy.sh --rollback v62` (v61…v50 also in the registry) |
+| Last verified | 2026-10-01 (CTO) — Containers API: app image `...cfb-power-rankings:v63`, app version 60 (this is the gate that counts); instance retired, one site request → `build=v63`, `code.marker=v63-outage-stale-serve`, `status ok`. Post-deploy live harness: analytics 685 rows, schedule Week 5 · 59 cards, no page JS exceptions, staleness check live (`api stale=false`). All public routes 200. |
 | Injuries | D1 `app_state.active_injuries` is the served source (45 teams / 56 tracked at migration). `/api/injuries` and the win-totals build read it. Kill switch `INJURIES_FROM_D1=0`. **D1 `injury_snapshots` is a settled-outcome tracking table, NOT the current injury state.** |
 | Quota ledger | `/api/health` `budget` is read from D1 `api_usage` — the ledger of record. The disk mirror `data/budget_ledger.json` is a **local-dev fallback only** (Phase 6). Kill switch `BUDGET_FROM_D1=0`. |
 | Archive health | `/api/health` → **`archive`** — `count > 0` means D1 writes are silently NOT landing (F5; before v54 this state was invisible) |
-| Container app image | must read `...:v62` via the Containers API — **`build` in `/api/health` does NOT prove this** (see the v52→v53 note) |
+| Container app image | must read `...:v63` via the Containers API — **`build` in `/api/health` does NOT prove this** (see the v52→v53 note) |
 | Deploy verifier | `python scripts/verify_container_swap.py --tag vN --marker <CODE_MARKER>` — API-driven, touches the site **once** |
+| Serving index (Task 5) | `ix_stat_obs_serving` on `stat_observations(season, week, subject_type, recorded_at)` — **APPLIED to production 2026-10-01** with Jeff's authorisation. Both selectors now seek it where they used to scan `ix_stat_obs_season_key_week (season=?)`; live `/api/analytics` warm latency 4.2-4.6s → 1.7-2.1s. Rollback: `DROP INDEX IF EXISTS ix_stat_obs_serving;` |
 | Enforcement gate | `python scripts/run_enforcement_tests.py` — **blocking** before any deploy (needs `CF_D1_TOKEN` + `node`; refuses to run without either). Three parts: served==D1 parity, the `data/` read allowlist, and the page-script suite `node --test tests/js/*.test.mjs`. **Do NOT run a bare `pytest` from the repo root** — it also collects `scripts/`, where `scripts/test_fbs_line_scope.py` queries D1 at import then `raise SystemExit(1)`, and pytest reports INTERNALERROR having run nothing. |
 | Page-script tests | `node --test tests/js/*.test.mjs` (12 tests, ~80 ms, no jsdom — the page's own `<script>` runs in a `node:vm` sandbox over a DOM/fetch stub). **`scripts/verify_pages_live.mjs`** runs the same harness against the LIVE API; that is the row-count receipt (2026-09-30: analytics 687 rows, schedule Week 5 · 59 games, zero page JS exceptions). |
 | Analytics publication marker | D1 `app_state` key `analytics_publication:<season>` — **published 2026-09-30** for 2026: stamp `2026-09-30T16:18:36Z`, week 5, 34,552 rows, 682 teams, 685 identity teams. Serving selects THE MARKER'S STAMP, never `MAX(recorded_at)`, so a later partial poll cannot become the payload. The numeric archive and the marker must ship together, **marker last**. Before it existed, the new read path had NO numerics (composite would have imputed 50 for every team) — the marker is a prerequisite for deploying any branch that reads it. |
