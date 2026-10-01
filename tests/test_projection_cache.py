@@ -51,6 +51,7 @@ def _client(app):
     return TestClient(app.app)
 
 
+@pytest.mark.needs_d1
 def test_warm_request_does_not_recompute_and_is_byte_identical(app_env):
     app, state = app_env
     c = _client(app)
@@ -65,6 +66,7 @@ def test_warm_request_does_not_recompute_and_is_byte_identical(app_env):
     assert second.content == first.content, "same key -> byte-identical payload"
 
 
+@pytest.mark.needs_d1
 def test_new_published_stamp_invalidates_across_processes(app_env):
     """The key is the publication identity, so another container's pull invalidates it."""
     app, state = app_env
@@ -86,6 +88,7 @@ def test_disk_fallback_is_a_distinct_cache_identity(app_env):
     assert state["compute"] > n, "fallback inputs must not reuse the published key"
 
 
+@pytest.mark.needs_d1
 def test_payload_shape_and_ordering_are_unchanged(app_env):
     """Exact parity: the endpoint's payload is what the pre-change code produced."""
     app, _state = app_env
@@ -101,6 +104,7 @@ def test_payload_shape_and_ordering_are_unchanged(app_env):
         assert set(p.keys()) >= {"home_projection", "away_projection", "name", "team_id"}
 
 
+@pytest.mark.needs_d1
 def test_a_failed_compute_is_never_cached_as_fresh(app_env):
     app, state = app_env
     c = _client(app)

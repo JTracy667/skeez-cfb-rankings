@@ -128,6 +128,7 @@ def _measure(scope_arg: str) -> dict[str, list[str]]:
 
 
 @pytest.mark.parametrize("scope", list(SCOPES))
+@pytest.mark.needs_d1
 def test_no_unlisted_disk_reads(scope):
     allowlist, arg = SCOPES[scope]
     reads = _measure(arg)

@@ -112,6 +112,7 @@ def test_reads_are_noops_when_reads_are_disabled(monkeypatch):
     assert d1_write_path.archived_analytics_weeks(2026) == []
 
 
+@pytest.mark.needs_d1
 def test_all_numeric_metrics_are_archived_without_a_key_list():
     """The default (keys=None) must archive every numeric metric on the record.
 
@@ -136,6 +137,7 @@ def test_all_numeric_metrics_are_archived_without_a_key_list():
         assert k in keys
 
 
+@pytest.mark.needs_d1
 def test_identity_keys_are_not_archived_as_metrics():
     rows = d1_write_path.team_analytics_rows(
         [{"name": "Georgia", "team_id": 61, "rank": 3, "sp_plus": 28.2}], None, 2026, 5)
@@ -216,6 +218,7 @@ def test_bulk_renders_none_as_null_and_floats_exactly():
     assert repr(0.1 + 0.2) in sql
 
 
+@pytest.mark.needs_d1
 def test_bulk_real_scale_statement_count():
     """The whole point: a real pull must be tens of statements, not thousands."""
     import app

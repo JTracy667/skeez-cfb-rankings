@@ -1277,6 +1277,32 @@ def api_boards_status():
 CODE_MARKER = "v62-stat-obs-append-only"   # bump when a release must be provably live
 
 
+_IDENTITY_CACHE: dict | None = None
+
+
+def _candidate_identity() -> dict:
+    """Identity of the code THIS process is serving.
+
+    `build` is an env var the Worker injects and has already been shown to lie (a warm instance
+    answers with the new tag while running the previous image). A claimed commit cannot be
+    checked from outside either. The source digest can: it hashes the bytes this process actually
+    loaded, and a reviewer recomputes it from the checkout with `python candidate_identity.py`.
+
+    Cached: the hash walks the tree and health is a probe.
+    """
+    global _IDENTITY_CACHE  # noqa: PLW0603
+    if _IDENTITY_CACHE is None:
+        try:
+            import candidate_identity  # noqa: PLC0415
+            d = candidate_identity.describe()
+            d["commit"] = os.environ.get("CFB_BUILD_COMMIT") or d["commit"]
+            _IDENTITY_CACHE = d
+        except Exception as e:  # noqa: BLE001 — identity must never break health
+            _IDENTITY_CACHE = {"commit": "unknown", "source_digest": None,
+                               "error": str(e)[:120]}
+    return _IDENTITY_CACHE
+
+
 @app.get("/api/health")
 def api_health():
     """Health check.
@@ -1305,6 +1331,34 @@ def api_health():
         "code": {
             "marker": CODE_MARKER,
             "weather_stream": callable(globals().get("_maybe_write_weather")),
+        },
+        # CANDIDATE IDENTITY + ISOLATION. The build tag is an env var the Worker injects and can
+        # lie; a claimed commit cannot be checked from outside. The digest CAN: it hashes the
+        # bytes this process loaded, and a reviewer recomputes it from the checkout with
+        #   python candidate_identity.py
+        # The d1 block is the read-only proof -- with no credential present every store call
+        # fails closed, so a served candidate cannot write.
+        "candidate": {
+            **_candidate_identity(),
+            "d1": {
+                "token_present": bool(os.environ.get("CF_D1_TOKEN")
+                                      or os.environ.get("CLOUDFLARE_API_TOKEN")),
+                # A sentinel is present-but-useless: the key exists so the repo .env loader
+                # cannot refill a REAL credential behind it, and the API rejects the value, so
+                # every store path fails closed. Presence alone reads as "this server can
+                # write", which is why the placeholder is reported separately.
+                "token_is_placeholder": (os.environ.get("CF_D1_TOKEN", "")
+                                         or os.environ.get("CLOUDFLARE_API_TOKEN", "")
+                                         ) == "local-offline-no-store",
+                "db_id": os.environ.get("CF_D1_DB_ID", ""),
+                "writes_enabled": os.environ.get("D1_WRITE_ENABLED", "").strip().lower()
+                                  not in ("0", "false", "no", "off"),
+                "read_only": os.environ.get("CFB_READ_ONLY", "") == "1",
+            },
+            # BEHAVIOURAL evidence rather than a claim: where the last analytics read actually
+            # came from. "disk (...)" means the store was unreachable and the fallback served,
+            # so a reviewer can see D1 is not being used instead of taking it on trust.
+            "serve": dict(_ANALYTICS_SERVE),
         },
         "model_version": composite_version(),
         "teams": len(load_local()),

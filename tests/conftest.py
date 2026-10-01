@@ -13,6 +13,8 @@ Set BEFORE any test module imports app (pytest loads conftest.py first).
 """
 import os
 
+import pytest
+
 os.environ.setdefault("CFB_SKIP_BOOTWARM", "1")
 
 # `_fetch_final_scores` live-fetches CFBD /games on a cache miss. Same standing rule as the
@@ -72,3 +74,36 @@ if os.environ.get("CFB_ALLOW_PROD_TEST_WRITES") != "1":
         return _orig_query_full(sql, params, timeout)
 
     _d1_store.query_full = _no_prod_writes
+
+
+# ---- D1-dependent tests: SKIP when no usable (non-production) D1 target is configured --------
+# A test that needs an external service must skip when that service is not configured; failing
+# the suite for an absent credential trains people to ignore red. These 14 tests passed only
+# because the repo `.env` happened to supply a token, so every suite run was reading PRODUCTION
+# D1 -- and its writes were being refused by the guard above, which is why "a verified result
+# should be cached" failed the moment the credential was removed. Point CF_D1_DB_ID at the
+# scratch database (scripts/setup_d1_scratch.py) to actually run them.
+_OFFLINE_SENTINEL = "local-offline-no-store"
+
+
+def _has_usable_d1_target() -> bool:
+    tok = os.environ.get("CF_D1_TOKEN") or os.environ.get("CLOUDFLARE_API_TOKEN")
+    if not tok or tok == _OFFLINE_SENTINEL:
+        return False
+    return os.environ.get("CF_D1_DB_ID", PROD_D1_DB_ID) not in ("", PROD_D1_DB_ID)
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "needs_d1: requires a real D1 target that is NOT production")
+
+
+def pytest_collection_modifyitems(config, items):
+    if _has_usable_d1_target():
+        return
+    skip = pytest.mark.skip(
+        reason="needs a SCRATCH D1 target (CF_D1_TOKEN + CF_D1_DB_ID away from production); "
+               "skipped rather than failed")
+    for item in items:
+        if "needs_d1" in item.keywords:
+            item.add_marker(skip)

@@ -9,6 +9,8 @@ No network: the D1 entry points and the served-analytics call are monkeypatched.
 """
 from __future__ import annotations
 
+import pytest
+
 import app
 
 
@@ -58,6 +60,7 @@ def test_the_fallback_key_is_stable_while_serve_state_changes(monkeypatch, tmp_p
     assert before_serving == after_serving, "a warm hit must still hit"
 
 
+@pytest.mark.needs_d1
 def test_a_published_pull_keys_on_the_pull_not_the_disk(monkeypatch, tmp_path):
     monkeypatch.setattr(app, "_CFBD_ANALYTICS_FILE", tmp_path / "cfbd_analytics.json")
     monkeypatch.setattr(app.d1_write_path, "analytics_publication", lambda season: _pub())
@@ -85,6 +88,7 @@ def test_an_empty_projection_set_is_not_cached_as_fresh(monkeypatch):
     assert app._proj_cache["body"] is None, "an empty result must not be cached as fresh"
 
 
+@pytest.mark.needs_d1
 def test_a_fallback_payload_is_not_reused_once_a_publication_appears(monkeypatch, tmp_path):
     """A payload built from the fallback must never satisfy a request that has a publication.
 
@@ -107,6 +111,7 @@ def test_a_fallback_payload_is_not_reused_once_a_publication_appears(monkeypatch
         "a fallback payload must not be reused once a verified publication exists")
 
 
+@pytest.mark.needs_d1
 def test_a_verified_result_is_cached(monkeypatch):
     monkeypatch.setattr(app, "live_week", lambda: 5)
     monkeypatch.setattr(app, "_served_analytics",
@@ -122,6 +127,7 @@ def test_a_verified_result_is_cached(monkeypatch):
     assert app._proj_cache["key"][1][0] == "pull"
 
 # ── QA counterexample 3: the cache must key on the identity it serves ─────────────────────
+@pytest.mark.needs_d1
 def test_a_served_team_rename_invalidates_the_cached_payload(monkeypatch, tmp_path):
     """OLD -> NEW under the same marker returned OLD: the identity was not in the key."""
     monkeypatch.setattr(app, "_CFBD_ANALYTICS_FILE", tmp_path / "cfbd_analytics.json")
@@ -138,6 +144,7 @@ def test_a_served_team_rename_invalidates_the_cached_payload(monkeypatch, tmp_pa
     assert first != second, "a served rename must invalidate the cached projections payload"
 
 
+@pytest.mark.needs_d1
 def test_a_rename_makes_the_endpoint_recompute(monkeypatch):
     """End to end: the rename must reach the response, and serving must run again."""
     calls = {"n": 0}
