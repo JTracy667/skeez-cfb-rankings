@@ -106,3 +106,46 @@ def test_a_verified_result_is_cached(monkeypatch):
 
     assert app._proj_cache["body"] is not None, "a verified result should be cached"
     assert app._proj_cache["key"][1][0] == "pull"
+
+# ── QA counterexample 3: the cache must key on the identity it serves ─────────────────────
+def test_a_served_team_rename_invalidates_the_cached_payload(monkeypatch, tmp_path):
+    """OLD -> NEW under the same marker returned OLD: the identity was not in the key."""
+    monkeypatch.setattr(app, "_CFBD_ANALYTICS_FILE", tmp_path / "cfbd_analytics.json")
+    monkeypatch.setattr(app.d1_write_path, "analytics_publication", lambda season: _pub())
+    ident = {"OLD": {"conf": "SEC"}}
+    monkeypatch.setattr(app, "_analytics_identity_map", lambda pub=None: ident)
+
+    first = app._projections_cache_key(5)
+
+    ident.clear()
+    ident["NEW"] = {"conf": "SEC"}
+    second = app._projections_cache_key(5)
+
+    assert first != second, "a served rename must invalidate the cached projections payload"
+
+
+def test_a_rename_makes_the_endpoint_recompute(monkeypatch):
+    """End to end: the rename must reach the response, and serving must run again."""
+    calls = {"n": 0}
+
+    def _served():
+        calls["n"] += 1
+        return [{"name": "OLD" if calls["n"] == 1 else "NEW", "sp_plus": 30.2, "conf": "SEC"}]
+
+    monkeypatch.setattr(app, "live_week", lambda: 5)
+    monkeypatch.setattr(app, "_served_analytics", _served)
+    monkeypatch.setattr(app.d1_write_path, "analytics_publication", lambda season: _pub())
+    ident = {"OLD": {}}
+    monkeypatch.setattr(app, "_analytics_identity_map", lambda pub=None: ident)
+    app._set_serve_state("d1", False, "")
+    app._proj_cache["key"], app._proj_cache["body"] = None, None
+
+    first = app.api_projections()
+    assert b"OLD" in first.body
+
+    ident.clear()
+    ident["NEW"] = {}
+    second = app.api_projections()
+
+    assert b"NEW" in second.body, "the rename must reach the response"
+    assert calls["n"] == 2, "the serving function must run again instead of serving the cache"

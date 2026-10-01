@@ -239,3 +239,51 @@ test('the source badge reports real state instead of a stale odds count', async 
   assert.match(badge, /odds unavailable/, `a failed feed must be visible in the badge: ${badge}`);
   assert.doesNotMatch(badge, /0 odds/, 'the badge must not claim an odds count it did not get');
 });
+// ── QA counterexample 2: a failed refresh must not leave stale data looking current ────────
+test('a failed refresh marks the retained rows STALE instead of looking current', async () => {
+  // QA's repro: after /api/analytics returned 500 the page kept its rows AND the
+  // "cfbd · N teams" badge, with the failure visible only in an already-hidden loading
+  // message. A stale payload has to say it is stale.
+  let n = 0;
+  const h = mk({
+    '/api/analytics': () => (++n === 1
+      ? { status: 200, body: { teams: TEAMS, season: 2026 } }
+      : { status: 500, body: {} }),
+  });
+  await ready(h);
+
+  assert.equal(h.rowsIn('spplus'), 687);
+  assert.match(h.el('sourceBadge').textContent, /687 teams/);
+  assert.equal(h.el('staleBanner').style.display, 'none', 'nothing stale on a clean load');
+
+  await h.advance(5 * 60 * 1000 + 1000);   // the interval refresh
+  await h.flush();
+
+  assert.equal(h.count('/api/analytics'), 2, 'the refresh really ran');
+  assert.match(h.el('sourceBadge').textContent, /STALE/,
+    'a count must not be presented as current when the refresh failed');
+  assert.equal(h.el('staleBanner').style.display, 'block', 'the stale banner is visible');
+  assert.match(h.el('staleBanner').textContent, /refresh failed/);
+  assert.ok(h.el('content').classList.contains('stale'), 'the retained rows are marked stale');
+  assert.equal(h.rowsIn('spplus'), 687, 'the rows are kept -- but they are labelled');
+});
+
+test('a later successful refresh clears the stale state', async () => {
+  let n = 0;
+  const h = mk({
+    '/api/analytics': () => (++n === 2
+      ? { status: 500, body: {} }
+      : { status: 200, body: { teams: TEAMS, season: 2026 } }),
+  });
+  await ready(h);
+  await h.advance(5 * 60 * 1000 + 1000);
+  await h.flush();
+  assert.ok(h.el('content').classList.contains('stale'), 'stale after the failure');
+
+  await h.advance(5 * 60 * 1000 + 1000);
+  await h.flush();
+
+  assert.ok(!h.el('content').classList.contains('stale'), 'recovered data is not stale');
+  assert.equal(h.el('staleBanner').style.display, 'none');
+  assert.ok(!/STALE/.test(h.el('sourceBadge').textContent));
+});

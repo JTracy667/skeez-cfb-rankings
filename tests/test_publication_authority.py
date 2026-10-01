@@ -97,19 +97,17 @@ def test_publication_is_refused_when_the_readback_does_not_match(conn, monkeypat
     """Counts are not a manifest: a per-key mismatch must refuse the publication."""
     teams = _full_teams()
     _seed(conn, teams)
-    real = dw._read_back_manifest
+    real = dw._read_back_rows
     tampered = {"n": 0}
 
-    def _drifted(season, week, stamp):
-        man = dict(real(season, week, stamp))
+    def _drifted(season, week, stamp, expected, page=1000):
+        rows = [dict(r) for r in real(season, week, stamp, expected, page)]
         if not tampered["n"]:
-            k = sorted(man)[0]
-            n, s = man[k]
-            man[k] = (n, s + 5.0)      # one key's values are not what the pull wrote
             tampered["n"] += 1
-        return man
+            rows[0] = {**rows[0], "value": float(rows[0]["value"]) + 5.0}
+        return rows
 
-    monkeypatch.setattr(dw, "_read_back_manifest", _drifted)
+    monkeypatch.setattr(dw, "_read_back_rows", _drifted)
 
     dw.snapshot_team_analytics(teams, FULL_KEYS, SEASON, WEEK, authoritative_pull=True)
 
@@ -151,3 +149,62 @@ def test_a_replay_missing_a_row_is_not_present(conn):
     d1_store.upsert_stat_observations_bulk(rows[:1])
 
     assert d1_store._chunk_rows_present(rows) is False
+
+# ── QA counterexample 4: the manifest must be the ROW SET, not counts/sums ────────────────
+def test_an_offsetting_pair_of_value_changes_is_caught(conn, monkeypatch):
+    """Two teams offset by +5 and -5: every per-key COUNT and SUM is unchanged.
+
+    This is QA's independent probe. The old per-key (count, sum) manifest passed it and the
+    wrong values were published; the exact row-set read-back must refuse.
+    """
+    teams = _full_teams()
+    _seed(conn, teams)
+    key = FULL_KEYS[0]
+
+    def _sums():
+        return {r["stat_key"]: (r["n"], r["s"]) for r in conn.execute(
+            "SELECT stat_key, COUNT(*) AS n, SUM(value) AS s FROM stat_observations "
+            "WHERE season = ? AND week = ? AND subject_type = 'team' GROUP BY stat_key",
+            (SEASON, WEEK)).fetchall()}
+
+    real_q = d1_store.query
+    tampered = {"done": False}
+
+    def _q(sql, params=None, timeout=60):
+        if "ORDER BY subject_id, stat_key" in sql and not tampered["done"]:
+            tampered["done"] = True
+            conn.execute("UPDATE stat_observations SET value = value + 5 WHERE subject_id = 1000 "
+                         "AND stat_key = ?", (key,))
+            conn.execute("UPDATE stat_observations SET value = value - 5 WHERE subject_id = 1001 "
+                         "AND stat_key = ?", (key,))
+            conn.commit()
+            before, after = _sums(), None
+            conn.execute("UPDATE stat_observations SET value = value WHERE 0")  # no-op
+            after = _sums()
+            assert before == after, "the probe must leave counts and sums identical"
+        return real_q(sql, params, timeout)
+
+    monkeypatch.setattr(d1_store, "query", _q)
+
+    dw.snapshot_team_analytics(teams, FULL_KEYS, SEASON, WEEK, authoritative_pull=True)
+
+    assert dw.analytics_publication(SEASON) is None, \
+        "values that disagree with the pull must not be published, sums notwithstanding"
+
+
+def test_an_extra_row_at_the_stamp_blocks_publication(conn, monkeypatch):
+    """A row at the stamp that the pull did not write must be rejected, not adopted."""
+    teams = _full_teams()
+    _seed(conn, teams)
+    real = dw._read_back_rows
+
+    def _with_extra(season, week, stamp, expected, page=1000):
+        return real(season, week, stamp, expected, page) + [
+            {"subject_id": 999999, "stat_key": "intruder_key", "value": 1.0}]
+
+    monkeypatch.setattr(dw, "_read_back_rows", _with_extra)
+
+    dw.snapshot_team_analytics(teams, FULL_KEYS, SEASON, WEEK, authoritative_pull=True)
+
+    assert dw.analytics_publication(SEASON) is None, \
+        "an extra row at the stamp means the read-back is not this pull"

@@ -257,3 +257,97 @@ a skip is not a pass.
 2. **The migration** `2026-09-30_stat_obs_serving_index.sql` is prepared and unapplied; the
    measured benefit at production density is 111.7 ms → 19.0 ms for the new selector.
 3. **Nothing ships until you sign off.** No deploy, no merge.
+
+---
+
+# Round 2 — QA's four counterexamples
+
+QA refuted candidate `d64bf2a` with four independently reproduced counterexamples. **All four
+were correct.** Each is fixed below with a test that fails against `d64bf2a` and passes now.
+The veto stands until QA reruns; nothing here is deployed.
+
+## C1 — `UnboundLocalError: ... 'disk'` at `app.py:4588` (crash on the serve path)
+
+**Reproduced:** publication + numeric rows + **no live identity map**. The lazy-fallback
+refactor moved `disk = _load_cfbd_analytics_file()` into a nested helper called only from the
+`except` and no-rows branches, but the success path still did `for r in disk:` when `ident` was
+empty. That local was never bound on that path.
+
+**Fix:** the branch resolves the fallback itself (`disk = _disk_fallback()`), which is also
+where the string fields it needs actually come from.
+
+**Test:** `test_publication_with_rows_but_no_live_identity_serves_without_crashing`
+(`tests/test_serving_fallback_contract.py`). RED evidence, verbatim:
+`UnboundLocalError: cannot access local variable 'disk' where it is not associated with a value` at `app.py:4588`.
+
+## C2 — a failed refresh left stale data looking current
+
+**Reproduced:** `/api/analytics` → 500 on a refresh, and the page kept the rows **and** the
+`cfbd · N teams` badge; the failure was only in a loading message that was already hidden.
+
+**Fix** (`analytics.html`): one state owner, `setAnalyticsFailure(err)`. A failed refresh now
+shows a red badge (`cfbd · N teams · STALE`, or `cfbd · unavailable`), a visible banner naming
+the failure, and a dimmed (`#content.stale`) table. A successful refresh clears all three.
+
+**Tests:** `a failed refresh marks the retained rows STALE instead of looking current`,
+`a later successful refresh clears the stale state`. Both RED before the fix.
+
+## C3 — the projections cache missed live identity changes
+
+**Reproduced:** a served team renamed OLD → NEW under the same marker returned **OLD**, and
+`_served_analytics()` ran only once. The cache key carried the marker + weeks + composite
+version — but the served identity is part of what the payload *contains*, so it belonged in
+the key and did not.
+
+**Fix** (`app.py`): `_served_identity_digest()` (sha1 of the sorted identity map) is now part
+of the key in **both** branches. A rename, a conference change, or any identity drift
+invalidates the payload. The digest is failure-tolerant — a cache key must never break serving.
+
+**Tests:** `test_a_served_team_rename_invalidates_the_cached_payload`,
+`test_a_rename_makes_the_endpoint_recompute` (asserts the response body changes **and** that
+serving ran again). Both RED before the fix.
+
+## C4 — publication integrity was insufficient (two findings)
+
+**C4a, offsetting pair:** QA's probe shifted two teams by `+5` and `−5`; every per-key count
+and sum stayed identical, so the wrong values were published and served. My manifest was a
+per-key `(count, sum)` — order- and offset-blind by construction.
+
+**C4b, extra key:** a row at the same stamp that the pull did not write was not rejected,
+because the check only iterated over the keys the pull *intended*.
+
+**Fix** (`d1_write_path.py`): the check is now the **exact row set**. `_read_back_rows()` pages
+every `(subject_id, stat_key, value)` readable at the stamp, and publication is refused on any
+missing row, any **extra** row, or any **wrong value**. The per-key aggregate helper is deleted
+so the blind check cannot be reintroduced by accident.
+
+**Tests:** `test_an_offsetting_pair_of_value_changes_is_caught` (tampers the database, then
+asserts on the same connection that counts and sums are unchanged — proving the old check was
+blind), `test_an_extra_row_at_the_stamp_blocks_publication`,
+`test_publication_is_refused_when_the_readback_does_not_match` (rewritten against the new
+read-back). All three RED against `d64bf2a`'s writer — verified by stashing it.
+
+## Round 2 results
+
+| gate | result |
+|---|---|
+| `python -m pytest tests/` | **156 passed, 4 skipped** (was 151) |
+| `node --test tests/js/*.test.mjs` | **21 passed** (was 19) |
+| `scripts/run_enforcement_tests.py --all` | **ENFORCEMENT GATE: PASS** |
+| `tests/test_d1_provider_specific.py` (scratch D1) | **4 passed** |
+| `node scripts/verify_pages_live.mjs` | **ALL LIVE PAGE CHECKS PASSED** |
+
+Also confirmed against `d64bf2a` by stash-and-rerun, so these are RED→GREEN rather than
+assertions written to match the new behaviour: C1 (1 failure), C3 (2), C4 (3).
+
+**Unchanged:** no production write, no deployment, no migration. Production still reports
+build v62. The four modified `data/` files still match the hashes recorded in §2.
+
+## What I got wrong, plainly
+
+Three of the four counterexamples are in code I wrote in the previous round (C1, C3, C4) and
+one is in the page's failure handling (C2). In each case my tests covered the happy path or the
+shape I had in mind rather than the counterexample: no test served a publication *without* a
+live identity map, none compared a cached payload against a changed input, and my manifest was
+the first thing I thought of rather than the strongest thing available. The suite passing at
+151 was not evidence for those paths, and QA's probes were.

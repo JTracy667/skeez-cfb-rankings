@@ -87,6 +87,9 @@ img.team-logo {
 }
 .badge-good { background: rgba(63,185,80,0.15); color: #3fb950; }
 .badge-bad { background: rgba(248,81,73,0.15); color: #f85149; }
+.stale-banner { background: rgba(248,81,73,0.10); border: 1px solid rgba(248,81,73,0.45);
+  color: #ffb3ae; padding: 10px 14px; border-radius: 8px; margin: 12px 0; font-size: 13px; }
+#content.stale { opacity: 0.55; }
 .badge-mid { background: rgba(240,178,50,0.15); color: #f0b232; }
 .badge-neutral { background: rgba(210,168,255,0.15); color: #d2a8ff; }
 .search-box {
@@ -182,6 +185,7 @@ img.team-logo {
     <button class="tab-btn" data-tab="projections">Projections & Odds</button>
   </div>
   <div id="loading" class="loading">Loading analytics data...</div>
+  <div id="staleBanner" class="stale-banner" style="display:none;"></div>
   <div id="content" style="display:none;">
     <div id="summary" class="summary-row"></div>
     <div id="spplus" class="metric-section active"></div>
@@ -209,6 +213,9 @@ let currentSeason = null;
 let currentTab = 'spplus';
 let sortCol = null;
 let sortDir = 'desc';
+// QA counterexample 2: the last analytics failure, if any. A failed refresh must never
+// leave the previous rows and count on screen looking current.
+let analyticsError = null;
 
 // ── Projections & Odds state (Task 1) ──
 // Declared up here because the source badge and the refresh path read it; the loaders and
@@ -220,6 +227,26 @@ const projState = { loaded: false, loading: false, lastAt: 0, generation: 0,
                     errors: { projections: null, odds: null } };
 
 // ── Fetch ──
+// QA counterexample 2: one place that owns the "this data is stale" state.
+function setAnalyticsFailure(err) {
+  analyticsError = err ? String(err) : null;
+  const banner = document.getElementById('staleBanner');
+  if (banner) {
+    banner.style.display = analyticsError ? 'block' : 'none';
+    if (analyticsError) {
+      banner.textContent = 'Showing the last loaded data — the latest refresh failed ('
+        + analyticsError + '). These numbers may be out of date.';
+    }
+  }
+  const content = document.getElementById('content');
+  if (content) {
+    if (analyticsError) content.classList.add('stale');
+    else content.classList.remove('stale');
+  }
+  updateSourceBadge();
+}
+
+
 async function fetchAnalytics() {
   try {
     // GET the cached analytics dataset (enriched server-side with composite).
@@ -230,15 +257,19 @@ async function fetchAnalytics() {
     const data = await res.json();
     teams = data.teams || [];
     currentSeason = data.season || null;
-    updateSourceBadge();
-    document.getElementById('sourceBadge').style.background = 'rgba(63,185,80,0.12)';
-    document.getElementById('sourceBadge').style.color = '#3fb950';
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
+    setAnalyticsFailure(null);
+    document.getElementById('sourceBadge').style.background = 'rgba(63,185,80,0.12)';
+    document.getElementById('sourceBadge').style.color = '#3fb950';
     renderActive();
   } catch (e) {
     console.error('Failed to load analytics:', e);
     document.getElementById('loading').textContent = 'Failed to load data. Check console.';
+    document.getElementById('sourceBadge').style.background = 'rgba(248,81,73,0.12)';
+    document.getElementById('sourceBadge').style.color = '#f85149';
+    // The rows that are still on screen are STALE, and now they say so.
+    setAnalyticsFailure(e);
   }
 }
 
@@ -656,6 +687,11 @@ async function loadProjectionsAndOdds(only) {
 function updateSourceBadge() {
   const el = document.getElementById('sourceBadge');
   if (!el) return;
+  if (analyticsError) {
+    // Never report a count as current when the refresh that would confirm it failed.
+    el.textContent = teams.length ? `cfbd · ${teams.length} teams · STALE` : 'cfbd · unavailable';
+    return;
+  }
   const parts = [`cfbd · ${teams.length} teams`];
   if (projState.errors.projections) parts.push('projections unavailable');
   if (projState.errors.odds) parts.push('odds unavailable');

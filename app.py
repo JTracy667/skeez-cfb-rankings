@@ -4585,6 +4585,10 @@ def _served_analytics():
         for nm, fields in ident.items():
             by_name[nm] = dict(fields, name=nm)
     else:
+        # QA counterexample 1: this path used the `disk` local that the lazy refactor no
+        # longer assigns here, so a verified publication with no live identity map crashed
+        # with UnboundLocalError. Resolve the fallback on the branch that needs it.
+        disk = _disk_fallback()
         for r in disk:
             if r.get("name"):
                 by_name[r["name"]] = dict(r)
@@ -4928,15 +4932,34 @@ def _disk_input_identity() -> str:
         return "disk:absent"
 
 
+def _served_identity_digest() -> str:
+    """A fingerprint of the identity actually served (QA counterexample 3).
+
+    The projections payload CONTAINS the served team names/strings, so the identity map is an
+    input to it. Without this, a team rename under the same publication marker produced the
+    same cache key: the old payload kept being served and `_served_analytics()` never ran again.
+    A digest (not the map) keeps the key small and comparable.
+    """
+    try:
+        pub = d1_write_path.analytics_publication(CFBD_YEAR)
+        ident = _analytics_identity_map(pub) or {}
+        blob = json.dumps(ident, sort_keys=True, default=str)
+        return hashlib.sha1(blob.encode("utf-8")).hexdigest()[:16]
+    except Exception as e:  # noqa: BLE001 — a cache key must never break serving
+        print(f"[projections] identity digest unavailable: {e}")
+        return "unknown"
+
+
 def _projections_cache_key(wk) -> tuple:
     pub = d1_write_path.analytics_publication(CFBD_YEAR)
+    ident_digest = _served_identity_digest()
     if pub and pub.get("stamp"):
-        source = ("pull", pub.get("stamp"), pub.get("n_rows"), pub.get("n_keys"))
+        source = ("pull", pub.get("stamp"), pub.get("n_rows"), pub.get("n_keys"), ident_digest)
     else:
         # Not a published pull: identify the actual fallback input AND whether that serve was
         # degraded, so a degraded result can never be mistaken for a verified one.
         source = ("fallback", _disk_input_identity(), _ANALYTICS_SERVE.get("source"),
-                  _ANALYTICS_SERVE.get("degraded"))
+                  _ANALYTICS_SERVE.get("degraded"), ident_digest)
     return (CFBD_YEAR, source, (pub or {}).get("week"), wk, composite_version())
 
 

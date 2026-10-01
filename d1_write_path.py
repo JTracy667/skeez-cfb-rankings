@@ -376,36 +376,30 @@ def _manifest_reasons(man: dict) -> list[str]:
     return why
 
 
-def _read_back_manifest(season: int, week: int, stamp: str) -> dict:
-    """Per stat key, what is actually READABLE at the stamp: (count, value sum).
+def _read_back_rows(season: int, week: int, stamp: str, expected: int,
+                    page: int = 1000) -> list[dict]:
+    """Every row actually readable at the stamp: (subject_id, stat_key, value).
 
-    A sum is not a per-row equality check, but combined with the key set and the counts it
-    catches a changed, dropped or duplicated value -- which row counting alone did not.
+    QA counterexample 4: per-key counts and SUMS are not a manifest. Two teams offset by
+    +5 and -5 leave every per-key count and sum unchanged, so the wrong values were
+    published and then served. The only check that catches that is the row set itself.
+    Paged because a season pull is ~35k rows.
     """
-    rows = d1_store.query(
-        "SELECT stat_key, COUNT(*) AS n, SUM(value) AS s FROM stat_observations "
-        "WHERE season = ? AND week = ? AND subject_type = 'team' AND recorded_at = ? "
-        "GROUP BY stat_key", [int(season), int(week), str(stamp)]) or []
-    out = {}
-    for r in rows:
-        try:
-            out[str(r.get("stat_key"))] = (int(r.get("n") or 0), float(r.get("s") or 0.0))
-        except (TypeError, ValueError):
-            out[str(r.get("stat_key"))] = (int(r.get("n") or 0), 0.0)
+    out: list[dict] = []
+    offset = 0
+    while True:
+        rows = d1_store.query(
+            "SELECT subject_id, stat_key, value FROM stat_observations "
+            "WHERE season = ? AND week = ? AND subject_type = 'team' AND recorded_at = ? "
+            "ORDER BY subject_id, stat_key LIMIT ? OFFSET ?",
+            [int(season), int(week), str(stamp), int(page), int(offset)]) or []
+        out.extend(rows)
+        if len(rows) < page:
+            break
+        offset += page
+        if offset > int(expected) + 2 * page:   # runaway guard: never loop forever
+            break
     return out
-
-
-def _expected_manifest(rows: list[dict]) -> dict:
-    exp: dict = {}
-    for r in rows:
-        k = str(r.get("stat_key"))
-        n, s = exp.get(k, (0, 0.0))
-        try:
-            v = float(r.get("value") or 0.0)
-        except (TypeError, ValueError):
-            v = 0.0
-        exp[k] = (n + 1, s + v)
-    return exp
 
 
 def publish_analytics_pull(season: int, week: int, stamp: str, n_rows: int, n_teams: int,
@@ -474,18 +468,23 @@ def snapshot_team_analytics(teams, keys=None, season: int = 0, week: int | None 
             print(f"[d1_write_path] NOT publishing {season} wk{week}: intended {expected} rows, "
                   f"only {got_rows} readable at stamp {stamp}")
             return n
-        # QA §2: counts alone are not a manifest. Verify the key set and per-key (count, sum)
-        # the pull intended against what is readable at the stamp.
-        exp = _expected_manifest(rows)
-        got = _read_back_manifest(season, week, stamp)
-        bad = []
-        for k, (en, es) in exp.items():
-            gn, gs = got.get(k, (0, 0.0))
-            if gn != en or abs(gs - es) > 1e-6 * max(1.0, abs(es)):
-                bad.append(f"{k}: intended {en}/{es:.3f}, readable {gn}/{gs:.3f}")
-        if bad:
-            print(f"[d1_write_path] NOT publishing {season} wk{week}: {len(bad)} stat keys do "
-                  f"not match the read-back (e.g. {bad[:3]})")
+        # QA §2 + counterexample 4: verify the EXACT row set the pull intended against what is
+        # readable at the stamp -- values included, and an EXTRA row at the stamp is a
+        # mismatch too (a partial writer sharing the stamp must not be silently adopted).
+        exp = {}
+        for r in rows:
+            exp[(r.get("subject_id"), str(r.get("stat_key")))] = r.get("value")
+        got = {}
+        for r in _read_back_rows(season, week, stamp, expected):
+            got[(r.get("subject_id"), str(r.get("stat_key")))] = r.get("value")
+        missing = [k for k in exp if k not in got]
+        extra = [k for k in got if k not in exp]
+        wrong = [k for k in exp if k in got and not d1_store._same_value(got[k], exp[k])]
+        if missing or extra or wrong:
+            print(f"[d1_write_path] NOT publishing {season} wk{week}: read-back disagrees "
+                  f"({len(missing)} missing, {len(extra)} extra, {len(wrong)} wrong value)"
+                  + (f"; e.g. missing={missing[:2]} extra={extra[:2]} wrong={wrong[:2]}"
+                     if (missing or extra or wrong) else ""))
             return n
         publish_analytics_pull(season, week, stamp, got_rows, got_teams, identity,
                                keys=man["keys"])

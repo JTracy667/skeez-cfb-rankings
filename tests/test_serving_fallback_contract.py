@@ -124,3 +124,24 @@ def test_opt_out_does_zero_d1_reads_and_is_reported_degraded(monkeypatch):
     assert out[0]["sp_plus"] == 30.2
     assert "ANALYTICS_FROM_D1=0" in app._ANALYTICS_SERVE["source"]
     assert app._ANALYTICS_SERVE["degraded"] is True
+
+def test_publication_with_rows_but_no_live_identity_serves_without_crashing(monkeypatch):
+    """QA counterexample 1: publication + numeric rows + NO live identity map.
+
+    This is the path that exited 1 with `UnboundLocalError: ... 'disk'` at app.py:4588 --
+    the disk fallback was refactored into a lazy helper, but the success path still read the
+    old `disk` local. Serving must never raise.
+    """
+    _stub_d1(monkeypatch, pub={"stamp": "2026-09-30T16:18:36Z", "week": 5, "identity": {}},
+             rows=[{"name": "Georgia", "sp_plus": 30.2}])
+    monkeypatch.setattr(app, "_analytics_identity_map", lambda pub=None: {})
+    monkeypatch.setattr(app, "_load_cfbd_analytics_file",
+                        lambda: [{"name": "Georgia", "mascot": "Bulldogs", "conf": "SEC",
+                                  "sp_plus": 30.2}])
+
+    out = app._served_analytics()
+
+    assert out[0]["name"] == "Georgia"
+    assert out[0]["sp_plus"] == 30.2, "the published numeric row must be served"
+    assert out[0]["mascot"] == "Bulldogs", "string fields come from the disk fallback"
+    assert app._ANALYTICS_SERVE["degraded"] is False, "the numerics were verified"
