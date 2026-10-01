@@ -189,6 +189,16 @@ step and/or the Wednesday smoke.
 offline-only (backtests, ops). But if any is *expected* to feed the site, the consumer is
 missing — same shape as the v49 bug. Needs a per-table intent decision, not a code change.
 
+### F9 — Board/schedule disk fallbacks are read with no verified publication. **LOW — by design, now tracked.**
+`cfbd_analytics.json` (serve **and** build, via `compute_win_totals()`) and `week_schedule.json`
+(build, via `load_schedule()`) are still read from `data/` when the store holds no verified
+publication. That is the documented disk fallback: it keeps a board or a page rendering during a
+D1/provider outage instead of serving an empty result.
+`tests/test_no_disk_reads_in_serving.py` allowlists exactly these three reads under this id, and
+still fails if any *other* data/ read appears.
+**Removal:** Phase 6 routes both through the D1-first accessors (`_served_analytics()`); delete the
+allowlist entries with that conversion so the test goes red if either read comes back.
+
 ---
 
 ## 6. Recommended order

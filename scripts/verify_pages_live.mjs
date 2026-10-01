@@ -57,6 +57,23 @@ const check = (label, ok, detail) => {
     badge || '(empty)');
   check('schedule: no current-week call when none needed or exactly one when needed',
     h.count('/api/schedule/current-week') <= 1, `${h.count('/api/schedule/current-week')} call(s)`);
+
+  // The stale-data notice must MATCH the API's staleness flag. An outage now serves the last good
+  // slate instead of an empty page, so this indicator is the only thing separating "old data"
+  // from "silently wrong data": it has to be wired, and it must not cry wolf when data is fresh.
+  const _base = (typeof process !== 'undefined' && process.env && process.env.CFB_BASE_URL)
+    || 'https://skeezcfb-rankings.com';
+  let _apiStale = null;
+  try {
+    _apiStale = !!(await (await fetch(`${_base}/api/schedule/weeks`)).json()).stale;
+  } catch (e) { _apiStale = null; }
+  const _notice = h.el('dataNotice');
+  const _shown = !!_notice && _notice.style.display !== 'none'
+                 && (_notice.textContent || '').length > 0;
+  check('schedule: stale-data notice matches the API staleness flag',
+    _apiStale !== null && _shown === _apiStale,
+    `api stale=${_apiStale}, notice shown=${_shown}`
+      + (_shown ? `: ${(_notice.textContent || '').slice(0, 70)}` : ''));
 }
 
 // A page JS error that never reaches the network -- the ReferenceError class that a syntax

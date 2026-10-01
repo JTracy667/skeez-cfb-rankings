@@ -85,6 +85,12 @@ SERVE_ALLOWLIST: dict[str, str] = {
     # appears in some runs and not others. git-tracked, last written 2026-08-07 by
     # scripts/build_fbs_db.py -- never written at runtime.
     "fbs_teams.json": "INTERMITTENT PERMANENT - static reference asset written only by a build script, never at runtime",
+    # FINDING F9 (Phase 6 removal). This read happens ONLY when the store
+    # holds no verified publication, i.e. the documented disk fallback that keeps a page rendering
+    # during an outage instead of serving an empty board. NOT permanent: Phase 6 routes the
+    # remaining board reads through the D1-first accessor (_served_analytics()); delete this entry
+    # with that conversion, and let this test go red if the read comes back.
+    "cfbd_analytics.json": "F9 -> Phase 6 (D1-first _served_analytics); remove with that conversion",
 }
 
 BUILD_ALLOWLIST: dict[str, str] = {
@@ -99,6 +105,13 @@ BUILD_ALLOWLIST: dict[str, str] = {
     "teams.json":           "PERMANENT - static reference asset (baked into the image, never written at runtime). No revert risk.",
     # DIFFED OUT in Phase 6: same conversion as the serve scope above.
     "cfbd_logos.json": "PERMANENT - static reference asset (baked into the image, never written at runtime); no revert risk",
+    # FINDING F9 (Phase 6 removal). Both reads occur ONLY when the store
+    # holds no verified publication: cfbd_analytics.json is read by compute_win_totals() to build
+    # the win-total board, week_schedule.json by load_schedule() on its serve fallback. NOT
+    # permanent: Phase 6 converts both to the D1-first accessors; delete these entries with that
+    # conversion, and let this test go red if either read comes back.
+    "cfbd_analytics.json": "F9 -> Phase 6 (D1-first compute_win_totals)",
+    "week_schedule.json": "F9 -> Phase 6 (D1-first load_schedule)",
 }
 
 IMPORT_ALLOWLIST: dict[str, str] = {

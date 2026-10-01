@@ -18,6 +18,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .header h1 span{color:var(--accent)}
 .header .subtitle{color:var(--text-dim);font-size:.95rem;margin-top:.35rem;position:relative}
 .week-badge{display:inline-block;margin-top:1rem;background:var(--surface2);border:1px solid var(--border);padding:.35rem 1rem;border-radius:999px;font-size:.8rem;font-weight:600;color:var(--accent);position:relative}
+.data-notice{display:none;margin-top:.75rem;background:rgba(255,176,32,.12);border:1px solid rgba(255,176,32,.45);color:#ffb020;padding:.5rem .9rem;border-radius:8px;font-size:.82rem;font-weight:600;position:relative}
 nav{margin-top:1rem;position:relative;display:flex;gap:12px;justify-content:center}
 nav a{color:var(--text-dim);text-decoration:none;font-size:.85rem;font-weight:600;transition:color .2s}
 nav a:hover{color:var(--accent)}
@@ -193,6 +194,10 @@ nav a.active{color:var(--accent)}
   <h1>🏈 Skeez <span>CFB Rankings</span> — Weekly Schedule</h1>
   <p class="subtitle">Score differentials and matchup projections</p>
   <div class="week-badge" id="weekBadge">Loading...</div>
+  <!-- Stale-data notice. Served when CFBD is unreachable and the page is showing the last good
+       slate (app._cfbd_games_freshness -> /api/schedule* payloads). An outage now degrades to
+       old data instead of an empty page, so the page has to SAY that it is old. -->
+  <div class="data-notice" id="dataNotice"></div>
   <nav>
     <a href="/">Skeez CFB Rankings</a>
     <span>·</span>
@@ -251,6 +256,7 @@ async function loadWeeks() {
     if (!res.ok) return false;
     const data = await res.json();
     const weeks = data.weeks || [];
+    showStaleness(data);
     if (!weeks.length) return false;
     const sel = document.getElementById('weekSelect');
     sel.innerHTML = '';
@@ -264,6 +270,20 @@ async function loadWeeks() {
   } catch (e) { console.error('Failed to load weeks:', e); return false; }
 }
 
+// Show the stale-data notice when the API says the slate came from an old cached copy.
+// An outage serves the last good slate rather than an empty page, so it must be visible.
+function showStaleness(data) {
+  const el = document.getElementById('dataNotice');
+  if (!el) return;
+  if (!data || !data.stale) { el.style.display = 'none'; el.textContent = ''; return; }
+  const h = (typeof data.data_age_hours === 'number') ? data.data_age_hours : null;
+  const age = h === null ? 'an unknown age'
+            : (h >= 48 ? `${Math.round(h / 24)} days` : `${Math.round(h)} hours`);
+  el.textContent = `⚠️ CFBD is unreachable — showing the last good slate (${age} old). `
+                 + `Some games or lines may be out of date.`;
+  el.style.display = 'block';
+}
+
 async function fetchSchedule(week) {
   currentWeek = week || currentWeek;
   try {
@@ -274,6 +294,7 @@ async function fetchSchedule(week) {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+    showStaleness(data);
     matchups = data.matchups;
     lastNote = data.note || '';
     document.getElementById('weekBadge').textContent = `Week ${data.week} · ${data.season} Season · ${matchups.length} Games`;

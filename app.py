@@ -4417,7 +4417,7 @@ def api_schedule_current_week(year: int = CFBD_YEAR):
         weeks = cfbd_weeks(year)
         if wk is None:
             wk = weeks[0] if weeks else 1
-        return {"year": year, "week": wk, "weeks": weeks}
+        return {"year": year, "week": wk, "weeks": weeks, **_cfbd_games_freshness(year)}
     except Exception as e:
         print(f"[GET /api/schedule/current-week ERROR] {e}")
         raise HTTPException(502, f"Current-week fetch failed: {e}")
@@ -5746,7 +5746,10 @@ def api_schedule_fetch(week: int = 1, year: int = 2026):
     except Exception as e:  # noqa: BLE001 — never break the schedule page
         print(f"[Schedule] D1 predictions failed: {e}")
     _payload = {"week": week, "season": year, "updated": datetime.now().isoformat(),
-                "matchups": enriched, "has_odds": len(odds_map) > 0, "note": note}
+                "matchups": enriched, "has_odds": len(odds_map) > 0, "note": note,
+                # How old the season-game list is. The page shows a notice when it is stale,
+                # because an outage now serves the last good slate instead of an empty page.
+                **_cfbd_games_freshness(year)}
     _SCHEDULE_FETCH_CACHE[_key] = {"ts": time.time(), "data": _payload}
     # Persist so the next cold container serves this instead of rebuilding it.
     _store_slate(week, year, _payload)
@@ -5760,7 +5763,7 @@ def api_schedule_weeks(year: int = CFBD_YEAR):
     The frontend builds its week dropdown from this so weeks appear as CFBD
     publishes them (and bye weeks like Week 14 don't show up)."""
     try:
-        return {"year": year, "weeks": cfbd_weeks(year)}
+        return {"year": year, "weeks": cfbd_weeks(year), **_cfbd_games_freshness(year)}
     except Exception as e:
         print(f"[GET /api/schedule/weeks ERROR] {e}")
         raise HTTPException(502, f"Weeks fetch failed: {e}")
@@ -6652,30 +6655,63 @@ CFBD_GAMES_TTL = 1800    # 30 minutes — schedule is static within a week
 _CFBD_GAMES_FILE = DATA_DIR / "cfbd_season_games.json"
 
 
+_CFBD_GAMES_STATE: dict = {}   # {year: {"source","age_hours","stale"}} -- reported by the API
+
+
+def _cfbd_games_freshness(year: int = CFBD_YEAR) -> dict:
+    """Where the season-game list came from, and how old it is.
+
+    The Schedule page renders a notice from this. Serving stale data is deliberate (see
+    _cfbd_season_games): an empty slate is worse than an old one, but it must be VISIBLE.
+    """
+    st = _CFBD_GAMES_STATE.get(year) or {}
+    age = st.get("age_hours")
+    return {
+        "data_source": st.get("source", "unknown"),
+        "stale": bool(st.get("stale")),
+        "data_age_hours": (round(age, 1) if age is not None else None),
+    }
+
+
 def _cfbd_season_games(year: int) -> list[dict]:
     """Full-season game list from CFBD (one call, all weeks).
 
-    Cached in memory for CFBD_GAMES_TTL seconds and persisted to disk. On a
-    fresh empty result (API hiccup), falls back to the last good disk copy."""
+    Cached in memory for CFBD_GAMES_TTL seconds and persisted to disk.
+
+    When the fetch comes back empty -- offline, or a CFBD outage -- the last good disk copy is
+    served REGARDLESS OF AGE and marked stale in _CFBD_GAMES_STATE, so the page can say so.
+    Refusing an old copy turned a provider outage into an EMPTY Schedule page: for a dataset that
+    is static within a week, old data beats no data as long as the staleness is visible.
+    """
     cached = _CFBD_GAMES_CACHE.get(year)
     if cached and time.time() - cached["ts"] < CFBD_GAMES_TTL:
         return cached["games"]
+
     games = [g for g in _cfbd_get("games", year) if isinstance(g, dict)]
+    source, age_hours = "live", 0.0
     if not games and _CFBD_GAMES_FILE.exists():
         try:
             payload = json.loads(_CFBD_GAMES_FILE.read_text(encoding="utf-8"))
-            # Disk copy is a fallback only — allow up to 4x the TTL staleness.
-            if time.time() - payload.get("ts", 0) < CFBD_GAMES_TTL * 4:
-                games = [g for g in payload.get("games", []) if isinstance(g, dict)]
+            disk = [g for g in payload.get("games", []) if isinstance(g, dict)]
+            if disk:
+                games = disk
+                age_hours = max(0.0, (time.time() - float(payload.get("ts") or 0)) / 3600.0)
+                fresh = age_hours * 3600 < CFBD_GAMES_TTL * 4
+                source = "disk" if fresh else "disk (stale)"
         except Exception:
             pass
+    if not games:
+        source = "empty"
+
+    _CFBD_GAMES_STATE[year] = {"source": source, "age_hours": age_hours,
+                               "stale": source == "disk (stale)"}
     _CFBD_GAMES_CACHE[year] = {"ts": time.time(), "games": games}
-    # NEVER overwrite a populated cache with an EMPTY result. A process that cannot reach the
-    # provider (an offline candidate, or a CFBD outage) would otherwise write [] over the last
-    # good copy, leaving the next boot nothing to fall back to -- which is exactly how the served
-    # Schedule page went empty with 3,679 games sitting in the copy it had just destroyed. The
-    # staleness rule above still decides what is SERVED; this only stops the data being LOST.
-    if games or not _CFBD_GAMES_FILE.exists():
+
+    # Write only for a LIVE fetch, or when there is no cache at all. Two reasons:
+    #   - an empty result must never destroy a populated cache (it did: 3,679 games replaced by
+    #     39 bytes, which is how the served Schedule page went empty);
+    #   - re-stamping a copy we just served from disk would erase the age we report as stale.
+    if source == "live" or not _CFBD_GAMES_FILE.exists():
         try:
             _CFBD_GAMES_FILE.write_text(
                 json.dumps({"ts": time.time(), "games": games}), encoding="utf-8")

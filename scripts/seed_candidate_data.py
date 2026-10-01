@@ -71,6 +71,12 @@ def main() -> int:
 
     # Freshness stamp: the offline process will not serve a copy older than 2h.
     gpath = os.path.join(target, "cfbd_season_games.json")
+    if os.environ.get("CFB_CANDIDATE_NO_RESTAMP") == "1":
+        # Demo/verification switch: leave the age alone so the STALE path can be exercised on a
+        # served candidate (an outage must still render, flagged). Never used for a normal serve.
+        print(f"  CFB_CANDIDATE_NO_RESTAMP=1 -> age left as-is "
+              f"({_games(gpath)} games, {os.path.getsize(gpath)} bytes)")
+        return 0
     if os.path.exists(gpath):
         try:
             with open(gpath, encoding="utf-8") as f:
