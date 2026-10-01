@@ -143,8 +143,14 @@ export function createHarness({ page, search = '', routes = {}, live = false }) 
     calls.push(rec);
     return rec;
   };
+  // QA round 5: the base URL was hardcoded to production, so `verify_pages_live.mjs` could only
+  // ever exercise what was DEPLOYED -- never a candidate commit. Override it to point the same
+  // harness at a locally served candidate:
+  //   CFB_BASE_URL=http://127.0.0.1:8011 node scripts/verify_pages_live.mjs
+  const liveBase = (typeof process !== 'undefined' && process.env && process.env.CFB_BASE_URL)
+    || 'https://skeezcfb-rankings.com';
   const realFetch = live
-    ? (u, o) => { noteCall(u, o); return globalThis.fetch(new URL(u, 'https://skeezcfb-rankings.com').href, o); }
+    ? (u, o) => { noteCall(u, o); return globalThis.fetch(new URL(u, liveBase).href, o); }
     : null;
 
   const fetchStub = (url, opts = {}) => {

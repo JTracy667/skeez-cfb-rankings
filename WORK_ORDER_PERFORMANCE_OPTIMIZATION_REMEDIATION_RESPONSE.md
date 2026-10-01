@@ -538,3 +538,84 @@ every other step passed`, exit 3. With the token: `ENFORCEMENT GATE: PASS`, exit
 | `node scripts/verify_pages_live.mjs` | **ALL LIVE PAGE CHECKS PASSED** |
 
 No deploy, no migration, no production write. Prod still build v62.
+
+---
+
+# Round 5 — a candidate-level receipt (QA: "UNVERIFIABLE for release approval")
+
+QA accepted the round-4 regression fix in their own probe and kept the veto for two stated
+reasons: the provider-dependent gate is not independently verifiable in their environment, and
+**the candidate cannot be exercised as a served site** — the live-page harness only ever
+described production (v62), never `8741bcb`.
+
+The second one was a real structural gap, not a formality: `tests/js/harness.mjs` hardcoded
+`https://skeezcfb-rankings.com`, so *no* page receipt could ever describe a candidate commit.
+
+## Fixes
+
+- **`tests/js/harness.mjs`** — the base URL is now `CFB_BASE_URL`-overridable, so the same
+  harness can be pointed at a locally served candidate:
+  `CFB_BASE_URL=http://127.0.0.1:8011 node scripts/verify_pages_live.mjs`.
+- **`scripts/serve_candidate_local.ps1`** — serves the working tree on 127.0.0.1:8011, offline
+  by construction.
+
+## Candidate-level receipt (commit `8741bcb` + these two files, served locally)
+
+```
+PASS  analytics: SP+ table renders  685 rows in 270ms
+PASS  analytics: startup asked for NO projections  projections calls: 0
+PASS  analytics: no page error text  loading pane: (hidden)
+PASS  analytics: projections pane populated on activation  1 projections call(s)
+PASS  analytics: odds table populated on activation  1 odds call(s)
+PASS  analytics: no error state  pane 38531 bytes
+PASS  schedule: week dropdown populated  14 weeks: 1,2,3,4...
+PASS  schedule: selected week is published  selected 5
+PASS  schedule: matchup cards render  59 cards
+PASS  schedule: week badge is populated  Week 5 · 2026 Season · 59 Games
+PASS  schedule: no current-week call when none needed or exactly one when needed  1 call(s)
+PASS  analytics: no page JS exceptions  clean
+PASS  schedule: no page JS exceptions  clean
+
+ALL LIVE PAGE CHECKS PASSED
+```
+
+Served state for that run: `/api/analytics` → 685 teams,
+`serve = {"source": "disk (no verified publication)", "degraded": true, "reason": "no verified
+publication marker"}`.
+
+## Making it offline found two silent traps
+
+Both are the kind that would have made a "hermetic" local run quietly touch production:
+
+1. **`app.py:47` loads the repository `.env` at import.** The production D1 credentials enter
+   the process regardless of the parent environment — unsetting them in the shell does nothing.
+2. **On Windows, `$env:X = ''` makes `X` ABSENT in the child** (verified with a probe), so
+   `app.py:59`'s `key not in os.environ` guard lets `.env` refill it. Absence is not protection.
+
+My first two attempts therefore still had D1 read access. **Honest account of what that means:**
+reads only — `write_enabled()` is false (`D1_WRITE_ENABLED=0`) and the ops POST routes are not
+reachable — and I checked rather than assumed: the D1 write ledger's mtime (18:48:43 PT)
+*precedes* the server's first boot (18:49:07 PT), and the production marker still carries no
+digest (the reason the serve reported "publication predates the value digest"). No production
+write occurred.
+
+The final configuration uses present-but-useless sentinels, which is what actually works:
+the key is set (so `.env` skips it) and the API rejects every call, driving the disk fallback.
+
+## What this receipt is — and is not
+
+**Is:** the candidate's own page scripts and API, executed as a served site (13 checks).
+**Is not:** D1-dependent behaviour. A local offline instance cannot exercise publication
+integrity or provider-specific semantics — those remain QA's isolated SQLite probes plus the
+CTO-reported scratch-D1 runs, which QA has correctly refused to treat as independent receipts.
+
+## Round 5 results
+
+| gate | result |
+|---|---|
+| candidate page harness (`CFB_BASE_URL=http://127.0.0.1:8011`) | **ALL LIVE PAGE CHECKS PASSED** (13) |
+| `python -m pytest tests/` | 161 passed, 4 skipped |
+| `node --test tests/js/*.test.mjs` | 21 passed |
+| `scripts/run_enforcement_tests.py` (no token) | PARTIAL, exit 3 |
+
+No deploy, no migration, no production write. Prod still build v62.
