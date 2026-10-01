@@ -45,17 +45,25 @@ if os.path.exists(QA_FILE):
         stale = f.read().strip()
     os.remove(QA_FILE)
     print(f"removed the credential file {QA_FILE}")
-    # Prove the value is dead, not just deleted from disk.
-    body = json.dumps({"sql": "SELECT 1"}).encode()
-    req = urllib.request.Request(
-        f"https://api.cloudflare.com/client/v4/accounts/{ACCT}/d1/database/"
-        "c3ec3149-cc85-483b-b727-5a18e3d5a1b9/query", data=body,
-        headers={"Authorization": f"Bearer {stale}", "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            print(f"!! the revoked token STILL WORKS (HTTP {r.status}) -- investigate")
-    except urllib.error.HTTPError as e:
-        print(f"revoked value now returns HTTP {e.code} (dead)")
+    # Prove the value is dead, not just deleted from disk. POLL: revocation is eventually
+    # consistent -- a t+0 probe can still return 200 (measured: 200 at t+0, 401 at t+15s), and a
+    # single read would report that window as "still works".
+    t0 = time.time()
+    while time.time() - t0 < 180:
+        body = json.dumps({"sql": "SELECT 1"}).encode()
+        req = urllib.request.Request(
+            f"https://api.cloudflare.com/client/v4/accounts/{ACCT}/d1/database/"
+            "c3ec3149-cc85-483b-b727-5a18e3d5a1b9/query", data=body,
+            headers={"Authorization": f"Bearer {stale}", "Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                print(f"  t+{int(time.time() - t0):>3}s  HTTP {r.status} (propagation window)")
+        except urllib.error.HTTPError as e:
+            print(f"  t+{int(time.time() - t0):>3}s  HTTP {e.code} -- PROVEN DEAD")
+            break
+        time.sleep(10)
+    else:
+        print("  !! still working after 180s -- investigate")
 else:
     print(f"no credential file at {QA_FILE}")
 
