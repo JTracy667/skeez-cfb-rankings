@@ -64,8 +64,12 @@ The 4 skips are the provider-specific tests without a scratch pin. Nothing else 
 
 ## Unresolved tradeoffs / open items
 
-1. **The index migration is prepared but not applied** (`2026-09-30_stat_obs_serving_index.sql`).
-   Proposed sequencing: apply it as part of the deploy, alongside the code.
+1. **The index migration is APPLIED to production** (`2026-09-30_stat_obs_serving_index.sql`,
+   applied 2026-10-01 alongside the v63 code deploy, with Jeff's authorisation). Verified by
+   read-only EXPLAIN QUERY PLAN on production: both selectors moved from
+   `ix_stat_obs_season_key_week (season=?)` to
+   `ix_stat_obs_serving (season=? AND week=? AND subject_type=? AND recorded_at=?)`.
+   Rollback remains one statement (`DROP INDEX IF EXISTS ix_stat_obs_serving;`).
 2. **Regression caught in review and fixed** (`911094c`): serving identity had been switched to
    the marker's snapshot, which froze streak/conf/mascot at the publication stamp and broke the
    documented "D1 identity empty → disk" contract. Identity is served from the LIVE

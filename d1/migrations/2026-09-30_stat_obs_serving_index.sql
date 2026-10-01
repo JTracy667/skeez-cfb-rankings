@@ -1,7 +1,15 @@
--- Task 5 — serving index for the analytics archive read. PREPARED, NOT APPLIED.
+-- Task 5 — serving index for the analytics archive read. APPLIED 2026-10-01 to production
+-- (cfb-history), authorised by Jeff after the v63 code deploy.
 --
--- Apply only with Jeff's approval, as its own step (the work order forbids a production
--- migration under this order). Rollback is one statement and is safe in either direction:
+-- EVIDENCE OF EFFECT (production, read-only EXPLAIN QUERY PLAN, before -> after):
+--   before: SEARCH o USING INDEX ix_stat_obs_season_key_week (season=?)
+--   after:  SEARCH o USING INDEX ix_stat_obs_serving (season=? AND week=? AND subject_type=? AND recorded_at=?)
+-- Both selectors (new `recorded_at = ?` and old `MAX(recorded_at)`) now seek the index.
+-- Live /api/analytics warm latency observed 4.16-4.58s before -> 1.67-2.06s after
+-- (not a controlled benchmark: in-process caching and container wake state vary; the
+-- definitive evidence is the plan change above).
+--
+-- Rollback is one statement and is safe in either direction:
 -- the index is a pure read optimisation and no query depends on its existence.
 --
 -- WHY IT IS JUSTIFIED (measured 2026-09-30, scripts/analytics_query_plan.py)

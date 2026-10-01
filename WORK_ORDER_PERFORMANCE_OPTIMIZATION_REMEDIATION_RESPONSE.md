@@ -17,6 +17,10 @@ Per your order, and with no exception:
 - **No production D1 writes** in this remediation. No marker, no rows, no app_state.
 - **No migration applied.** `d1/migrations/2026-09-30_stat_obs_serving_index.sql` is still
   PREPARED, NOT APPLIED.
+  > UPDATE 2026-10-01: this was true OF THIS REMEDIATION ROUND and is left as the historical
+  > record. The migration has since been APPLIED to production (cfb-history) as part of the
+  > v63 release, authorised by Jeff. See the migration file header and
+  > WORK_ORDER_PERFORMANCE_OPTIMIZATION_HANDOFF.md § open items.
 - **No deployment.** Prod is untouched: image v62, app version 59. The branch is not merged.
 - **No unsafe restoration.** The one file restored was restored from git HEAD, under Jeff's
   explicit in-session approval (below). The four other dirty `data/` mirrors were **left
