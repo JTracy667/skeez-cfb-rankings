@@ -70,5 +70,11 @@ $env:CF_D1_TOKEN          = 'local-offline-no-store'
 $env:CLOUDFLARE_API_TOKEN = 'local-offline-no-store'
 $env:CF_D1_DB_ID          = ''
 
+# Seed the scratch data dir from the repo. The candidate cannot fetch, so without this the
+# Schedule page serves an empty slate -- and it also repairs caches the app clobbered with empty
+# results before the guard in _cfbd_season_games() was added.
+python scripts/seed_candidate_data.py $DataDir
+
 Write-Host "serving the working tree at http://127.0.0.1:$Port  (offline: no D1, no fetches)"
+Write-Host "verify with: python scripts/qa_candidate_check.py http://127.0.0.1:$Port"
 python -m uvicorn app:app --host 127.0.0.1 --port $Port

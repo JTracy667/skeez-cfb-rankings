@@ -6670,11 +6670,17 @@ def _cfbd_season_games(year: int) -> list[dict]:
         except Exception:
             pass
     _CFBD_GAMES_CACHE[year] = {"ts": time.time(), "games": games}
-    try:
-        _CFBD_GAMES_FILE.write_text(
-            json.dumps({"ts": time.time(), "games": games}), encoding="utf-8")
-    except Exception:
-        pass
+    # NEVER overwrite a populated cache with an EMPTY result. A process that cannot reach the
+    # provider (an offline candidate, or a CFBD outage) would otherwise write [] over the last
+    # good copy, leaving the next boot nothing to fall back to -- which is exactly how the served
+    # Schedule page went empty with 3,679 games sitting in the copy it had just destroyed. The
+    # staleness rule above still decides what is SERVED; this only stops the data being LOST.
+    if games or not _CFBD_GAMES_FILE.exists():
+        try:
+            _CFBD_GAMES_FILE.write_text(
+                json.dumps({"ts": time.time(), "games": games}), encoding="utf-8")
+        except Exception:
+            pass
     return games
 
 
