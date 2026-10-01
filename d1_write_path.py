@@ -75,6 +75,7 @@ def _guard(fn):
 # F5: in-process view of archive failures since this container booted. The D1 rows are the
 # durable history; this is what /api/health can answer without a query.
 _ARCHIVE_FAILURES = {"count": 0, "last_fn": None, "last_error": None, "last_ts": None}
+_RECORDING_FAILURE = False   # re-entry guard: the recorder must never recurse (see below)
 
 
 def archive_failure_state() -> dict:
@@ -84,18 +85,37 @@ def archive_failure_state() -> dict:
 
 
 def _record_archive_failure(fn_name: str, exc: Exception) -> None:
-    """Best-effort, and it MUST NOT raise: this runs INSIDE an exception handler and
-    telemetry must never be able to affect the site."""
+    """Best-effort, and it MUST NOT raise -- and MUST NOT RE-ENTER.
+
+    `record_freshness_event` is itself `@_guard`ed, so when the D1 write path is down its own
+    failure calls back into THIS function: guard -> recorder -> guarded recorder -> recorder ->
+    ... That recursed until `RecursionError`, which (a) inflated the counter by thousands for
+    ONE real failure, (b) overwrote the ORIGINAL error with the recorder's own, so the actual
+    cause was never visible, and (c) kept the container's CPU busy enough that it never idled --
+    so it never recycled and could not even pick up corrected credentials.
+
+    Observed in production 2026-10-01: archive.count 3450+, last_fn `record_freshness_event`,
+    and ZERO `archive_failure` rows in D1 -- because the write that would have recorded the
+    failure was the write that was failing.
+    """
+    global _RECORDING_FAILURE
+    if _RECORDING_FAILURE:
+        # Already reporting one failure: do not recurse, do not inflate the count.
+        print(f"[d1_write_path] (suppressed) {fn_name} failed while reporting a failure: {exc}")
+        return
     _ARCHIVE_FAILURES["count"] += 1
     _ARCHIVE_FAILURES["last_fn"] = fn_name
     _ARCHIVE_FAILURES["last_error"] = f"{type(exc).__name__}: {exc}"[:300]
     _ARCHIVE_FAILURES["last_ts"] = _now()
+    _RECORDING_FAILURE = True
     try:
         record_freshness_event(event="archive_failure", source=fn_name,
                                detail=_ARCHIVE_FAILURES["last_error"])
     except Exception as e:  # noqa: BLE001
         # If we cannot even record the failure, say so loudly on stdout -- but never raise.
         print(f"[d1_write_path] could not record archive_failure for {fn_name}: {e}")
+    finally:
+        _RECORDING_FAILURE = False
 
 
 def _now() -> str:
