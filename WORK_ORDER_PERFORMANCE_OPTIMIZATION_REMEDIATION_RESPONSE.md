@@ -178,10 +178,16 @@ value** (numeric-tolerant via `_same_value`).
 **Defects (both confirmed).** The fallback identity was the constant `"disk"`, and an empty
 result was cached as fresh.
 
-**Fix** (`app.py`): `_disk_input_identity()` = `disk:<name>:<size>:<mtime_ns>`; the fallback
-key also carries the serve source and degraded flag; the published key carries
-`(stamp, n_rows, n_keys)`; and **nothing is cached when the payload is empty or was computed
-while the serve was degraded**.
+**Fix** (`app.py`): `_disk_input_identity()` = `disk:<name>:<size>:<mtime_ns>`; the key carries
+which door produced the payload (the published marker, or the fallback's disk input) plus the
+identity digest; and **an empty payload is never cached**.
+
+*(Corrected in round 3: the fallback key originally also carried the serve source and degraded
+flag, and the store was gated on that flag. Serving SETS that flag, so the key changed between
+a request and its own warm follow-up — every cache hit missed — and gating the store on a
+global set by whatever served last made caching depend on an unrelated request. The key and the
+store decision are now input-based. The material guarantee is unchanged and tested: a fallback
+payload cannot satisfy a request that has a verified publication.)*
 
 **Acceptance tests** — `tests/test_projection_cache_identity.py`, **7 tests**; 6 of 7 FAIL
 against the pre-fix `app.py` (verified by stash) and pass after.
