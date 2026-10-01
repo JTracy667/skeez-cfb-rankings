@@ -34,6 +34,13 @@ def _d1():
 def _require_d1():
     if not os.environ.get("CF_D1_TOKEN"):
         pytest.skip("CF_D1_TOKEN not set - the append-only proof needs the real D1.")
+    import d1_store  # noqa: PLC0415
+    if (str(getattr(d1_store, "D1_DB_ID", ""))
+            == "c3ec3149-cc85-483b-b727-5a18e3d5a1b9"
+            and os.environ.get("CFB_ALLOW_PROD_TEST_WRITES") != "1"):
+        pytest.skip(
+            "the live append-only probe writes rows, so it must not run against PRODUCTION. "
+            "Point CF_D1_DB_ID at the scratch D1 (scripts/setup_d1_scratch.py).")
 
 
 def _cleanup(stamps):

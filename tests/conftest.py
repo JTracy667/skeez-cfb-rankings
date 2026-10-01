@@ -37,3 +37,32 @@ if not os.environ.get("CFB_DATA_DIR"):
     _scratch = tempfile.mkdtemp(prefix="cfb-test-data-")
     shutil.copytree(os.path.join(_repo_root, "data"), _scratch, dirs_exist_ok=True)
     os.environ["CFB_DATA_DIR"] = _scratch
+
+# ── Standing rule: NO TEST MAY WRITE TO PRODUCTION D1 ────────────────────────────────────
+# Reads are fine -- the served==D1 parity test needs them. Writes are not: a test run that
+# happens to have a token in its environment must not be able to touch the live store.
+# Enforced rather than documented, because "it skips when CF_D1_TOKEN is absent" is not a
+# guard: a token can appear in a run's environment (tests/d1_counter_selftest.py harvests one
+# from Desktop/Cloudflare.txt), and CF_D1_DB_ID DEFAULTS TO PRODUCTION.
+#
+#   Found 2026-09-30: a full-suite run wrote 2,243 rows into live D1 -- probe rows in
+#   stat_observations deleted by exact stamp, so the tables looked unchanged while the write
+#   ledger and the Cloudflare burn were charged.
+PROD_D1_DB_ID = "c3ec3149-cc85-483b-b727-5a18e3d5a1b9"
+
+if os.environ.get("CFB_ALLOW_PROD_TEST_WRITES") != "1":
+    import d1_store as _d1_store
+
+    _orig_query_full = _d1_store.query_full
+
+    def _no_prod_writes(sql, params=None, timeout=60):
+        stmt = sql.strip().upper()
+        if (stmt.startswith(("INSERT", "UPDATE", "DELETE", "REPLACE"))
+                and str(getattr(_d1_store, "D1_DB_ID", "")) == PROD_D1_DB_ID):
+            raise RuntimeError(
+                "refusing to WRITE to production D1 from a test run. Point CF_D1_DB_ID at a "
+                "scratch database (scripts/setup_d1_scratch.py), or set "
+                "CFB_ALLOW_PROD_TEST_WRITES=1 for a deliberate live probe. SQL: " + sql[:120])
+        return _orig_query_full(sql, params, timeout)
+
+    _d1_store.query_full = _no_prod_writes

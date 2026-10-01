@@ -40,6 +40,14 @@ os.environ.setdefault("D1_DAILY_WRITE_CAP", "200000")
 import d1_store           # noqa: E402
 import backfill_d1 as bf  # noqa: E402
 
+# This runner WRITES probe rows. Refuse production unless it is asked for explicitly:
+# CF_D1_DB_ID defaults to the live database, so silence would mean touching prod.
+if (str(getattr(d1_store, "D1_DB_ID", "")) == "c3ec3149-cc85-483b-b727-5a18e3d5a1b9"
+        and os.environ.get("CFB_ALLOW_PROD_TEST_WRITES") != "1"):
+    sys.exit("refusing: this selftest writes probe rows and CF_D1_DB_ID resolves to\n"
+             "PRODUCTION. Point it at the scratch D1, or set "
+             "CFB_ALLOW_PROD_TEST_WRITES=1 for a deliberate live probe.")
+
 ok = []
 
 # 1/2 ---------------------------------------------------------------- real write
