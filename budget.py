@@ -39,6 +39,7 @@ write; counting it would make the meter feed itself).
 from __future__ import annotations
 
 import json
+from runtime_paths import data_dir as _rt_data_dir
 import os
 import threading
 import time
@@ -60,8 +61,7 @@ ALERT_PCT = 80.0
 PAUSE_PCT = 95.0
 
 FLUSH_EVERY_S = 600          # min seconds between D1 ledger flushes
-LEDGER_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "data", "budget_ledger.json")
+LEDGER_PATH = os.path.join(str(_rt_data_dir()), "budget_ledger.json")
 
 _local = threading.local()
 _lock = threading.RLock()

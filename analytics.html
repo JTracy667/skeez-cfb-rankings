@@ -210,6 +210,15 @@ let currentTab = 'spplus';
 let sortCol = null;
 let sortDir = 'desc';
 
+// ── Projections & Odds state (Task 1) ──
+// Declared up here because the source badge and the refresh path read it; the loaders and
+// renderers live further down with the rest of the render code.
+let projections = [];
+let odds = [];
+const PROJ_TTL_MS = 5 * 60 * 1000;
+const projState = { loaded: false, loading: false, lastAt: 0, generation: 0,
+                    errors: { projections: null, odds: null } };
+
 // ── Fetch ──
 async function fetchAnalytics() {
   try {
@@ -221,7 +230,7 @@ async function fetchAnalytics() {
     const data = await res.json();
     teams = data.teams || [];
     currentSeason = data.season || null;
-    document.getElementById('sourceBadge').textContent = `cfbd · ${teams.length} teams`;
+    updateSourceBadge();
     document.getElementById('sourceBadge').style.background = 'rgba(63,185,80,0.12)';
     document.getElementById('sourceBadge').style.color = '#3fb950';
     document.getElementById('loading').style.display = 'none';
@@ -239,7 +248,12 @@ async function fetchAnalytics() {
 // public endpoint that anyone can use to trigger third-party API pulls.
 async function reloadAnalytics() {
   await fetchAnalytics();
-  await fetchProjectionsAndOdds();
+  // Task 1 / QA §7: never call a feed loader directly from here. Projections and odds belong
+  // to their own tab -- refresh them only when that tab is ACTIVE and its data is due, so a
+  // hidden pane never fetches and a failed feed cannot couple to the analytics refresh.
+  // (This called fetchProjectionsAndOdds(), which no longer exists: a ReferenceError on every
+  // 5-minute timer tick and every tab-focus return.)
+  if (activeTabName() === 'projections') ensureProjections();
 }
 
 // ── Helpers ──
@@ -595,11 +609,7 @@ init();
 // Loaded on FIRST activation of the Projections & Odds tab, never at startup: the live
 // /api/projections call takes seconds and its pane is hidden by default. The two feeds are
 // independent -- either one failing still renders the other, with a retryable error.
-let projections = [];
-let odds = [];
-const PROJ_TTL_MS = 5 * 60 * 1000;
-const projState = { loaded: false, loading: false, lastAt: 0, generation: 0,
-                    errors: { projections: null, odds: null } };
+// (state declared at the top of the script -- see "Projections & Odds state")
 
 function projectionsDue() {
   return !projState.loaded || (Date.now() - projState.lastAt) >= PROJ_TTL_MS;
@@ -637,8 +647,20 @@ async function loadProjectionsAndOdds(only) {
   projState.loading = false;
   projState.loaded = true;
   projState.lastAt = Date.now();
-  document.getElementById('sourceBadge').textContent = `cfbd · ${teams.length} teams · ${odds.length} odds`;
+  updateSourceBadge();
   renderProjections();
+}
+
+// The badge states what is actually in hand: a failed feed says so, and a count that was
+// never received is never rendered as "0 odds" (QA §7).
+function updateSourceBadge() {
+  const el = document.getElementById('sourceBadge');
+  if (!el) return;
+  const parts = [`cfbd · ${teams.length} teams`];
+  if (projState.errors.projections) parts.push('projections unavailable');
+  if (projState.errors.odds) parts.push('odds unavailable');
+  else if (odds.length) parts.push(`${odds.length} odds`);
+  el.textContent = parts.join(' · ');
 }
 
 function retryFeed(name) {

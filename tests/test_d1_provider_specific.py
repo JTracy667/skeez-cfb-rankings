@@ -88,6 +88,19 @@ def d1():
     _cleanup(d1_store, [STAMP_A, STAMP_B])
 
 
+@pytest.fixture(autouse=True)
+def _small_fixture_floors(monkeypatch):
+    """This file's scratch fixture is 1-2 teams wide, so the §2 completeness FLOOR is lowered.
+
+    The floor itself -- and the coordinator gate -- is asserted with the REAL thresholds in
+    tests/test_publication_authority.py on the hermetic harness. What THIS file proves is
+    provider-specific: real D1 error text, `meta` accounting, and replay semantics.
+    """
+    import d1_write_path as _dw
+    monkeypatch.setattr(_dw, "MIN_PUBLISH_TEAMS", 1, raising=False)
+    monkeypatch.setattr(_dw, "MIN_PUBLISH_KEYS", 1, raising=False)
+
+
 def test_real_d1_conflict_target_error_text_is_recognised(d1):
     """The migration window, on the REAL provider: stale LEGACY target vs append-only index."""
     dstore, _dw = d1
@@ -146,7 +159,8 @@ def test_real_d1_publication_roundtrip_and_partial_poll(d1):
     """Task 9 read-back on real D1: publish, read back, then survive a later partial poll."""
     dstore, dw = d1
     n = dw.snapshot_team_analytics(TEAMS, ["sp_plus"], SEASON, WEEK,
-                                   identity={"Scratch Alpha": {"conf": "SEC"}})
+                                   identity={"Scratch Alpha": {"conf": "SEC"}},
+                                   authoritative_pull=True)
     assert n > 0, f"expected the archive to confirm, got {n}"
     marker_rows = dstore.query(
         "SELECT COUNT(*) AS n FROM stat_observations WHERE recorded_at = ?",
@@ -175,7 +189,8 @@ BIG_KEYS = [f'k{i:03d}' for i in range(500)]   # >400 rows => TWO statements, on
 def test_real_d1_interrupted_pull_keeps_the_previous_publication(d1):
     """Chunk 2 fails on real D1 -> the previous complete pull keeps serving."""
     dstore, dw = d1
-    assert dw.snapshot_team_analytics(TEAMS, ["sp_plus"], SEASON, WEEK) > 0
+    assert dw.snapshot_team_analytics(TEAMS, ["sp_plus"], SEASON, WEEK,
+                                      authoritative_pull=True) > 0
     before = dw.analytics_publication(SEASON)
 
     # ONE team, 500 metrics: >400 rows forces the second statement, which IS the real chunk
@@ -194,7 +209,8 @@ def test_real_d1_interrupted_pull_keeps_the_previous_publication(d1):
 
     dstore.query_full = flaky
     try:
-        wrote = dw.snapshot_team_analytics(big, BIG_KEYS, SEASON, WEEK)
+        wrote = dw.snapshot_team_analytics(big, BIG_KEYS, SEASON, WEEK,
+                                           authoritative_pull=True)
     finally:
         dstore.query_full = real
 

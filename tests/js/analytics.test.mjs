@@ -178,3 +178,64 @@ test('switching tabs renders that section with the current filter, never blank',
   await h.flush();
   assert.equal(h.rowsIn('composite'), 687, 'clearing the search restores the full table');
 });
+
+// ── §7 (QA remediation): the timer/visibility refresh must not call a removed function ──
+test('the 5-minute refresh fires with no page error and does not wake a hidden pane', async () => {
+  const h = mk();
+  await ready(h);
+  assert.equal(h.count('/api/analytics'), 1);
+
+  await h.advance(5 * 60 * 1000 + 1000);   // the interval fires for real here
+  await h.flush();
+
+  assert.deepEqual(h.pageErrors, [],
+    'the timer refresh threw -- reloadAnalytics() must call a function that exists');
+  assert.equal(h.count('/api/analytics'), 2, 'the analytics data is re-read');
+  assert.equal(h.count('/api/projections'), 0, 'a hidden Projections pane must not fetch');
+  assert.equal(h.count('/api/odds'), 0);
+});
+
+test('visibilitychange refresh works, and only the active tab refreshes its feeds', async () => {
+  const h = mk();
+  await ready(h);
+
+  h.setVisibility('visible');
+  h.fireDocument('visibilitychange');
+  await h.flush(); await h.flush();
+  assert.deepEqual(h.pageErrors, [], 'visibilitychange threw');
+  assert.equal(h.count('/api/analytics'), 2);
+  assert.equal(h.count('/api/projections'), 0, 'still hidden: no feed request');
+
+  // now make the Projections tab active and let its data go stale
+  h.click(tabBtn(h, 'projections'));
+  await h.flush(); await h.flush();
+  const odds1 = h.count('/api/odds');
+  const proj1 = h.count('/api/projections');
+
+  await h.advance(5 * 60 * 1000 + 1000);
+  await h.flush(); await h.flush();
+  assert.deepEqual(h.pageErrors, []);
+  assert.equal(h.count('/api/odds'), odds1 + 1, 'the active tab refreshes its feeds');
+  assert.equal(h.count('/api/projections'), proj1 + 1);
+
+  // and going back to a metric tab stops the feed refreshes again
+  h.click(tabBtn(h, 'spplus'));
+  await h.flush();
+  const odds2 = h.count('/api/odds');
+  await h.advance(5 * 60 * 1000 + 1000);
+  await h.flush();
+  assert.equal(h.count('/api/odds'), odds2, 'no feed traffic while another tab is active');
+  assert.deepEqual(h.pageErrors, []);
+});
+
+test('the source badge reports real state instead of a stale odds count', async () => {
+  const h = mk({ '/api/odds': { status: 500, body: {} } });
+  await ready(h);
+  assert.match(h.el('sourceBadge').textContent, /687 teams/, 'analytics count is reported');
+
+  h.click(tabBtn(h, 'projections'));
+  await h.flush(); await h.flush();
+  const badge = h.el('sourceBadge').textContent;
+  assert.match(badge, /odds unavailable/, `a failed feed must be visible in the badge: ${badge}`);
+  assert.doesNotMatch(badge, /0 odds/, 'the badge must not claim an odds count it did not get');
+});

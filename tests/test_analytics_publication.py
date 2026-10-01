@@ -28,6 +28,19 @@ os.environ.setdefault("CFB_SKIP_BOOTWARM", "1")
 os.environ.setdefault("REFRESH_INTERVAL_SECONDS", "0")
 
 SEASON, WEEK = 2026, 5
+
+@pytest.fixture(autouse=True)
+def _small_fixture_floors(monkeypatch):
+    """This file's fixture is 3 teams wide, so the §2 completeness FLOOR is lowered here.
+
+    The floor itself -- and the refusal of a partial pull -- is asserted with the REAL
+    thresholds in tests/test_publication_authority.py. These tests are about selection
+    and publication atomicity, not about the floor.
+    """
+    import d1_write_path as _dw
+    monkeypatch.setattr(_dw, "MIN_PUBLISH_TEAMS", 1, raising=False)
+    monkeypatch.setattr(_dw, "MIN_PUBLISH_KEYS", 1, raising=False)
+
 KEYS = ["sp_plus", "efficiency", "talent"]
 T1 = "2026-09-30T04:00:00+00:00"
 T2 = "2026-09-30T09:00:00+00:00"   # the later, partial writer
@@ -76,7 +89,7 @@ def _partial_poll(d1_store, conn, team_id=1):
 def test_complete_pull_survives_a_later_partial_poll(d1):
     """A poll row must not displace the complete pull. RED on v62: only the poll survives."""
     dw, dstore, conn, _ = d1
-    assert dw.snapshot_team_analytics(TEAMS, KEYS, SEASON, WEEK) == 9
+    assert dw.snapshot_team_analytics(TEAMS, KEYS, SEASON, WEEK, authoritative_pull=True) == 9
     _partial_poll(dstore, conn)
 
     got = dw.load_team_analytics(SEASON)
@@ -101,7 +114,7 @@ def test_serving_door_requires_a_published_complete_pull(d1):
 def test_marker_with_mismatched_counts_is_not_promoted(d1):
     """A marker whose counts do not match the table is a partial/failed pull: fail closed."""
     dw, dstore, _conn, _ = d1
-    dw.snapshot_team_analytics(TEAMS, KEYS, SEASON, WEEK)
+    dw.snapshot_team_analytics(TEAMS, KEYS, SEASON, WEEK, authoritative_pull=True)
     dw.publish_analytics_pull(SEASON, WEEK, stamp=T1, n_rows=9, n_teams=999,
                               identity={})
     assert dw.load_team_analytics(SEASON) == [], "a lying marker must not be served"
@@ -111,7 +124,7 @@ def test_publication_marker_carries_identity(d1):
     """Task 9 / Q6: numerics and string identity publish together, in one record."""
     dw, _dstore, _conn, _ = d1
     ident = {"Alpha": {"mascot": "Tide", "conf": "SEC", "emoji": "🏈"}}
-    dw.snapshot_team_analytics(TEAMS, KEYS, SEASON, WEEK, identity=ident)
+    dw.snapshot_team_analytics(TEAMS, KEYS, SEASON, WEEK, identity=ident, authoritative_pull=True)
     pub = dw.analytics_publication(SEASON)
     assert pub and pub["week"] == WEEK and pub["n_teams"] == 3 and pub["n_rows"] == 9
     assert pub["identity"] == ident, "identity must ride the same publication record"
@@ -128,7 +141,7 @@ def test_interrupted_multichunk_write_publishes_nothing(monkeypatch):
     import d1_store
     import d1_write_path as dw
 
-    assert dw.snapshot_team_analytics(TEAMS, KEYS, SEASON, WEEK) == 9
+    assert dw.snapshot_team_analytics(TEAMS, KEYS, SEASON, WEEK, authoritative_pull=True) == 9
     before = dw.analytics_publication(SEASON)
     assert before is not None
 
@@ -149,7 +162,9 @@ def test_interrupted_multichunk_write_publishes_nothing(monkeypatch):
 
     monkeypatch.setattr(d1_store, "query_full", flaky)
     # The archive is guarded by design: a failure never reaches the site (returns 0).
-    assert dw.snapshot_team_analytics(big, ["sp_plus"], SEASON, WEEK) == 0
+    # (authoritative_pull=True so the refusal is for the FAILED PULL, not the §2 gate.)
+    assert dw.snapshot_team_analytics(big, ["sp_plus"], SEASON, WEEK,
+                                      authoritative_pull=True) == 0
     assert dw.analytics_publication(SEASON) == before, "a failed pull must not republish"
     served = dw.load_team_analytics(SEASON)
     assert {r["name"] for r in served} == {"Alpha", "Bravo", "Delta"}, \
@@ -157,7 +172,8 @@ def test_interrupted_multichunk_write_publishes_nothing(monkeypatch):
 
     # RESUME: fault cleared -> the same pull completes and is published, selected once.
     monkeypatch.setattr(d1_store, "query_full", real)
-    assert dw.snapshot_team_analytics(big, ["sp_plus"], SEASON, WEEK) == 500
+    assert dw.snapshot_team_analytics(big, ["sp_plus"], SEASON, WEEK,
+                                      authoritative_pull=True) == 500
     after = dw.analytics_publication(SEASON)
     assert after["n_teams"] == 500 and after["n_rows"] == 500
     resumed = dw.load_team_analytics(SEASON)
@@ -188,7 +204,7 @@ def test_publication_is_not_refused_when_d1_reports_index_inflated_writes(monkey
         return rows, meta
 
     monkeypatch.setattr(d1_store, "query_full", inflated)
-    assert dw.snapshot_team_analytics(TEAMS, KEYS, SEASON, WEEK) > 0
+    assert dw.snapshot_team_analytics(TEAMS, KEYS, SEASON, WEEK, authoritative_pull=True) > 0
     pub = dw.analytics_publication(SEASON)
     assert pub is not None, "the pull must still publish"
     assert pub["n_rows"] == 9, f"marker must record ROWS (9), got {pub.get('n_rows')}"

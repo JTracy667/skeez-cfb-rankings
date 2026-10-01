@@ -2,6 +2,7 @@
 
 import json
 import os
+import runtime_paths
 import hmac
 import hashlib
 import re
@@ -33,10 +34,14 @@ _HTTP_CLIENT_HEADERS = {}  # set after env keys load below
 
 # ── Paths ──
 BASE_DIR = Path(__file__).resolve().parent
-DATA_FILE = BASE_DIR / "data" / "teams.json"
-ANALYTICS_FILE = BASE_DIR / "data" / "analytics.json"
-SCHEDULE_FILE = BASE_DIR / "data" / "week_schedule.json"
-ACTIVE_INJURIES_FILE = BASE_DIR / "data" / "active_injuries.json"
+
+# QA remediation §1.5: every runtime mirror resolves through runtime_paths so a test run
+# can be redirected to a scratch copy of data/ and can never write the repository's files.
+DATA_DIR = runtime_paths.data_dir()
+DATA_FILE = DATA_DIR / "teams.json"
+ANALYTICS_FILE = DATA_DIR / "analytics.json"
+SCHEDULE_FILE = DATA_DIR / "week_schedule.json"
+ACTIVE_INJURIES_FILE = DATA_DIR / "active_injuries.json"
 
 # ── Environment (.env) support ──
 def _load_env_file():
@@ -176,8 +181,8 @@ app.add_middleware(
 _rankings_cache: dict = {}
 _analytics_cache: dict = {}
 _odds_cache: dict = {}   # merged odds map (PropLine + backups) — avoids 113+ API calls per page load
-ODDS_CACHE_FILE = BASE_DIR / "data" / "odds_cache.json"  # disk-persisted so restarts reuse the daily fetch
-LINE_HISTORY_FILE = BASE_DIR / "data" / "line_history.json"  # snapshots for line-movement detection
+ODDS_CACHE_FILE = DATA_DIR / "odds_cache.json"  # disk-persisted so restarts reuse the daily fetch
+LINE_HISTORY_FILE = DATA_DIR / "line_history.json"  # snapshots for line-movement detection
 CACHE_TTL = 300  # 5 minutes (rankings)
 ANALYTICS_TTL = 600  # 10 minutes (analytics)
 ODDS_TTL = 86400  # 24 hours — live odds pulled ONCE per day, cached all other times
@@ -273,7 +278,7 @@ def _odds_disk_cache_set(odds_map: dict):
 
 
 # ── Line-movement tracking + background auto-refresh ──
-LINE_MOVEMENTS_FILE = BASE_DIR / "data" / "line_movements.json"  # rolling event log (CLV record)
+LINE_MOVEMENTS_FILE = DATA_DIR / "line_movements.json"  # rolling event log (CLV record)
 LINE_MOVEMENTS_MAX_AGE = 7 * 86400  # keep 7 days of movement events
 LINE_MOVEMENTS_STATE_KEY = "line_movements"   # D1 app_state key -- durable copy
 
@@ -400,7 +405,7 @@ try:
     _PT_TZ = ZoneInfo("America/Los_Angeles")
 except Exception:  # tzdata missing — fall back to UTC-7 (PDT) approximation
     _PT_TZ = None
-WEEKLY_ANALYTICS_FILE = BASE_DIR / "data" / "last_analytics_pull.json"
+WEEKLY_ANALYTICS_FILE = DATA_DIR / "last_analytics_pull.json"
 
 # Sync anchors: Sunday 9pm PT (post-Saturday results), Monday 9pm PT (short-week
 # seasons: Sunday games + Monday poll releases), Tuesday 9pm PT (CFBD's SP+/FPI
@@ -672,8 +677,15 @@ def refresh_all() -> dict:
         # closing lines from the app's own CFBD source, plus a once-per-day rankings snapshot.
         result["d1_closing_rows"] = d1_write_path.snapshot_closing(
             _fetch_closing_lines_map(), _normalize_team_name)
-        result["d1_rankings_rows"] = d1_write_path.daily_rankings(
-            lambda: get_rankings().teams, CFBD_YEAR, None, composite_version())
+        # QA §3/§4: this snapshot becomes the system of record, so it is built from a
+        # VERIFIED publication only -- the serve-path disk fallback is refused here.
+        global _VERIFIED_ONLY
+        _VERIFIED_ONLY = True
+        try:
+            result["d1_rankings_rows"] = d1_write_path.daily_rankings(
+                lambda: get_rankings().teams, CFBD_YEAR, None, composite_version())
+        finally:
+            _VERIFIED_ONLY = False
     except Exception as e:
         print(f"[refresh] D1 write-path failed: {e}")
     try:
@@ -1010,7 +1022,7 @@ def _rating_vintages(teams) -> dict:
     """
     vintages: dict = {}
     try:
-        with open(BASE_DIR / "data" / "rating_vintages.json") as f:
+        with open(DATA_DIR / "rating_vintages.json") as f:
             rec = json.load(f)
         vintages = {k: v for k, v in rec.items() if isinstance(v, int)}
     except Exception:
@@ -1045,7 +1057,7 @@ def _save_rating_vintages() -> None:
             rec["as_of_utc"] = datetime.now().isoformat(timespec="seconds")
         rec["detail"] = ("Updated by the analytics fetch path. A rating falls back to the "
                          "previous season when CFBD has not published the current one.")
-        with open(BASE_DIR / "data" / "rating_vintages.json", "w") as f:
+        with open(DATA_DIR / "rating_vintages.json", "w") as f:
             json.dump(rec, f, indent=2)
             f.write("\n")
     except Exception:
@@ -1390,7 +1402,11 @@ def api_analytics():
         "season": CFBD_YEAR,
         "updated": datetime.now().isoformat(),
         "teams": teams,
+        # `source` is the DATA PROVIDER (the analytics come from CFBD). `serve` is the PATH
+        # that answered this request and whether it was degraded (QA §3/§4) -- a consumer
+        # must not have to infer that from a 200.
         "source": "cfbd",
+        "serve": dict(_ANALYTICS_SERVE),
         # Which season each fallback-capable rating input was actually served from.
         # A consumer (or a freshness gate) can now tell a current-season value from a
         # deliberate previous-season fallback instead of assuming recency.
@@ -2225,11 +2241,11 @@ CONSENSUS_GUARD_PTS = 6.0
 #   kickoff within 48h  -> best-line every refresh cycle (lines move fast now)
 #   beyond 48h          -> at most once per day (opening lines barely move)
 PROPLINE_NEAR_HOURS = int(os.environ.get("PROPLINE_NEAR_HOURS", "48"))
-BEST_LINE_TS_FILE = BASE_DIR / "data" / "best_line_ts.json"
+BEST_LINE_TS_FILE = DATA_DIR / "best_line_ts.json"
 # Last-known best-line per event id — reused on cycles where a far-out game is not
 # due for a fresh call, so every game keeps its consensus line (not just the ones
 # fetched this cycle).
-BEST_LINE_STORE_FILE = BASE_DIR / "data" / "best_line_store.json"
+BEST_LINE_STORE_FILE = DATA_DIR / "best_line_store.json"
 # Durable copies of the two best-line caches (D1 app_state). Both files are baked into
 # the image, so a fresh container started with stale best-line state and re-bought the
 # whole slate every boot. See _load_best_line_ts for the full account.
@@ -4227,7 +4243,7 @@ def api_analytics_refresh_if_due():
 # silently truncates to 25 events (observed Aug 2026), which broke every week.
 # CFBD returns the complete slate for all weeks in one call, with week numbers
 # and ISO dates.
-FBS_TEAMS_FILE = BASE_DIR / "data" / "fbs_teams.json"
+FBS_TEAMS_FILE = DATA_DIR / "fbs_teams.json"
 
 def _cfbd_is_fbs(game: dict) -> bool:
     """True if either side of a CFBD game is FBS-classified."""
@@ -4400,11 +4416,11 @@ _TEAM_MAP_CACHE = {}
 _TEAM_MAP_CACHE_TS = 0
 _LOGO_MAP = {}  # team_name_lower -> logo_url
 # Restore logo map from disk on hot-reload
-_LOGO_FILE = BASE_DIR / "data" / "cfbd_logos.json"
+_LOGO_FILE = DATA_DIR / "cfbd_logos.json"
 if _LOGO_FILE.exists():
     with open(_LOGO_FILE) as f:
         _LOGO_MAP = json.load(f)
-_CFBD_ANALYTICS_FILE = BASE_DIR / "data" / "cfbd_analytics.json"
+_CFBD_ANALYTICS_FILE = DATA_DIR / "cfbd_analytics.json"
 
 def _load_cfbd_analytics_file():
     """Load pre-fetched CFBD analytics from disk."""
@@ -4483,6 +4499,27 @@ def _analytics_identity_map(pub: dict | None = d1_write_path._UNSET) -> dict:
         return {}
 
 
+# ── QA §3/§4: what the last analytics serve actually was ────────────────────────────────
+# Serving has a fallback chain (verified D1 publication -> documented disk fallback -> live
+# fetch at the route). A caller -- and a monitor -- must be able to tell which one answered,
+# so a degraded serve is never mistaken for a verified one. Exposed on /api/analytics as
+# `serve` and on /api/health.
+_ANALYTICS_SERVE: dict = {"source": "unknown", "degraded": False, "reason": ""}
+
+# True while a BOARD is being built for D1. A board must come from a VERIFIED publication:
+# the disk fallback exists to keep the site readable, not to bake build-time numerics into
+# the system of record (QA §3/§4).
+_VERIFIED_ONLY = False
+
+
+def _set_serve_state(source: str, degraded: bool, reason: str = "") -> None:
+    _ANALYTICS_SERVE.update({"source": source, "degraded": bool(degraded), "reason": reason})
+
+
+def _verified_analytics_only() -> bool:
+    return _VERIFIED_ONLY
+
+
 def _served_analytics():
     """Analytics to SERVE — D1 FIRST. Jeff's direction: D1 is the system of record.
 
@@ -4507,21 +4544,41 @@ def _served_analytics():
     # Task 3: check the opt-out BEFORE any D1 read. It used to run the identity query
     # first, so ANALYTICS_FROM_D1=0 still paid D1 latency (and a D1 outage).
     if os.environ.get("ANALYTICS_FROM_D1", "1") != "1":
+        _set_serve_state("disk (ANALYTICS_FROM_D1=0)", True, "operator opt-out")
         return _load_cfbd_analytics_file() or []
     # Task 3: ONE marker read per request, shared by the identity map and the numeric
     # selection (each used to read it separately).
     pub = d1_write_path.analytics_publication(CFBD_YEAR)
     ident = _analytics_identity_map(pub)
-    disk = [] if ident else (_load_cfbd_analytics_file() or [])
+    # QA §3: the disk file is the documented fallback for NUMERICS too. It used to be loaded
+    # only when the identity map was empty, so a missing/invalid publication marker turned a
+    # valid fallback into an empty payload -- the marker suppressed the data it guards.
+    #
+    # Loaded LAZILY, on the branches that need it: the v50 rule still holds (while a verified
+    # publication exists the image file is not a serving source), and a 77k-line read must not
+    # sit on the hot path of every request.
+    def _disk_fallback():
+        if _verified_analytics_only():
+            # A board is being built for D1: refuse the fallback, never bake staleness in.
+            return []
+        return _load_cfbd_analytics_file() or []
     try:
         rows = d1_write_path.load_team_analytics(CFBD_YEAR, pub=pub)
     except Exception as e:  # noqa: BLE001 — serving must never depend on D1 being up
         print(f"[analytics] D1 read failed; serving disk file: {e}")
+        disk = _disk_fallback()
+        if disk:
+            _set_serve_state("disk (d1 read failed)", True, str(e)[:200])
+        else:
+            _set_serve_state("unavailable", True, f"d1 read failed: {str(e)[:200]}")
         return _seed_d1_team_identity(list(disk))
     if not rows:
-        # No published COMPLETE pull (Task 4/9) -> the documented disk fallback. F3 identity
-        # completeness must NOT depend on the numeric marker: a team D1 knows but analytics
-        # never covered is a different (older) defect, and the two must not be coupled.
+        # No published COMPLETE pull (Task 4/9) -> the documented disk fallback, reported as
+        # DEGRADED (QA §3). F3 identity completeness must NOT depend on the numeric marker: a
+        # team D1 knows but analytics never covered is a different (older) defect.
+        disk = _disk_fallback()
+        _set_serve_state("disk (no verified publication)" if disk else "empty", True,
+                         "no verified publication marker" if disk else "no publication and no disk fallback")
         return _seed_d1_team_identity(list(disk))
     by_name = {}
     if ident:
@@ -4549,6 +4606,18 @@ def _served_analytics():
     out.extend(by_name.values())              # disk teams D1 did not cover (identity only)
     out = _seed_d1_team_identity(out)
     print(f"[analytics] served from D1: {len(rows)} teams ({added} not in the disk file)")
+    # QA §4 contract: the numeric universe is the PUBLISHED snapshot; identity fields are
+    # joined by team NAME (the stable key) with the live identity map taking precedence, and
+    # a team the snapshot does not cover is served identity-only -- no invented numerics.
+    # Names outside the published universe mean two snapshots were mixed in one response.
+    universe = set((pub or {}).get("identity") or {})
+    stray = [r.get("name") for r in rows if universe and r.get("name") not in universe]
+    if stray:
+        print(f"[analytics] WARNING: {len(stray)} rows outside the published identity universe")
+        _set_serve_state("d1 (mixed universe)", True,
+                         f"{len(stray)} rows outside the published snapshot")
+    else:
+        _set_serve_state("d1", False, "")
     return out
 
 
@@ -4593,8 +4662,11 @@ def _store_team_analytics(teams: list[dict]) -> int:
     try:
         week = current_season_week(CFBD_YEAR)
         # Task 9: identity rides the SAME publication record as the numerics.
+        # QA §2: this is the authoritative full pull -- the ONLY caller allowed to publish
+        # the season's snapshot marker.
         n = d1_write_path.snapshot_team_analytics(teams, None, CFBD_YEAR, week,
-                                                  identity=_identity_map(teams))
+                                                  identity=_identity_map(teams),
+                                                  authoritative_pull=True)
         if n:
             print(f"[analytics] archived {n} stat_observations rows to D1 (wk{week})")
         # F3: the IDENTITY list rides the same live pull. `teams` used to be written only by a
@@ -4833,17 +4905,39 @@ def api_odds():
 # (season, stamp, week) plus the live week and composite_version(), so invalidation is exact
 # across processes/containers instead of a TTL guess, and a weights change (env override or
 # code) invalidates automatically because composite_version() is a hash of the active config.
-# Disk-fallback state is a DISTINCT identity ("disk"): its inputs are not a published pull.
+# Disk-fallback state is a DISTINCT identity: its inputs are not a published pull. That
+# identity must also describe WHICH disk content was used (QA §6) -- a bare "disk" made a
+# changed fallback file indistinguishable from the old one, so a corrected file kept serving
+# the stale cached payload.
 _proj_cache: dict = {"key": None, "body": None}
 # Narrowly scoped to THIS endpoint: concurrent misses must not run the pass twice, and no
 # other endpoint ever waits on this lock.
 _proj_lock = threading.Lock()
 
 
+def _disk_input_identity() -> str:
+    """Identity of the disk fallback INPUT, not the word "disk" (QA §6).
+
+    size + mtime_ns is cheap enough to compute per request and changes whenever the file is
+    rewritten; the path is included so two different files cannot collide.
+    """
+    try:
+        st = _CFBD_ANALYTICS_FILE.stat()
+        return f"disk:{_CFBD_ANALYTICS_FILE.name}:{st.st_size}:{st.st_mtime_ns}"
+    except OSError:
+        return "disk:absent"
+
+
 def _projections_cache_key(wk) -> tuple:
     pub = d1_write_path.analytics_publication(CFBD_YEAR)
-    return (CFBD_YEAR, (pub or {}).get("stamp") or "disk", (pub or {}).get("week"),
-            wk, composite_version())
+    if pub and pub.get("stamp"):
+        source = ("pull", pub.get("stamp"), pub.get("n_rows"), pub.get("n_keys"))
+    else:
+        # Not a published pull: identify the actual fallback input AND whether that serve was
+        # degraded, so a degraded result can never be mistaken for a verified one.
+        source = ("fallback", _disk_input_identity(), _ANALYTICS_SERVE.get("source"),
+                  _ANALYTICS_SERVE.get("degraded"))
+    return (CFBD_YEAR, source, (pub or {}).get("week"), wk, composite_version())
 
 
 @app.get("/api/projections")
@@ -4883,7 +4977,15 @@ def api_projections():
             # Sort by composite (home) descending
             projections.sort(key=lambda x: x["home_projection"]["composite"], reverse=True)
             body = json.dumps({"projections": projections, "count": len(projections)})
-            _proj_cache["key"], _proj_cache["body"] = key, body
+            # QA §6: an empty payload, or one computed while the analytics serve was
+            # degraded, is NOT a fresh result -- caching it would pin a bad answer in place
+            # for as long as the (unchanged) key holds.
+            if projections and not _ANALYTICS_SERVE.get("degraded"):
+                _proj_cache["key"], _proj_cache["body"] = key, body
+            else:
+                print(f"[projections] not caching: {len(projections)} projections, "
+                      f"serve={_ANALYTICS_SERVE.get('source')} "
+                      f"degraded={_ANALYTICS_SERVE.get('degraded')}")
             return Response(content=body, media_type="application/json")
     except Exception as e:
         print(f"[GET /api/projections ERROR] {e}")
@@ -5646,7 +5748,7 @@ def api_injuries_override(payload: dict):
     return {"status": "updated", "team": team, "net_injury_points": team_entry["net_injury_points"]}
 
 # ── Records: Straight-Up (SU) + Against-the-Spread (ATS) tracking ──
-RECORD_FILE = BASE_DIR / "data" / "record.json"
+RECORD_FILE = DATA_DIR / "record.json"
 RECORD_STATE_KEY = "su_ats_record"   # D1 app_state key -- the durable copy of the record
 
 
@@ -6165,7 +6267,7 @@ def api_record_repair_ats(spread: float, ats_pick: str, key: str):
 
 
 # ── Best Bets: separate tracker for high-confidence value plays ──
-BEST_BETS_FILE = BASE_DIR / "data" / "best_bets.json"
+BEST_BETS_FILE = DATA_DIR / "best_bets.json"
 BEST_BETS_STATE_KEY = "best_bets"   # D1 app_state key -- durable tracker
 
 
@@ -6456,7 +6558,7 @@ def _h2h_win_prob(home_score: float, away_score: float) -> float:
 # disk so container restarts reuse the last pull instead of re-fetching.
 _CFBD_GAMES_CACHE = {}   # {year: {"ts": float, "games": [dict]}}
 CFBD_GAMES_TTL = 1800    # 30 minutes — schedule is static within a week
-_CFBD_GAMES_FILE = BASE_DIR / "data" / "cfbd_season_games.json"
+_CFBD_GAMES_FILE = DATA_DIR / "cfbd_season_games.json"
 
 
 def _cfbd_season_games(year: int) -> list[dict]:

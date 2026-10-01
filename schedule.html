@@ -242,19 +242,26 @@ let sortDir = 'asc';
 async function loadWeeks() {
   // Build the week dropdown from CFBD's published weeks (bye weeks and
   // unpublished future weeks simply don't appear).
+  //
+  // Returns TRUE only when the list was actually published. The markup ships a static
+  // "Week 1" placeholder option, so after a failure the dropdown is NOT empty -- reading
+  // its first entry as the first published week would silently serve week 1 (QA §8).
   try {
     const res = await fetch(`${API}/schedule/weeks`);
-    if (!res.ok) return;
+    if (!res.ok) return false;
     const data = await res.json();
+    const weeks = data.weeks || [];
+    if (!weeks.length) return false;
     const sel = document.getElementById('weekSelect');
     sel.innerHTML = '';
-    (data.weeks || []).forEach(w => {
+    weeks.forEach(w => {
       const opt = document.createElement('option');
       opt.value = w;
       opt.textContent = `Week ${w}`;
       sel.appendChild(opt);
     });
-  } catch (e) { console.error('Failed to load weeks:', e); }
+    return true;
+  } catch (e) { console.error('Failed to load weeks:', e); return false; }
 }
 
 async function fetchSchedule(week) {
@@ -726,14 +733,14 @@ document.getElementById('refreshBtn').addEventListener('click', () => fetchSched
     if (data && data.week) currentWeek = data.week;
   }
 
-  await weekList;
-  // If the requested week isn't published yet (e.g. a bye week), fall back to the
-  // first available option -- unchanged from before. When the weeks list could not
-  // be loaded at all, KEEP the resolved (or forced) week: falling back to the empty
-  // dropdown's first entry would silently serve week 1.
+  const weeksLoaded = await weekList;
+  // If the requested week isn't published yet (e.g. a bye week), fall back to the first
+  // available option -- unchanged from before. But ONLY when the list actually loaded:
+  // on a weeks failure the dropdown still holds the markup's static "Week 1" placeholder,
+  // which is not a published week, so keep the forced/resolved week instead (QA §8).
   const sel = document.getElementById('weekSelect');
   const opts = [...sel.options].map(o => o.value);
-  if (opts.length) {
+  if (weeksLoaded) {
     if (!opts.includes(String(currentWeek))) currentWeek = parseInt(opts[0], 10);
   } else if (!currentWeek) {
     currentWeek = 1;

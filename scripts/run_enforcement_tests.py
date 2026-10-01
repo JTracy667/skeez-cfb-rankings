@@ -28,6 +28,7 @@ Usage:  python scripts/run_enforcement_tests.py [--all]
         --all   also run the rest of the suite afterwards
 """
 import glob
+import hashlib
 import os
 import shutil
 import subprocess
@@ -38,12 +39,31 @@ REPO = Path(__file__).resolve().parents[1]
 ENFORCEMENT = ["tests/test_served_equals_d1.py", "tests/test_no_disk_reads_in_serving.py"]
 
 
+def _data_hashes() -> dict:
+    """QA §1.5: a test run must leave the repository's data/ byte-identical.
+
+    The suite points CFB_DATA_DIR at a scratch copy (tests/conftest.py), so writes go
+    elsewhere -- but that is a mechanism, and this is the proof. A run that changes these
+    hashes has broken hermeticity, which is how a one-row stub once destroyed
+    data/cfbd_analytics.json.
+    """
+    out = {}
+    for p in sorted((REPO / "data").glob("*.json")):
+        try:
+            out[p.name] = hashlib.sha256(p.read_bytes()).hexdigest()
+        except OSError as e:  # noqa: PERF203 - a missing file is itself worth reporting
+            out[p.name] = f"unreadable: {e}"
+    return out
+
+
 def main() -> int:
     if not os.environ.get("CF_D1_TOKEN"):
         print("REFUSING TO RUN: CF_D1_TOKEN is not set.", file=sys.stderr)
         print("The enforcement gate verifies served == D1. Without store credentials it "
               "cannot verify anything, and a skipped check is NOT a pass.", file=sys.stderr)
         return 2
+
+    data_before = _data_hashes()
 
     node = shutil.which("node")
     if not node:
@@ -66,6 +86,17 @@ def main() -> int:
         # scripts/test_fbs_line_scope.py queries D1 at import and raises SystemExit.
         rc = subprocess.call([sys.executable, "-m", "pytest", "-q", "-rxs", "tests/"],
                              cwd=str(REPO))
+
+    # QA §1.5: prove hermeticity rather than assume it.
+    data_after = _data_hashes()
+    if data_after != data_before:
+        changed = sorted(k for k in set(data_before) | set(data_after)
+                         if data_before.get(k) != data_after.get(k))
+        print("\nHERMETICITY FAILURE: the test run modified repository data/ files:\n  "
+              + "\n  ".join(changed), file=sys.stderr)
+        if rc == 0:
+            rc = 1
+
     print("\n" + ("ENFORCEMENT GATE: PASS" if rc == 0 else "ENFORCEMENT GATE: FAIL"), flush=True)
     return rc
 

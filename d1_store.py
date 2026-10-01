@@ -431,20 +431,43 @@ def _is_conflict_target_mismatch(exc: Exception) -> bool:
     return any(s in msg for s in _CONFLICT_TARGET_SIGNS)
 
 
+def _same_value(a, b) -> bool:
+    """Numeric-tolerant equality: SQLite returns an int where the pull wrote a float."""
+    try:
+        fa, fb = float(a), float(b)
+    except (TypeError, ValueError):
+        return a == b
+    if fa == fb:
+        return True
+    return abs(fa - fb) <= 1e-9 * max(1.0, abs(fa), abs(fb))
+
+
 def _chunk_rows_present(chunk: list[dict]) -> bool:
-    """True when a chunk's rows are already in the table under its own stamp.
+    """True when a chunk's rows are already in the table, under its own stamp, UNCHANGED.
 
     Needed because append-only writes use `DO NOTHING`: REPLAYING an already-landed chunk
     confirms 0 new writes, and "0 confirmed" must not be read as "the batch is missing"
-    (QA ruling Q5). One query per zero-confirmed chunk; a chunk is one pull, one week, so
-    its rows share season/week/subject_type/recorded_at and the count is exact.
+    (QA ruling Q5).
+
+    Counting rows is NOT enough (QA remediation §5). A replay whose VALUES changed is a
+    no-op at the database -- `DO NOTHING` keeps the old value -- so counting it as satisfied
+    reports a write that never landed and hides the divergence. The (subject_id, stat_key)
+    pairs and their values are compared instead. One query per zero-confirmed chunk; a chunk
+    is one pull, one week, so its rows share season/week/subject_type/recorded_at.
     """
     r0 = chunk[0]
-    rows = query("SELECT COUNT(*) AS n FROM stat_observations WHERE recorded_at = ? "
-                 "AND season = ? AND week = ? AND subject_type = ?",
+    rows = query("SELECT subject_id, stat_key, value FROM stat_observations "
+                 "WHERE recorded_at = ? AND season = ? AND week = ? AND subject_type = ?",
                  [r0.get("recorded_at"), r0.get("season"), r0.get("week"),
-                  r0.get("subject_type")])
-    return int((rows[0].get("n") if rows else 0) or 0) >= len(chunk)
+                  r0.get("subject_type")]) or []
+    got = {}
+    for r in rows:
+        got[(r.get("subject_id"), str(r.get("stat_key")))] = r.get("value")
+    for r in chunk:
+        key = (r.get("subject_id"), str(r.get("stat_key")))
+        if key not in got or not _same_value(got[key], r.get("value")):
+            return False
+    return True
 
 
 def _bulk_write_once(rows: list[dict]) -> int:

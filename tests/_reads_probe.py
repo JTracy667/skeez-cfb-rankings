@@ -20,7 +20,10 @@ import pathlib
 import sys
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
-DATA_DIR = (REPO / "data").resolve()
+sys.path.insert(0, str(REPO))
+import runtime_paths  # noqa: E402  (QA §1.5: the suite redirects the data dir to a
+                      # scratch copy, so the guard must measure THAT dir, not REPO/data)
+DATA_DIR = runtime_paths.data_dir().resolve()
 
 os.environ.setdefault("CFB_SKIP_BOOTWARM", "1")
 os.environ.setdefault("REFRESH_INTERVAL_SECONDS", "0")

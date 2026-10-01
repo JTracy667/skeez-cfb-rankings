@@ -16,6 +16,7 @@ Two hard rules (from D1_RISK_REGISTER):
 from __future__ import annotations
 
 import json
+from runtime_paths import data_dir as _rt_data_dir
 import os
 import time
 from datetime import datetime, timezone
@@ -23,7 +24,7 @@ from datetime import datetime, timezone
 import d1_store
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-_RANK_DATE_FILE = os.path.join(BASE_DIR, "data", "d1_rankings_last.json")
+_RANK_DATE_FILE = os.path.join(str(_rt_data_dir()), "d1_rankings_last.json")
 
 
 def write_enabled() -> bool:
@@ -345,11 +346,77 @@ def analytics_publication(season: int) -> dict | None:
     return doc if isinstance(doc, dict) else None
 
 
+# QA remediation §2 -- publication is an AUTHORITATIVE act.
+#
+# The marker names ONE pull as the season's complete snapshot, so it must only be written by
+# the full-pull coordinator, and only when that pull's own manifest is complete AND the
+# read-back matches it exactly. Before this, ANY call to snapshot_team_analytics could
+# publish: a delegated probe that invoked the weekly pull with a one-team payload named
+# itself the season's complete snapshot, and every reader then served that stub.
+#
+# The floor is deliberately about the SHAPE of a season-wide FBS pull (682 teams, ~115 stat
+# keys as measured on production data), not a threshold anyone should tune per-week.
+MIN_PUBLISH_TEAMS = 600
+MIN_PUBLISH_KEYS = 40
+
+
+def _pull_manifest(rows: list[dict]) -> dict:
+    """What this pull intends to write: rows, teams, and the exact set of stat keys."""
+    return {"rows": len(rows),
+            "teams": len({r.get("subject_id") for r in rows}),
+            "keys": sorted({str(r.get("stat_key")) for r in rows})}
+
+
+def _manifest_reasons(man: dict) -> list[str]:
+    why = []
+    if man["teams"] < MIN_PUBLISH_TEAMS:
+        why.append(f"only {man['teams']} teams (< {MIN_PUBLISH_TEAMS})")
+    if len(man["keys"]) < MIN_PUBLISH_KEYS:
+        why.append(f"only {len(man['keys'])} stat keys (< {MIN_PUBLISH_KEYS})")
+    return why
+
+
+def _read_back_manifest(season: int, week: int, stamp: str) -> dict:
+    """Per stat key, what is actually READABLE at the stamp: (count, value sum).
+
+    A sum is not a per-row equality check, but combined with the key set and the counts it
+    catches a changed, dropped or duplicated value -- which row counting alone did not.
+    """
+    rows = d1_store.query(
+        "SELECT stat_key, COUNT(*) AS n, SUM(value) AS s FROM stat_observations "
+        "WHERE season = ? AND week = ? AND subject_type = 'team' AND recorded_at = ? "
+        "GROUP BY stat_key", [int(season), int(week), str(stamp)]) or []
+    out = {}
+    for r in rows:
+        try:
+            out[str(r.get("stat_key"))] = (int(r.get("n") or 0), float(r.get("s") or 0.0))
+        except (TypeError, ValueError):
+            out[str(r.get("stat_key"))] = (int(r.get("n") or 0), 0.0)
+    return out
+
+
+def _expected_manifest(rows: list[dict]) -> dict:
+    exp: dict = {}
+    for r in rows:
+        k = str(r.get("stat_key"))
+        n, s = exp.get(k, (0, 0.0))
+        try:
+            v = float(r.get("value") or 0.0)
+        except (TypeError, ValueError):
+            v = 0.0
+        exp[k] = (n + 1, s + v)
+    return exp
+
+
 def publish_analytics_pull(season: int, week: int, stamp: str, n_rows: int, n_teams: int,
-                           identity: dict | None = None) -> int:
-    """Publish a COMPLETE pull: ONE upsert carrying the marker AND the identity blob."""
+                           identity: dict | None = None, keys: list[str] | None = None) -> int:
+    """Publish a COMPLETE pull: ONE upsert carrying the marker, the identity blob, and the
+    manifest (row/team counts and the exact stat-key set) so a reader can audit what the
+    marker claims without trusting the writer."""
     doc = {"season": int(season), "week": int(week), "stamp": str(stamp),
            "n_rows": int(n_rows), "n_teams": int(n_teams),
+           "keys": sorted(str(k) for k in (keys or [])),
+           "n_keys": len(keys or []),
            "identity": identity or {}, "published_at": _now()}
     return d1_store.set_app_state(publication_key(season), json.dumps(doc))
 
@@ -368,7 +435,8 @@ def _selection_counts(season: int, week: int, stamp: str) -> tuple[int, int]:
 @_guard
 def snapshot_team_analytics(teams, keys=None, season: int = 0, week: int | None = None,
                             source: str = "cfbd", publish: bool = True,
-                            identity: dict | None = None) -> int:
+                            identity: dict | None = None,
+                            authoritative_pull: bool = False) -> int:
     """Archive per-team season analytics into stat_observations. Returns rows written.
 
     One stamp for the whole pull (so the pull has an identity the marker can name), then --
@@ -386,6 +454,15 @@ def snapshot_team_analytics(teams, keys=None, season: int = 0, week: int | None 
     if not n:
         return 0
     if publish:
+        # QA §2: the marker is written ONLY by the authoritative full-pull coordinator, and
+        # ONLY when the pull's manifest is complete and the read-back matches it exactly.
+        man = _pull_manifest(rows)
+        reasons = _manifest_reasons(man)
+        if not authoritative_pull:
+            reasons.append("caller is not the authoritative full-pull coordinator")
+        if reasons:
+            print(f"[d1_write_path] NOT publishing {season} wk{week}: " + "; ".join(reasons))
+            return n
         # D1's meta.rows_written counts INDEX maintenance, not rows: measured on a scratch
         # database, a 2-row stat_observations insert reports 7 (one row + both indexes).
         # Completeness is therefore checked with READ-BACK ROWS against the rows this pull
@@ -397,7 +474,21 @@ def snapshot_team_analytics(teams, keys=None, season: int = 0, week: int | None 
             print(f"[d1_write_path] NOT publishing {season} wk{week}: intended {expected} rows, "
                   f"only {got_rows} readable at stamp {stamp}")
             return n
-        publish_analytics_pull(season, week, stamp, got_rows, got_teams, identity)
+        # QA §2: counts alone are not a manifest. Verify the key set and per-key (count, sum)
+        # the pull intended against what is readable at the stamp.
+        exp = _expected_manifest(rows)
+        got = _read_back_manifest(season, week, stamp)
+        bad = []
+        for k, (en, es) in exp.items():
+            gn, gs = got.get(k, (0, 0.0))
+            if gn != en or abs(gs - es) > 1e-6 * max(1.0, abs(es)):
+                bad.append(f"{k}: intended {en}/{es:.3f}, readable {gn}/{gs:.3f}")
+        if bad:
+            print(f"[d1_write_path] NOT publishing {season} wk{week}: {len(bad)} stat keys do "
+                  f"not match the read-back (e.g. {bad[:3]})")
+            return n
+        publish_analytics_pull(season, week, stamp, got_rows, got_teams, identity,
+                               keys=man["keys"])
     return n
 
 

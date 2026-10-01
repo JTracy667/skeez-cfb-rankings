@@ -25,7 +25,6 @@ function makeElement(tag, attrs = {}) {
     style: {},
     innerHTML: '',
     textContent: '',
-    value: '',
     children: [],
     _listeners: {},
     get classList() { return this._cl || (this._cl = new ClassList(this)); },
@@ -38,11 +37,19 @@ function makeElement(tag, attrs = {}) {
   // A real DOM stringifies .value (option/select/input), and the page relies on it
   // (`opts.includes(String(currentWeek))`). Faking that faithfully is the difference between
   // testing the page and testing the stub.
+  let _html = '';
+  Object.defineProperty(el, 'innerHTML', {
+    get() { return _html; },
+    set(v) { _html = v === undefined || v === null ? '' : String(v); el.children.length = 0; },
+  });
   let _value = '';
   Object.defineProperty(el, 'value', {
     get() { return _value; },
     set(v) { _value = (v === undefined || v === null) ? '' : String(v); },
   });
+  // AFTER the accessor exists -- assigning before it would be shadowed by the defineProperty
+  // and every static option would read as value '' (which hid QA's §8 placeholder).
+  if (attrs.value !== undefined) el.value = attrs.value;
   Object.defineProperty(el, 'className', {
     get() { return el._class; }, set(v) { el._class = v; },
   });
@@ -65,18 +72,20 @@ export function buildDom(html) {
     const tag = m[2];
     const attrs = m[3];
     if (/^(script|style)$/i.test(tag)) continue;
-    const voidTag = /\/$/.test(m[0]) || /^(img|br|input|hr|meta|link|option)$/i.test(tag);
+    const voidTag = /\/$/.test(m[0]) || /^(img|br|input|hr|meta|link)$/i.test(tag);
     if (closing) { stack.pop(); continue; }
     const id = (attrs.match(/\bid="([^"]*)"/) || [])[1];
     const cls = (attrs.match(/\bclass="([^"]*)"/) || [])[1] || '';
     const datatab = (attrs.match(/\bdata-tab="([^"]*)"/) || [])[1];
-    const el = makeElement(tag, { id, class: cls, datatab });
+    const value = (attrs.match(/value="([^"]*)"/) || [])[1];
+    const el = makeElement(tag, { id, class: cls, datatab, value });
     if (tag.toLowerCase() === 'select') {
       Object.defineProperty(el, 'options', { get: () => el.children });
     }
     // Nesting matters: the pages use delegated listeners on containers (#tabs), so an event
     // must bubble. Every element joins the stack, even unregistered ones, to keep it aligned.
     el._parent = stack[stack.length - 1] || null;
+    if (el._parent) el._parent.children.push(el);
     if (id || cls) {
       all.push(el);
       if (id) byId.set(id, el);
@@ -92,11 +101,12 @@ export function buildDom(html) {
 
   const doc = {
     _byId: byId,
+    _listeners: {},
     getElementById: (id) => byId.get(id) || null,
     querySelectorAll: qsa,
     querySelector: (sel) => qsa(sel)[0] || null,
     createElement: (tag) => makeElement(tag),
-    addEventListener: () => {},
+    addEventListener(type, fn) { (this._listeners[type] ||= []).push(fn); },
     visibilityState: 'visible',
     body: makeElement('body'),
   };
@@ -174,7 +184,8 @@ export function createHarness({ page, search = '', routes = {}, live = false }) 
       : { log: () => {}, warn: () => {}, error: () => {} },
     setTimeout: live ? setTimeout : (fn, ms = 0) => { const id = ++timerSeq; timers.set(id, { fn, at: fakeNow + ms }); return id; },
     clearTimeout: live ? clearTimeout : (id) => { timers.delete(id); },
-    setInterval: live ? setInterval : (fn, ms) => { const id = { fn, ms }; intervals.push(id); return id; },
+    setInterval: live ? setInterval
+      : (fn, ms) => { const id = { fn, ms, nextAt: fakeNow + ms }; intervals.push(id); return id; },
     clearInterval: live ? clearInterval : () => {},
   };
   sandbox.window = sandbox;
@@ -230,15 +241,38 @@ export function createHarness({ page, search = '', routes = {}, live = false }) 
       fakeNow += ms;
       for (let pass = 0; pass < 10; pass++) {
         const due = [...timers].filter(([, t]) => t.at <= fakeNow);
-        if (!due.length) break;
+        const dueIntervals = intervals.filter(iv => iv.nextAt <= fakeNow);
+        if (!due.length && !dueIntervals.length) break;
         due.forEach(([id]) => timers.delete(id));
-        due.forEach(([, t]) => t.fn());
+        dueIntervals.forEach(iv => { iv.nextAt += iv.ms; });
+        const fire = (fn) => {
+          try {
+            const r = fn();
+            if (r && typeof r.catch === 'function') {
+              r.catch(e => pageErrors.push(e && e.message ? e.message : String(e)));
+            }
+          } catch (e) { pageErrors.push(e && e.message ? e.message : String(e)); }
+        };
+        due.forEach(([, t]) => fire(t.fn));
+        dueIntervals.forEach(iv => fire(iv.fn));
         await flush();
       }
       await flush();
     },
     flush,
     pageErrors,
+    setVisibility(state) { doc.visibilityState = state; },
+    fireDocument(type) {
+      const ev = { target: doc, preventDefault() {}, stopPropagation() {} };
+      try {
+        (doc._listeners[type] || []).forEach(fn => {
+          const r = fn(ev);
+          if (r && typeof r.catch === 'function') {
+            r.catch(e => pageErrors.push(e && e.message ? e.message : String(e)));
+          }
+        });
+      } catch (e) { pageErrors.push(e && e.message ? e.message : String(e)); }
+    },
     timersDue: () => [...timers.values()].filter(t => t.at <= fakeNow),
   };
 }

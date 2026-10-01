@@ -54,6 +54,7 @@ for _cand in (_HERE, os.path.dirname(_HERE)):
         break
 sys.path.insert(0, _ROOT)
 
+from runtime_paths import data_dir as _rt_data_dir
 import cfbd_shared  # noqa: E402
 import d1_store  # noqa: E402
 
@@ -62,7 +63,7 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 ENDPOINT = "https://masseyratings.com/json/ranks.php"
 FCS_SUB = 11605          # Massey's FCS sub id (cf/ncaa-d1 is the FBS board)
 SOURCE = "massey"
-ALIAS_FILE = os.path.join(_ROOT, "data", "massey_aliases.json")
+ALIAS_FILE = os.path.join(str(_rt_data_dir()), "massey_aliases.json")
 MIN_EXPECTED_ROWS = 100  # refuse to write a short/partial payload
 
 # Massey abbreviates school names ("Montana St", "E Washington", "SF Austin").
