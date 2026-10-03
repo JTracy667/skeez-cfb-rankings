@@ -4384,23 +4384,41 @@ def current_season_week(year: int = CFBD_YEAR) -> int | None:
         return cached[0]
     games = [g for g in _cfbd_season_games(year)
              if isinstance(g, dict) and _cfbd_is_fbs(g) and g.get("startDate")]
-    if not games:
+    switch_points = _week_switch_points(games)
+    if not switch_points:
         return None
+    now = datetime.now(timezone.utc)
+    current = switch_points[0][1]  # before/at first switch -> earliest week
+    for point, wk in switch_points:
+        if now >= point:
+            current = wk
+    _current_week_cache[year] = (current, time.time())
+    return current
+
+
+def _week_switch_points(games: list) -> list[tuple]:
+    """(cutover_utc, week) for every week with games, sorted by cutover.
+
+    PURE -- no clock, no cache, no network -- so the cutover rule can be tested
+    against a synthetic schedule instead of only against today's date.
+    """
     earliest_by_week: dict[int, datetime] = {}
+    latest_by_week: dict[int, datetime] = {}
     for g in games:
         try:
             start = datetime.fromisoformat(g["startDate"].replace("Z", "+00:00"))
-        except (ValueError, AttributeError):
+        except (ValueError, AttributeError, TypeError, KeyError):
             continue
         wk = g.get("week")
         if not isinstance(wk, int):
             continue
         if wk not in earliest_by_week or start < earliest_by_week[wk]:
             earliest_by_week[wk] = start
+        if wk not in latest_by_week or start > latest_by_week[wk]:
+            latest_by_week[wk] = start
     if not earliest_by_week:
-        return None
+        return []
     ET = timezone(timedelta(hours=-4))  # EDT; cutover precision of a day makes DST irrelevant
-    now = datetime.now(timezone.utc)
     switch_points = []
     for wk, start in earliest_by_week.items():
         local = start.astimezone(ET)
@@ -4409,14 +4427,20 @@ def current_season_week(year: int = CFBD_YEAR) -> int | None:
         # current as soon as the previous week's games are in the books.
         cutover = (local - timedelta(days=4)).replace(
             hour=0, minute=0, second=0, microsecond=0)
+        # ...but that lead time must never outrun the week it follows. A midweek
+        # (Tue/Wed) opener pulls "4 days before" back into the weekend it is meant
+        # to follow: week 6 opens Tue Oct 6, so it cut over on Fri Oct 2 and hid
+        # week 5's entire unplayed Saturday slate (Jeff, 2026-10-03). Floor each
+        # cutover at the midnight AFTER the previous week's last game, so a week
+        # is only ever current once the prior week is actually in the books.
+        prev_last = latest_by_week.get(wk - 1)
+        if prev_last is not None:
+            prev_done = (prev_last.astimezone(ET).replace(
+                hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1))
+            cutover = max(cutover, prev_done)
         switch_points.append((cutover, wk))
     switch_points.sort()
-    current = switch_points[0][1]  # before/at first switch -> earliest week
-    for point, wk in switch_points:
-        if now >= point:
-            current = wk
-    _current_week_cache[year] = (current, time.time())
-    return current
+    return switch_points
 
 
 @app.get("/api/schedule/current-week")
