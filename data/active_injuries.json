@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-03T10:15:15.225463",
+  "updated": "2026-10-03T10:25:14.224982",
   "total_teams_with_injuries": 53,
   "total_tracked_injuries": 75,
   "key_qb_injuries": 5,
@@ -26,7 +26,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.216944"
+      "updated_at": "2026-10-03T10:25:14.216405"
     },
     "Arizona State": {
       "team": "Arizona State",
@@ -42,7 +42,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.217027"
+      "updated_at": "2026-10-03T10:25:14.216405"
     },
     "Arkansas State": {
       "team": "Arkansas State",
@@ -58,7 +58,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.217095"
+      "updated_at": "2026-10-03T10:25:14.216405"
     },
     "Ball State": {
       "team": "Ball State",
@@ -74,7 +74,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.217287"
+      "updated_at": "2026-10-03T10:25:14.216405"
     },
     "Baylor": {
       "team": "Baylor",
@@ -90,7 +90,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.217337"
+      "updated_at": "2026-10-03T10:25:14.216405"
     },
     "Boise State": {
       "team": "Boise State",
@@ -106,7 +106,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.217372"
+      "updated_at": "2026-10-03T10:25:14.216902"
     },
     "BYU": {
       "team": "BYU",
@@ -130,7 +130,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.217720"
+      "updated_at": "2026-10-03T10:25:14.216902"
     },
     "Clemson": {
       "team": "Clemson",
@@ -146,7 +146,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.217962"
+      "updated_at": "2026-10-03T10:25:14.217403"
     },
     "Coastal Carolina": {
       "team": "Coastal Carolina",
@@ -162,7 +162,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.217997"
+      "updated_at": "2026-10-03T10:25:14.217403"
     },
     "Colorado": {
       "team": "Colorado",
@@ -178,7 +178,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.218101"
+      "updated_at": "2026-10-03T10:25:14.217403"
     },
     "Delaware": {
       "team": "Delaware",
@@ -194,7 +194,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.218213"
+      "updated_at": "2026-10-03T10:25:14.217403"
     },
     "Eastern Michigan": {
       "team": "Eastern Michigan",
@@ -218,7 +218,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.218530"
+      "updated_at": "2026-10-03T10:25:14.217403"
     },
     "Florida": {
       "team": "Florida",
@@ -234,7 +234,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.218652"
+      "updated_at": "2026-10-03T10:25:14.217403"
     },
     "Florida State": {
       "team": "Florida State",
@@ -250,7 +250,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.218718"
+      "updated_at": "2026-10-03T10:25:14.217403"
     },
     "Georgia": {
       "team": "Georgia",
@@ -266,7 +266,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.218783"
+      "updated_at": "2026-10-03T10:25:14.217403"
     },
     "Georgia Tech": {
       "team": "Georgia Tech",
@@ -282,7 +282,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.219003"
+      "updated_at": "2026-10-03T10:25:14.218406"
     },
     "Hawai'i": {
       "team": "Hawai'i",
@@ -298,7 +298,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.219136"
+      "updated_at": "2026-10-03T10:25:14.218406"
     },
     "Illinois": {
       "team": "Illinois",
@@ -314,7 +314,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.219418"
+      "updated_at": "2026-10-03T10:25:14.218406"
     },
     "Indiana": {
       "team": "Indiana",
@@ -330,7 +330,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.219467"
+      "updated_at": "2026-10-03T10:25:14.218406"
     },
     "Iowa State": {
       "team": "Iowa State",
@@ -346,7 +346,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.219629"
+      "updated_at": "2026-10-03T10:25:14.218406"
     },
     "Louisville": {
       "team": "Louisville",
@@ -378,7 +378,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.220404"
+      "updated_at": "2026-10-03T10:25:14.219425"
     },
     "LSU": {
       "team": "LSU",
@@ -402,7 +402,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.220469"
+      "updated_at": "2026-10-03T10:25:14.219930"
     },
     "Maryland": {
       "team": "Maryland",
@@ -418,7 +418,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.220592"
+      "updated_at": "2026-10-03T10:25:14.219930"
     },
     "Miami": {
       "team": "Miami",
@@ -442,7 +442,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.220675"
+      "updated_at": "2026-10-03T10:25:14.219930"
     },
     "Ole Miss": {
       "team": "Ole Miss",
@@ -458,7 +458,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.220890"
+      "updated_at": "2026-10-03T10:25:14.219930"
     },
     "Nebraska": {
       "team": "Nebraska",
@@ -474,7 +474,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.221445"
+      "updated_at": "2026-10-03T10:25:14.219930"
     },
     "Northwestern": {
       "team": "Northwestern",
@@ -498,7 +498,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.221902"
+      "updated_at": "2026-10-03T10:25:14.220934"
     },
     "Ohio State": {
       "team": "Ohio State",
@@ -514,7 +514,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.222103"
+      "updated_at": "2026-10-03T10:25:14.220934"
     },
     "Oklahoma": {
       "team": "Oklahoma",
@@ -538,7 +538,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.222168"
+      "updated_at": "2026-10-03T10:25:14.220934"
     },
     "Oregon": {
       "team": "Oregon",
@@ -570,7 +570,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.222356"
+      "updated_at": "2026-10-03T10:25:14.220934"
     },
     "Penn State": {
       "team": "Penn State",
@@ -586,7 +586,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.222451"
+      "updated_at": "2026-10-03T10:25:14.220934"
     },
     "Pittsburgh": {
       "team": "Pittsburgh",
@@ -610,7 +610,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.222562"
+      "updated_at": "2026-10-03T10:25:14.221955"
     },
     "Rutgers": {
       "team": "Rutgers",
@@ -634,7 +634,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.222704"
+      "updated_at": "2026-10-03T10:25:14.221955"
     },
     "San Diego State": {
       "team": "San Diego State",
@@ -650,7 +650,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.222943"
+      "updated_at": "2026-10-03T10:25:14.221955"
     },
     "SMU": {
       "team": "SMU",
@@ -674,7 +674,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.223069"
+      "updated_at": "2026-10-03T10:25:14.221955"
     },
     "South Florida": {
       "team": "South Florida",
@@ -690,7 +690,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.223237"
+      "updated_at": "2026-10-03T10:25:14.221955"
     },
     "Southern Mississippi": {
       "team": "Southern Mississippi",
@@ -706,7 +706,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.223300"
+      "updated_at": "2026-10-03T10:25:14.221955"
     },
     "Stanford": {
       "team": "Stanford",
@@ -722,7 +722,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.223392"
+      "updated_at": "2026-10-03T10:25:14.221955"
     },
     "Syracuse": {
       "team": "Syracuse",
@@ -738,7 +738,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.223456"
+      "updated_at": "2026-10-03T10:25:14.222976"
     },
     "TCU": {
       "team": "TCU",
@@ -754,7 +754,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.223520"
+      "updated_at": "2026-10-03T10:25:14.222976"
     },
     "Tennessee": {
       "team": "Tennessee",
@@ -778,7 +778,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.223679"
+      "updated_at": "2026-10-03T10:25:14.222976"
     },
     "Texas A&M": {
       "team": "Texas A&M",
@@ -802,7 +802,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.223852"
+      "updated_at": "2026-10-03T10:25:14.222976"
     },
     "Texas State": {
       "team": "Texas State",
@@ -826,7 +826,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.223903"
+      "updated_at": "2026-10-03T10:25:14.223482"
     },
     "Texas Tech": {
       "team": "Texas Tech",
@@ -850,7 +850,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.223953"
+      "updated_at": "2026-10-03T10:25:14.223482"
     },
     "Troy": {
       "team": "Troy",
@@ -866,7 +866,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.224035"
+      "updated_at": "2026-10-03T10:25:14.223482"
     },
     "UCF": {
       "team": "UCF",
@@ -890,7 +890,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.224196"
+      "updated_at": "2026-10-03T10:25:14.223482"
     },
     "UCLA": {
       "team": "UCLA",
@@ -914,7 +914,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.224315"
+      "updated_at": "2026-10-03T10:25:14.223482"
     },
     "Connecticut": {
       "team": "Connecticut",
@@ -930,7 +930,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.224342"
+      "updated_at": "2026-10-03T10:25:14.223482"
     },
     "USC": {
       "team": "USC",
@@ -954,7 +954,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.224519"
+      "updated_at": "2026-10-03T10:25:14.223980"
     },
     "Vanderbilt": {
       "team": "Vanderbilt",
@@ -978,7 +978,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.224847"
+      "updated_at": "2026-10-03T10:25:14.223980"
     },
     "Wake Forest": {
       "team": "Wake Forest",
@@ -994,7 +994,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.225047"
+      "updated_at": "2026-10-03T10:25:14.224480"
     },
     "Western Michigan": {
       "team": "Western Michigan",
@@ -1010,7 +1010,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.225323"
+      "updated_at": "2026-10-03T10:25:14.224480"
     },
     "Wisconsin": {
       "team": "Wisconsin",
@@ -1026,7 +1026,7 @@
         }
       ],
       "manual_overrides": [],
-      "updated_at": "2026-10-03T10:15:15.225403"
+      "updated_at": "2026-10-03T10:25:14.224480"
     }
   }
 }
