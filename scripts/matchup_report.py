@@ -275,6 +275,30 @@ def _lines_block(proj: dict | None, home: str, away: str) -> str:
     return "<br>".join(parts) or '<span class="k">LINE</span><br>n/a'
 
 
+def _weather_block(proj: dict | None) -> str:
+    """Kickoff conditions, rendered under the VS/line in the centre column.
+
+    `indoor` takes precedence: a dome's temperature is meaningless, so show the fact
+    that matters instead of a number nobody should read as a forecast.
+    """
+    wx = (proj or {}).get("weather") or {}
+    if not wx:
+        return "Weather n/a"
+    if wx.get("indoor"):
+        return "Indoor"
+    parts = []
+    temp = wx.get("temp")
+    if isinstance(temp, (int, float)):
+        parts.append(f"{temp:.0f}\u00b0F")
+    cond = wx.get("condition")
+    if cond:
+        parts.append(str(cond))
+    wind = wx.get("wind")
+    if isinstance(wind, (int, float)):
+        parts.append(f"wind {wind:.0f} mph")
+    return " \u00b7 ".join(parts) or "Weather n/a"
+
+
 def render_html(out: dict, proj: dict | None = None, logos: dict | None = None) -> str:
     home, away = out["home"], out["away"]
     logos = logos or {}
@@ -341,6 +365,7 @@ def render_html(out: dict, proj: dict | None = None, logos: dict | None = None) 
         "{{AWAY_PP_LEAD}}": lead_cls(away_pp, home_pp),
         "{{HOME_PP_LEAD}}": lead_cls(home_pp, away_pp),
         "{{LINES}}": _lines_block(proj, home["name"], away["name"]),
+        "{{WEATHER}}": _weather_block(proj),
         "{{CROSS}}": cross,
         "{{AWAY_STACK}}": stack("away"), "{{HOME_STACK}}": stack("home"),
     }
@@ -355,6 +380,9 @@ def render_png(html_text: str, png_path: str | Path, width: int = 1280) -> str:
     exe = next((p for p in _EDGE_CANDIDATES if p and Path(p).exists()), None)
     if not exe:
         raise SystemExit("Edge not found for --png; set CFB_EDGE to msedge.exe")
+    # Edge resolves --screenshot relative to ITS OWN cwd, so a relative path silently
+    # writes nowhere (or somewhere else). Always hand it an absolute path.
+    png_path = Path(png_path).resolve()
     scratch = Path(os.environ.get("TMPDIR", ".")) / "matchup_card"
     scratch.mkdir(parents=True, exist_ok=True)
     # A reused --user-data-dir can hold a stale lock from a killed run and hang the

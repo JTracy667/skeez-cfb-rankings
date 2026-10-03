@@ -16,10 +16,9 @@ body{margin:0;background:var(--bg);color:var(--text);
 font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:14px}
 .card{max-width:1280px;margin:0 auto;background:var(--surface);border:1px solid var(--border);
 border-radius:16px;padding:16px 20px 10px}
-.topbar{display:flex;justify-content:space-between;align-items:baseline;
+.topbar{display:flex;justify-content:center;align-items:baseline;
 border-bottom:1px solid var(--border);padding-bottom:9px}
-.tl{font-size:19px;font-weight:800;color:#fff;letter-spacing:.02em}
-.tr{font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.14em;text-transform:uppercase}
+.tr{font-size:13px;font-weight:800;color:var(--accent);letter-spacing:.18em;text-transform:uppercase}
 /* team header */
 .teams{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start;
 padding:12px 0 10px;border-bottom:1px solid var(--border)}
@@ -37,11 +36,14 @@ padding:5px 12px;text-align:center;min-width:84px}
 .statbox .v{display:block;font-size:18px;font-weight:800;color:#fff}
 .statbox .v.lead{color:var(--good)}
 .center{display:flex;flex-direction:column;align-items:center;justify-content:center;
-gap:6px;padding-top:6px;min-width:190px}
-.vs{font-size:13px;font-weight:800;color:var(--dim);letter-spacing:.16em}
-.linebox{background:#1d2434;border:1px solid var(--border);border-radius:8px;
-padding:7px 12px;text-align:center;font-size:11.5px;color:#fff;font-weight:600;line-height:1.55}
-.linebox .k{color:var(--dim);font-weight:700;letter-spacing:.06em}
+gap:8px;padding-top:2px;min-width:300px}
+.vs{font-size:26px;font-weight:900;color:#ffffff;letter-spacing:.18em;line-height:1}
+.wx{font-size:14px;font-weight:700;color:#ffffff;letter-spacing:.02em;text-align:center}
+.linebox{background:#1d2434;border:1px solid var(--border);border-radius:10px;
+padding:11px 20px;text-align:center;font-size:17px;color:#fff;font-weight:800;
+line-height:1.6;min-width:260px}
+.linebox .k{color:var(--accent);font-weight:800;letter-spacing:.08em;font-size:12px;
+vertical-align:2px}
 /* three-column body */
 .cols{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:16px;align-items:start;margin-top:2px}
 .col{display:flex;flex-direction:column;min-width:0}
@@ -84,8 +86,7 @@ background:#93c5fd;border-radius:999px;padding:1.5px 6px;margin:0 7px;font-weigh
 .rk.mid{background:#3a4459;color:#e8edf7;font-weight:700}
 .foot{color:var(--dim);font-size:11px;margin-top:14px;border-top:1px solid var(--border);padding-top:9px}
 </style></head><body><div class="card">
-<div class="topbar"><span class="tl">{{AWA}} AT {{HOM}}</span>
-<span class="tr">Advanced Stats Preview</span></div>
+<div class="topbar"><span class="tr">Advanced Stats Preview</span></div>
 <div class="teams">
   <div class="team away">
     <img class="logo" src="{{AWAY_LOGO}}" alt="{{AWA}}">
@@ -96,7 +97,9 @@ background:#93c5fd;border-radius:999px;padding:1.5px 6px;margin:0 7px;font-weigh
       </div>
     </div>
   </div>
-  <div class="center"><div class="vs">VS</div><div class="linebox">{{LINES}}</div></div>
+  <div class="center"><div class="vs">VS</div>
+    <div class="wx">{{WEATHER}}</div>
+    <div class="linebox">{{LINES}}</div></div>
   <div class="team home">
     <img class="logo" src="{{HOME_LOGO}}" alt="{{HOM}}">
     <div class="tinfo"><div class="tname">{{HOM}}</div><div class="trec">{{HOME_REC}}</div>
@@ -112,8 +115,4 @@ background:#93c5fd;border-radius:999px;padding:1.5px 6px;margin:0 7px;font-weigh
   <div class="mid">{{CROSS}}</div>
   <div class="col home">{{HOME_STACK}}</div>
 </div>
-<div class="foot">Outside columns = that team's own stats (left = {{AWA}}, right = {{HOM}}); the two centre
-tables pair one side's offense against the other's defense. Heat = that side's national percentile (green
-top 30%, red bottom 30%); green value = side holding the edge. Rank pill = FBS national rank. Win prob /
-proj pts are the model's, from stored analytics + the modelled line — no live API cost.</div>
 </div></body></html>
