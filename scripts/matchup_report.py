@@ -31,8 +31,10 @@ import base64
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -278,15 +280,23 @@ def render_html(out: dict, proj: dict | None = None, logos: dict | None = None) 
     logos = logos or {}
     proj = proj or {}
 
-    def row(r):
-        return _row3(r["label"], r["away"], r["home"], r["leader"], r["decimals"])
-
-    sections = ""
-    for sec in out["sections"]:
-        w = sec["wins"]
-        sections += (f'<section><h2>{sec["label"]}'
-                     f'<span class="tally">away {w["away"]} · home {w["home"]}</span></h2>'
-                     f'<table>{"".join(row(r) for r in sec["rows"])}</table></section>')
+    def stack(side):
+        """One team's own stats as a vertical column (the reference's side panels)."""
+        html = ""
+        for sec in out["sections"]:
+            html += f'<div class="secttl">{sec["label"]}</div>'
+            for r in sec["rows"]:
+                st = r[side]
+                lead = "lead" if r["leader"] == side else ""
+                cls = f"sval {_heat(st.get('pct'))} {lead}".strip()
+                val = _fmt(st.get("value"), r["decimals"])
+                rk = ""
+                if st.get("rank") is not None:
+                    rk = f'<span class="rk {_pill(st.get("pct"))}">{st["rank"]}</span>'
+                html += (f'<div class="srow {side}">'
+                         f'<span class="slabel">{r["label"]}</span>'
+                         f'<span class="{cls}">{val}</span>{rk}</div>')
+        return html
 
     # The centre of the reference card: two head-to-head tables, each pairing one
     # side's OFFENSE against the other's DEFENSE. Left column = the AWAY team's
@@ -331,7 +341,8 @@ def render_html(out: dict, proj: dict | None = None, logos: dict | None = None) 
         "{{AWAY_PP_LEAD}}": lead_cls(away_pp, home_pp),
         "{{HOME_PP_LEAD}}": lead_cls(home_pp, away_pp),
         "{{LINES}}": _lines_block(proj, home["name"], away["name"]),
-        "{{CROSS}}": cross, "{{SECTIONS}}": sections,
+        "{{CROSS}}": cross,
+        "{{AWAY_STACK}}": stack("away"), "{{HOME_STACK}}": stack("home"),
     }
     tpl = TEMPLATE.read_text(encoding="utf-8")
     for k, v in subs.items():
@@ -339,13 +350,18 @@ def render_html(out: dict, proj: dict | None = None, logos: dict | None = None) 
     return tpl
 
 
-def render_png(html_text: str, png_path: str | Path, width: int = 800) -> str:
+def render_png(html_text: str, png_path: str | Path, width: int = 1280) -> str:
     """Screenshot the card with headless Edge, sized to its real content height."""
     exe = next((p for p in _EDGE_CANDIDATES if p and Path(p).exists()), None)
     if not exe:
         raise SystemExit("Edge not found for --png; set CFB_EDGE to msedge.exe")
     scratch = Path(os.environ.get("TMPDIR", ".")) / "matchup_card"
     scratch.mkdir(parents=True, exist_ok=True)
+    # A reused --user-data-dir can hold a stale lock from a killed run and hang the
+    # probe forever; give every invocation its own profile dir.
+    uniq = f"{os.getpid()}-{int(time.time())}"
+    probe_dir = scratch / f"edge_probe_{uniq}"
+    shot_dir = scratch / f"edge_shot_{uniq}"
 
     probe = scratch / "_probe.html"
     probe.write_text(
@@ -354,8 +370,9 @@ def render_png(html_text: str, png_path: str | Path, width: int = 800) -> str:
                           "</script></body>"),
         encoding="utf-8")
     dom = subprocess.run(
-        [exe, "--headless=new", "--disable-gpu", "--no-sandbox",
-         f"--user-data-dir={scratch / 'edge_probe'}", "--virtual-time-budget=4000",
+        [exe, "--headless=new", "--disable-gpu", "--no-sandbox", "--no-first-run",
+         "--no-default-browser-check",
+         f"--user-data-dir={probe_dir}", "--virtual-time-budget=4000",
          "--dump-dom", probe.as_uri()],
         capture_output=True, text=True, timeout=120)
     m = re.search(r"H=(\d+)", dom.stdout or "")
@@ -365,10 +382,13 @@ def render_png(html_text: str, png_path: str | Path, width: int = 800) -> str:
     page.write_text(html_text, encoding="utf-8")
     subprocess.run(
         [exe, "--headless=new", "--disable-gpu", "--no-sandbox", "--hide-scrollbars",
+         "--no-first-run", "--no-default-browser-check",
          "--force-device-scale-factor=2", f"--window-size={width},{height}",
-         f"--user-data-dir={scratch / 'edge_shot'}", f"--screenshot={png_path}",
+         f"--user-data-dir={shot_dir}", f"--screenshot={png_path}",
          page.as_uri()],
         capture_output=True, text=True, timeout=120)
+    for d in (probe_dir, shot_dir):
+        shutil.rmtree(d, ignore_errors=True)
     return str(png_path)
 
 
@@ -382,6 +402,8 @@ def main() -> int:
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--html", metavar="PATH")
     ap.add_argument("--png", metavar="PATH")
+    ap.add_argument("--width", type=int, default=1280,
+                    help="card width in CSS px (default 1240 = landscape for phone sharing)")
     ap.add_argument("--no-proj", action="store_true",
                     help="skip the /api/schedule lookup (win prob / line / logos)")
     args = ap.parse_args()
@@ -402,7 +424,7 @@ def main() -> int:
             Path(args.html).write_text(html_text, encoding="utf-8")
             print(f"html: {args.html}", file=sys.stderr)
         if args.png:
-            render_png(html_text, args.png)
+            render_png(html_text, args.png, width=args.width)
             print(f"png: {args.png}", file=sys.stderr)
 
     if args.json:
