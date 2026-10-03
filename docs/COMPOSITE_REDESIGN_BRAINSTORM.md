@@ -170,9 +170,12 @@ clone — re-pull.
 **The repo IS the live formula.** Production is deployed from the working tree
 (`scripts/cfb_deploy.sh <tag>`), not from GitHub. So `COMPOSITE_CONFIG_DEFAULT` in `app.py` *is*
 the current weighting, and the V6.1 comments around it are accurate — there is **no separate newer
-production composite** to reconcile against. Live right now: build **v65**, code marker
-**v65-week-cutover-epa**, `model_version` **cc4e71b6d16**. The composite config is hashed into
+production composite** to reconcile against. Live right now: build **v66**, code marker
+**v66-adv-stats-from-d1**, `model_version` **cc4e71b6d16**. The composite config is hashed into
 `model_version`, so it is a change detector — if a weight moves, that string moves.
+
+**We are in week 5.** Week 6 is in the future and has not been played. Anything in the archive
+stamped `week=6` is a mislabel (see question 8) — do not treat it as a completed week.
 
 **You do NOT need production D1 access to answer the open question.** Everything stored per team is
 on a public endpoint, no token:
@@ -263,10 +266,15 @@ stored and hand you the access, so the analysis runs against ground truth.
 
 ### D. Sample size, decay and garbage time
 
-8. **Are the stored weekly values cumulative-to-date or single-week?** Alabama's
-   `off_success_rate` is byte-identical at week 5 and week 6 (0.4944), which reads as
-   cumulative-but-unchanged, not per-week. If they are cumulative, "thin sample" handling
-   (§4) has to come from games-played, not from the week number.
+8. **Are the stored weekly values cumulative-to-date or single-week — and is the `week` stamp
+   trustworthy at all?** Alabama's `off_success_rate` is byte-identical across successive pulls,
+   which reads as cumulative-but-unchanged rather than per-week. The bigger problem: **the archive
+   stamps rows `week=6` while we are in week 5.** Pulls on Oct 2 wrote `week=6` (69,104 rows), and
+   Oct 3 wrote both `week=5` (62,480) and `week=6` (34,552), while
+   `/api/schedule/current-week` correctly returns **5**. So the writer's week number runs ahead of
+   the site's `current_season_week()`. **Any point-in-time join on `week` is off by one for those
+   pulls** — confirm the intended semantics before the validation harness depends on it, and note
+   that a `(week, stamp)`-selected publication can therefore select the wrong row set entirely.
 9. **Garbage-time exclusion: available or not?** If not available from CFBD, is there a
    defensible proxy (score margin filter, play count), or should the design drop it?
 10. **Prior-layer decay inputs** — `talent_score`, `recruiting_*`, `returning_ppa`,
