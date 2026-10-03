@@ -28,6 +28,8 @@ from __future__ import annotations
 
 import argparse
 import base64
+import colorsys
+import io
 import json
 import os
 import re
@@ -69,6 +71,74 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 # 1x1 transparent gif: keeps the layout intact when a logo cannot be fetched.
 _BLANK_PX = ("data:image/gif;base64,"
              "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")
+
+# Accent used when a logo is missing/unreadable, or when Pillow is not installed.
+# Deliberately a neutral blue rather than a team colour: a WRONG team colour looks
+# like a bug, an obviously generic one does not.
+_FALLBACK_ACCENT = (64, 120, 200)
+
+
+def _dominant_color_rgb(data_uri: str) -> tuple[int, int, int]:
+    """Average logo colour, skipping near-white / near-black / grey / transparent.
+
+    Logos are almost always a coloured mark on a white or transparent field with black
+    outline strokes, so averaging every pixel just yields grey. Filter those out, then
+    boost saturation and clamp lightness (see `_accent_hex`) so the result actually
+    reads as an accent against a near-black card.
+
+    Pillow is imported INSIDE the function and wrapped: it is an optional dependency,
+    so a missing Pillow (or a bad logo) degrades to the neutral fallback instead of
+    killing the card. Adapted from Research's matchup_report_research.py.
+    """
+    if not data_uri or not data_uri.startswith("data:image") or data_uri == _BLANK_PX:
+        return _FALLBACK_ACCENT
+    try:
+        from PIL import Image  # noqa: PLC0415 -- optional dependency, only needed here
+        _, b64data = data_uri.split(",", 1)
+        raw = base64.b64decode(b64data)
+        im = Image.open(io.BytesIO(raw)).convert("RGBA")
+        im.thumbnail((48, 48))
+        r_sum = g_sum = b_sum = n = 0
+        for r, g, b, a in im.getdata():
+            if a < 128:
+                continue
+            mx, mn = max(r, g, b), min(r, g, b)
+            if mx > 232 and mn > 205:            # near-white background
+                continue
+            if mx < 38:                          # near-black outline
+                continue
+            if mx - mn < 14 and mx < 205:        # low-saturation grey
+                continue
+            r_sum += r
+            g_sum += g
+            b_sum += b
+            n += 1
+        if n == 0:
+            return _FALLBACK_ACCENT
+        return (r_sum // n, g_sum // n, b_sum // n)
+    except Exception:  # noqa: BLE001 -- a bad/missing logo must never kill the card
+        return _FALLBACK_ACCENT
+
+
+def _accent_hex(rgb: tuple[int, int, int]) -> str:
+    """Saturation-boosted, lightness-clamped accent so it reads on a near-black card."""
+    r, g, b = rgb
+    h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+    l = min(max(l, 0.45), 0.64)
+    s = min(max(s, 0.55), 1.0)
+    r2, g2, b2 = colorsys.hls_to_rgb(h, l, s)
+    return f"#{int(round(r2 * 255)):02x}{int(round(g2 * 255)):02x}{int(round(b2 * 255)):02x}"
+
+
+def _hex_to_rgba(hex_color: str, alpha: float) -> str:
+    h = hex_color.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"rgba({r},{g},{b},{alpha})"
+
+
+def team_accent(logo_uri: str) -> str:
+    """Logo data URI -> accent hex. Sampled live per matchup, never hardcoded."""
+    return _accent_hex(_dominant_color_rgb(logo_uri))
 
 
 def _edge_sides(e: dict):
@@ -373,6 +443,9 @@ def render_html(out: dict, proj: dict | None = None, logos: dict | None = None,
     rec_a, rec_h = (ratings.get("away") or {}), (ratings.get("home") or {})
     ratings_html = (_ratings_block(rec_a, rec_h, away["name"], home["name"])
                     if rec_a and rec_h else "")
+    # Team accents, sampled LIVE from each logo -- the card re-themes per matchup.
+    away_accent = team_accent(logos.get("away") or _BLANK_PX)
+    home_accent = team_accent(logos.get("home") or _BLANK_PX)
 
     def stack(side):
         """One team's own stats as a vertical column (the reference's side panels)."""
@@ -439,6 +512,11 @@ def render_html(out: dict, proj: dict | None = None, logos: dict | None = None,
         "{{CROSS}}": cross,
         "{{RATINGS}}": ratings_html,
         "{{LEGEND}}": _legend_block(),
+        "{{AWAY_ACCENT}}": away_accent, "{{HOME_ACCENT}}": home_accent,
+        "{{AWAY_SOFT}}": _hex_to_rgba(away_accent, 0.14),
+        "{{HOME_SOFT}}": _hex_to_rgba(home_accent, 0.14),
+        "{{AWAY_GLOW}}": _hex_to_rgba(away_accent, 0.55),
+        "{{HOME_GLOW}}": _hex_to_rgba(home_accent, 0.55),
         "{{AWAY_STACK}}": stack("away"), "{{HOME_STACK}}": stack("home"),
     }
     tpl = TEMPLATE.read_text(encoding="utf-8")
@@ -447,8 +525,17 @@ def render_html(out: dict, proj: dict | None = None, logos: dict | None = None,
     return tpl
 
 
-def render_png(html_text: str, png_path: str | Path, width: int = 1280) -> str:
-    """Screenshot the card with headless Edge, sized to its real content height."""
+def render_png(html_text: str, png_path: str | Path, width: int = 1280,
+               scale: int = 2) -> str:
+    """Screenshot the card with headless Edge, sized to its real content height.
+
+    `scale` is the device-pixel-ratio Edge renders at. Default 2 at this card WIDTH
+    lands the PNG at ~2560px wide, which is Telegram's own photo ceiling -- anything
+    larger is downscaled on delivery, so 3x here would just triple the file size for
+    nothing. (Research ran 3x because his card was ~840px wide; same delivered
+    resolution, different starting width. Jeff's "2x was hard to read" was against
+    that narrow card, not this one.) Pass --scale 3 for a local-archive render.
+    """
     exe = next((p for p in _EDGE_CANDIDATES if p and Path(p).exists()), None)
     if not exe:
         raise SystemExit("Edge not found for --png; set CFB_EDGE to msedge.exe")
@@ -483,7 +570,7 @@ def render_png(html_text: str, png_path: str | Path, width: int = 1280) -> str:
     subprocess.run(
         [exe, "--headless=new", "--disable-gpu", "--no-sandbox", "--hide-scrollbars",
          "--no-first-run", "--no-default-browser-check",
-         "--force-device-scale-factor=2", f"--window-size={width},{height}",
+         "--force-device-scale-factor=%d" % scale, f"--window-size={width},{height}",
          f"--user-data-dir={shot_dir}", f"--screenshot={png_path}",
          page.as_uri()],
         capture_output=True, text=True, timeout=120)
@@ -504,6 +591,8 @@ def main() -> int:
     ap.add_argument("--png", metavar="PATH")
     ap.add_argument("--width", type=int, default=1280,
                     help="card width in CSS px (default 1240 = landscape for phone sharing)")
+    ap.add_argument("--scale", type=int, default=2,
+                    help="device-pixel-ratio for the PNG (default 2 = ~2560px, Telegram's photo ceiling)")
     ap.add_argument("--no-proj", action="store_true",
                     help="skip the /api/schedule lookup (win prob / line / logos)")
     args = ap.parse_args()
@@ -528,7 +617,7 @@ def main() -> int:
             Path(args.html).write_text(html_text, encoding="utf-8")
             print(f"html: {args.html}", file=sys.stderr)
         if args.png:
-            render_png(html_text, args.png, width=args.width)
+            render_png(html_text, args.png, width=args.width, scale=args.scale)
             print(f"png: {args.png}", file=sys.stderr)
 
     if args.json:
