@@ -1,0 +1,214 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{TITLE}}</title>
+<style>
+/* Palette rule (Jeff, 2026-10-02): label/text contrast is non-negotiable.
+   NEVER grey-on-dark for a label or a value. --dim is for footnotes ONLY.
+   Team accent colors below are SAMPLED LIVE from each team's logo (see
+   _dominant_color() in matchup_report_research.py) -- this card re-themes
+   itself per matchup, it is never a fixed palette. */
+:root{
+  --bg:#060709;--surface:#12151f;--surface2:#171b28;--border:#2b3346;
+  --text:#ffffff;--dim:#aab3c9;--accent:#8fb8ff;--good:#3ddc84;--bad:#ff6b6b;
+  --row-alt:#0e1119;
+  --away:{{AWAY_ACCENT}};--home:{{HOME_ACCENT}};
+  --away-soft:{{AWAY_SOFT}};--home-soft:{{HOME_SOFT}};
+  --away-glow:{{AWAY_GLOW}};--home-glow:{{HOME_GLOW}};
+}
+*{box-sizing:border-box}
+body{margin:0;
+  background:
+    radial-gradient(circle at 12% -8%, var(--away-soft) 0%, transparent 42%),
+    radial-gradient(circle at 88% -8%, var(--home-soft) 0%, transparent 42%),
+    radial-gradient(circle at 50% 110%, #141a2c 0%, var(--bg) 60%),
+    var(--bg);
+  color:var(--text);
+  font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:22px}
+
+/* Widened + sections render as 2-column tables below (see .dual-table) so the
+   card's HEIGHT:WIDTH ratio lands close to a phone screen's (~2.1:1) instead of
+   the old single-column stack, which rendered ~3:1 tall and letterboxed with
+   black bars in Telegram's fit-to-height photo viewer (Jeff, 2026-10-03). */
+.card{max-width:1040px;margin:0 auto;background:linear-gradient(180deg,#141828 0%,var(--surface) 100%);
+border:1px solid var(--border);border-radius:22px;padding:0 0 14px;overflow:hidden;
+box-shadow:0 30px 70px -24px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.02) inset}
+
+/* ── Hero band ─────────────────────────────────────────────────────── */
+.hero{position:relative;padding:20px 24px 16px;
+  background:linear-gradient(115deg, var(--away-soft) 0%, rgba(20,24,38,0) 38%,
+              rgba(20,24,38,0) 62%, var(--home-soft) 100%);
+  border-bottom:1px solid var(--border)}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:linear-gradient(90deg, var(--away) 0%, #2b3346 50%, var(--home) 100%)}
+.topbar{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px}
+.tl{font-size:20px;font-weight:900;color:#fff;letter-spacing:.01em}
+.tr{font-size:10.5px;font-weight:800;color:var(--accent);letter-spacing:.16em;text-transform:uppercase;
+  background:rgba(143,184,255,.12);padding:4px 9px;border-radius:999px}
+.subtitle{font-size:10px;color:var(--dim);font-weight:600;letter-spacing:.02em;margin:3px 0 14px}
+
+.teams{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center}
+.team{display:flex;flex-direction:column;align-items:center;gap:8px}
+.logo-ring{position:relative;width:78px;height:78px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle,rgba(255,255,255,.04) 0%,transparent 70%)}
+.team.away .logo-ring{box-shadow:0 0 0 2px var(--away), 0 0 26px 2px var(--away-glow)}
+.team.home .logo-ring{box-shadow:0 0 0 2px var(--home), 0 0 26px 2px var(--home-glow)}
+.logo{width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(0,0,0,.6))}
+.tname{font-size:16px;font-weight:900;color:#fff;letter-spacing:.01em;text-align:center}
+.tmeta{font-size:10.5px;color:var(--dim);font-weight:700;text-align:center}
+.tmeta .conf{color:var(--dim)}
+
+.ring-wrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px}
+.ring-wrap .k{font-size:9px;letter-spacing:.1em;color:var(--dim);font-weight:800}
+.wp-ring text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.pp-chip{margin-top:2px;background:rgba(255,255,255,.06);border:1px solid var(--border);
+  border-radius:8px;padding:4px 11px;text-align:center}
+.pp-chip .k{display:block;font-size:8.5px;letter-spacing:.09em;color:var(--dim);font-weight:800}
+.pp-chip .v{display:block;font-size:15px;font-weight:800;color:#fff}
+
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-width:160px}
+.vs-badge{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:900;letter-spacing:.04em;color:#0b0d13;
+  box-shadow:0 6px 16px -4px rgba(0,0,0,.5);
+  background:linear-gradient(135deg,#dfe7f7,#aebbd6)}
+.linebox{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:12px;
+  padding:10px 16px;text-align:center;font-size:17px;color:#fff;font-weight:800;line-height:1.7;min-width:150px}
+.linebox .k{display:inline-block;color:var(--dim);font-weight:800;letter-spacing:.06em;font-size:10.5px;
+  margin-right:4px}
+
+/* ── Prediction headline banner ───────────────────────────────────── */
+.predict{margin:14px 24px 0;display:flex;align-items:center;justify-content:center;gap:9px;
+  background:linear-gradient(90deg, var(--away-soft), rgba(255,255,255,.04), var(--home-soft));
+  border:1px solid var(--border);border-radius:12px;padding:9px 14px;text-align:center;
+  font-size:12.5px;font-weight:700;color:#fff}
+.predict .bolt{font-size:14px}
+.predict b{font-weight:900}
+.chiprow{display:flex;gap:8px;justify-content:center;margin:10px 24px 0;flex-wrap:wrap}
+.pickchip{font-size:10.5px;font-weight:800;letter-spacing:.02em;color:#fff;
+  background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:999px;padding:4px 11px}
+.pickchip .k{color:var(--dim);font-weight:700;margin-right:5px}
+
+/* ── Legend ───────────────────────────────────────────────────────── */
+.legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:center;
+  margin:14px 24px 0;padding:9px 10px;font-size:10px;color:var(--dim);font-weight:700;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px}
+.sw{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.sw.good{background:var(--good)}
+.sw.bad{background:var(--bad)}
+.sw.pill{background:#93c5fd;border-radius:999px;width:15px;height:11px}
+
+/* ── Sections ─────────────────────────────────────────────────────── */
+section.block{margin:16px 24px 0;background:var(--surface2);border:1px solid var(--border);
+  border-radius:14px;padding:4px 14px 6px;position:relative;overflow:hidden}
+section.block::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--away),var(--home))}
+h2{font-size:12.5px;letter-spacing:.05em;color:#fff;text-transform:uppercase;
+  margin:10px 0 4px 6px;display:flex;align-items:center;gap:8px;justify-content:space-between;font-weight:800}
+h2 .htitle{display:flex;align-items:center;gap:8px}
+h2 .icon{font-size:15px}
+.tally{display:flex;gap:5px;align-items:center;font-weight:800;font-size:10.5px}
+.tally .n{min-width:20px;text-align:center;padding:2px 6px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--dim)}
+.tally .n.away-win{background:var(--away);color:#0b0d13}
+.tally .n.home-win{background:var(--home);color:#0b0d13}
+
+/* Each section's rows split into two half-height tables side by side (see
+   render_html's _split_rows) -- this is the main lever that flattens the
+   card's aspect ratio for phone viewing; see the .card comment above. */
+.dual-table{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.dual-table table{margin:0}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+tr:nth-child(even) td{background:var(--row-alt)}
+tr{position:relative}
+td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle}
+.label{text-align:center;color:#ffffff;font-size:11.5px;font-weight:800;
+  letter-spacing:.01em;white-space:nowrap;width:27%}
+.val{font-variant-numeric:tabular-nums;white-space:nowrap;width:36.5%;
+  color:#ffffff;font-size:13.5px;font-weight:800;border-radius:9px;transition:none}
+.val.away{text-align:left;border-left:3px solid transparent}
+.val.home{text-align:right;border-right:3px solid transparent}
+.val.good{background:rgba(61,220,132,.14)}
+.val.bad{background:rgba(255,107,107,.14)}
+.val.away.lead{border-left-color:var(--away)}
+.val.home.lead{border-right-color:var(--home)}
+.val.lead .vnum{color:var(--good)}
+
+.vwrap{display:flex;align-items:center;gap:6px;padding:2px 5px}
+.val.home .vwrap{flex-direction:row-reverse}
+.vnum{font-size:13.5px}
+
+.rk{display:inline-block;min-width:25px;text-align:center;font-size:10px;color:#0b0d13;
+  background:#93c5fd;border-radius:999px;padding:1.5px 6px;font-weight:800}
+.rk.bad{background:#fca5a5}
+.rk.mid{background:#3a4459;color:#e8edf7;font-weight:700}
+
+.pct-track{height:5px;border-radius:99px;background:rgba(255,255,255,.07);margin:4px 5px 2px;overflow:hidden}
+.pct-fill{height:100%;border-radius:99px;background:#5a6478}
+.pct-fill.good{background:var(--good)}
+.pct-fill.bad{background:var(--bad)}
+.val.home .pct-fill{margin-left:auto}
+
+/* ── Edges ────────────────────────────────────────────────────────── */
+.edge-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:8px}
+.edge-card{background:rgba(255,255,255,.035);border:1px solid var(--border);border-radius:11px;
+  padding:10px 12px}
+.edge-card .em{font-size:10.5px;color:var(--dim);font-weight:700;margin-bottom:5px}
+.edge-card .em b{color:#fff;font-weight:800}
+.edge-card .ev{font-variant-numeric:tabular-nums;font-size:13px;font-weight:800;color:#fff;
+  display:flex;align-items:center;justify-content:space-between;gap:6px}
+.chip{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.02em;
+  padding:3px 10px;border-radius:999px;white-space:nowrap}
+.chip.away-win{background:var(--away);color:#0b0d13}
+.chip.home-win{background:var(--home);color:#0b0d13}
+.chip.none{background:rgba(255,255,255,.08);color:var(--dim);font-weight:700}
+
+.foot{color:var(--dim);font-size:10.5px;margin:16px 24px 0;padding-top:11px;
+  border-top:1px solid var(--border)}
+</style></head><body><div class="card">
+
+<div class="hero">
+  <div class="topbar"><span class="tl">{{AWA}} AT {{HOM}}</span>
+  <span class="tr">Advanced Stats Preview</span></div>
+  <div class="subtitle">{{SUBTITLE}}</div>
+
+  <div class="teams">
+    <div class="team away">
+      <div class="logo-ring"><img class="logo" src="{{AWAY_LOGO}}" alt="{{AWA}}"></div>
+      <div class="tname">{{AWA}}</div>
+      <div class="tmeta">{{AWAY_REC}}</div>
+      <div class="ring-wrap">{{AWAY_WP_RING}}<span class="k">WIN PROB</span></div>
+      <div class="pp-chip"><span class="k">PROJ PTS</span><span class="v">{{AWAY_PP}}</span></div>
+    </div>
+    <div class="center">
+      <div class="vs-badge">VS</div>
+      <div class="linebox">{{LINES}}</div>
+    </div>
+    <div class="team home">
+      <div class="logo-ring"><img class="logo" src="{{HOME_LOGO}}" alt="{{HOM}}"></div>
+      <div class="tname">{{HOM}}</div>
+      <div class="tmeta">{{HOME_REC}}</div>
+      <div class="ring-wrap">{{HOME_WP_RING}}<span class="k">WIN PROB</span></div>
+      <div class="pp-chip"><span class="k">PROJ PTS</span><span class="v">{{HOME_PP}}</span></div>
+    </div>
+  </div>
+</div>
+
+{{PREDICT_BANNER}}
+{{PICK_CHIPS}}
+
+<div class="legend">
+  <span><span class="sw pill"></span>FBS national rank</span>
+  <span><span class="sw good"></span>top 30% nationally</span>
+  <span><span class="sw bad"></span>bottom 30% nationally</span>
+  <span>bar = percentile</span>
+  <span><b style="color:var(--good)">green value</b> + colored edge = holds the edge</span>
+</div>
+
+{{SECTIONS}}
+<section class="block"><h2><span class="htitle"><span class="icon">⚔️</span>Offense vs Defense Edges</span></h2>
+<div class="edge-grid">{{EDGES}}</div></section>
+
+<div class="foot">Heat = that side's national percentile (green top 30%, red bottom 30%). Rank pill = FBS
+national rank. Accent colors are sampled live from each team's own logo. Win prob / proj pts are the
+model's, from stored analytics + the modelled line — no live API cost.</div>
+</div></body></html>
+
