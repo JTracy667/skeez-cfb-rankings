@@ -435,7 +435,7 @@ def _ratings_block(rec_a: dict, rec_h: dict, away_name: str, home_name: str) -> 
 
 
 def render_html(out: dict, proj: dict | None = None, logos: dict | None = None,
-                ratings: dict | None = None) -> str:
+                ratings: dict | None = None, template: str | Path | None = None) -> str:
     home, away = out["home"], out["away"]
     logos = logos or {}
     proj = proj or {}
@@ -519,7 +519,10 @@ def render_html(out: dict, proj: dict | None = None, logos: dict | None = None,
         "{{HOME_GLOW}}": _hex_to_rgba(home_accent, 0.55),
         "{{AWAY_STACK}}": stack("away"), "{{HOME_STACK}}": stack("home"),
     }
-    tpl = TEMPLATE.read_text(encoding="utf-8")
+    tpl_path = Path(template) if template else TEMPLATE
+    if not tpl_path.exists():
+        raise SystemExit(f"template not found: {tpl_path}")
+    tpl = tpl_path.read_text(encoding="utf-8")
     for k, v in subs.items():
         tpl = tpl.replace(k, v)
     return tpl
@@ -595,6 +598,10 @@ def main() -> int:
                     help="device-pixel-ratio for the PNG (default 2 = ~2560px, Telegram's photo ceiling)")
     ap.add_argument("--no-proj", action="store_true",
                     help="skip the /api/schedule lookup (win prob / line / logos)")
+    ap.add_argument("--template", metavar="PATH",
+                    help="render an ALTERNATE card template; default is "
+                         "scripts/templates/matchup_card.html. Use this to try a redesign "
+                         "without touching the canonical card.")
     args = ap.parse_args()
 
     out = (compute_local(args.away, args.home) if args.local
@@ -612,7 +619,7 @@ def main() -> int:
                        "home": teams.get(out["home"]["name"])}
 
     if args.html or args.png:
-        html_text = render_html(out, proj, logos, ratings)
+        html_text = render_html(out, proj, logos, ratings, template=args.template)
         if args.html:
             Path(args.html).write_text(html_text, encoding="utf-8")
             print(f"html: {args.html}", file=sys.stderr)

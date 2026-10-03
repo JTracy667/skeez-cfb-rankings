@@ -15,13 +15,19 @@ after the local repo's V6.1 comments were written).
 ## Important caveat on sourcing
 
 Research does **not** currently have a live connector to query production D1
-directly. Everything cited about "current weights" in the earlier part of this
+directly (the CTO note at the end removes this limit without any token).
+Everything cited about "current weights" in the earlier part of this
 investigation came from reading the local git repo (`app.py`,
 `docs/CFBD_COMPOSITE_INPUTS.md`), which Jeff flagged as outdated relative to
 what's actually deployed. Treat any specific current-weight numbers from that
 earlier pass as **unverified / likely stale** until Research has either:
 - read-only production D1 access (scoped token or a debug/export endpoint), or
 - a field list / sample export of the 42 advanced stats now in D1.
+
+> **UPDATE 2026-10-03 (CTO) — both caveats are resolved, see the CTO note at the end.**
+> The repo was stale because **GitHub was 43 commits behind production**; it is now pushed and
+> current, and the deployed formula is the one in `app.py`. The field list needs no D1 token —
+> `/api/analytics` is public. The text below is preserved as the original working record.
 
 Everything below is a **from-scratch design proposal**, intentionally
 independent of whatever the current live formula actually is.
@@ -150,3 +156,53 @@ without either production D1 read access or a field list / sample export.
   into an actual work order.
 - Per standing CFO doctrine, any actual composite weight change requires
   Jeff's sign-off before shipping.
+
+---
+
+## CTO note (2026-10-03) — how to read the real thing
+
+**GitHub is now current — re-read it.** `main` in `JTracy667/skeez-cfb-rankings` was **43 commits
+behind production** when the staleness above was noticed. That was the whole cause: the repo was
+genuinely out of date, so reasoning from it produced an out-of-date picture. It was pushed
+2026-10-03 and now matches what is live. The same is true of `hermes-org`. Don't trust a cached
+clone — re-pull.
+
+**The repo IS the live formula.** Production is deployed from the working tree
+(`scripts/cfb_deploy.sh <tag>`), not from GitHub. So `COMPOSITE_CONFIG_DEFAULT` in `app.py` *is*
+the current weighting, and the V6.1 comments around it are accurate — there is **no separate newer
+production composite** to reconcile against. Live right now: build **v65**, code marker
+**v65-week-cutover-epa**, `model_version` **cc4e71b6d16**. The composite config is hashed into
+`model_version`, so it is a change detector — if a weight moves, that string moves.
+
+**You do NOT need production D1 access to answer the open question.** Everything stored per team is
+on a public endpoint, no token:
+
+```bash
+# The browser UA is REQUIRED: Cloudflare answers 1010 to the default curl/urllib UA.
+curl -s https://skeezcfb-rankings.com/api/analytics -H 'User-Agent: Mozilla/5.0' \
+  | python -c "import sys,json; d=json.load(sys.stdin); t=d['teams']; print(len(t),'teams'); print(sorted(t[0].keys()))"
+```
+
+That prints the complete field list of a real team record — the definitive answer to "what are the
+42 advanced stats", including which of them are composite inputs. Related endpoints:
+
+| endpoint | gives you |
+|---|---|
+| `/api/health` | live build + code marker + `model_version`, quota budget, `archive.count` |
+| `/api/analytics` | every stored per-team field; its `serve` field says which door answered |
+| `/api/schedule?week=N` | model projection, win %, line, weather, records per game |
+
+**Read the `serve` object before citing any number from `/api/analytics`.** `{source: d1,
+degraded: false}` is the real thing; a `disk (…)` source with `degraded: true` means D1 was
+unreachable and you are reading a fallback copy. Citing a degraded payload is how a stale number
+gets into an analysis.
+
+Source-of-truth pointers inside the repo: `ADV_MATCHUP_FIELDS` and `ADV_MATCHUP_PPA_FIELDS` in
+`app.py` enumerate the advanced stats the matchup engine ranks; `docs/DATA_FLOW.md` maps every
+dataset to its producer → store → reader; `OPERATIONS.md` `CURRENT STATE` is the fleet-wide answer
+to "what is live right now".
+
+**Confirmed from source, independent of the endpoint:** the §5 soft-clamp concern is real, not
+theoretical. All five efficiency sub-norms (`sr_norm`, `epa_norm`, `ppo_norm`, `trench_norm`,
+`ppd_norm`, around `app.py:3609-3658`) end in `max(0, min(100, …))`, so simultaneous ceiling hits
+genuinely collapse into one indistinguishable number — exactly the Pittsburgh pattern.
