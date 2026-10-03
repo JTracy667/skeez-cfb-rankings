@@ -153,6 +153,9 @@ def _edge_sides(e: dict):
     return e["home"], e["away"]
 
 
+from matchup_engine import matchup_breakdown  # single shared implementation
+
+
 def admin_token() -> str:
     tok = os.environ.get("ADMIN_TOKEN", "").strip()
     if tok:
@@ -653,33 +656,65 @@ def main() -> int:
                     help="render an ALTERNATE card template; default is "
                          "scripts/templates/matchup_card.html. Use this to try a redesign "
                          "without touching the canonical card.")
+    ap.add_argument("--source", choices=("d1", "api"), default="d1",
+                    help="where the data comes from. 'd1' (default) reads D1 directly and "
+                         "makes NO network call to CFBD or the site. 'api' uses the site's "
+                         "/api/matchup (debug/compare only).")
     args = ap.parse_args()
 
-    # Orientation guard. This used to trust argument order, so building a card from
-    # "A vs B" when the game is really "B @ A" silently put the logos, records,
-    # projections and spread under the wrong team names -- a card that looks perfectly
-    # fine and is wrong. /api/schedule knows the true venue, so resolve against it
-    # before anything else is fetched.
     proj, logos, ratings = None, None, None
-    if not args.no_proj:
-        proj = fetch_schedule_game(args.api, args.away, args.home, args.week)
-        if proj and _norm(proj.get("home")) != _norm(args.home):
-            print(f"note: this game is {proj.get('away')} @ {proj.get('home')} -- "
-                  f"swapping the order you passed so both sides are labelled right.",
-                  file=sys.stderr)
-            args.away, args.home = proj.get("away"), proj.get("home")
 
-    out = (compute_local(args.away, args.home) if args.local
-           else fetch_api(args.api, args.away, args.home))
+    if args.source == "d1":
+        # D1 ONLY: no CFBD call, no site call. Refuses to render a partial board rather
+        # than emit a card that looks authoritative and is missing whole sections.
+        from d1_board import Incomplete, board as d1_board, game_panel, logo_data_uri
+        try:
+            teams, pub = d1_board()
+        except Incomplete as e:
+            raise SystemExit(f"REFUSING to render a partial card: {e}")
+        print(f"[d1] {len(teams)} teams | publication wk{pub.get('week')} | "
+              f"{len(pub.get('keys') or [])} keys", file=sys.stderr)
+        if not args.no_proj:
+            proj = game_panel(args.away, args.home, week=args.week)
+            if proj and _norm(proj.get("home")) != _norm(args.home):
+                print(f"note: this game is {proj.get('away')} @ {proj.get('home')} -- "
+                      f"labelling the sides from the schedule, not from argument order.",
+                      file=sys.stderr)
+                args.away, args.home = proj.get("away"), proj.get("home")
+            if proj:
+                logos = {"away": logo_data_uri(proj.get("away_logo_url")),
+                         "home": logo_data_uri(proj.get("home_logo_url"))}
+        out = matchup_breakdown(args.home, args.away, teams)
+        if out.get("error"):
+            raise SystemExit(out["error"])
+        by_name = {t.get("name"): t for t in teams}
+        ratings = {"away": by_name.get(out["away"]["name"]),
+                   "home": by_name.get(out["home"]["name"])}
+    else:
+        # Orientation guard. This used to trust argument order, so building a card from
+        # "A vs B" when the game is really "B @ A" silently put the logos, records,
+        # projections and spread under the wrong team names -- a card that looks perfectly
+        # fine and is wrong. /api/schedule knows the true venue, so resolve against it
+        # before anything else is fetched.
+        if not args.no_proj:
+            proj = fetch_schedule_game(args.api, args.away, args.home, args.week)
+            if proj and _norm(proj.get("home")) != _norm(args.home):
+                print(f"note: this game is {proj.get('away')} @ {proj.get('home')} -- "
+                      f"swapping the order you passed so both sides are labelled right.",
+                      file=sys.stderr)
+                args.away, args.home = proj.get("away"), proj.get("home")
 
-    if not args.no_proj:
-        if proj:
-            logos = {"away": logo_data_uri(proj.get("away_logo_url")),
-                     "home": logo_data_uri(proj.get("home_logo_url"))}
-        teams = fetch_analytics_teams(args.api)
-        if teams:
-            ratings = {"away": teams.get(out["away"]["name"]),
-                       "home": teams.get(out["home"]["name"])}
+        out = (compute_local(args.away, args.home) if args.local
+               else fetch_api(args.api, args.away, args.home))
+
+        if not args.no_proj:
+            if proj:
+                logos = {"away": logo_data_uri(proj.get("away_logo_url")),
+                         "home": logo_data_uri(proj.get("home_logo_url"))}
+            teams = fetch_analytics_teams(args.api)
+            if teams:
+                ratings = {"away": teams.get(out["away"]["name"]),
+                           "home": teams.get(out["home"]["name"])}
 
     if args.html or args.png:
         html_text = render_html(out, proj, logos, ratings, template=args.template)

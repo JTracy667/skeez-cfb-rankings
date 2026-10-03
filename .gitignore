@@ -88,3 +88,6 @@ data/playbyplay_*.json
 # (app.py: _snapshot path under data/odds_snapshots). Runtime data, never source;
 # unprotected it is one `git add -A` away from entering the repo.
 data/odds_snapshots/
+
+# Derived: warm once with scripts/warm_logo_cache.py (keeps the render path network-free)
+data/logo_cache/
