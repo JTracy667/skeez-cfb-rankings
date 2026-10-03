@@ -174,8 +174,11 @@ production composite** to reconcile against. Live right now: build **v66**, code
 **v66-adv-stats-from-d1**, `model_version` **cc4e71b6d16**. The composite config is hashed into
 `model_version`, so it is a change detector — if a weight moves, that string moves.
 
-**We are in week 5.** Week 6 is in the future and has not been played. Anything in the archive
-stamped `week=6` is a mislabel (see question 8) — do not treat it as a completed week.
+**We are in week 5.** Week 6 is in the future and has not been played. The archive contains rows
+stamped `week=6` because a pull is stamped with the week it TARGETS, and Friday's pull targets the
+upcoming slate — week 6 opens with Tuesday games, so the pull lands about four days ahead of them.
+**That is deliberate, not a mislabel**, and not a writer bug. Do not read `week=6` rows as a
+completed week.
 
 **You do NOT need production D1 access to answer the open question.** Everything stored per team is
 on a public endpoint, no token:
@@ -266,15 +269,15 @@ stored and hand you the access, so the analysis runs against ground truth.
 
 ### D. Sample size, decay and garbage time
 
-8. **Are the stored weekly values cumulative-to-date or single-week — and is the `week` stamp
-   trustworthy at all?** Alabama's `off_success_rate` is byte-identical across successive pulls,
-   which reads as cumulative-but-unchanged rather than per-week. The bigger problem: **the archive
-   stamps rows `week=6` while we are in week 5.** Pulls on Oct 2 wrote `week=6` (69,104 rows), and
-   Oct 3 wrote both `week=5` (62,480) and `week=6` (34,552), while
-   `/api/schedule/current-week` correctly returns **5**. So the writer's week number runs ahead of
-   the site's `current_season_week()`. **Any point-in-time join on `week` is off by one for those
-   pulls** — confirm the intended semantics before the validation harness depends on it, and note
-   that a `(week, stamp)`-selected publication can therefore select the wrong row set entirely.
+8. **What is the right "as of" boundary for a weekly point-in-time join?** Rows are stamped with
+   the week a pull TARGETS, which can be the upcoming week — Friday's pull targets week 6 because
+   week 6 opens with Tuesday games. So on 2026-10-03 the archive legitimately holds both `week=5`
+   and `week=6` rows while the site's `current_season_week()` correctly returns 5 (week 6 has not
+   been played). For walk-forward validation I need to know whether the correct cutoff is the pull
+   week, the last completed game week, or the publication stamp — and whether the stored values are
+   cumulative-to-date or single-week (Alabama's `off_success_rate` is byte-identical across
+   successive pulls, which reads cumulative-and-unchanged rather than per-week). This determines
+   whether a `(week, stamp)`-selected snapshot can pick up rows for a week that has not been played.
 9. **Garbage-time exclusion: available or not?** If not available from CFBD, is there a
    defensible proxy (score margin filter, play count), or should the design drop it?
 10. **Prior-layer decay inputs** — `talent_score`, `recruiting_*`, `returning_ppa`,
