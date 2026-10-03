@@ -96,13 +96,15 @@ recycles (`sleepAfter` **5m** idle), so budget **~6–12 min** typical. Probe in
 **never by grepping caches**:
 
 ```bash
-export CLOUDFLARE_API_TOKEN="$(python "$LOCALAPPDATA/hermes/profiles/cto/scripts/cf_deploy_token.py")"
+export CLOUDFLARE_API_TOKEN="$(cat "$(python "$LOCALAPPDATA/hermes/profiles/cto/scripts/cf_deploy_token.py")")"
 export CLOUDFLARE_ACCOUNT_ID=90c2c31beec12cb7de1c249ade1eb773
 bash scripts/cfb_deploy.sh vNN <code-marker>
 ```
 
-`cf_deploy_token.py` prints the first token that actually passes
-`/accounts/<id>/containers/me` and caches it to `profiles/cto/.cf_deploy_token` (outside `cache/`, so it
+`cf_deploy_token.py` prints the **path** of the token file (never the value — that
+contract changed 2026-10-03 after a printed token forced a roll), valid for the first
+credential that actually passes `/accounts/<id>/containers/me`, and caches it to
+`profiles/cto/.cf_deploy_token` (outside `cache/`, so it
 is not pruned). The old procedure — grepping `profiles/cto/cache/terminal/*.sh` — is **superseded and
 dangerous**: that directory is pruned at 24h idle, which is exactly how the v45 deploy died with
 "CLOUDFLARE_API_TOKEN is not set".

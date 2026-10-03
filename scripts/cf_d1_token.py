@@ -1,11 +1,13 @@
-"""Print the working D1 token, verifying it against D1 first.
+"""Resolve the working D1 token, verifying it against D1 first.
 
-Mirrors scripts/cf_deploy_token.py: prints the value on stdout so a shell can capture it
+Prints the PATH of the token file, NEVER the value:
 
-    CF_D1_TOKEN=$(python scripts/cf_d1_token.py) python scripts/d1_receipt.py
+    CF_D1_TOKEN="$(cat "$(python scripts/cf_d1_token.py)")" python scripts/d1_receipt.py
 
-and exits non-zero with a clear message if it cannot find one that works. The value is NEVER
-written into a repo file, a commit, or a chat message -- the only copy lives in
+`--print` emits the raw value for the rare caller that needs it inline; it is
+transcript-unsafe by construction, so it must stay explicit. Exits non-zero with a
+clear message if it cannot find a token that works. The value is NEVER written into a
+repo file, a commit, or a chat message -- the only copy lives in
 profiles/cto/.cf_d1_token, which is outside the repo.
 
 Why a file at all: the D1 scripts need a credential and there is no secret manager for local
@@ -41,9 +43,20 @@ def _works(tok: str) -> bool:
 
 
 def main() -> int:
+    """Resolve the D1 token and print its PATH, never the value."""
+    want_raw = "--print" in sys.argv
     env = os.environ.get("CF_D1_TOKEN", "").strip()
     if env and _works(env):
-        print(env)
+        if want_raw:
+            print(env)
+            return 0
+        # Keep the store current so "the path" is always the truth.
+        try:
+            with open(CANDIDATES[0], "w", encoding="utf-8") as fh:
+                fh.write(env)
+        except OSError:
+            pass
+        print(CANDIDATES[0])
         return 0
     for p in CANDIDATES:
         try:
@@ -51,7 +64,7 @@ def main() -> int:
         except OSError:
             continue
         if tok and _works(tok):
-            print(tok)
+            print(tok if want_raw else p)
             return 0
         print(f"WARNING: the token in {p} does not work against D1 (401) -- roll it: "
               "create a D1 Read+Write account token and replace that file.", file=sys.stderr)

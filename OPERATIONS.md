@@ -456,8 +456,9 @@ one turns the suite RED until its marker is removed — the worklist cannot rot.
 Use the script; it encodes the whole procedure and auto-rolls-back:
 
 ```bash
-# credentials first (never commit them)
-export CLOUDFLARE_API_TOKEN="$(python "$LOCALAPPDATA/hermes/profiles/cto/scripts/cf_deploy_token.py")"
+# credentials first (never commit them). The resolver prints a PATH, not the token:
+#   export CLOUDFLARE_API_TOKEN="$(cat "$(python .../cf_deploy_token.py)")"
+export CLOUDFLARE_API_TOKEN="$(cat "$(python "$LOCALAPPDATA/hermes/profiles/cto/scripts/cf_deploy_token.py")")"
 export CLOUDFLARE_ACCOUNT_ID=90c2c31beec12cb7de1c249ade1eb773
 
 python scripts/run_enforcement_tests.py        # BLOCKING: served==D1 + no new data/ reads
