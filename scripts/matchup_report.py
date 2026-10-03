@@ -185,6 +185,33 @@ def fetch_api(api: str, away: str, home: str) -> dict:
     })
 
 
+_ABBR_PATH = Path(__file__).resolve().parent.parent / "data" / "team_abbr.json"
+_ABBR_CACHE: dict[str, str] = {}
+
+
+def _abbr(name: str) -> str:
+    """CFBD's own team abbreviation, for tight spots where the full name truncates.
+
+    Canonical codes disambiguate where common shorthand does not: Mississippi State
+    is MSST while Michigan State is MSU. Generated from CFBD /teams into
+    data/team_abbr.json, so they are a known quantity rather than hand-written.
+    Falls back to a derived code so a missing team can never blank the key.
+    """
+    global _ABBR_CACHE
+    if not _ABBR_CACHE:
+        try:
+            _ABBR_CACHE = json.loads(_ABBR_PATH.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001 -- optional file, must never be fatal
+            _ABBR_CACHE = {}
+    key = (name or "").strip()
+    if key in _ABBR_CACHE:
+        return _ABBR_CACHE[key]
+    for k, v in _ABBR_CACHE.items():          # tolerate casing/punctuation drift
+        if _norm(k) == _norm(key):
+            return v
+    return "".join(c for c in key.upper() if c.isalpha())[:4] or "—"
+
+
 def _norm(name: str) -> str:
     return re.sub(r"[^a-z]", "", (name or "").lower())
 
@@ -502,6 +529,7 @@ def render_html(out: dict, proj: dict | None = None, logos: dict | None = None,
     subs = {
         "{{TITLE}}": f"{away['name']} @ {home['name']} — Advanced Stats Preview",
         "{{AWA}}": away["name"], "{{HOM}}": home["name"],
+        "{{AWAY_ABBR}}": _abbr(away["name"]), "{{HOME_ABBR}}": _abbr(home["name"]),
         "{{AWAY_LOGO}}": logos.get("away") or _BLANK_PX,
         "{{HOME_LOGO}}": logos.get("home") or _BLANK_PX,
         "{{AWAY_REC}}": proj.get("away_record") or "",
