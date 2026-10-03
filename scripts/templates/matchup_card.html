@@ -84,6 +84,15 @@ display:flex;justify-content:space-between;font-weight:800;margin:16px 0 6px}
 background:#93c5fd;border-radius:999px;padding:1.5px 6px;margin:0 7px;font-weight:800;flex:0 0 auto}
 .rk.bad{background:#fca5a5}
 .rk.mid{background:#3a4459;color:#e8edf7;font-weight:700}
+/* legend + reference ratings — fills the centre column's dead space */
+.legend{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.lg{display:flex;align-items:center;gap:9px;font-size:11.5px;color:#ffffff;line-height:1.35}
+.sw{width:15px;height:15px;border-radius:4px;flex:0 0 auto;border:1px solid var(--border)}
+.sw.good{background:rgba(34,197,94,.38);border-color:#22c55e}
+.sw.pill{background:#93c5fd;border-color:#93c5fd;border-radius:999px}
+.sw.none{background:transparent;border-style:dashed;border-color:#556080}
+.note{color:var(--dim);font-size:11px;margin-top:6px}
+.note b{color:#ffffff}
 .foot{color:var(--dim);font-size:11px;margin-top:14px;border-top:1px solid var(--border);padding-top:9px}
 </style></head><body><div class="card">
 <div class="topbar"><span class="tr">Advanced Stats Preview</span></div>
@@ -112,7 +121,7 @@ background:#93c5fd;border-radius:999px;padding:1.5px 6px;margin:0 7px;font-weigh
 </div>
 <div class="cols">
   <div class="col away">{{AWAY_STACK}}</div>
-  <div class="mid">{{CROSS}}</div>
+  <div class="mid">{{CROSS}}{{RATINGS}}{{LEGEND}}</div>
   <div class="col home">{{HOME_STACK}}</div>
 </div>
 </div></body></html>

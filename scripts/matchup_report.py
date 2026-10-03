@@ -138,6 +138,22 @@ def fetch_schedule_game(api: str, away: str, home: str, week: int | None = None)
     return None
 
 
+def fetch_analytics_teams(api: str) -> dict:
+    """name -> analytics record, from the PUBLIC /api/analytics.
+
+    Used only for the ratings comparison (SP+/FPI/Elo/SRS + composite). The matchup
+    endpoint deliberately returns just the two teams' comparison rows, so the ratings
+    come from the same public payload the site's own pages read. Returns {} on any
+    failure -- a ratings block is nice-to-have and must never kill a card.
+    """
+    try:
+        data = _get_json(f"{api.rstrip('/')}/api/analytics",
+                         {"Accept": "application/json", "User-Agent": UA}, timeout=90)
+    except Exception:  # noqa: BLE001
+        return {}
+    return {t.get("name"): t for t in (data.get("teams") or []) if isinstance(t, dict)}
+
+
 def logo_data_uri(url: str) -> str:
     """Inline the logo so the PNG renders even with no network at screenshot time."""
     if not url:
@@ -299,10 +315,68 @@ def _weather_block(proj: dict | None) -> str:
     return " \u00b7 ".join(parts) or "Weather n/a"
 
 
-def render_html(out: dict, proj: dict | None = None, logos: dict | None = None) -> str:
+def _legend_block() -> str:
+    """The card's key, filling the centre column's dead space.
+
+    Every visual device on the card is defined here, in plain words: the heat tint,
+    the green "holds the edge" value, the rank pill, and the column convention.
+    """
+    return """
+  <section><h2>Legend</h2>
+    <div class="legend">
+      <div class="lg"><span class="sw good"></span>Heat = that side's national percentile — green top 30%, red bottom 30%</div>
+      <div class="lg"><span class="sw good"></span>Green value = the side holding the edge on that row</div>
+      <div class="lg"><span class="sw pill"></span>Pill = FBS national rank, 1 = best (blue top 30%, red bottom 30%, grey middle)</div>
+      <div class="lg"><span class="sw none"></span>Outside columns = a team's own stats; centre tables = one side's OFFENSE vs the other's DEFENSE</div>
+      <div class="lg"><span class="sw none"></span>WIN PROB / PROJ PTS = the model · SPREAD / TOTAL = the market line (model total in brackets)</div>
+    </div>
+  </section>"""
+
+
+def _ratings_block(rec_a: dict, rec_h: dict, away_name: str, home_name: str) -> str:
+    """SP+ / FPI / Elo / SRS / composite for both teams.
+
+    HONEST LABELLING: only SP+ is an input to the composite. Elo, SRS and FPI carry
+    ZERO weight in the model and the payload says so (`elo_contribution` /
+    `srs_contribution` / `fpi_contribution` are all 0.0). They are shown as a
+    reference comparison, and the block says that on its face — a ratings table
+    sitting next to a projection reads as "this is why" otherwise.
+    """
+    rows = (
+        ("SP+ RATING (model input)", "sp_plus", "sp_rank", 1),
+        ("FPI", "fpi", "fpi_rank", 2),
+        ("ELO", "elo", None, 0),
+        ("SRS", "srs", None, 1),
+        ("COMPOSITE", "composite", None, 1),
+    )
+    body = ""
+    for label, key, rkey, dec in rows:
+        va, vh = rec_a.get(key), rec_h.get(key)
+        ra, rh = (rec_a.get(rkey), rec_h.get(rkey)) if rkey else (None, None)
+        both = isinstance(va, (int, float)) and isinstance(vh, (int, float))
+        # Higher is better for every rating here, so the leader is simply the larger.
+        lead_a = "lead" if both and va > vh else ""
+        lead_h = "lead" if both and vh > va else ""
+        pa = f'<span class="rk mid">{ra}</span>' if ra else ""
+        ph = f'<span class="rk mid">{rh}</span>' if rh else ""
+        body += (f'<tr><td class="val away {lead_a}">{_fmt(va, dec)}{pa}</td>'
+                 f'<td class="label">{label}</td>'
+                 f'<td class="val home {lead_h}">{ph}{_fmt(vh, dec)}</td></tr>')
+    return (f'<section><h2>{away_name} vs {home_name} — team ratings</h2>'
+            f'<table>{body}</table>'
+            f'<div class="note">Reference only: ELO, SRS and FPI carry <b>zero weight</b> in the '
+            f'composite. SP+ is a model input.</div></section>')
+
+
+def render_html(out: dict, proj: dict | None = None, logos: dict | None = None,
+                ratings: dict | None = None) -> str:
     home, away = out["home"], out["away"]
     logos = logos or {}
     proj = proj or {}
+    ratings = ratings or {}
+    rec_a, rec_h = (ratings.get("away") or {}), (ratings.get("home") or {})
+    ratings_html = (_ratings_block(rec_a, rec_h, away["name"], home["name"])
+                    if rec_a and rec_h else "")
 
     def stack(side):
         """One team's own stats as a vertical column (the reference's side panels)."""
@@ -367,6 +441,8 @@ def render_html(out: dict, proj: dict | None = None, logos: dict | None = None) 
         "{{LINES}}": _lines_block(proj, home["name"], away["name"]),
         "{{WEATHER}}": _weather_block(proj),
         "{{CROSS}}": cross,
+        "{{RATINGS}}": ratings_html,
+        "{{LEGEND}}": _legend_block(),
         "{{AWAY_STACK}}": stack("away"), "{{HOME_STACK}}": stack("home"),
     }
     tpl = TEMPLATE.read_text(encoding="utf-8")
@@ -439,15 +515,19 @@ def main() -> int:
     out = (compute_local(args.away, args.home) if args.local
            else fetch_api(args.api, args.away, args.home))
 
-    proj, logos = None, None
+    proj, logos, ratings = None, None, None
     if not args.no_proj:
         proj = fetch_schedule_game(args.api, args.away, args.home, args.week)
         if proj:
             logos = {"away": logo_data_uri(proj.get("away_logo_url")),
                      "home": logo_data_uri(proj.get("home_logo_url"))}
+        teams = fetch_analytics_teams(args.api)
+        if teams:
+            ratings = {"away": teams.get(out["away"]["name"]),
+                       "home": teams.get(out["home"]["name"])}
 
     if args.html or args.png:
-        html_text = render_html(out, proj, logos)
+        html_text = render_html(out, proj, logos, ratings)
         if args.html:
             Path(args.html).write_text(html_text, encoding="utf-8")
             print(f"html: {args.html}", file=sys.stderr)
