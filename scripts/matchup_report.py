@@ -336,14 +336,12 @@ def _legend_block() -> str:
 def _ratings_block(rec_a: dict, rec_h: dict, away_name: str, home_name: str) -> str:
     """SP+ / FPI / Elo / SRS / composite for both teams.
 
-    HONEST LABELLING: only SP+ is an input to the composite. Elo, SRS and FPI carry
-    ZERO weight in the model and the payload says so (`elo_contribution` /
-    `srs_contribution` / `fpi_contribution` are all 0.0). They are shown as a
-    reference comparison, and the block says that on its face — a ratings table
-    sitting next to a projection reads as "this is why" otherwise.
+    Plain stats comparison -- no model commentary. The card is an advanced-stats
+    matchup of two teams, not an explanation of the projection; Jeff was explicit
+    about that (2026-10-03).
     """
     rows = (
-        ("SP+ RATING (model input)", "sp_plus", "sp_rank", 1),
+        ("SP+ RATING", "sp_plus", "sp_rank", 1),
         ("FPI", "fpi", "fpi_rank", 2),
         ("ELO", "elo", None, 0),
         ("SRS", "srs", None, 1),
@@ -363,9 +361,7 @@ def _ratings_block(rec_a: dict, rec_h: dict, away_name: str, home_name: str) -> 
                  f'<td class="label">{label}</td>'
                  f'<td class="val home {lead_h}">{ph}{_fmt(vh, dec)}</td></tr>')
     return (f'<section><h2>{away_name} vs {home_name} — team ratings</h2>'
-            f'<table>{body}</table>'
-            f'<div class="note">Reference only: ELO, SRS and FPI carry <b>zero weight</b> in the '
-            f'composite. SP+ is a model input.</div></section>')
+            f'<table>{body}</table></section>')
 
 
 def render_html(out: dict, proj: dict | None = None, logos: dict | None = None,
