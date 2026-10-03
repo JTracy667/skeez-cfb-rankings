@@ -196,6 +196,28 @@ def _pill(pct) -> str:
     return "" if pct >= GOOD_PCT else ("bad" if pct <= BAD_PCT else "mid")
 
 
+def _cell(side: str, stat: dict, leader, dec: int) -> str:
+    """One side of a comparison row: heat-tinted, leading side in green.
+
+    Pills sit OUTSIDE the value (away: value then pill; home: pill then value) so
+    the two numeric columns stay flush to their own edges, like the reference card.
+    """
+    lead = "lead" if leader == side else ""
+    cls = f"val {side} {_heat(stat.get('pct'))} {lead}".strip()
+    val = _fmt(stat.get("value"), dec)
+    rk = ""
+    if stat.get("rank") is not None:
+        rk = f'<span class="rk {_pill(stat.get("pct"))}">{stat["rank"]}</span>'
+    inner = f"{val}{rk}" if side == "away" else f"{rk}{val}"
+    return f'<td class="{cls}">{inner}</td>'
+
+
+def _row3(label: str, a: dict, h: dict, leader, dec: int) -> str:
+    return (f'<tr>{_cell("away", a, leader, dec)}'
+            f'<td class="label">{label}</td>'
+            f'{_cell("home", h, leader, dec)}</tr>')
+
+
 def render_text(out: dict) -> str:
     home, away = out["home"], out["away"]
     lines = [
@@ -257,22 +279,7 @@ def render_html(out: dict, proj: dict | None = None, logos: dict | None = None) 
     proj = proj or {}
 
     def row(r):
-        a, h = r["away"], r["home"]
-
-        def side_cls(side, stat):
-            lead = "lead" if r["leader"] == side else ""
-            return f"val {side} {_heat(stat.get('pct'))} {lead}".strip()
-
-        def badge(stat):
-            if stat["rank"] is None:
-                return ""
-            return f'<span class="rk {_pill(stat.get("pct"))}">{stat["rank"]}</span>'
-
-        return (f'<tr><td class="{side_cls("away", a)}">'
-                f'{_fmt(a["value"], r["decimals"])}{badge(a)}</td>'
-                f'<td class="label">{r["label"]}</td>'
-                f'<td class="{side_cls("home", h)}">{badge(h)}'
-                f'{_fmt(h["value"], r["decimals"])}</td></tr>')
+        return _row3(r["label"], r["away"], r["home"], r["leader"], r["decimals"])
 
     sections = ""
     for sec in out["sections"]:
@@ -281,20 +288,25 @@ def render_html(out: dict, proj: dict | None = None, logos: dict | None = None) 
                      f'<span class="tally">away {w["away"]} · home {w["home"]}</span></h2>'
                      f'<table>{"".join(row(r) for r in sec["rows"])}</table></section>')
 
-    edges = ""
+    # The centre of the reference card: two head-to-head tables, each pairing one
+    # side's OFFENSE against the other's DEFENSE. Left column = the AWAY team's
+    # side of that pair, right = HOME's -- which is why the second table's left
+    # column is a defense.
+    by_dir: dict[str, list] = {}
     for e in out["edges"]:
         if e["label"] in _RETIRED_EDGE_LABELS:
             continue
-        side = "away" if e["direction"] == "away_o_vs_home_d" else "home"
-        off_team = away["name"] if side == "away" else home["name"]
-        def_team = home["name"] if side == "away" else away["name"]
-        lead = {"away": away["name"], "home": home["name"], "even": "even",
-                None: "no data"}[e["leader"]]
-        lead_cls = "" if e["leader"] is None else ' class="none"'
-        off_stat, def_stat = _edge_sides(e)
-        edges += (f'<li><b>{off_team} O</b> vs <b>{def_team} D</b> — {e["label"]}: '
-                  f'{_fmt(off_stat["value"], e["decimals"])} vs '
-                  f'{_fmt(def_stat["value"], e["decimals"])} → <em{lead_cls}>{lead}</em></li>')
+        by_dir.setdefault(e["direction"], []).append(e)
+
+    cross = ""
+    for direction, title in ((("away_o_vs_home_d"), f"{away['name']} OFF vs {home['name']} DEF"),
+                             (("home_o_vs_away_d"), f"{away['name']} DEF vs {home['name']} OFF")):
+        rows = ""
+        for e in by_dir.get(direction, []):
+            off_stat, def_stat = _edge_sides(e)
+            left, right = (off_stat, def_stat) if direction == "away_o_vs_home_d" else (def_stat, off_stat)
+            rows += _row3(e["label"], left, right, e["leader"], e["decimals"])
+        cross += f'<section><h2>{title}</h2><table>{rows}</table></section>'
 
     away_wp, home_wp = proj.get("away_win_prob"), proj.get("home_win_prob")
     away_pp, home_pp = proj.get("away_proj"), proj.get("home_proj")
@@ -319,7 +331,7 @@ def render_html(out: dict, proj: dict | None = None, logos: dict | None = None) 
         "{{AWAY_PP_LEAD}}": lead_cls(away_pp, home_pp),
         "{{HOME_PP_LEAD}}": lead_cls(home_pp, away_pp),
         "{{LINES}}": _lines_block(proj, home["name"], away["name"]),
-        "{{SECTIONS}}": sections, "{{EDGES}}": edges,
+        "{{CROSS}}": cross, "{{SECTIONS}}": sections,
     }
     tpl = TEMPLATE.read_text(encoding="utf-8")
     for k, v in subs.items():

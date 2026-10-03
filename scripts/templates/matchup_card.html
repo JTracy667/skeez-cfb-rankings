@@ -38,6 +38,8 @@ padding:6px 10px;text-align:center;font-size:11px;color:#fff;font-weight:600;lin
 h2{font-size:11.5px;letter-spacing:.09em;color:var(--accent);text-transform:uppercase;
 margin:16px 0 6px;display:flex;justify-content:space-between;font-weight:800}
 .tally{color:var(--dim);letter-spacing:0;text-transform:none;font-weight:700}
+h2.grp{color:#ffffff;justify-content:flex-start;border-top:1px solid var(--border);
+padding-top:14px;margin-top:20px;letter-spacing:.11em}
 table{width:100%;border-collapse:collapse;table-layout:fixed}
 td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.07);vertical-align:middle}
 .label{text-align:center;color:#ffffff;font-size:11.5px;font-weight:600;
@@ -81,9 +83,11 @@ em.none{color:var(--dim)}
     </div>
   </div>
 </div>
+{{CROSS}}
+<h2 class="grp">Team Stats — Head to Head</h2>
 {{SECTIONS}}
-<section><h2>Offense vs Defense Edges</h2><ul>{{EDGES}}</ul></section>
-<div class="foot">Heat = that side's national percentile (green top 30%, red bottom 30%); green value = side
-holding the edge on that row. Rank pill = FBS national rank. Win prob / proj pts are the model's, from
-stored analytics + the modelled line — no live API cost.</div>
+<div class="foot">Left column = the away team's side of each pairing, right = the home team's. Heat =
+that side's national percentile (green top 30%, red bottom 30%); green value = side holding the edge on
+that row. Rank pill = FBS national rank. Win prob / proj pts are the model's, from stored analytics +
+the modelled line — no live API cost.</div>
 </div></body></html>
