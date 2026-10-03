@@ -1884,6 +1884,16 @@ ADV_MATCHUP_RESUME_FIELDS = (
     "sp_special_teams",
 )
 
+# EPA/PPA fields, extracted by `_cfbd_ppa()` from CFBD **/ppa/teams** (NOT
+# /stats/season/advanced -- that endpoint has no `epa` key at all; CFBD calls its
+# EPA "ppa", Predicted Points Added). Offense and defense are symmetric here, and
+# `def_epa_*` is EPA ALLOWED (lower is better). Listed so the payload test can
+# prove the engine never references a field the record cannot carry.
+ADV_MATCHUP_PPA_FIELDS = (
+    "epa_play", "epa_pass", "epa_rush",
+    "def_epa_play", "def_epa_pass", "def_epa_rush",
+)
+
 
 def _adv_num(v, ndigits: int = 4):
     """round(v, ndigits), but None-safe: anything non-numeric in -> None out.
@@ -7067,6 +7077,7 @@ else:
 # sign silently inverts an entire row. Every entry below was confirmed by Jeff
 # before the engine was built rather than inferred from the metric name.
 MATCHUP_SECTIONS = (
+    ("epa", "EPA & EFFICIENCY"),
     ("trench", "TRENCH & HAVOC"),
     ("drives", "QUALITY DRIVES & FINISHING"),
     ("situational", "SITUATIONAL DOWNS"),
@@ -7075,6 +7086,15 @@ MATCHUP_SECTIONS = (
 
 # key, label, section, polarity, decimals
 MATCHUP_METRICS = (
+    # EPA / PPA (from CFBD /ppa/teams). `def_epa_*` is EPA ALLOWED, so lower is
+    # better -- confirmed against the payload (Ohio State -0.08, Georgia -0.14,
+    # Washington -0.15 vs USC +0.19 for a defense ranked #119 by PTS/OPP).
+    ("epa_play", "OFF EPA/PLAY", "epa", +1, 3),
+    ("def_epa_play", "DEF EPA/PLAY ALWD", "epa", -1, 3),
+    ("epa_pass", "OFF EPA/DROPBACK", "epa", +1, 3),
+    ("def_epa_pass", "DEF EPA/DROPBACK ALWD", "epa", -1, 3),
+    ("epa_rush", "OFF EPA/RUSH", "epa", +1, 3),
+    ("def_epa_rush", "DEF EPA/RUSH ALWD", "epa", -1, 3),
     ("off_success_rate", "OFF SUCCESS RATE", "trench", +1, 4),
     ("off_explosiveness", "OFF EXPLOSIVENESS", "trench", +1, 3),
     ("off_line_yards", "OFF LINE YARDS", "trench", +1, 2),
@@ -7110,6 +7130,9 @@ MATCHUP_METRICS = (
 # DIFFERENT keys; the polarity belongs to the offensive key.
 # label, offense_key, defense_key, polarity, decimals
 MATCHUP_EDGES = (
+    ("EPA/PLAY vs EPA/PLAY ALWD", "epa_play", "def_epa_play", +1, 3),
+    ("EPA/DROPBACK vs EPA/DROPBACK ALWD", "epa_pass", "def_epa_pass", +1, 3),
+    ("EPA/RUSH vs EPA/RUSH ALWD", "epa_rush", "def_epa_rush", +1, 3),
     ("PASS OFFENSE vs PASS DEFENSE", "off_pass_success", "def_pass_success", +1, 4),
     ("RUSH OFFENSE vs RUSH DEFENSE", "off_rush_success", "def_rush_success", +1, 4),
     ("O-LINE YARDS vs D-LINE YARDS ALWD", "off_line_yards", "def_line_yards", +1, 2),

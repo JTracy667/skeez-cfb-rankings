@@ -44,7 +44,9 @@ class TestPolarityAndConfig(unittest.TestCase):
         if not LIVE.exists():
             self.skipTest("no live analytics file")
         live_keys = set(json.loads(LIVE.read_text(encoding="utf-8"))[0].keys())
-        available = live_keys | set(app.ADV_MATCHUP_FIELDS) | set(app.ADV_MATCHUP_RESUME_FIELDS)
+        available = (live_keys | set(app.ADV_MATCHUP_FIELDS)
+                     | set(app.ADV_MATCHUP_RESUME_FIELDS)
+                     | set(app.ADV_MATCHUP_PPA_FIELDS))
         missing = [k for k, _l, _s, _p, _d in app.MATCHUP_METRICS if k not in available]
         self.assertEqual([], missing, f"engine references fields that do not exist: {missing}")
 
