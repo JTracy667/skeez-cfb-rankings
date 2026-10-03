@@ -386,18 +386,25 @@ def _weather_block(proj: dict | None) -> str:
 
 
 def _legend_block() -> str:
-    """The card's key, filling the centre column's dead space.
+    """The card's key.
 
     Every visual device on the card is defined here, in plain words: the heat tint,
-    the green "holds the edge" value, the rank pill, and the column convention.
+    the green "holds the edge" value, the rank pill, the team-coloured edge rail, and
+    the column convention.
+
+    COPY MUST MATCH THE TEMPLATE'S ACTUAL LAYOUT. The previous wording ("outside
+    columns = a team's own stats; centre tables = one side's OFFENSE vs the other's
+    DEFENSE") described the retired three-column card and became a lie the moment the
+    centre became a head-to-head ledger. Any layout change here needs a copy change.
     """
     return """
   <section><h2>Legend</h2>
     <div class="legend">
       <div class="lg"><span class="sw good"></span>Heat = that side's national percentile — green top 30%, red bottom 30%</div>
-      <div class="lg"><span class="sw good"></span>Green value = the side holding the edge on that row</div>
+      <div class="lg"><span class="sw lead"></span>Green value = the side holding the edge on that row</div>
       <div class="lg"><span class="sw pill"></span>Pill = FBS national rank, 1 = best (blue top 30%, red bottom 30%, grey middle)</div>
-      <div class="lg"><span class="sw none"></span>Outside columns = a team's own stats; centre tables = one side's OFFENSE vs the other's DEFENSE</div>
+      <div class="lg"><span class="sw rail"></span>Team-coloured rail beside a row = that team holds the edge (away left, home right)</div>
+      <div class="lg"><span class="sw none"></span>Side panels = each team's own season profile; the centre ledger pairs every stat head-to-head — away value · label · home value</div>
       <div class="lg"><span class="sw none"></span>WIN PROB / PROJ PTS = the model · SPREAD / TOTAL = the market line (model total in brackets)</div>
     </div>
   </section>"""
@@ -553,7 +560,7 @@ def render_png(html_text: str, png_path: str | Path, width: int = 1280,
     probe_dir = scratch / f"edge_probe_{uniq}"
     shot_dir = scratch / f"edge_shot_{uniq}"
 
-    probe = scratch / "_probe.html"
+    probe = scratch / f"_probe_{uniq}.html"
     probe.write_text(
         html_text.replace("</body>",
                           '<script>document.title="H="+document.documentElement.scrollHeight;'
@@ -574,15 +581,25 @@ def render_png(html_text: str, png_path: str | Path, width: int = 1280,
     m = re.search(r"H=(\d+)", dom.stdout or "")
     height = (int(m.group(1)) + 24) if m else 1500
 
-    page = scratch / "_page.html"
+    page = scratch / f"_page_{uniq}.html"
     page.write_text(html_text, encoding="utf-8")
-    subprocess.run(
-        [exe, "--headless=new", "--disable-gpu", "--no-sandbox", "--hide-scrollbars",
-         "--no-first-run", "--no-default-browser-check",
-         "--force-device-scale-factor=%d" % scale, f"--window-size={width},{height}",
-         f"--user-data-dir={shot_dir}", f"--screenshot={png_path}",
-         page.as_uri()],
-        capture_output=True, text=True, timeout=120)
+    shot_cmd = [exe, "--headless=new", "--disable-gpu", "--no-sandbox", "--hide-scrollbars",
+                "--no-first-run", "--no-default-browser-check",
+                "--force-device-scale-factor=%d" % scale, f"--window-size={width},{height}",
+                f"--user-data-dir={shot_dir}", f"--screenshot={png_path}",
+                page.as_uri()]
+    # Back-to-back Edge launches occasionally exit 1 without writing the file -- observed
+    # rendering four cards in a loop, where two of four silently produced nothing. Retry
+    # once with a fresh profile dir rather than handing back a missing PNG.
+    for attempt in (1, 2):
+        subprocess.run(shot_cmd, capture_output=True, text=True, timeout=120)
+        if Path(png_path).exists() and Path(png_path).stat().st_size > 0:
+            break
+        if attempt == 1:
+            time.sleep(2)
+            shutil.rmtree(shot_dir, ignore_errors=True)
+    else:
+        raise SystemExit(f"Edge produced no screenshot at {png_path}")
     for d in (probe_dir, shot_dir):
         shutil.rmtree(d, ignore_errors=True)
     return str(png_path)
@@ -610,12 +627,24 @@ def main() -> int:
                          "without touching the canonical card.")
     args = ap.parse_args()
 
-    out = (compute_local(args.away, args.home) if args.local
-           else fetch_api(args.api, args.away, args.home))
-
+    # Orientation guard. This used to trust argument order, so building a card from
+    # "A vs B" when the game is really "B @ A" silently put the logos, records,
+    # projections and spread under the wrong team names -- a card that looks perfectly
+    # fine and is wrong. /api/schedule knows the true venue, so resolve against it
+    # before anything else is fetched.
     proj, logos, ratings = None, None, None
     if not args.no_proj:
         proj = fetch_schedule_game(args.api, args.away, args.home, args.week)
+        if proj and _norm(proj.get("home")) != _norm(args.home):
+            print(f"note: this game is {proj.get('away')} @ {proj.get('home')} -- "
+                  f"swapping the order you passed so both sides are labelled right.",
+                  file=sys.stderr)
+            args.away, args.home = proj.get("away"), proj.get("home")
+
+    out = (compute_local(args.away, args.home) if args.local
+           else fetch_api(args.api, args.away, args.home))
+
+    if not args.no_proj:
         if proj:
             logos = {"away": logo_data_uri(proj.get("away_logo_url")),
                      "home": logo_data_uri(proj.get("home_logo_url"))}
