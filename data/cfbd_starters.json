@@ -279,14 +279,6 @@
       "first_init": "w"
     }
   },
-  "Tulsa": {
-    "qb": {
-      "player": "Dexter Williams II",
-      "att": 59.0,
-      "last_name": "williams",
-      "first_init": "d"
-    }
-  },
   "Arkansas-Pine Bluff": {
     "qb": {
       "player": "Garrison Davis",
@@ -341,14 +333,6 @@
       "att": 119.0,
       "last_name": "fitzgerald",
       "first_init": "c"
-    }
-  },
-  "North Texas": {
-    "qb": {
-      "player": "Tayven Jackson",
-      "att": 129.0,
-      "last_name": "jackson",
-      "first_init": "t"
     }
   },
   "Wofford": {
@@ -407,6 +391,14 @@
       "first_init": "d"
     }
   },
+  "North Texas": {
+    "qb": {
+      "player": "Tayven Jackson",
+      "att": 168.0,
+      "last_name": "jackson",
+      "first_init": "t"
+    }
+  },
   "Virginia Tech": {
     "qb": {
       "player": "Ethan Grunkemeyer",
@@ -461,6 +453,14 @@
       "att": 101.0,
       "last_name": "lamson",
       "first_init": "j"
+    }
+  },
+  "Western Kentucky": {
+    "qb": {
+      "player": "Rodney Tisdale Jr.",
+      "att": 117.0,
+      "last_name": "tisdale",
+      "first_init": "r"
     }
   },
   "Sacred Heart": {
@@ -709,14 +709,6 @@
       "att": 132.0,
       "last_name": "craig",
       "first_init": "j"
-    }
-  },
-  "Western Kentucky": {
-    "qb": {
-      "player": "Rodney Tisdale Jr.",
-      "att": 77.0,
-      "last_name": "tisdale",
-      "first_init": "r"
     }
   },
   "Duke": {
@@ -1271,6 +1263,14 @@
       "first_init": "k"
     }
   },
+  "New Mexico State": {
+    "qb": {
+      "player": "Trey Hedden",
+      "att": 116.0,
+      "last_name": "hedden",
+      "first_init": "t"
+    }
+  },
   "Kansas State": {
     "qb": {
       "player": "Avery Johnson",
@@ -1461,6 +1461,14 @@
       "att": 104.0,
       "last_name": "colandrea",
       "first_init": "a"
+    }
+  },
+  "Tulsa": {
+    "qb": {
+      "player": "Baylor Hayes",
+      "att": 96.0,
+      "last_name": "hayes",
+      "first_init": "b"
     }
   },
   "Youngstown State": {
@@ -1693,14 +1701,6 @@
       "att": 6.0,
       "last_name": "picarella",
       "first_init": "e"
-    }
-  },
-  "New Mexico State": {
-    "qb": {
-      "player": "Trey Hedden",
-      "att": 116.0,
-      "last_name": "hedden",
-      "first_init": "t"
     }
   },
   "Sam Houston": {

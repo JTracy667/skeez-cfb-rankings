@@ -56,6 +56,9 @@ logs/
 data/ratings_etag_state.json
 data/ratings_etag_history.jsonl
 
+# Matchup-card renders (scratch output from scripts/matchup_report.py --html/--png)
+output/
+
 # CFBD API transport map (regenerate with scripts/probe_api_surface.py)
 data/api_surface_map.json
 

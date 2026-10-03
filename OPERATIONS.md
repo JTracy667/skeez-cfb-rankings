@@ -14,6 +14,17 @@ minimum the `CURRENT STATE` block. If you had to read source to answer "how does
 work", write the answer here before you finish. A stale ops doc is worse than none,
 because it is trusted.
 
+**FLEET RESOURCE (Jeff, 2026-10-03).** This file is the shared answer to "what is live
+right now", for every bot that needs the CFB system — Research included. GitHub
+(`JTracy667/skeez-cfb-rankings`) mirrors this repo so the fleet can read it without this
+box. Two consequences:
+- **A commit is not a deploy.** Prod runs the image built from the LOCAL tree
+  (`scripts/cfb_deploy.sh`). GitHub is version control and a fleet resource; it is never
+  the source of the running image, and `main` can legitimately be *behind* prod between
+  pushes.
+- **`CURRENT STATE` below is authoritative** for what is live, and is updated in the same
+  session as any deploy.
+
 Repo: `C:\Users\jtracy\dev\cfb-power-rankings` (see `CANONICAL.md` — this is the only
 working clone).
 
@@ -80,22 +91,17 @@ Also in this release: `MATCHUP_EDGES` no longer pairs two different scales
 (`off_explosiveness` vs `def_havoc_total` was replaced by explosiveness vs explosiveness
 allowed), and the matchup card renders each edge in label order (offense then defense).
 
-### PENDING — performance/correctness branch, NOT deployed (2026-09-30, CTO)
+### RESOLVED — the perf branch shipped, and is now `main` (2026-10-03, CTO)
 
-Branch `perf/d1-snapshot-safety` — the 9-task performance work order. Reviewable, not live;
-prod is **v62**. Commits: correctness (append-only selection + publication marker + writer-mode
-recovery), serving perf (projections cache by published identity, one marker read per request,
-bounded identity reads, index evidence), frontend (deferred Projections & Odds, active-tab-only
-rendering, debounced search, parallel Schedule startup).
+This section used to say the `perf/d1-snapshot-safety` branch was "reviewable, not live" and
+that prod was v62. Both statements aged out: that tree is what production runs. v63 (serving
+index), v64 (D1-credential recovery) and v65 (week-cutover floor + EPA) were all deployed from
+it, and the branch was merged to `main` and pushed on 2026-10-03 so GitHub matches prod.
 
-**Before deploying:** re-run `python scripts/run_enforcement_tests.py` (now includes
-`node --test tests/js/*.test.mjs`) and apply
-`d1/migrations/2026-09-30_stat_obs_serving_index.sql` — prepared, NOT applied; measured
-111.7 ms -> 19.0 ms on the production-density plan. Rollback is v62 as usual.
+The migration it listed as "prepared, NOT applied" —
+`d1/migrations/2026-09-30_stat_obs_serving_index.sql` — **WAS applied** (see CURRENT STATE:
+`ix_stat_obs_serving`). Kept only so the history is not rewritten; do not act on the text below.
 
-**Already done in production (a DATA change, not a deploy):** the analytics publication marker
-was published 2026-09-30 so the new read path has numerics the moment it ships — see CURRENT
-STATE. The marker is inert under v62 and load-bearing under the new code.
 ### v61 → v62 (2026-09-28, CTO) — Phase 4 (F4): `stat_observations` is APPEND-ONLY
 
 **The last open finding — and the ONLY schema change in the whole plan.** `stat_observations`
