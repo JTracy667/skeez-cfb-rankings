@@ -24,15 +24,15 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v64** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v64-d1-restore` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v64` |
-| Rollback tag | **v63** — `scripts/cfb_deploy.sh --rollback v63` (v62…v50 also in the registry) |
-| Last verified | 2026-10-01 (CTO) — Containers API: app image `...cfb-power-rankings:v64`, app version 61 (this is the gate that counts); instance retired, one site request → `build=v64`, `code.marker=v64-d1-restore`, `status ok`. Post-deploy live harness: analytics **687 rows** (the D1 publication, not the 685-row baked copy), schedule Week 5 · 59 cards, no page JS exceptions. `/api/analytics` `serve` = `{source: d1, degraded: false}` and `/api/health` `archive.count = 0`. All public routes 200. |
+| Live build | **v65** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v65-week-cutover-epa` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v65` |
+| Rollback tag | **v64** — `scripts/cfb_deploy.sh --rollback v64` (v63…v50 also in the registry) |
+| Last verified | 2026-10-03 (CTO) — Containers API: app image `...cfb-power-rankings:v65`, app version 62 (this is the gate that counts); instance retired, one site request → `build=v65`, `code.marker=v65-week-cutover-epa`, `status ok`. Pre-deploy enforcement gate **PASS** (23 pytest + 21 page-script). Post-deploy: `/api/schedule/current-week` → **week 5** (was wrongly 6), default `/api/schedule` → week 5 · 59 games incl. Washington @ USC, `/api/matchup` now returns the **EPA & EFFICIENCY** section + the 3 EPA edge pairs, `/api/health` `archive.count = 0`, all public routes 200. Budget CFBD 7.11%→7.16%, D1 806,407→806,438 rows (one boot). |
 | Injuries | D1 `app_state.active_injuries` is the served source (45 teams / 56 tracked at migration). `/api/injuries` and the win-totals build read it. Kill switch `INJURIES_FROM_D1=0`. **D1 `injury_snapshots` is a settled-outcome tracking table, NOT the current injury state.** |
 | Quota ledger | `/api/health` `budget` is read from D1 `api_usage` — the ledger of record. The disk mirror `data/budget_ledger.json` is a **local-dev fallback only** (Phase 6). Kill switch `BUDGET_FROM_D1=0`. |
 | Archive health | `/api/health` → **`archive`** — `count > 0` means D1 writes are silently NOT landing (F5; before v54 this state was invisible) |
-| Container app image | must read `...:v64` via the Containers API — **`build` in `/api/health` does NOT prove this** (see the v52→v53 note) |
+| Container app image | must read `...:v65` via the Containers API — **`build` in `/api/health` does NOT prove this** (see the v52→v53 note) |
 | Deploy verifier | `python scripts/verify_container_swap.py --tag vN --marker <CODE_MARKER>` — API-driven, touches the site **once** |
 | Container D1 credential | Worker secrets `CF_D1_TOKEN` + `CF_D1_DB_ID` (+ `CF_ACCOUNT_ID`); `wrangler.jsonc` declares NO vars, so a deploy cannot clobber them. **2026-10-01 incident:** the container lost D1 access at a recycle and EVERY D1 surface silently served its baked disk copy (`serve.source` = `disk (no verified publication)`, degraded) with `archive.count` 3450+. A recorder recursion kept the instance from idling, so it never recycled and could not pick up corrected secrets — the fix required a NEW image tag (v64). Symptom set + diagnosis: `cfb-site-operations` skill. Token in use: `cfb-container-d1 (2026-10-01)`. |
 | Serving index (Task 5) | `ix_stat_obs_serving` on `stat_observations(season, week, subject_type, recorded_at)` — **APPLIED to production 2026-10-01** with Jeff's authorisation. Both selectors now seek it where they used to scan `ix_stat_obs_season_key_week (season=?)`; live `/api/analytics` warm latency 4.2-4.6s → 1.7-2.1s. Rollback: `DROP INDEX IF EXISTS ix_stat_obs_serving;` |
@@ -50,6 +50,35 @@ curl -s https://skeezcfb-rankings.com/api/health   # status ok + build + code.ma
 ---
 
 ## RECENT CHANGES & OPEN WORK
+
+### v64 → v65 (2026-10-03, CTO) — schedule week cutover floor, and EPA in the matchup engine
+
+**Two changes, one release.**
+
+1. **The Schedule page was a week ahead.** `current_season_week()` used "4 days before the
+   week's first kickoff, floored to midnight ET". Week 6 opens on a **Tuesday (Oct 6)**, so its
+   cutover computed to **Fri Oct 2** — reaching back into the weekend it was meant to follow, and
+   hiding week 5's whole unplayed Saturday slate (including Washington @ USC). The docstring
+   already stated the intent ("the moment the prior week's games are done"); only the arithmetic
+   disagreed. Cutover is now **floored at the midnight ET after the previous week's LAST game**,
+   so a week can never become current while the week before it still has games to play.
+   Weeks **2, 7 and 8** carried the same latent bug (Labor Day Monday finisher, more midweek
+   openers). Standard Thu–Sat weeks are byte-identical. The rule is now the PURE
+   `_week_switch_points()`, pinned by `tests/test_current_week_cutover.py`.
+   **Symptom to recognise: "the site is a week ahead" on a Fri/Sat before that weekend's games.**
+
+2. **EPA added to the matchup engine.** CFBD calls EPA **`ppa`** (Predicted Points Added) and
+   exposes it symmetrically for offense and defense — `_cfbd_ppa()` already parsed it from
+   `/ppa/teams` into `epa_play`/`epa_pass`/`epa_rush` + `def_epa_*`; only the matchup engine's
+   ranking list (`ADV_MATCHUP_FIELDS`) omitted it. **`/stats/season/advanced` has no `epa` key at
+   all** — do not look for it there. New `EPA & EFFICIENCY` section (6 rows) + 3 EPA pairs in the
+   cross tables; `def_epa_*` is EPA **ALLOWED**, so polarity is −1 (a good defense is negative:
+   Ohio State −0.08, Georgia −0.14, Washington −0.15 vs USC +0.19). `ADV_MATCHUP_PPA_FIELDS`
+   names that source for the payload test.
+
+Also in this release: `MATCHUP_EDGES` no longer pairs two different scales
+(`off_explosiveness` vs `def_havoc_total` was replaced by explosiveness vs explosiveness
+allowed), and the matchup card renders each edge in label order (offense then defense).
 
 ### PENDING — performance/correctness branch, NOT deployed (2026-09-30, CTO)
 
