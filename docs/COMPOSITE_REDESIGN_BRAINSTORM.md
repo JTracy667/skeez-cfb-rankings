@@ -313,3 +313,140 @@ stored and hand you the access, so the analysis runs against ground truth.
 - **I am not the right owner for source semantics.** If a question above amounts to "what does
   this field mean", it is yours, and I would rather it come back as a correction than as a
   workaround.
+
+---
+
+## How to read D1 for this analysis (Research) — 2026-10-03
+
+A **read-only** D1 token now exists so this work runs against ground truth instead of the repo.
+It cannot write: `CREATE TABLE` returns *"You do not have permission to perform this operation."*
+Expires **2026-10-17**; ask the CTO to re-mint if you need it longer.
+
+```
+TOKEN FILE : C:\Users\jtracy\AppData\Local\hermes\profiles\cto\.cf_d1_readonly_token
+DATABASE   : cfb-history   uuid c3ec3149-cc85-483b-b727-5a18e3d5a1b9
+ACCOUNT    : 90c2c31beec12cb7de1c249ade1eb773
+```
+
+**Never commit the token, and never print its value** (the resolvers print a PATH for this reason).
+
+### Setup
+
+```bash
+export CF_D1_TOKEN="$(cat "C:/Users/jtracy/AppData/Local/hermes/profiles/cto/.cf_d1_readonly_token")"
+cd C:/Users/jtracy/dev/cfb-power-rankings
+```
+
+```python
+import sys; sys.path.insert(0, ".")
+import d1_store
+rows = d1_store.query("SELECT COUNT(*) AS n FROM stat_observations")
+```
+
+`d1_store.query(sql, params)` takes `?` placeholders and returns `list[dict]`. Everything below
+is copy-pasteable.
+
+### The tables worth knowing
+
+| table | rows (2026-10-03) | what it is |
+|---|---|---|
+| `stat_observations` | 431k | **the metric store.** `subject_type='team'`, `subject_id`=CFBD team id, `stat_key`, `value`, `season`, `week`, `recorded_at`, `source`. Append-only. |
+| `app_state` | — | key/value. Holds **`analytics_publication:2026`** — the authoritative served snapshot. |
+| `teams` | — | `team_id`, `name`, `abbr`, `conference`, `classification`, `first_season`. Join key for names. |
+| `games` | 21k | `game_id`, `season`, `week`, `home_id`, `away_id`, `kickoff`, scores, `status`, `neutrality`. |
+| `closing_lines` | 7,184 | stored closing line. Columns `game_id, book, spread_home, total, home_moneyline, away_moneyline, captured_at` — **note `home_moneyline`/`away_moneyline` here vs `home_ml`/`away_ml` in `odds_snapshots`.** |
+| `odds_snapshots` | 365k | `game_id`, `book`, `spread_home`, `total`, `home_ml`, `away_ml`, `poll_ts`. Overwhelmingly **2026** (369k rows) — older seasons have only hundreds. Use `closing_lines`, not this, for multi-season work. |
+| `model_predictions` | 330 | `game_id`, `win_prob_home`, `predicted_margin_home`, `predicted_total`, weather columns. |
+| `weather_snapshots` | 112k | per-game weather by poll, incl. `kickoff_utc`. |
+| `slate_cache` | 19 | `kind` in (schedule, rankings, win_totals), `week`, `payload_gz` — the exact payloads the site serves. |
+| `api_usage` | — | the quota ledger (bucket/day/month, source, calls). |
+| `backtest_runs` | — | existing backtest records. |
+| `served_snapshots` | 385 | per-endpoint serve receipts (`endpoint`, `as_of`, `row_count`, `content_hash`, `build_tag`). |
+
+### The three things that will bite you
+
+1. **A snapshot is selected by ONE `(week, stamp)`.** The served board is not "the newest rows".
+   A pull that wrote 67 of 115 keys became the publication once, and 36 metrics read blank while
+   D1 held them at other stamps. Always read the marker before concluding a metric is missing:
+
+```python
+import json, d1_store
+pub = json.loads(d1_store.query(
+    "SELECT value FROM app_state WHERE key='analytics_publication:2026'")[0]["value"])
+print(pub["week"], pub["stamp"], len(pub["keys"]))     # -> 5, ..., 115
+```
+
+2. **`week` is the week a pull TARGETS, not the last completed week.** Friday's pull targets the
+   upcoming slate (week 6 opens Tuesday), so the archive legitimately holds `week=6` rows while the
+   site correctly says week 5. Do not treat `week=6` rows as a played week (see question 8).
+
+3. **`recorded_at` is the pull timestamp; the same metric is stored many times.** For a
+   point-in-time value, filter on `recorded_at <= <cutoff>` — not just `season`/`week`.
+
+### Worked queries for the questions above
+
+**Q4 — correlation matrix.** Latest value per team per key, then pivot in pandas:
+
+```python
+KEYS = ["off_success_rate","off_explosiveness","off_line_yards","off_stuff_rate",
+        "off_havoc_total","def_havoc_total","off_eckel_rate","eckel_ratio","off_ppo",
+        "def_ppo","pts_per_poss","net_field_pos","sp_special_teams","fpi_sor","fpi_sos",
+        "sp_plus","elo","srs","fpi","composite"]
+marks = ",".join("?" for _ in KEYS)
+rows = d1_store.query(
+    "SELECT t.name AS team, s.stat_key AS k, s.value AS v, s.week AS w, s.recorded_at AS ts "
+    "FROM stat_observations s JOIN teams t ON t.team_id = s.subject_id "
+    f"WHERE s.subject_type='team' AND s.season=2026 AND s.stat_key IN ({marks})", KEYS)
+# keep the LATEST row per (team, key), then pivot to team x key and .corr()
+```
+
+**Q1/Q2 — field inventory across the season:**
+
+```python
+d1_store.query("SELECT stat_key, COUNT(*) AS n, COUNT(DISTINCT subject_id) AS teams "
+               "FROM stat_observations WHERE season=2026 GROUP BY stat_key ORDER BY stat_key")
+```
+
+**Q8 — is a stored value cumulative or per-week?** Look at one team across pulls:
+
+```python
+d1_store.query(
+    "SELECT week, value, recorded_at FROM stat_observations "
+    "WHERE subject_type='team' AND subject_id=(SELECT team_id FROM teams WHERE name='Alabama') "
+    "AND stat_key='off_success_rate' AND season=2026 ORDER BY recorded_at")
+```
+
+**Q12 — ATS scoring inputs.** **Answered: prior seasons are covered.** Verified coverage:
+
+| season | scored games | stored closing lines |
+|---|---|---|
+| 2026 | 1,361 | 521 |
+| 2025 | 3,829 | 1,547 |
+| 2024 | — | 1,507 |
+| 2023 | — | 1,347 |
+| 2022 | — | 1,413 |
+| 2021 | — | 849 |
+
+So ATS calibration can be scored on multiple seasons, not just 2026. Re-check it yourself:
+
+```python
+d1_store.query(
+    "SELECT g.season, COUNT(*) AS n FROM closing_lines c "
+    "JOIN games g ON g.game_id=c.game_id GROUP BY g.season ORDER BY g.season DESC")
+```
+
+**Opponent-adjustment work (Q1–Q3)** — per-game results join cleanly to team ids:
+
+```python
+d1_store.query(
+    "SELECT g.season, g.week, g.game_id, th.name AS home, ta.name AS away, "
+    "g.home_score, g.away_score, g.neutrality "
+    "FROM games g JOIN teams th ON th.team_id=g.home_id JOIN teams ta ON ta.team_id=g.away_id "
+    "WHERE g.season=2026 AND g.home_score IS NOT NULL ORDER BY g.week, g.game_id")
+```
+
+### One caution
+
+The read-only token is scoped to **account-level D1 read** (Cloudflare offers no per-database
+scoping for this permission group). It can read every D1 database in the account, not just
+`cfb-history`. That is why it is read-only and time-boxed.
