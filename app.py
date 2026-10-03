@@ -7113,7 +7113,10 @@ MATCHUP_EDGES = (
     ("PASS OFFENSE vs PASS DEFENSE", "off_pass_success", "def_pass_success", +1, 4),
     ("RUSH OFFENSE vs RUSH DEFENSE", "off_rush_success", "def_rush_success", +1, 4),
     ("O-LINE YARDS vs D-LINE YARDS ALWD", "off_line_yards", "def_line_yards", +1, 2),
-    ("EXPLOSIVENESS vs HAVOC ALLOWED", "off_explosiveness", "def_havoc_total", +1, 3),
+    # LIKE-FOR-LIKE ONLY. The old pairing here was off_explosiveness vs
+    # def_havoc_total -- two different scales, so the "leader" was decided by which
+    # metric's numbers happen to be bigger, not by either team (2026-10-02).
+    ("EXPLOSIVENESS vs EXPLOSIVENESS ALWD", "off_explosiveness", "def_explosiveness", +1, 3),
     ("PTS/OPP vs PTS/OPP ALWD", "off_ppo", "def_ppo", +1, 2),
 )
 

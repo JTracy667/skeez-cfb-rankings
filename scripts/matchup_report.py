@@ -36,6 +36,23 @@ DEFAULT_API = "https://skeezcfb-rankings.com"
 # the engine's polarity flag, not by the number's size.
 GOOD_PCT, BAD_PCT = 75, 25
 
+# Edge rows the API still returns but that compare two DIFFERENT scales, so their
+# "leader" is meaningless. App.py has been fixed at the source; this keeps the card
+# honest while prod still answers with the old tuple.
+_RETIRED_EDGE_LABELS = {"EXPLOSIVENESS vs HAVOC ALLOWED"}
+
+
+def _edge_sides(e: dict):
+    """(offense_stat, defense_stat) for an edge row.
+
+    The payload stores the two sides under 'away'/'home' for comparison, NOT in
+    label order: for a home-offense edge the 'away' slot holds the DEFENSE. Render
+    in label order (offense vs defense) or every home-offense row reads backwards.
+    """
+    if e["direction"] == "away_o_vs_home_d":
+        return e["away"], e["home"]
+    return e["home"], e["away"]
+
 
 def admin_token() -> str:
     tok = os.environ.get("ADMIN_TOKEN", "").strip()
@@ -122,13 +139,16 @@ def render_text(out: dict) -> str:
     lines.append("")
     lines.append("── OFFENSE vs DEFENSE EDGES")
     for e in out["edges"]:
+        if e["label"] in _RETIRED_EDGE_LABELS:
+            continue
         side = "away" if e["direction"] == "away_o_vs_home_d" else "home"
         off_team = away["name"] if side == "away" else home["name"]
         def_team = home["name"] if side == "away" else away["name"]
         lead = {"away": away["name"], "home": home["name"], "even": "even", None: "n/a"}[e["leader"]]
+        off_stat, def_stat = _edge_sides(e)
         lines.append(
-            f"  {off_team} O vs {def_team} D — {e['label']}: {_fmt(e['away']['value'], e['decimals'])}"
-            f" vs {_fmt(e['home']['value'], e['decimals'])}  → {lead}"
+            f"  {off_team} O vs {def_team} D — {e['label']}: {_fmt(off_stat['value'], e['decimals'])}"
+            f" vs {_fmt(def_stat['value'], e['decimals'])}  → {lead}"
         )
     return "\n".join(lines)
 
@@ -168,14 +188,17 @@ def render_html(out: dict) -> str:
 
     edges = ""
     for e in out["edges"]:
+        if e["label"] in _RETIRED_EDGE_LABELS:
+            continue
         side = "away" if e["direction"] == "away_o_vs_home_d" else "home"
         off_team = away["name"] if side == "away" else home["name"]
         def_team = home["name"] if side == "away" else away["name"]
         lead = {"away": away["name"], "home": home["name"], "even": "even",
                 None: "no data"}[e["leader"]]
+        off_stat, def_stat = _edge_sides(e)
         edges += (f"<li><b>{off_team} O</b> vs <b>{def_team} D</b> — {e['label']}: "
-                  f"{_fmt(e['away']['value'], e['decimals'])} vs "
-                  f"{_fmt(e['home']['value'], e['decimals'])} → <em>{lead}</em></li>")
+                  f"{_fmt(off_stat['value'], e['decimals'])} vs "
+                  f"{_fmt(def_stat['value'], e['decimals'])} → <em>{lead}</em></li>")
 
     return f"""<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
