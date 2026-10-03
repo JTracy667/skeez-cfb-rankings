@@ -562,6 +562,12 @@ def render_png(html_text: str, png_path: str | Path, width: int = 1280,
     dom = subprocess.run(
         [exe, "--headless=new", "--disable-gpu", "--no-sandbox", "--no-first-run",
          "--no-default-browser-check",
+         # The probe MUST run at the same WIDTH as the screenshot. Without this it
+         # measures at Edge's default ~800px viewport, so a fluid/responsive card
+         # reports a height computed at the wrong width -- oversized (dead canvas)
+         # or undersized (clipped). Cards that hard-lock body{width:1280px} happened
+         # to be immune, which hid the bug. (Caught by CLO, 2026-10-03.)
+         f"--window-size={width},600",
          f"--user-data-dir={probe_dir}", "--virtual-time-budget=4000",
          "--dump-dom", probe.as_uri()],
         capture_output=True, text=True, timeout=120)
