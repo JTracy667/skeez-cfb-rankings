@@ -1,0 +1,248 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{TITLE}}</title>
+<!-- DATA CONTRACT (clo edition, 2026-10-03):
+     Every key substituted by scripts/matchup_report.py is present below. The brief's
+     three aliases map onto the renderer's real keys: {{AWAY_NAME}} -> {{AWA}},
+     {{HOME_NAME}} -> {{HOM}}, {{VS_BLOCK}} -> <section class="verdict"> (VS + {{LINES}} + {{WEATHER}}).
+     DESIGN THESIS: prime-time broadcast booth. Hue-agnostic colourway — the two logo-sampled
+     accents are used STRUCTURALLY (rails, seams, glows, washes), never as body text, so the
+     card survives any seed pair (purple/cardinal, green/gold, …). Contrast rule (Jeff,
+     2026-10-02): labels and values always sit on --txt/--txt-2 or brighter; --dim is
+     footnotes ONLY. No JS, no webfonts, no external assets. -->
+<style>
+:root{
+  /* ── neutral architecture (hue-agnostic) ── */
+  --canvas:#06080d; --card-a:#0d1220; --card-b:#0a0e17;
+  --panel:rgba(255,255,255,.028); --panel-2:rgba(255,255,255,.045);
+  --hair:rgba(168,184,220,.14); --hair-2:rgba(168,184,220,.26);
+  --txt:#f3f6fc; --txt-2:#dbe4f4; --dim:#8fa0c2;           /* --dim = footnotes ONLY */
+  --good:#4ae490; --good-bg:rgba(74,228,144,.14); --good-rg:rgba(74,228,144,.42);
+  --bad:#ff8484;  --bad-bg:rgba(255,110,110,.13);  --bad-rg:rgba(255,110,110,.40);
+  --stripe:rgba(214,226,255,.026);
+  /* ── matchup seed ── */
+  --away:{{AWAY_ACCENT}}; --home:{{HOME_ACCENT}};
+  --away-soft:{{AWAY_SOFT}}; --home-soft:{{HOME_SOFT}};
+  --away-glow:{{AWAY_GLOW}}; --home-glow:{{HOME_GLOW}};
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,"Segoe UI Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:16px 20px;width:1280px;  /* FIXED canvas: the PNG probe measures at its
+   own default viewport width; a fluid card would wrap differently there and crop wrong.
+   Locking 1280 makes probe-height == screenshot-height identical. */
+  background:
+  radial-gradient(900px 420px at 8% -6%, var(--away-soft) 0%, transparent 60%),
+  radial-gradient(900px 420px at 92% -6%, var(--home-soft) 0%, transparent 60%),
+  radial-gradient(1200px 700px at 50% 118%, #101a30 0%, transparent 70%),
+  var(--canvas);
+  color:var(--txt);
+  font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+.card{max-width:1240px;margin:0 auto;position:relative;overflow:hidden;
+  background:linear-gradient(178deg,var(--card-a) 0%,var(--card-b) 100%);
+  border:1px solid var(--hair);border-radius:24px;padding:0 0 14px;
+  box-shadow:0 36px 90px -30px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.025) inset}
+/* film grain: keeps the dark surfaces from banding */
+.card::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='150' height='150' filter='url(%23n)' opacity='0.05'/></svg>") repeat;
+  mix-blend-mode:overlay;opacity:.7}
+
+/* ══ top rail: the two accents converge in a broadcast diagonal ══ */
+.railtop{position:relative;height:4px;overflow:hidden;
+  background:linear-gradient(90deg,var(--away) 0%,var(--away) 46%,#1b2234 50%,var(--home) 54%,var(--home) 100%)}
+.railtop::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,var(--away-glow) 0%,transparent 30%,transparent 70%,var(--home-glow) 100%);
+  filter:blur(2px)}
+
+/* ══ masthead ══ */
+.masthead{display:flex;justify-content:space-between;align-items:center;padding:12px 26px 2px}
+.mh-left{display:flex;align-items:center;gap:12px}
+.mh-mark{width:15px;height:15px;background:var(--txt);
+  -webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='2' y='9' width='3' height='5' rx='1'/><rect x='7' y='4' width='3' height='10' rx='1'/><rect x='12' y='1' width='3' height='13' rx='1'/></svg>") center/contain no-repeat;
+  mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='2' y='9' width='3' height='5' rx='1'/><rect x='7' y='4' width='3' height='10' rx='1'/><rect x='12' y='1' width='3' height='13' rx='1'/></svg>") center/contain no-repeat}
+.mh-word{font:800 13px/1 var(--mono);letter-spacing:.14em;color:var(--txt)}
+.mh-sub{font:700 10.5px/1 var(--mono);letter-spacing:.2em;color:var(--txt);
+  padding-left:12px;border-left:1px solid var(--hair-2)}
+.mh-right{font:800 10px/1 var(--mono);letter-spacing:.18em;color:var(--txt-2);
+  background:var(--panel-2);border:1px solid var(--hair);border-radius:999px;padding:5px 12px}
+
+/* ══ hero: tale of the tape with the verdict as the monument ══ */
+.hero{position:relative;padding:10px 26px 14px}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;background:
+  linear-gradient(104deg,var(--away-soft) 0%,transparent 30%,transparent 70%,var(--home-soft) 100%)}
+.hero::after{content:"";position:absolute;left:26px;right:26px;bottom:0;height:1px;
+  background:linear-gradient(90deg,var(--away),var(--hair-2) 50%,var(--home))}
+.hero-teams{position:relative;display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center}
+.team{display:flex;gap:14px;align-items:center;min-width:0}
+.team.home{flex-direction:row-reverse;text-align:right}
+.logo-ring{flex:0 0 auto;width:66px;height:66px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 42%, rgba(255,255,255,.07), rgba(255,255,255,0) 72%)}
+.team.away .logo-ring{box-shadow:0 0 0 1.5px var(--away), 0 0 0 5px color-mix(in srgb, var(--away) 16%, transparent), 0 0 26px 3px var(--away-glow)}
+.team.home .logo-ring{box-shadow:0 0 0 1.5px var(--home), 0 0 0 5px color-mix(in srgb, var(--home) 16%, transparent), 0 0 26px 3px var(--home-glow)}
+.logo{width:46px;height:46px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.65))}
+.team-body{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 auto}
+.tname{font-size:clamp(19px,2.15vw,27px);font-weight:900;letter-spacing:-.01em;line-height:1.06;color:var(--txt);text-wrap:balance}
+.trec{display:inline-flex;align-self:flex-start;font:800 11.5px/1 var(--mono);letter-spacing:.06em;color:var(--txt);
+  background:var(--panel-2);border:1px solid var(--hair-2);border-radius:999px;padding:4px 11px}
+.team.home .trec{align-self:flex-end}
+.plates{display:flex;gap:8px}
+.team.home .plates{justify-content:flex-end}
+.plate{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--hair);
+  border-radius:12px;padding:5px 13px 6px;text-align:center;min-width:88px}
+.plate .k{display:block;font:800 9.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--txt-2)}
+.plate .v{display:block;font-size:26px;font-weight:900;line-height:1.12;color:var(--txt);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.plate .v.lead{color:var(--good);text-shadow:0 0 18px var(--good-rg)}
+/* the verdict: VS + spread/total + weather — the largest thing on the card */
+.verdict{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:340px;max-width:390px;
+  padding:2px 20px;border-left:1px solid var(--hair);border-right:1px solid var(--hair)}
+.vs{display:flex;align-items:center;gap:10px;font:900 13px/1 var(--mono);letter-spacing:.3em;color:var(--txt)}
+.vs::before,.vs::after{content:"";width:26px;height:1px;background:var(--hair-2)}
+.linebox{text-align:center;font-size:26px;font-weight:900;line-height:1.38;color:var(--txt);letter-spacing:-.015em;
+  font-variant-numeric:tabular-nums;text-wrap:balance}
+.linebox .k{display:inline-block;font:800 10px/1 var(--mono);letter-spacing:.2em;color:var(--txt-2);
+  vertical-align:3px;margin-right:7px}
+.wxchip{display:inline-flex;align-items:center;gap:7px;font:700 12px/1 var(--mono);letter-spacing:.04em;color:var(--txt);
+  background:var(--panel-2);border:1px solid var(--hair);border-radius:999px;padding:5px 13px}
+.wxico{width:12px;height:12px;background:var(--txt-2);
+  -webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M13.5 14.2V5a2.25 2.25 0 0 0-4.5 0v9.2a4.2 4.2 0 1 0 4.5 0z'/></svg>") center/contain no-repeat;
+  mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M13.5 14.2V5a2.25 2.25 0 0 0-4.5 0v9.2a4.2 4.2 0 1 0 4.5 0z'/></svg>") center/contain no-repeat}
+
+/* ══ body: team rails + spine ══ */
+.cols{display:grid;grid-template-columns:.95fr 1.6fr .95fr;gap:16px;align-items:stretch;padding:14px 26px 4px}
+.col{min-width:0;border-radius:16px;border:1px solid var(--hair);padding:8px 12px 9px;
+  background:linear-gradient(180deg,var(--panel-2),transparent 46%),var(--panel)}
+.col.away{border-left:3px solid var(--away);box-shadow:inset 28px 0 48px -34px var(--away-glow)}
+.col.home{border-right:3px solid var(--home);box-shadow:inset -28px 0 48px -34px var(--home-glow)}
+.colcap{display:flex;align-items:center;gap:8px;margin:0 0 6px;
+  font:800 10px/1 var(--mono);letter-spacing:.24em;color:var(--txt)}
+.colcap::after{content:"";flex:1;height:1px;background:var(--hair)}
+.away .colcap::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--away);box-shadow:0 0 12px var(--away-glow)}
+.home .colcap{justify-content:flex-end}
+.home .colcap::before{content:"";order:3;width:9px;height:9px;border-radius:3px;background:var(--home);box-shadow:0 0 12px var(--home-glow)}
+.secttl{display:flex;align-items:center;gap:8px;margin:7px 0 2px;
+  font-size:10.5px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:var(--txt);white-space:nowrap}
+.secttl::after{content:"";flex:1;height:1px;background:var(--hair)}
+.col.away .secttl::before,.col.home .secttl::before{content:"";width:5px;height:5px;transform:rotate(45deg);background:var(--hair-2)}
+.srow{display:flex;align-items:center;gap:6px;font-size:11.6px;line-height:1.2;padding:1px 3px;
+  border-bottom:1px solid rgba(214,226,255,.05)}
+.srow:last-child{border-bottom:0}
+.col.away .srow{flex-direction:row}
+.col.home .srow{flex-direction:row-reverse}
+.slabel{color:var(--txt-2);font-weight:600;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sval{color:var(--txt);font-weight:800;font-variant-numeric:tabular-nums;flex:0 0 auto;line-height:1;
+  min-width:44px;padding:2px 6px;border-radius:6px;border:1px solid transparent}
+.col.away .sval{text-align:right}
+.col.home .sval{text-align:left}
+.sval.good{background:var(--good-bg);border-color:var(--good-rg)}
+.sval.bad{background:var(--bad-bg);border-color:var(--bad-rg)}
+.sval.lead{color:var(--good);font-weight:900}
+.rk{display:inline-block;min-width:25px;text-align:center;font:900 10.2px/1.3 var(--mono);color:#071019;
+  background:linear-gradient(180deg,#aaccff,#7fb0f7);border-radius:999px;padding:1px 5px;margin:0 6px;flex:0 0 auto}
+.rk.bad{background:linear-gradient(180deg,#ffb0ab,#f28b82);color:#20070a}
+.rk.mid{background:#3e4a63;color:#e9f1ff;font-weight:800}
+/* centre column: cross-matchup tables + ratings sit in elevated panels */
+/* NB: this div is .spine, NOT .mid — the renderer stamps .rk.mid rank pills and a
+   container named .mid would collide with them in CSS/query-land. */
+.spine{min-width:0;display:flex;flex-direction:column;justify-content:center}
+.spine section{background:linear-gradient(180deg,var(--panel-2),transparent 60%),var(--panel);
+  border:1px solid var(--hair);border-radius:16px;padding:8px 15px 6px;margin:0 0 12px}
+.spine section:last-child{margin-bottom:0}
+h2{display:flex;align-items:center;gap:9px;margin:0 0 4px;font-size:11px;font-weight:900;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--txt)}
+h2::after{content:"";flex:1;height:1px;background:var(--hair)}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+tr:nth-child(even){background:var(--stripe)}
+td{padding:4px 7px;border-bottom:1px solid rgba(214,226,255,.05);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+.label{text-align:center;width:57%;color:var(--txt);font-size:11px;font-weight:700;letter-spacing:.01em;
+  text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.val{font-variant-numeric:tabular-nums;white-space:nowrap;width:21.5%;color:var(--txt);line-height:1.15;
+  font-size:12.8px;font-weight:800;border-radius:8px;position:relative}
+.val.away{padding-right:36px}
+.val.home{padding-left:36px}
+.val .rk{position:absolute;top:50%;transform:translateY(-50%);margin:0}
+.val.away .rk{right:7px}
+.val.home .rk{left:7px}
+.val.away{text-align:left;border-left:3px solid transparent}
+.val.home{text-align:right;border-right:3px solid transparent}
+.val.good{background:var(--good-bg)}
+.val.bad{background:var(--bad-bg)}
+.val.away.lead{border-left-color:var(--away);color:var(--good)}
+.val.home.lead{border-right-color:var(--home);color:var(--good)}
+.val.lead{color:var(--good);font-weight:900}
+
+/* ══ legend band + footnotes ══ */
+.foot{padding:6px 26px 0}
+.legendbox{border-top:1px solid var(--hair);padding-top:10px}
+.legendbox h2{margin-bottom:7px}
+.legendbox h2::after{background:var(--hair)}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:4px 26px}
+.lg{display:flex;align-items:baseline;gap:9px;font-size:11.5px;color:var(--txt);line-height:1.4}
+.lg::before{content:"";flex:0 0 auto;width:4px;height:4px;border-radius:50%;background:var(--hair-2);transform:translateY(-1px)}
+.sw{width:14px;height:14px;border-radius:5px;flex:0 0 auto;border:1px solid var(--good-rg);background:var(--good-bg);
+  transform:translateY(2px)}
+.sw.good{background:var(--good-bg);border-color:var(--good-rg)}
+.sw.pill{background:linear-gradient(180deg,#aaccff,#7fb0f7);border-color:transparent;border-radius:999px;width:17px;height:12px}
+.sw.none{background:transparent;border:1px dashed var(--hair-2)}
+.footnote{display:flex;justify-content:space-between;gap:18px;margin-top:9px;padding-top:8px;
+  border-top:1px dashed var(--hair);font:600 10.5px/1.4 var(--mono);letter-spacing:.05em;color:var(--txt-2)}
+.footnote b{color:var(--txt);font-weight:800}
+.footnote .sig{color:var(--dim)}
+</style></head><body><div class="card">
+
+<div class="railtop"></div>
+
+<header class="masthead">
+  <div class="mh-left">
+    <span class="mh-mark"></span>
+    <span class="mh-word">SKEEZ CFB</span>
+    <span class="mh-sub">ADVANCED MATCHUP PREVIEW</span>
+  </div>
+  <div class="mh-right">MODEL × MARKET</div>
+</header>
+
+<section class="hero">
+  <div class="hero-teams">
+    <div class="team away">
+      <div class="logo-ring"><img class="logo" src="{{AWAY_LOGO}}" alt="{{AWA}}"></div>
+      <div class="team-body">
+        <div class="tname">{{AWA}} <span class="trec">{{AWAY_REC}}</span></div>
+        <div class="plates">
+          <div class="plate"><span class="k">WIN PROB</span><span class="v {{AWAY_WP_LEAD}}">{{AWAY_WP}}</span></div>
+          <div class="plate"><span class="k">PROJ PTS</span><span class="v {{AWAY_PP_LEAD}}">{{AWAY_PP}}</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="verdict">
+      <div class="vs">VS</div>
+      <div class="linebox">{{LINES}}</div>
+      <div class="wxchip"><i class="wxico"></i>{{WEATHER}}</div>
+    </div>
+    <div class="team home">
+      <div class="logo-ring"><img class="logo" src="{{HOME_LOGO}}" alt="{{HOM}}"></div>
+      <div class="team-body">
+        <div class="tname">{{HOM}} <span class="trec">{{HOME_REC}}</span></div>
+        <div class="plates">
+          <div class="plate"><span class="k">WIN PROB</span><span class="v {{HOME_WP_LEAD}}">{{HOME_WP}}</span></div>
+          <div class="plate"><span class="k">PROJ PTS</span><span class="v {{HOME_PP_LEAD}}">{{HOME_PP}}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main class="cols">
+  <aside class="col away"><div class="colcap">AWAY</div>{{AWAY_STACK}}</aside>
+  <div class="spine">{{CROSS}}{{RATINGS}}</div>
+  <aside class="col home"><div class="colcap">HOME</div>{{HOME_STACK}}</aside>
+</main>
+
+<footer class="foot">
+  <div class="legendbox">{{LEGEND}}</div>
+  <div class="footnote">
+    <span><b>HEAT</b> = national percentile band · <b>PILL</b> = FBS rank, 1 best · <b>RAILS + VS BLOCK</b> recolour from each team's logo</span>
+    <span class="sig">SKEEZ CFB · CLO EDITION</span>
+  </div>
+</footer>
+
+</div></body></html>

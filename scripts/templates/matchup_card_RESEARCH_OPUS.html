@@ -1,0 +1,343 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{TITLE}}</title>
+<style>
+/* ════════════════════════════════════════════════════════════════════════════
+   PRIMETIME — Research's matchup card (RESEARCH_OPUS variant)
+   Mood: a night game under the lights. A near-black field, two team colours
+   acting as LIGHT SOURCES from their own touchline, a stadium-scoreboard
+   centrepiece. Zero JavaScript: derived numbers (duels won / stat edges) are
+   CSS counters; winner arrows are :has(). Everything is final at first paint.
+
+   Colour system — every accent tone is DERIVED from the two logo-sampled seeds
+   with color-mix(), so it re-themes for any matchup (purple/cardinal today,
+   green/gold tomorrow):
+     --X        seed (light, rails, bars)
+     --X-ink    seed mixed 45% toward white  → accent text that always reads
+     --X-deep   seed mixed 80% toward ink    → tinted surface
+     --X-beam   seed at 34% alpha            → spotlight wash
+   Semantics are fixed and hue-separated from teams by FORM, not just colour:
+   good/bad = tinted cell + green/red value; rank = pill; edge = outer rail + arrow.
+   Text tiers: --t1 #fff values · --t2 #e8ebf3 labels · --t3 footnotes ONLY.
+   ════════════════════════════════════════════════════════════════════════════ */
+:root{
+  --ink0:#05060a; --ink1:#0a0c12; --ink2:#10131c; --ink3:#171b27;
+  --hair:rgba(255,255,255,.075); --hair2:rgba(255,255,255,.14);
+  --t1:#ffffff; --t2:#e8ebf3; --t3:#b9c1d3;
+  --good:#46e39a; --bad:#ff7b7b; --good-tint:rgba(70,227,154,.17); --bad-tint:rgba(255,123,123,.17);
+  --pill-top:#a9d2ff; --pill-bot:#ffaaa6; --pill-mid:#2a3143;
+  --away:{{AWAY_ACCENT}}; --home:{{HOME_ACCENT}};
+  --away-soft:{{AWAY_SOFT}}; --home-soft:{{HOME_SOFT}};
+  --away-glow:{{AWAY_GLOW}}; --home-glow:{{HOME_GLOW}};
+  --away-ink:color-mix(in oklab,var(--away) 55%,#fff);
+  --home-ink:color-mix(in oklab,var(--home) 55%,#fff);
+  --away-deep:color-mix(in oklab,var(--away) 20%,var(--ink1));
+  --home-deep:color-mix(in oklab,var(--home) 20%,var(--ink1));
+  --away-beam:color-mix(in srgb,var(--away) 34%,transparent);
+  --home-beam:color-mix(in srgb,var(--home) 34%,transparent);
+  --disp:"Bahnschrift","DIN Alternate","Roboto Condensed","Arial Narrow",-apple-system,"Segoe UI",sans-serif;
+  --ui:"Segoe UI Variable Text","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+  --r-lg:20px; --r-md:12px; --r-sm:7px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink0)}
+body{color:var(--t1);font:13px/1.35 var(--ui);-webkit-font-smoothing:antialiased}
+
+/* ── Canvas: the card IS the viewport. Spotlights + field hash + film grain ── */
+.card{position:relative;overflow:hidden;width:1280px;min-height:100vh;padding:26px 28px 22px;
+  counter-reset:dA dH sA sH;
+  display:grid;column-gap:24px;row-gap:18px;
+  grid-template-columns:minmax(0,1fr) 548px minmax(0,1fr);
+  grid-template-areas:
+    "away center home"
+    "body body body"
+    "key key key";
+  background:
+    radial-gradient(70% 520px at 0% -60px,var(--away-beam),transparent 70%),
+    radial-gradient(70% 520px at 100% -60px,var(--home-beam),transparent 70%),
+    linear-gradient(180deg,#0d1018 0%,var(--ink1) 420px,var(--ink0) 100%);}
+.card::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.05;mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+/* yard-line field behind the hero only: 10 stripes + hash ticks */
+.card::after{content:"";position:absolute;left:0;right:0;top:0;height:404px;pointer-events:none;
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 1px,transparent 1px 128px),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.09) 0 1px,transparent 1px 25.6px) 0 100%/100% 9px no-repeat;
+  -webkit-mask:linear-gradient(180deg,transparent 0,#000 30%,#000 100%);mask:linear-gradient(180deg,transparent 0,#000 30%,#000 100%)}
+.card>*{position:relative;z-index:1}
+
+/* ── Team panels ─────────────────────────────────────────────────────────── */
+.team{grid-area:away;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  text-align:center;padding:2px 0 0;min-width:0}
+.team.home{grid-area:home}
+.wm{position:absolute;top:150px;width:420px;height:420px;object-fit:contain;opacity:.06;
+  transform:translateY(-50%);pointer-events:none;filter:saturate(.6)}
+.team.away .wm{left:-190px}.team.home .wm{right:-190px}
+.side{font:700 11px/1 var(--ui);letter-spacing:.32em;text-transform:uppercase;color:var(--t2);
+  padding:6px 10px 6px 13px;border-radius:999px;border:1px solid var(--hair2);background:rgba(0,0,0,.3)}
+.team.away .side{box-shadow:inset 0 -2px 0 var(--away)} .team.home .side{box-shadow:inset 0 -2px 0 var(--home)}
+.crest{position:relative;width:112px;height:112px;margin:12px 0 10px;border-radius:50%;display:grid;place-items:center}
+.crest::before{content:"";position:absolute;inset:-18px;border-radius:50%;filter:blur(14px);opacity:.9}
+.crest::after{content:"";position:absolute;inset:0;border-radius:50%;padding:2px;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.team.away .crest{background:radial-gradient(circle,var(--away-deep) 0%,rgba(10,12,18,.92) 72%)}
+.team.home .crest{background:radial-gradient(circle,var(--home-deep) 0%,rgba(10,12,18,.92) 72%)}
+.team.away .crest::before{background:radial-gradient(circle,var(--away-glow),transparent 66%)}
+.team.home .crest::before{background:radial-gradient(circle,var(--home-glow),transparent 66%)}
+.team.away .crest::after{background:conic-gradient(from 210deg,var(--away),var(--away-ink) 25%,rgba(255,255,255,.08) 50%,var(--away) 100%)}
+.team.home .crest::after{background:conic-gradient(from 30deg,var(--home),var(--home-ink) 25%,rgba(255,255,255,.08) 50%,var(--home) 100%)}
+.logo{position:relative;z-index:1;width:82px;height:82px;object-fit:contain;filter:drop-shadow(0 6px 14px rgba(0,0,0,.7))}
+.tname{font:700 42px/.94 var(--disp);letter-spacing:.01em;text-transform:uppercase;color:var(--t1);
+  max-width:100%;overflow-wrap:anywhere;text-wrap:balance;text-shadow:0 2px 18px rgba(0,0,0,.6)}
+.trec{margin-top:9px;display:inline-flex;align-items:center;gap:8px;
+  font:700 11px/1 var(--ui);letter-spacing:.2em;color:var(--t2);text-transform:uppercase}
+.trec b{font:700 20px/1 var(--disp);letter-spacing:.04em;color:var(--t1);font-variant-numeric:tabular-nums}
+.trec:has(b:empty){display:none}
+/* tale of the tape: the RATINGS block rendered in each panel, showing only that side */
+.tape{width:100%;margin-top:12px;padding:9px 12px 4px;border-radius:var(--r-md);text-align:left;
+  background:rgba(8,10,15,.62);border:1px solid var(--hair);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.team.away .tape{border-top:2px solid var(--away)} .team.home .tape{border-top:2px solid var(--home)}
+.tape .tt{font:700 10.5px/1 var(--ui);letter-spacing:.24em;text-transform:uppercase;color:var(--t2);margin:0 2px 6px}
+.team.home .tape .tt{text-align:right}
+.tape h2{display:none}
+.tape table{border-spacing:0}
+.tape tr{display:flex;align-items:center;height:25px;border-bottom:1px solid var(--hair)}
+.tape tr:last-child{border-bottom:0}
+.tape td.label{order:1;flex:1;width:auto;background:none;padding:0 2px;text-align:left;font:600 12px/1 var(--ui);color:var(--t2)}
+.tape td.val{order:2;width:auto;height:auto;background:none;box-shadow:none;padding:0 2px;font:700 17px/1 var(--disp)}
+.tape td.val .rk{margin:0 0 0 8px;vertical-align:1px}
+.team.away .tape td.val.home,.team.home .tape td.val.away{display:none}
+.team.home .tape td.label{order:2;text-align:right}
+.team.home .tape td.val.home{order:1}
+.team.home .tape td.val.home .rk{margin:0 8px 0 0}
+.team .tape td.val.lead{box-shadow:none}
+.tape tr:has(td.val.away.lead) td.label::before,.tape tr:has(td.val.home.lead) td.label::after{content:none}
+
+/* ── Centre: the scoreboard slab (the hero) ─────────────────────────────── */
+.center{grid-area:center;align-self:stretch;border-radius:var(--r-lg);padding:16px 26px 16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.025) 46%,rgba(255,255,255,.035)),
+             rgba(9,11,17,.8);
+  border:1px solid var(--hair2);
+  box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 40px 80px -30px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.6);
+  display:flex;flex-direction:column;justify-content:space-between;gap:10px}
+.center::before{content:"";position:absolute;left:22px;right:22px;top:-1px;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,var(--away),transparent 45%,transparent 55%,var(--home))}
+.kick{display:flex;align-items:center;justify-content:center;gap:9px;
+  font:700 11.5px/1 var(--ui);letter-spacing:.28em;text-transform:uppercase;color:var(--t2)}
+.kick svg{width:18px;height:18px;color:var(--t1)}
+.board{display:grid;grid-template-columns:1fr 74px 1fr;align-items:center}
+.pp{text-align:center;min-width:0}
+.pp .n{display:block;font:700 84px/.88 var(--disp);letter-spacing:-.01em;color:var(--t1);
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.pp .n.lead{color:var(--good);text-shadow:0 0 30px rgba(70,227,154,.35)}
+.pp .who{display:block;margin-top:8px;font:700 12px/1.1 var(--ui);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px}
+.pp.away .who::before,.pp.home .who::after{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;
+  vertical-align:1px;margin:0 7px}
+.pp.away .who::before{background:var(--away)} .pp.home .who::after{background:var(--home)}
+.vs{width:66px;height:66px;border-radius:50%;display:grid;place-items:center;justify-self:center;
+  font:700 21px/1 var(--disp);letter-spacing:.12em;padding-left:.12em;color:var(--t1);
+  background:linear-gradient(var(--ink2),var(--ink2)) padding-box,
+             linear-gradient(135deg,var(--away),var(--home)) border-box;
+  border:2px solid transparent;box-shadow:0 0 24px rgba(0,0,0,.6)}
+.cap{font:700 10.5px/1 var(--ui);letter-spacing:.24em;text-transform:uppercase;color:var(--t2);text-align:center}
+/* win-probability tug: the split point IS the data (AWAY_WP feeds flex-basis) */
+.wp{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px}
+.wp .pct{font:700 26px/1 var(--disp);color:var(--t1);font-variant-numeric:tabular-nums;min-width:74px}
+.wp .pct.home{text-align:right}
+.wp .pct.lead{color:var(--good)}
+.wp .mid{display:flex;flex-direction:column;gap:7px}
+.tug{display:flex;height:14px;border-radius:999px;overflow:hidden;background:var(--ink3);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.tug i{display:block;flex:0 0 50%;min-width:0}
+.tug .a{background:linear-gradient(90deg,color-mix(in oklab,var(--away) 65%,#000),var(--away));box-shadow:inset -2px 0 0 #fff}
+.tug .h{background:linear-gradient(90deg,var(--home),color-mix(in oklab,var(--home) 65%,#000))}
+.market{border-radius:var(--r-md);background:rgba(0,0,0,.34);border:1px solid var(--hair);padding:11px 8px 12px}
+.linebox{text-align:center;font:700 27px/1.1 var(--disp);color:var(--t1);font-variant-numeric:tabular-nums}
+.linebox:has(.k:nth-of-type(2)){columns:2;column-gap:0;column-rule:1px solid var(--hair2)}
+.linebox .k{display:block;margin-bottom:6px;font:700 10.5px/1 var(--ui);letter-spacing:.24em;color:var(--t2)}
+.linebox .k:nth-of-type(2){break-before:column}
+.linebox br{display:none} /* .k is block-level, so the <br> separators are redundant */
+.wx{display:flex;align-items:center;justify-content:center;gap:10px;font:600 17px/1.2 var(--ui);color:var(--t1);letter-spacing:.01em}
+.wx svg{width:24px;height:24px;flex:0 0 auto;color:#ffd27a}
+.tally{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tl{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:8px 12px;
+  border-radius:var(--r-md);background:rgba(255,255,255,.04);border:1px solid var(--hair)}
+.tl .lbl{font:700 10.5px/1.15 var(--ui);letter-spacing:.16em;text-transform:uppercase;color:var(--t2);text-align:center}
+.tl .c{font:700 26px/1 var(--disp);color:var(--t1);font-variant-numeric:tabular-nums;min-width:30px}
+.tl .c.a{border-left:4px solid var(--away);padding-left:8px}
+.tl .c.h{border-right:4px solid var(--home);padding-right:8px;text-align:right}
+.tl.duel .c.a::before{content:counter(dA)} .tl.duel .c.h::before{content:counter(dH)}
+.tl.edge .c.a::before{content:counter(sA)} .tl.edge .c.h::before{content:counter(sH)}
+
+/* ── Body: duels (left) + season ledger (right) ─────────────────────────── */
+.body{grid-area:body;display:grid;grid-template-columns:504px 696px;gap:24px;align-items:start}
+.band-h{display:flex;align-items:center;gap:10px;margin:0 0 10px;height:18px;
+  font:700 12px/1 var(--ui);letter-spacing:.24em;text-transform:uppercase;color:var(--t1);white-space:nowrap}
+.band-h svg{width:17px;height:17px;flex:0 0 auto}
+.band-h .fill{flex:1;height:1px;background:linear-gradient(90deg,var(--hair2),transparent)}
+.band-h .sub{font:600 11.5px/1 var(--ui);letter-spacing:.02em;text-transform:none;color:var(--t3)}
+.band-h .teams{display:flex;gap:14px;font:700 11px/1 var(--ui);letter-spacing:.12em;color:var(--t2);min-width:0}
+.band-h .teams span{overflow:hidden;text-overflow:ellipsis;max-width:120px}
+.band-h .teams span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+.band-h .teams .a::before{background:var(--away)} .band-h .teams .h::before{background:var(--home)}
+
+/* shared pill: FBS rank. blue top 30% · red bottom 30% · slate middle */
+.rk{display:inline-block;min-width:31px;padding:3px 5px 2px;border-radius:999px;text-align:center;
+  font:700 12px/1.05 var(--disp);font-variant-numeric:tabular-nums;color:#07101e;background:var(--pill-top);flex:0 0 auto}
+.rk.bad{background:var(--pill-bot);color:#200707}
+.rk.mid{background:var(--pill-mid);color:#eef2fa;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+
+/* Duels: offense-vs-defense, mirrored around a central label spine */
+.duels section{min-width:0}
+.duels section+section{margin-top:12px}
+.duels h2{margin:0 0 4px;padding:9px 12px;border-radius:var(--r-md) var(--r-md) 0 0;
+  font:700 12.5px/1.1 var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--t1);text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background:linear-gradient(90deg,var(--away-deep),var(--ink2) 35%,var(--ink2) 65%,var(--home-deep));
+  border-bottom:2px solid;border-image:linear-gradient(90deg,var(--away),rgba(255,255,255,.12) 50%,var(--home)) 1}
+table{width:100%;border-collapse:separate;border-spacing:0 3px;table-layout:fixed}
+td{padding:0;vertical-align:middle}
+td.label{width:50%;padding:3px 4px;text-align:center;font:600 11.5px/1.15 var(--ui);letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  color:var(--t2);text-wrap:balance;background:rgba(255,255,255,.035)}
+td.val{width:25%;height:27px;padding:0 9px;font:700 17px/1 var(--disp);color:var(--t1);white-space:nowrap;
+  font-variant-numeric:tabular-nums;background:rgba(255,255,255,.035)}
+td.val.away{text-align:right;border-radius:var(--r-sm) 0 0 var(--r-sm)}
+td.val.home{text-align:left;border-radius:0 var(--r-sm) var(--r-sm) 0}
+td.val .rk{margin:0 7px;vertical-align:2px}
+td.val.good.away{background:linear-gradient(90deg,var(--good-tint),rgba(255,255,255,.035) 90%)}
+td.val.good.home{background:linear-gradient(270deg,var(--good-tint),rgba(255,255,255,.035) 90%)}
+td.val.bad.away{background:linear-gradient(90deg,var(--bad-tint),rgba(255,255,255,.035) 90%)}
+td.val.bad.home{background:linear-gradient(270deg,var(--bad-tint),rgba(255,255,255,.035) 90%)}
+td.val.lead{color:var(--good)}
+td.val.away.lead{box-shadow:inset 4px 0 0 var(--away)}
+td.val.home.lead{box-shadow:inset -4px 0 0 var(--home)}
+tr:has(td.val.away.lead) td.label::before{content:"\25C2  ";color:var(--away-ink);font-size:13px}
+tr:has(td.val.home.lead) td.label::after{content:"  \25B8";color:var(--home-ink);font-size:13px}
+.duels .val.away.lead{counter-increment:dA}
+.duels .val.home.lead{counter-increment:dH}
+
+/* Season ledger. The two stacks are IDENTICAL flows (same sections, same rows,
+   fixed row height), so the home stack is laid exactly over the away stack:
+   away rows draw [value·rank | label | ····], home rows draw [···· | ···· | rank·value].
+   Every metric therefore reads as one head-to-head line, with no script. */
+.ledger{--colw:calc((696px - 16px) / 2);--lab:150px;--slot:calc((var(--colw) - var(--lab)) / 2)}
+.lgrid{position:relative}
+.lgrid .col{columns:2;column-gap:16px;column-fill:balance}
+.lgrid .col.home{position:absolute;inset:0;pointer-events:none}
+.col .secttl{height:28px;margin:6px 0 2px;padding:0 10px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;
+  font:700 11.5px/1 var(--ui);letter-spacing:.18em;text-transform:uppercase;color:var(--t1);
+  background:linear-gradient(90deg,var(--away-deep),var(--ink3) 30%,var(--ink3) 70%,var(--home-deep));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);break-after:avoid}
+.col .secttl:first-child{margin-top:0}
+.col .secttl:nth-child(3 of .secttl){break-before:column;margin-top:0}
+.col.home .secttl{visibility:hidden}
+.srow{display:flex;align-items:center;gap:5px;height:26px;break-inside:avoid}
+.srow.away{justify-content:flex-end;padding-right:var(--slot);border-bottom:1px solid var(--hair)}
+.srow.away .slabel{order:3;flex:0 0 var(--lab);align-self:stretch;display:flex;align-items:center;justify-content:center;
+  margin-left:3px;padding:0 5px;font:600 11.5px/1 var(--ui);letter-spacing:.02em;color:var(--t2);
+  background:rgba(255,255,255,.035);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srow.away .sval{order:1}.srow.away .rk{order:2}
+.srow.home{justify-content:flex-start;padding-left:calc(var(--slot) + var(--lab) + 3px)}
+.srow.home .slabel{display:none}
+.srow.home .rk{order:1}.srow.home .sval{order:2}
+.sval{font:700 14.5px/1 var(--disp);color:var(--t1);font-variant-numeric:tabular-nums;padding:4px 5px 3px;border-radius:5px;white-space:nowrap}
+.sval.good{background:var(--good-tint)} .sval.bad{background:var(--bad-tint)}
+.sval.lead{color:var(--good)}
+.srow.away:has(.lead){box-shadow:inset 3px 0 0 var(--away)}
+.srow.home:has(.lead){box-shadow:inset -3px 0 0 var(--home)}
+.srow .rk{min-width:29px;font-size:11.5px;padding:3px 4px 2px}
+.col.away .sval.lead{counter-increment:sA}
+.col.home .sval.lead{counter-increment:sH}
+
+/* ── Key: one slim footer rail ─────────────────────────────────────────── */
+.key{grid-area:key;border-top:1px solid var(--hair);padding-top:11px}
+.key section h2{display:none}
+.legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 26px}
+.lg{display:flex;align-items:flex-start;gap:9px;font:500 11.5px/1.3 var(--ui);color:var(--t2)}
+.sw{width:13px;height:13px;margin-top:1px;border-radius:4px;flex:0 0 auto;border:1px solid var(--hair2)}
+.sw.good{background:var(--good-tint);border-color:var(--good)}
+.sw.pill{background:var(--pill-top);border-color:var(--pill-top);border-radius:999px}
+.sw.none{background:transparent;border-style:dashed;border-color:#7a86a3}
+.kick b{color:var(--t1);letter-spacing:.3em}
+.kick .dot{width:4px;height:4px;border-radius:50%;background:var(--t3)}
+</style></head><body><div class="card">
+
+<div class="team away">
+  <img class="wm" src="{{AWAY_LOGO}}" alt="">
+  <span class="side">Away</span>
+  <div class="crest"><img class="logo" src="{{AWAY_LOGO}}" alt="{{AWA}}"></div>
+  <div class="tname">{{AWA}}</div>
+  <div class="trec">Record <b>{{AWAY_REC}}</b></div>
+  <div class="tape"><div class="tt">Power ratings</div>{{RATINGS}}</div>
+</div>
+
+<div class="team home">
+  <img class="wm" src="{{HOME_LOGO}}" alt="">
+  <span class="side">Home</span>
+  <div class="crest"><img class="logo" src="{{HOME_LOGO}}" alt="{{HOM}}"></div>
+  <div class="tname">{{HOM}}</div>
+  <div class="trec">Record <b>{{HOME_REC}}</b></div>
+  <div class="tape"><div class="tt">Power ratings</div>{{RATINGS}}</div>
+</div>
+
+<div class="body">
+  <div class="duels">
+    <div class="band-h">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l9 9M4 4h5M4 4v5"/><path d="M20 4l-9 9M20 4h-5M20 4v5"/><path d="M8 17l-3 3M16 17l3 3"/></svg>
+      Head-to-head <span class="sub">offense vs the other side's defense · edges tallied up top</span><span class="fill"></span>
+    </div>
+    {{CROSS}}
+  </div>
+  <div class="ledger">
+    <div class="band-h">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      Season ledger <span class="fill"></span>
+      <span class="teams"><span class="a">{{AWA}}</span><span class="h">{{HOM}}</span></span>
+    </div>
+    <div class="lgrid">
+      <div class="col away">{{AWAY_STACK}}</div>
+      <div class="col home">{{HOME_STACK}}</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="key">{{LEGEND}}</div>
+
+<!-- Centre comes AFTER the duels and ledger in the DOM so its CSS counters have
+     already counted every edge; grid-area puts it back at the top visually. -->
+<div class="center">
+  <div class="kick">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><ellipse cx="12" cy="12" rx="10" ry="6" transform="rotate(-35 12 12)"/><path d="M9.2 14.8l5.6-5.6M10.4 11.2l1.4 1.4M12.2 9.4l1.4 1.4M8.6 13l1.4 1.4"/></svg>
+    <b>Skeez CFB</b><span class="dot"></span>Advanced stats matchup
+  </div>
+  <div class="board">
+    <div class="pp away"><span class="n {{AWAY_PP_LEAD}}">{{AWAY_PP}}</span><span class="who">{{AWA}}</span></div>
+    <div class="vs">VS</div>
+    <div class="pp home"><span class="n {{HOME_PP_LEAD}}">{{HOME_PP}}</span><span class="who">{{HOM}}</span></div>
+  </div>
+  <div class="cap">Model projected points</div>
+  <div class="wp">
+    <span class="pct away {{AWAY_WP_LEAD}}">{{AWAY_WP}}</span>
+    <div class="mid">
+      <div class="tug"><i class="a" style="flex-basis:{{AWAY_WP}}"></i><i class="h" style="flex-basis:{{HOME_WP}}"></i></div>
+      <div class="cap">Win probability</div>
+    </div>
+    <span class="pct home {{HOME_WP_LEAD}}">{{HOME_WP}}</span>
+  </div>
+  <div class="market"><div class="linebox">{{LINES}}</div></div>
+  <div class="wx">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="9" cy="9" r="3.4"/><path d="M9 2.5v1.6M2.5 9h1.6M4.4 4.4l1.1 1.1M13.6 4.4l-1.1 1.1"/><path d="M8 19.5h9.5a3.5 3.5 0 0 0 .4-7 5 5 0 0 0-9.4 1.6A2.7 2.7 0 0 0 8 19.5z" fill="#0a0c12"/></svg>
+    <span>{{WEATHER}}</span>
+  </div>
+  <div class="tally">
+    <div class="tl duel"><span class="c a"></span><span class="lbl">Duels<br>won</span><span class="c h"></span></div>
+    <div class="tl edge"><span class="c a"></span><span class="lbl">Ledger<br>edges</span><span class="c h"></span></div>
+  </div>
+</div>
+
+
+
+</div></body></html>

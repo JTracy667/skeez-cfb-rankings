@@ -1,0 +1,401 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>{{TITLE}}</title>
+<style>
+/* ================= HERMES MATCHUP CARD =================
+   MOOD: "Broadcast booth at night" -- deep engineered ink, one stadium-light
+   colour system seeded live from the two team logos.
+
+   COLOUR LAW (defensible in one line each):
+   * Team accents are STRUCTURE, never small text: rails, rules, washes, glow,
+     crest rings, column identity. The sampled accent is mid-lightness, so as
+     text it would fail contrast -- where accent must become type it is used
+     only through --away-lit / --home-lit (accent mixed toward white), which
+     stays legible for EVERY seed (cardinal, gold, green, navy).
+   * Semantic colour is FIXED and matches the injected legend block verbatim:
+     green = top-30% percentile and "holds the edge", red = bottom-30%,
+     blue/grey/red rank pills. It never collides with team colour because team
+     colour only appears as fill/rule/glow.
+   * Hierarchy comes from SIZE and WEIGHT, not from dimming. --tx-3 (the only
+     muted tone) is footnotes/metadata; every label and every value is white
+     or near-white. Non-negotiable.
+
+   TYPE: Bahnschrift (DIN, system on Windows) for display + tracked caps,
+   Segoe UI for prose, tabular figures everywhere a number lives.
+   NO webfonts, NO JS, NO external requests. The win-probability rail is split
+   by the real numbers through plain substitution: style="width:{{AWAY_WP}}".
+   ======================================================= */
+:root{
+  --ink-0:#04060b; --ink-1:#080c14; --ink-2:#0c111d; --ink-3:#121a2a; --ink-4:#182235;
+  --line:#1e2739; --line-2:#2b374e;
+  --tx-1:#ffffff; --tx-2:#e9eef8; --tx-3:#9dabc2;
+  --good:#2fd07a; --good-soft:rgba(47,208,122,.14); --good-ring:rgba(47,208,122,.30);
+  --bad:#ff6172; --bad-soft:rgba(255,97,114,.13); --bad-ring:rgba(255,97,114,.28);
+  --pill-blue:#8ec4ff; --pill-blue-ink:#04101f;
+  --pill-red:#ff8a8a;  --pill-red-ink:#260305;
+  --pill-grey:#2c3852; --pill-grey-ink:#dee7f6;
+
+  --away:{{AWAY_ACCENT}}; --home:{{HOME_ACCENT}};
+  --away-soft:{{AWAY_SOFT}}; --home-soft:{{HOME_SOFT}};
+  --away-glow:{{AWAY_GLOW}}; --home-glow:{{HOME_GLOW}};
+  /* derived scales (graceful fallback = white / base accent) */
+  --away-lit:#ffffff; --away-lit:color-mix(in srgb, var(--away) 52%, #ffffff);
+  --home-lit:#ffffff; --home-lit:color-mix(in srgb, var(--home) 52%, #ffffff);
+  --away-deep:var(--away); --away-deep:color-mix(in srgb, var(--away) 72%, var(--ink-0));
+  --home-deep:var(--home); --home-deep:color-mix(in srgb, var(--home) 72%, var(--ink-0));
+
+  --f-disp:"Bahnschrift","Segoe UI Semibold","Segoe UI",-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  --f-text:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{background:var(--ink-0)}
+body{margin:0;width:1280px;color:var(--tx-1);font-family:var(--f-text);
+  background:
+    radial-gradient(920px 380px at 10% -12%, var(--away-soft), transparent 72%),
+    radial-gradient(920px 380px at 90% -12%, var(--home-soft), transparent 72%),
+    var(--ink-0);
+  -webkit-font-smoothing:antialiased}
+
+.frame{position:relative;width:1280px;overflow:hidden;
+  background:linear-gradient(180deg, var(--ink-1) 0%, var(--ink-0) 34%, var(--ink-0) 100%);
+  border:1px solid var(--line-2)}
+/* engineered grid + film grain: texture, never decoration that implies data */
+.frame::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:
+    linear-gradient(rgba(255,255,255,.020) 1px, transparent 1px) 0 0/100% 46px,
+    linear-gradient(90deg, rgba(255,255,255,.020) 1px, transparent 1px) 0 0/46px 100%}
+.frame::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* stadium-light spectrum rule: the two live accents meeting in the middle */
+.spectrum{position:relative;z-index:3;height:4px;
+  background:linear-gradient(90deg, var(--away) 0%, var(--away-deep) 26%, var(--ink-4) 50%, var(--home-deep) 74%, var(--home) 100%)}
+
+/* ============================ HERO ============================ */
+.hero{position:relative;z-index:3}
+.eyebrow{display:flex;align-items:center;gap:10px;height:32px;padding:0 26px;
+  border-bottom:1px solid var(--line);
+  font-family:var(--f-disp);font-size:11px;font-weight:600;letter-spacing:.19em;
+  text-transform:uppercase;color:var(--tx-2);white-space:nowrap;overflow:hidden}
+.eyebrow .dia{width:8px;height:8px;flex:0 0 auto;transform:rotate(45deg);
+  background:linear-gradient(135deg,var(--away),var(--home))}
+.eyebrow .tail{margin-left:auto;letter-spacing:.19em;color:var(--tx-3);font-size:10.5px}
+
+.verdict{display:grid;grid-template-columns:1fr minmax(462px,1fr) 1fr;align-items:stretch}
+
+/* --- identity wings --- */
+.wing{display:flex;align-items:center;gap:15px;padding:22px 22px;position:relative;min-width:0}
+.wing.away{background:linear-gradient(105deg,var(--away-soft) 0%,transparent 88%)}
+.wing.home{flex-direction:row-reverse;text-align:right;
+  background:linear-gradient(255deg,var(--home-soft) 0%,transparent 88%)}
+.wing::before{content:"";position:absolute;top:18px;bottom:18px;width:2px;opacity:.55}
+.wing.away::before{left:0;background:linear-gradient(180deg,transparent,var(--away),transparent)}
+.wing.home::before{right:0;background:linear-gradient(180deg,transparent,var(--home),transparent)}
+.crest{position:relative;flex:0 0 auto;width:96px;height:96px;display:flex;
+  align-items:center;justify-content:center}
+.crest img{width:96px;height:96px;object-fit:contain;
+  filter:drop-shadow(0 10px 22px rgba(0,0,0,.65))}
+.crest::after{content:"";position:absolute;inset:-9px;border-radius:50%;z-index:-1;opacity:.85}
+.wing.away .crest::after{background:radial-gradient(circle,var(--away-glow) 0%,transparent 66%)}
+.wing.home .crest::after{background:radial-gradient(circle,var(--home-glow) 0%,transparent 66%)}
+.ident{min-width:0}
+.tag{display:inline-block;padding:3px 9px;border-radius:3px;margin-bottom:8px;
+  font-family:var(--f-disp);font-size:10.5px;font-weight:600;letter-spacing:.2em;
+  text-transform:uppercase;white-space:nowrap}
+.wing.away .tag{background:var(--away-soft);color:var(--away-lit);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--away) 45%,transparent)}
+.wing.home .tag{background:var(--home-soft);color:var(--home-lit);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--home) 45%,transparent)}
+.tname{font-family:var(--f-disp);font-size:35px;font-weight:600;line-height:1.0;
+  letter-spacing:-.012em;text-transform:uppercase;color:var(--tx-1);
+  overflow-wrap:normal;word-break:normal;hyphens:none}
+.trec{margin-top:8px;font-family:var(--f-disp);font-size:16px;font-weight:400;
+  letter-spacing:.07em;color:var(--tx-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* --- the verdict core: the hero of the hero --- */
+.core{position:relative;margin:12px 13px;padding:14px 26px 12px;border-radius:16px;
+  background:
+    radial-gradient(130% 140% at 50% -22%, rgba(255,255,255,.11), transparent 64%),
+    linear-gradient(180deg,#172135 0%,var(--ink-2) 100%);
+  border:1px solid #3a4a66;
+  box-shadow:0 30px 60px -26px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.10);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.core::before{content:"";position:absolute;inset:0;border-radius:16px;pointer-events:none;
+  background:linear-gradient(90deg,var(--away-soft),transparent 34%,transparent 66%,var(--home-soft))}
+.core>*{position:relative}
+.core-cap{font-family:var(--f-disp);font-size:12px;font-weight:600;letter-spacing:.30em;
+  text-transform:uppercase;color:#ffffff;display:flex;align-items:center;gap:13px}
+.core-cap::before,.core-cap::after{content:"";width:52px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--line-2))}
+.core-cap::after{background:linear-gradient(270deg,transparent,var(--line-2))}
+.score{display:flex;align-items:center;justify-content:center;gap:15px;line-height:1}
+.ps{font-family:var(--f-disp);font-size:63px;font-weight:600;letter-spacing:-.022em;
+  font-variant-numeric:tabular-nums;color:var(--tx-1);min-width:98px;text-align:center}
+.ps.away{text-shadow:0 0 46px var(--away-glow)}
+.ps.home{text-shadow:0 0 46px var(--home-glow)}
+.ps.lead{color:var(--good)}
+.vs{flex:0 0 auto;width:64px;height:64px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-family:var(--f-disp);font-size:18px;font-weight:600;
+  letter-spacing:.12em;color:#ffffff;position:relative;
+  background:linear-gradient(160deg,#1c2740,#0d1420);
+  border:1px solid #465873;box-shadow:0 0 26px rgba(0,0,0,.7)}
+.vs::after{content:"";position:absolute;inset:-5px;border-radius:50%;opacity:.62;
+  background:conic-gradient(from 210deg, var(--away), transparent 42%, transparent 58%, var(--home))}
+
+/* market block: the injected {{LINES}} markup, rebuilt as a key/value ledger */
+.market{position:relative;width:100%;margin-top:1px;padding:11px 4px 2px;
+  border-top:1px solid var(--line-2);
+  font-family:var(--f-disp);font-size:27px;font-weight:600;line-height:1.40;
+  letter-spacing:.002em;color:var(--tx-1);font-variant-numeric:tabular-nums}
+.market .k{display:inline-block;width:104px;font-size:11px;font-weight:600;
+  letter-spacing:.20em;text-transform:uppercase;color:var(--tx-2);vertical-align:middle}
+.market::after{content:"";position:absolute;left:112px;top:16px;bottom:7px;width:1px;
+  background:linear-gradient(180deg,transparent,var(--line-2) 14%,var(--line-2) 86%,transparent)}
+.wx{display:flex;align-items:center;gap:9px;font-family:var(--f-disp);font-size:16.5px;
+  font-weight:400;letter-spacing:.045em;color:#ffffff;text-align:center}
+.wx svg{flex:0 0 auto;opacity:.9}
+
+/* --- win probability rail: the split is the real number --- */
+.rail{padding:11px 26px 13px;border-top:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(255,255,255,.014),transparent)}
+.railhead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:7px}
+.railhead .t{font-family:var(--f-disp);font-size:11px;font-weight:600;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--tx-2)}
+.railhead .s{font-family:var(--f-disp);font-size:10.5px;font-weight:400;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--tx-3)}
+.track{position:relative;height:26px;border-radius:6px;overflow:hidden;
+  background:var(--ink-3);border:1px solid var(--line-2);
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.55)}
+.fill{position:absolute;top:0;bottom:0;width:0}
+.fill.away{left:0;background:
+  linear-gradient(180deg,color-mix(in srgb,var(--away) 88%,#fff) 0%,var(--away) 42%,var(--away-deep) 100%)}
+.fill.home{right:0;background:
+  linear-gradient(180deg,color-mix(in srgb,var(--home) 88%,#fff) 0%,var(--home) 42%,var(--home-deep) 100%)}
+.fill::after{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.12) 0 2px,transparent 2px 9px)}
+.track .ticks{position:absolute;inset:0;pointer-events:none;
+  background:
+    linear-gradient(90deg,transparent calc(25% - 1px),rgba(255,255,255,.30) 25%,transparent calc(25% + 1px)),
+    linear-gradient(90deg,transparent calc(75% - 1px),rgba(255,255,255,.30) 75%,transparent calc(75% + 1px))}
+.track .half{position:absolute;top:0;bottom:0;left:calc(50% - 1px);width:2px;
+  background:rgba(255,255,255,.85);box-shadow:0 0 12px rgba(255,255,255,.55)}
+.railends{display:flex;align-items:baseline;justify-content:space-between;margin-top:7px;gap:12px}
+.rend{display:flex;align-items:baseline;gap:11px;min-width:0}
+.rend.home{flex-direction:row-reverse}
+.rend .nm{font-family:var(--f-disp);font-size:12px;font-weight:600;letter-spacing:.19em;
+  text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rend.away .nm{color:var(--away-lit)}
+.rend.home .nm{color:var(--home-lit)}
+.rend .pc{font-family:var(--f-disp);font-size:27px;font-weight:600;letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums;color:var(--tx-1);white-space:nowrap}
+.rend .pc.lead{color:var(--good)}
+.railends .mid{font-family:var(--f-disp);font-size:10.5px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--tx-3);white-space:nowrap}
+
+/* ============================ BOARD ============================ */
+.board{position:relative;z-index:3;display:grid;grid-template-columns:334px 1fr 334px;
+  gap:20px;padding:15px 26px 18px;align-items:stretch}
+
+.col{min-width:0;position:relative;display:flex;flex-direction:column;
+  border-radius:12px;padding:10px 12px 12px;
+  background:linear-gradient(180deg,rgba(255,255,255,.022),rgba(255,255,255,.008));
+  border:1px solid var(--line)}
+.col.away{box-shadow:inset 0 2px 0 var(--away)}
+.col.home{box-shadow:inset 0 2px 0 var(--home)}
+.colhead{display:flex;align-items:center;gap:10px;padding-bottom:8px;margin-bottom:3px;
+  border-bottom:1px solid var(--line-2)}
+.col.home .colhead{flex-direction:row-reverse}
+.colhead .chip{flex:0 0 auto;padding:3px 8px;border-radius:3px;
+  font-family:var(--f-disp);font-size:10px;font-weight:600;letter-spacing:.19em;
+  text-transform:uppercase;white-space:nowrap}
+.col.away .colhead .chip{background:var(--away-soft);color:var(--away-lit);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--away) 45%,transparent)}
+.col.home .colhead .chip{background:var(--home-soft);color:var(--home-lit);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--home) 45%,transparent)}
+.colhead .cname{font-family:var(--f-disp);font-size:15px;font-weight:600;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--tx-1);min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.colhead .csub{margin-left:auto;flex:0 0 auto;font-family:var(--f-disp);font-size:10px;
+  letter-spacing:.17em;text-transform:uppercase;color:var(--tx-3)}
+.col.home .colhead .csub{margin-left:0;margin-right:auto}
+
+/* section rule inside a team column */
+.secttl{display:flex;align-items:center;gap:8px;margin:9px 0 2px;
+  font-family:var(--f-disp);font-size:11px;font-weight:600;letter-spacing:.155em;
+  text-transform:uppercase;color:var(--tx-2);line-height:1}
+.secttl::before{content:"";width:14px;height:2px;flex:0 0 auto;border-radius:2px}
+.col.away .secttl::before{background:var(--away)}
+.col.home .secttl::before{background:var(--home)}
+.secttl::after{content:"";flex:1 1 auto;height:1px;background:var(--line)}
+.col.home .secttl{flex-direction:row-reverse}
+.stack .secttl:first-child{margin-top:2px}
+
+/* the rails fill themselves to the board's height: rows share the slack, so the
+   three columns co-terminate in ANY matchup with no hand-tuning */
+.stack{flex:1 1 auto;display:flex;flex-direction:column}
+.stack .secttl{flex:0 0 auto}
+.stack .srow{flex:1 1 auto}
+
+/* metric lane */
+.srow{position:relative;display:flex;align-items:center;gap:8px;min-height:19px;
+  padding:1px 2px;border-bottom:1px solid rgba(255,255,255,.05)}
+.col.away .srow{flex-direction:row}
+.col.home .srow{flex-direction:row-reverse}
+.slabel{flex:1 1 auto;min-width:0;font-family:var(--f-text);font-size:11.5px;font-weight:600;
+  letter-spacing:.012em;color:var(--tx-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.col.away .slabel{text-align:left}
+.col.home .slabel{text-align:right}
+.sval{flex:0 0 auto;min-width:60px;padding:0 5px;border-radius:4px;
+  font-family:var(--f-disp);font-size:13px;font-weight:600;letter-spacing:.005em;
+  font-variant-numeric:tabular-nums;color:var(--tx-1)}
+.col.away .sval{text-align:right}
+.col.home .sval{text-align:left}
+.sval.good,.val.good{background:var(--good-soft);box-shadow:inset 0 0 0 1px var(--good-ring)}
+.sval.bad,.val.bad{background:var(--bad-soft);box-shadow:inset 0 0 0 1px var(--bad-ring)}
+.sval.lead,.val.lead{color:var(--good)}
+/* the advantage ladder: a team-coloured tick on every lane this side leads */
+.srow::before{content:"";position:absolute;top:3px;bottom:3px;width:3px;border-radius:2px;opacity:0}
+.col.away .srow::before{left:-2px;background:var(--away)}
+.col.home .srow::before{right:-2px;background:var(--home)}
+.col .srow:has(.sval.lead)::before{opacity:.95}
+
+/* rank ticker chip */
+.rk{flex:0 0 auto;display:inline-block;min-width:30px;padding:1px 5px;border-radius:3px;
+  text-align:center;font-family:var(--f-disp);font-size:11px;font-weight:600;
+  letter-spacing:.01em;font-variant-numeric:tabular-nums;
+  background:var(--pill-blue);color:var(--pill-blue-ink)}
+.rk.bad{background:var(--pill-red);color:var(--pill-red-ink)}
+.rk.mid{background:var(--pill-grey);color:var(--pill-grey-ink)}
+
+/* ==================== centre: matchup board ==================== */
+.mid{min-width:0;display:flex;flex-direction:column}
+.cross section,.ratings section{flex:1 1 auto;display:flex;flex-direction:column}
+.cross section>table,.ratings section>table{flex:1 1 auto}
+.legendwrap{flex:0 0 auto;margin:2px 0 0;
+  background:rgba(255,255,255,.028);border:1px solid var(--line);border-radius:10px;padding:1px 4px 6px}
+.mid section{margin:0 0 6px}
+.mid h2{position:relative;margin:0 0 6px;padding:5px 6px;text-align:center;
+  font-family:var(--f-disp);font-size:11px;font-weight:600;letter-spacing:.175em;
+  text-transform:uppercase;color:var(--tx-2);line-height:1.3;
+  border-top:1px solid var(--line-2);border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(255,255,255,.028),transparent)}
+.cross section:nth-of-type(1) h2{box-shadow:inset 3px 0 0 var(--away)}
+.cross section:nth-of-type(2) h2{box-shadow:inset 3px 0 0 var(--home)}
+.mid h2::after{content:"";position:absolute;left:50%;bottom:-1px;transform:translateX(-50%);
+  width:56px;height:2px;background:linear-gradient(90deg,var(--away),var(--home))}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+tr:nth-child(even) td{background:rgba(255,255,255,.017)}
+td{padding:2px 8px;vertical-align:middle;border-bottom:1px solid rgba(255,255,255,.05)}
+.label{text-align:center;width:54%;font-family:var(--f-disp);font-size:11px;font-weight:600;
+  letter-spacing:.075em;text-transform:uppercase;color:var(--tx-2);line-height:1.25}
+.val{position:relative;width:23%;font-family:var(--f-disp);font-size:16px;font-weight:600;
+  letter-spacing:0;font-variant-numeric:tabular-nums;color:var(--tx-1);white-space:nowrap}
+.val .rk{position:absolute;top:50%;transform:translateY(-50%)}
+.val.away{text-align:right;padding:4px 8px 4px 42px}
+.val.home{text-align:left;padding:4px 42px 4px 8px}
+.val.away .rk{left:8px}
+.val.home .rk{right:8px}
+.val.away.lead{box-shadow:inset -4px 0 0 var(--away), -10px 0 22px -14px var(--away-glow)}
+.val.home.lead{box-shadow:inset 4px 0 0 var(--home), 10px 0 22px -14px var(--home-glow)}
+/* advantage wash down the centre rows */
+.cross tr:has(.val.away.lead) td.label{background:linear-gradient(90deg,var(--away-soft),var(--away-soft) 22%,transparent 78%)}
+.cross tr:has(.val.home.lead) td.label{background:linear-gradient(270deg,var(--home-soft),var(--home-soft) 22%,transparent 78%)}
+
+/* ratings + legend */
+.ratings table td{padding:3px 8px}
+.ratings .val{font-size:17px}
+
+.legend{display:flex;flex-direction:column;gap:3px;padding:1px 1px}
+.lg{display:flex;align-items:flex-start;gap:7px;font-family:var(--f-text);font-size:11px;
+  line-height:1.34;letter-spacing:0;color:#ffffff}
+.sw{flex:0 0 auto;width:11px;height:11px;margin-top:2px;border-radius:3px;
+  border:1px solid var(--line-2)}
+.sw.good{background:var(--good-soft);border-color:var(--good-ring)}
+.sw.pill{background:var(--pill-blue);border-color:var(--pill-blue)}
+.sw.none{background:transparent;border-style:dashed;border-color:var(--line-2)}
+</style></head>
+<body><div class="frame">
+<div class="spectrum"></div>
+
+<header class="hero">
+  <div class="eyebrow"><span class="dia"></span><span>{{TITLE}}</span>
+    <span class="tail">Advanced stats · model + market</span></div>
+
+  <div class="verdict">
+    <div class="wing away">
+      <div class="crest"><img src="{{AWAY_LOGO}}" alt=""></div>
+      <div class="ident">
+        <div class="tag">Away</div>
+        <div class="tname">{{AWA}}</div>
+        <div class="trec">{{AWAY_REC}}</div>
+      </div>
+    </div>
+
+    <div class="core">
+      <div class="core-cap">Projected final</div>
+      <div class="score">
+        <span class="ps away {{AWAY_PP_LEAD}}">{{AWAY_PP}}</span>
+        <span class="vs">VS</span>
+        <span class="ps home {{HOME_PP_LEAD}}">{{HOME_PP}}</span>
+      </div>
+      <div class="market">{{LINES}}</div>
+      <div class="wx">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 17h13a3.2 3.2 0 1 0-3.2-3.2"/><path d="M3 12h8.4a2.6 2.6 0 1 0-2.6-2.6"/>
+          <path d="M17.5 6.5 20 4"/><path d="M20.5 10.5H23"/></svg>
+        <span>{{WEATHER}}</span>
+      </div>
+    </div>
+
+    <div class="wing home">
+      <div class="crest"><img src="{{HOME_LOGO}}" alt=""></div>
+      <div class="ident">
+        <div class="tag">Home</div>
+        <div class="tname">{{HOM}}</div>
+        <div class="trec">{{HOME_REC}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rail">
+    <div class="railhead"><span class="t">Win probability</span>
+      <span class="s">Model · the split is the real number</span></div>
+    <div class="track">
+      <div class="fill away" style="width:{{AWAY_WP}}"></div>
+      <div class="fill home" style="width:{{HOME_WP}}"></div>
+      <div class="ticks"></div>
+      <div class="half"></div>
+    </div>
+    <div class="railends">
+      <span class="rend away"><span class="nm">{{AWA}}</span>
+        <span class="pc {{AWAY_WP_LEAD}}">{{AWAY_WP}}</span></span>
+      <span class="mid">50 / 50</span>
+      <span class="rend home"><span class="nm">{{HOM}}</span>
+        <span class="pc {{HOME_WP_LEAD}}">{{HOME_WP}}</span></span>
+    </div>
+  </div>
+</header>
+
+<main class="board">
+  <section class="col away">
+    <div class="colhead"><span class="chip">Away</span><span class="cname">{{AWA}}</span>
+      <span class="csub">Own stats</span></div>
+    <div class="stack">{{AWAY_STACK}}</div>
+  </section>
+
+  <section class="mid">
+    <div class="cross">{{CROSS}}</div>
+    <div class="ratings">{{RATINGS}}</div>
+    <div class="legendwrap">{{LEGEND}}</div>
+  </section>
+
+  <section class="col home">
+    <div class="colhead"><span class="chip">Home</span><span class="cname">{{HOM}}</span>
+      <span class="csub">Own stats</span></div>
+    <div class="stack">{{HOME_STACK}}</div>
+  </section>
+</main>
+
+<div class="spectrum"></div>
+</div></body></html>

@@ -35,15 +35,15 @@ working clone).
 | | |
 |---|---|
 | Live URL | `https://skeezcfb-rankings.com` (apex is real; `www` CNAMEs to it) |
-| Live build | **v65** — `/api/health` → `build`, proven by `code.marker` |
-| Code marker | `v65-week-cutover-epa` |
-| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v65` |
+| Live build | **v66** — `/api/health` → `build`, proven by `code.marker` |
+| Code marker | `v66-adv-stats-from-d1` |
+| Image tag in `wrangler.jsonc` | `cfb-power-rankings:v66` |
 | Rollback tag | **v64** — `scripts/cfb_deploy.sh --rollback v64` (v63…v50 also in the registry) |
-| Last verified | 2026-10-03 (CTO) — Containers API: app image `...cfb-power-rankings:v65`, app version 62 (this is the gate that counts); instance retired, one site request → `build=v65`, `code.marker=v65-week-cutover-epa`, `status ok`. Pre-deploy enforcement gate **PASS** (23 pytest + 21 page-script). Post-deploy: `/api/schedule/current-week` → **week 5** (was wrongly 6), default `/api/schedule` → week 5 · 59 games incl. Washington @ USC, `/api/matchup` now returns the **EPA & EFFICIENCY** section + the 3 EPA edge pairs, `/api/health` `archive.count = 0`, all public routes 200. Budget CFBD 7.11%→7.16%, D1 806,407→806,438 rows (one boot). |
+| Last verified | 2026-10-03 (CTO) — Containers API: app image `...cfb-power-rankings:v66`, app version 63 (this is the gate that counts); instance retired, ONE site request → `build=v66`, `code.marker=v66-adv-stats-from-d1`, `status ok`. Pre-deploy boot gate **PASS** (all 6 public routes 200 on the built image). Post-deploy: all public routes 200. **Advanced stats now read from D1, not a live CFBD call.** After re-publishing, `analytics_publication:2026` went **67 → 115 keys** (all 36 `ADV_MATCHUP_FIELDS` now included) and `/api/matchup` returned **34/34 rows populated, 0 blank** (was 22 blank). Root cause of the blanks: the served snapshot is selected by the publication marker, and `team_analytics_rows` SKIPS absent values — so when the build's CFBD advanced call came back empty, the 36 advanced keys were dropped from the snapshot KEY LIST entirely, and D1's own copies were never selected. |
 | Injuries | D1 `app_state.active_injuries` is the served source (45 teams / 56 tracked at migration). `/api/injuries` and the win-totals build read it. Kill switch `INJURIES_FROM_D1=0`. **D1 `injury_snapshots` is a settled-outcome tracking table, NOT the current injury state.** |
 | Quota ledger | `/api/health` `budget` is read from D1 `api_usage` — the ledger of record. The disk mirror `data/budget_ledger.json` is a **local-dev fallback only** (Phase 6). Kill switch `BUDGET_FROM_D1=0`. |
 | Archive health | `/api/health` → **`archive`** — `count > 0` means D1 writes are silently NOT landing (F5; before v54 this state was invisible) |
-| Container app image | must read `...:v65` via the Containers API — **`build` in `/api/health` does NOT prove this** (see the v52→v53 note) |
+| Container app image | must read `...:v66` via the Containers API — **`build` in `/api/health` does NOT prove this** (see the v52→v53 note) |
 | Deploy verifier | `python scripts/verify_container_swap.py --tag vN --marker <CODE_MARKER>` — API-driven, touches the site **once** |
 | Container D1 credential | Worker secrets `CF_D1_TOKEN` + `CF_D1_DB_ID` (+ `CF_ACCOUNT_ID`); `wrangler.jsonc` declares NO vars, so a deploy cannot clobber them. **2026-10-01 incident:** the container lost D1 access at a recycle and EVERY D1 surface silently served its baked disk copy (`serve.source` = `disk (no verified publication)`, degraded) with `archive.count` 3450+. A recorder recursion kept the instance from idling, so it never recycled and could not pick up corrected secrets — the fix required a NEW image tag (v64). Symptom set + diagnosis: `cfb-site-operations` skill. Token in use: `cfb-container-d1 (2026-10-01)`. |
 | Serving index (Task 5) | `ix_stat_obs_serving` on `stat_observations(season, week, subject_type, recorded_at)` — **APPLIED to production 2026-10-01** with Jeff's authorisation. Both selectors now seek it where they used to scan `ix_stat_obs_season_key_week (season=?)`; live `/api/analytics` warm latency 4.2-4.6s → 1.7-2.1s. Rollback: `DROP INDEX IF EXISTS ix_stat_obs_serving;` |
@@ -61,6 +61,31 @@ curl -s https://skeezcfb-rankings.com/api/health   # status ok + build + code.ma
 ---
 
 ## RECENT CHANGES & OPEN WORK
+
+### v65 → v66 (2026-10-03, CTO) — advanced matchup stats read from D1, not CFBD
+
+**Symptom:** 22 of 34 matchup rows rendered blank on every card (Trench & Havoc 13/13, Situational
+Downs 4/4, Quality Drives 4/6, Field Position 1/5) while the values sat in D1, current.
+
+**Root cause (two faults, both real):**
+1. `_cfbd_advanced_stats()` built the advanced payload from a **live CFBD call** even though every
+   key it needs is already published to D1 `stat_observations`. `cfbd_shared.cfbd_get()` returns
+   `[]` on failure, so a source hiccup emptied the payload — no D1 fallback existed.
+2. `team_analytics_rows()` **SKIPS absent values** (correct: a missing metric must stay missing, or
+   a backtest reads a real zero). So when that CFBD call came back empty, the 36 advanced keys were
+   not merely null — they were **absent from the publication's KEY LIST**, and the serving selector
+   reads exactly the published keys. D1 held the values; nothing selected them.
+
+**Fix:** new `_d1_advanced_stats()` reads the 48 keys (`_ADV_BASE_KEYS` + `ADV_MATCHUP_FIELDS`) from
+D1, taking the latest week per team+key, returning `{}` on any failure so CFBD stays the fallback.
+Build call site is now `adv_data = _d1_advanced_stats() or _cfbd_advanced_stats()`. Kill switch
+`ADV_STATS_FROM_D1=0`.
+
+**Verified:** publication 67 → 115 keys; `/api/matchup` → **34/34 rows, 0 blank**.
+
+**LESSON:** a key missing from the published snapshot is invisible to the reader — the failure
+looked like "CFBD is down" and was really "the snapshot's key list lost a section." When a whole
+SECTION blanks, check `analytics_publication:<season>.keys`, not just the stat table.
 
 ### v64 → v65 (2026-10-03, CTO) — schedule week cutover floor, and EPA in the matchup engine
 

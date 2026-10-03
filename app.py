@@ -1274,7 +1274,7 @@ def api_boards_status():
     return out
 
 
-CODE_MARKER = "v65-week-cutover-epa"   # bump when a release must be provably live
+CODE_MARKER = "v66-adv-stats-from-d1"   # bump when a release must be provably live
 
 
 _IDENTITY_CACHE: dict | None = None
@@ -1906,6 +1906,66 @@ def _adv_num(v, ndigits: int = 4):
     if isinstance(v, bool) or not isinstance(v, (int, float)):
         return None
     return round(v, ndigits)
+
+
+_ADV_BASE_KEYS = (
+    "off_success_rate", "def_success_rate", "off_ppo", "def_ppo",
+    "off_line_yards", "def_line_yards", "off_stuff_rate", "def_stuff_rate",
+    "off_power_success", "def_power_success",
+    "off_explosiveness", "def_explosiveness",
+)
+
+
+def _d1_advanced_stats(season: int | None = None) -> dict:
+    """Advanced season stats read from D1 (`stat_observations`) -- NOT a live CFBD pull.
+
+    Every key the matchup engine needs (the 12 base metrics plus ADV_MATCHUP_FIELDS) is
+    already published to D1 by the nightly archive, so the matchup build has no reason to
+    call CFBD for them. Reading D1 here:
+      * removes a live API dependency + budget cost from every matchup/card render, and
+      * removes the failure mode where a CFBD hiccup blanked 22 of 34 matchup rows while
+        D1 held every value (2026-10-03).
+
+    Grain in D1 is (subject_id=CFBD team id, season, week); we take the LATEST week per
+    team+key. Returns {} on any failure so the caller falls back to CFBD.
+    Kill switch: ADV_STATS_FROM_D1=0.
+    """
+    if os.environ.get("ADV_STATS_FROM_D1", "1").strip().lower() not in ("1", "true", "yes", "on"):
+        return {}
+    season = season or CFBD_YEAR
+    keys = _ADV_BASE_KEYS + tuple(ADV_MATCHUP_FIELDS)
+    try:
+        import d1_store  # noqa: PLC0415 -- shipped via COPY *.py
+        marks = ",".join("?" for _ in keys)
+        rows = d1_store.query(
+            "SELECT t.name AS team, s.stat_key AS k, s.value AS v, s.week AS w "
+            "FROM stat_observations s JOIN teams t ON t.team_id = s.subject_id "
+            f"WHERE s.subject_type='team' AND s.season=? AND s.stat_key IN ({marks})",
+            [season, *keys],
+        )
+    except Exception as e:  # noqa: BLE001 -- must never break the build
+        print(f"[analytics] advanced D1 read failed, falling back to CFBD: {e}")
+        return {}
+    latest: dict[tuple[str, str], tuple[int, object]] = {}
+    for r in rows or []:
+        team, k = r.get("team"), r.get("k")
+        if not team or not k:
+            continue
+        w = r.get("w")
+        wi = -1 if w is None else int(w)
+        cur = latest.get((team, k))
+        if cur is None or wi >= cur[0]:
+            latest[(team, k)] = (wi, r.get("v"))
+    out: dict[str, dict] = {}
+    for (team, k), (_, v) in latest.items():
+        if v is None:
+            continue
+        try:
+            v = float(v)
+        except (TypeError, ValueError):
+            pass
+        out.setdefault(team, {})[k] = v
+    return out
 
 
 def _cfbd_advanced_stats() -> dict:
@@ -3992,7 +4052,9 @@ def fetch_live_analytics():
 
         # EPA (Expected Points Added) + possession-based metrics from CFBD
         ppa_data = _cfbd_ppa()
-        adv_data = _cfbd_advanced_stats()
+        # D1 FIRST: these keys are already in stat_observations, so this must not be a
+        # live CFBD call. CFBD remains the fallback AND the nightly refresh source.
+        adv_data = _d1_advanced_stats() or _cfbd_advanced_stats()
         drive_stats = _cfbd_drives_for_teams(list(
             teams_db.keys() | fpi_data.keys() | sp_data.keys() | rec_data.keys()))
         returning_data = _cfbd_returning()
