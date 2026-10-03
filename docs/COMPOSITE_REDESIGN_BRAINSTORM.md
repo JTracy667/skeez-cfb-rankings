@@ -206,3 +206,99 @@ to "what is live right now".
 theoretical. All five efficiency sub-norms (`sr_norm`, `epa_norm`, `ppo_norm`, `trench_norm`,
 `ppd_norm`, around `app.py:3609-3658`) end in `max(0, min(100, …))`, so simultaneous ceiling hits
 genuinely collapse into one indistinguishable number — exactly the Pittsburgh pattern.
+
+---
+
+## CTO questions for Research (2026-10-03)
+
+Everything below is a question, not a proposal — Research owns data-source interpretation
+(`/stats/season/advanced` vs `/ppa/teams` semantics, what carries baked-in opponent
+adjustment), so I am not going to guess at it. What I can do is tell you exactly what is
+stored and hand you the access, so the analysis runs against ground truth.
+
+### What is answerable right now
+
+- **The 48-key candidate set is enumerable.** `MATCHUP_METRICS` in `matchup_engine.py` (or
+  `ADV_MATCHUP_FIELDS` in `app.py`) is the exact list the matchup engine ranks; those names are
+  the same `stat_key` values stored in D1, so the two can be joined without a translation table.
+- **The publication marker is the live key list.** D1 `app_state['analytics_publication:2026']`
+  carries `week`, `stamp`, `n_rows`, `n_teams`, `keys[]` (115 today), and a `digest`. That is
+  the authoritative "what is actually served".
+- **Weekly history is retained, append-only.** `stat_observations` keeps every pull
+  (e.g. Alabama `off_success_rate` has 10 rows across Sep 28 → Oct 3), so a weekly walk-forward
+  backtest has real point-in-time rows rather than one overwritten snapshot.
+
+### A. Opponent adjustment (blocks #1 and #3 of the design philosophy)
+
+1. **Which of the 48 candidate keys already carry opponent adjustment, and which are raw
+   box-score numbers?** The doc asserts `/ppa` and `/stats/season/advanced` *generally* support
+   filtering/adjustment. I need it per-field, not per-endpoint, because the model would otherwise
+   double-count adjustment on some keys and miss it on others.
+2. **Does any CFBD advanced endpoint expose an opponent-adjusted form directly**, or is every
+   adjusted number something we have to derive ourselves? If derivable, from what minimum inputs
+   (per-game results + per-team rates), and is that data in D1 or CFBD-only?
+3. **Is `fpi_sos` and `fpi_sor` computed on the same scale across weeks**, or does it get
+   re-based? A weekly backtest that compares week-4 SOS to week-9 SOS needs them comparable.
+
+### B. Redundancy and collinearity (blocks "which are strong enough to include")
+
+4. **Correlation matrix across the 48 keys, and against the existing composite inputs**
+   (`sp_plus`, `fpi`, `elo`, `srs`, `composite`). Which are strongly collinear — havoc vs
+   stuff rate, Eckel rate vs PPO, SP+ ST vs FPI ST — such that including both adds no
+   information and just double-weights one concept?
+5. **`net_field_pos` is stored but I cannot tell if it is an input or decoration.** Same question
+   for `off_eckel_rate` / `eckel_ratio` / `def_eckel_rate`: in or out?
+
+### C. The live composite's current shape
+
+6. **Four of the named inputs are zero-weighted in the live config** — `fpi`, `srs`, `elo` are
+   `_ENABLED_KEYS`-excluded (present and named, but inert, and JSON overrides for them are
+   silently ignored). Is that deliberate, and does it change the Pittsburgh reading? A composite
+   that ignores SRS while ranking a weak-schedule team #2 is a different story than one that
+   weights it.
+7. **What are the actual live bucket shares?** I can read them off `COMPOSITE_CONFIG_DEFAULT`;
+   what I am asking for is whether the *observed* behaviour (Pittsburgh #2) is explained by those
+   shares or by the clamps in §5 — those are two different fixes and I do not want to ship the
+   wrong one.
+
+### D. Sample size, decay and garbage time
+
+8. **Are the stored weekly values cumulative-to-date or single-week?** Alabama's
+   `off_success_rate` is byte-identical at week 5 and week 6 (0.4944), which reads as
+   cumulative-but-unchanged, not per-week. If they are cumulative, "thin sample" handling
+   (§4) has to come from games-played, not from the week number.
+9. **Garbage-time exclusion: available or not?** If not available from CFBD, is there a
+   defensible proxy (score margin filter, play count), or should the design drop it?
+10. **Prior-layer decay inputs** — `talent_score`, `recruiting_*`, `returning_ppa`,
+    `roster_count` are all in the published 115 keys. What is the proposed information-weighted
+    decay (games played × schedule quality seen), and does it need data we do not store?
+
+### E. Validation harness
+
+11. **What is the minimum walk-forward design you would accept as leakage-free at WEEKLY
+    granularity?** Specifically: the point-in-time join, and whether the published-snapshot
+    stamp (rather than `MAX(recorded_at)`) is the correct "as of" boundary — I believe it is,
+    because that is what the site actually served at the time.
+12. **`closing_lines` and `games` are both in D1** (365k odds rows, 21k games). Is the
+    stored closing line sufficient to score ATS calibration separately from rank correlation,
+    as §7 requires, for prior seasons — or only for 2026?
+
+### F. Scope
+
+13. **Of the six threads** (opponent-adjustment engine, empirical weight refit, soft-clamp,
+    decay redesign, turnover regression, walk-forward harness) — which one has to go first for
+    the others to be measurable? My read is the validation harness, because without it every
+    other change is unfalsifiable, but that is your call to argue.
+
+### Caveats I would rather state than have you discover
+
+- **A whole section can vanish without any row being lost.** A published snapshot is selected by
+  ONE `(week, stamp)`. The pull that became the publication carried 67 of 115 keys, so 36
+  advanced metrics were absent from the key list and 22 of 34 matchup rows read blank while D1
+  held the values at other stamps. When a whole bucket looks empty, check
+  `analytics_publication:<season>.keys` before concluding the source is down.
+- **The composite's weights need Jeff's sign-off to ship.** Backtest changes are authorised by a
+  work order; pushing a changed number live is not.
+- **I am not the right owner for source semantics.** If a question above amounts to "what does
+  this field mean", it is yours, and I would rather it come back as a correction than as a
+  workaround.
